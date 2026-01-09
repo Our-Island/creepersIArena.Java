@@ -1,0 +1,5 @@
+clear @s lantern
+
+#item replace entity @s hotbar.1 with lantern{HideFlags:255,display:{Name:[{"text": "孔明灯","color": "white","italic": false}],Lore:[[{"text": "✎ 释放一个孔明灯，跟随其飘起，并照明周围的敌人","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 14 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
+
+item replace entity @s hotbar.1 with lantern[custom_name={"text": "孔明灯","color": "white","italic": false},lore=[{"text": "✎ 释放一个孔明灯","color": "gray","italic": false},{"text": "✎ 照亮并减速周围的敌人","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "14","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

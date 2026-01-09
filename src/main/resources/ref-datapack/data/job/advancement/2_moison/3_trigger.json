@@ -1,0 +1,65 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:using_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:ender_eye"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "光影传送"
+            },
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 传送至40格内距离你最近的光灵箭"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "20"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": " 秒冷却"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:2_moison/skill/3/trigger"
+  }
+}

@@ -1,0 +1,13 @@
+
+#红队的
+fill -20028 71 -20039 -20039 77 -20039 air destroy
+fill -20039 77 -20039 -20039 71 -20028 air destroy
+fill -20039 71 -20028 -20028 77 -20028 air destroy
+fill -20028 77 -20028 -20028 71 -20039 air destroy
+fill -20039 77 -20039 -20028 77 -20028 air destroy
+#蓝队的
+fill -19972 71 -19961 -19961 77 -19961 air destroy
+fill -19961 77 -19961 -19961 71 -19972 air destroy
+fill -19961 71 -19972 -19972 77 -19972 air destroy
+fill -19972 77 -19972 -19972 71 -19961 air destroy
+fill -19961 77 -19961 -19972 77 -19972 air destroy

@@ -1,0 +1,24 @@
+{
+    "pack": {
+        "pack_format": 56,
+        "description": {
+            "translate": "方块竞技场为灵感的自创作品；苦力怕的幻想竞技场\n英文名：Creeper_Imagine"
+        }
+    },
+    "filter": {
+        "block": [
+            {
+                "namespace": "minecraft",
+                "path": "recipes/.*"
+            },
+            {
+                "namespace": "minecraft",
+                "path": "advancements/.*"
+            },
+            {
+                "namespace": "minecraft",
+                "path": "loot_tables/.*"
+            }
+        ]
+    }
+}

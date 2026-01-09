@@ -1,0 +1,70 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:comparator"
+          ],
+          "components": {
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "text": "✎ 骑乘一枚烟花向前上方飞去",
+                "italic": false
+              },
+              {
+                "color": "gray",
+                "text": "✎ 这枚烟花同样会造成爆炸伤害",
+                "italic": false
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "text": "右键",
+                    "italic": false
+                  },
+                  {
+                    "color": "gray",
+                    "text": "使用",
+                    "italic": false
+                  }
+                ],
+                "text": "❃ ",
+                "italic": false
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "text": "20",
+                    "italic": false
+                  },
+                  {
+                    "color": "gray",
+                    "text": " 秒冷却",
+                    "italic": false
+                  }
+                ],
+                "text": "❃ ",
+                "italic": false
+              }
+            ],
+            "minecraft:custom_name": {
+              "color": "white",
+              "text": "烟花坐骑",
+              "italic": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:1_creeper/skill/3/trigger"
+  }
+}

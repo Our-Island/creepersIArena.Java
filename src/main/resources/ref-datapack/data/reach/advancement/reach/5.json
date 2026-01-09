@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 20017.0,
+                "max": 20018.0
+              },
+              "y": {
+                "min": 60.0,
+                "max": 61.0
+              },
+              "z": {
+                "min": 20014.0,
+                "max": 20015.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/5"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:spawner"
+    },
+    "title": {
+      "text": "5. 深藏封印处",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：4 * 火药",
+      "color": "gray"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "reach:reach/0"
+}

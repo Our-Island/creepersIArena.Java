@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:light_blue_stained_glass_pane"
+    },
+    "title": {
+      "text": "4.彩色药水粒子",
+      "color": "white"
+    },
+    "description": [
+      {
+        "text": "价格：5 * 火药 + 1 * TNT",
+        "color": "gray"
+      }
+    ],
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "shop:0"
+}

@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 14907.0,
+                "max": 14906.0
+              },
+              "y": {
+                "min": 63.0,
+                "max": 65.0
+              },
+              "z": {
+                "min": 14945.0,
+                "max": 14946.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/4"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:sculk_sensor"
+    },
+    "title": {
+      "text": "4. 乌漆嘛黑处",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：6 * 火药",
+      "color": "gray"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "reach:reach/0"
+}

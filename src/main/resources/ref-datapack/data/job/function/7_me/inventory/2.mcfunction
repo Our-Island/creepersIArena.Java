@@ -1,0 +1,5 @@
+clear @s pumpkin
+
+#item replace entity @s hotbar.1 with lantern{HideFlags:255,display:{Name:[{"text": "孔明灯","color": "white","italic": false}],Lore:[[{"text": "✎ 释放一个孔明灯，跟随其飘起，并照明周围的敌人","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 14 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
+
+item replace entity @s hotbar.1 with jack_o_lantern[custom_name={"text": "南瓜惊喜","color": "white","italic": false},lore=[{"text": "✎ 遮挡周围敌人视野","color": "gray","italic": false},{"text": "✎ 闪现到前方并暂时获得隐身","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "7","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

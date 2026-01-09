@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:lime_dye"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "已准备"
+            },
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 游戏开始后会参与游戏"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "取消准备"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "steal:waiting/toggle_ready_off"
+  }
+}

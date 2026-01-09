@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:campfire"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "返回"
+            },
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 退出战场回到大厅"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "death:respawn/exit/trigger"
+  }
+}

@@ -1,0 +1,30 @@
+package top.ourisland.creepersiarena.job;
+
+import java.util.*;
+
+public final class JobManager {
+    private final Map<JobId, Job> jobs = new HashMap<>();
+
+    public void clear() {
+        jobs.clear();
+    }
+
+    public void register(Job job) {
+        Objects.requireNonNull(job, "job");
+        jobs.put(job.id(), job);
+    }
+
+    public Job getJob(JobId id) {
+        return jobs.get(id);
+    }
+
+    public List<String> getAllJobIds() {
+        return getAllJobs().stream()
+                .map(job -> job.id().toString())
+                .toList();
+    }
+
+    public Collection<Job> getAllJobs() {
+        return Collections.unmodifiableCollection(jobs.values());
+    }
+}

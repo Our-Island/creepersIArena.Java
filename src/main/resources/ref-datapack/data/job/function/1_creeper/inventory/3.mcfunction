@@ -1,0 +1,5 @@
+clear @s comparator
+
+#item replace entity @s hotbar.2 with firework_rocket{HideFlags:255,display:{Name:[{"text": "升空烟花","color": "white","italic": false}],Lore:[[{"text": "✎ 原地跟随一枚烟花升空","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 20 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
+
+item replace entity @s hotbar.2 with comparator[custom_name={"text": "烟花坐骑","color": "white","italic": false},lore=[{"text": "✎ 骑乘一枚烟花向前上方飞去","color": "gray","italic": false},{"text": "✎ 这枚烟花同样会造成爆炸伤害","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "20","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

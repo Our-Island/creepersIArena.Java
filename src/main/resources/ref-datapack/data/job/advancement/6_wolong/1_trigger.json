@@ -1,0 +1,102 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:brush"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "朱雀羽扇"
+            },
+            "minecraft:lore": [
+              [
+                {
+                  "color": "gray",
+                  "italic": false,
+                  "text": "❈ 附魔 "
+                },
+                {
+                  "color": "white",
+                  "italic": false,
+                  "text": "火焰附加 Ⅰ"
+                }
+              ],
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 伤害 4 / 攻速 1.2"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "左键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              },
+              {
+                "text": ""
+              },
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 先向后移动，后向前方弹跳"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "5"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": " 秒冷却"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:6_wolong/skill/1/trigger"
+  }
+}

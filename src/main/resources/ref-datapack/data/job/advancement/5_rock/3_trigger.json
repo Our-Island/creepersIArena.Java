@@ -1,0 +1,65 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:sculk_shrieker"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "裂隙石牙"
+            },
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 短暂禁锢你最后攻击的敌人并召唤尖牙"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "20"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": " 秒冷却"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:5_rock/skill/3/trigger"
+  }
+}

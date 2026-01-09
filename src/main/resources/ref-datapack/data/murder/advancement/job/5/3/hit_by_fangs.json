@@ -1,0 +1,26 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "source_entity": {
+              "type": "evoker_fangs",
+              "nbt": "{Tags:[\"job_5_3_fang\"]}",
+              "distance": {
+                "absolute": {
+                  "min": 0,
+                  "max": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "murder:job/5/3/trigger"
+  }
+}

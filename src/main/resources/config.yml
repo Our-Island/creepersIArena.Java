@@ -1,0 +1,41 @@
+lang: "zh_cn"
+
+disabled-jobs:
+  - test
+
+lobbies:
+  hub:
+    location: [ 0, 100, 0 ]
+    range:
+      from: [ 100, 100 ]
+      to: [ -100, -100 ]
+
+  death:
+    location: [ -500, 100, -500 ]
+    range:
+      from: [ -600, -600 ]
+      to: [ -400, -400 ]
+
+game:
+  disabled-modes:
+    - example_mode
+
+  battle:
+    single-game-time: 600
+    respawn-time: 10
+
+    max-team: 4
+    team-auto-balancing: true
+    force-balancing: false
+
+  steal:
+    min-player-to-start: 2
+    prepare-time: 30
+
+    total-round: 10
+    time-per-round: 10
+
+ui:
+  lobby:
+    job-select-mode: hotbar
+    jobs-per-page: 5

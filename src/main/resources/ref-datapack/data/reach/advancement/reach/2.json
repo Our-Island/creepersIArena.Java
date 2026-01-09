@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 4983.0,
+                "max": 4984.0
+              },
+              "y": {
+                "min": 81.0,
+                "max": 82.0
+              },
+              "z": {
+                "min": 5000.0,
+                "max": 5001.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/2"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:spruce_trapdoor"
+    },
+    "title": {
+      "text": "2. 阁楼无灯处",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：4 * 火药",
+      "color": "gray"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "reach:reach/0"
+}

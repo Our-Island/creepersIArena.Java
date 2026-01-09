@@ -1,0 +1,22 @@
+{
+  "criteria": {
+    "any": {
+      "trigger": "minecraft:entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "tags": [
+              {
+                "expected": true,
+                "id": "minecraft:is_fall"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "murder:accident/5_fall"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 15111.0,
+                "max": 15112.0
+              },
+              "y": {
+                "min": 102.0,
+                "max": 104.0
+              },
+              "z": {
+                "min": 14899.0,
+                "max": 14900.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/6"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "text": "6. 沼泽最高点",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：5 * 火药 + 1 * TNT",
+      "color": "gray"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "reach:reach/0"
+}

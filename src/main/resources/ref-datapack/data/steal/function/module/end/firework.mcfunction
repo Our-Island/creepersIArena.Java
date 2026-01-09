@@ -1,0 +1,4 @@
+#$summon minecraft:firework_rocket ~ ~1.5 ~ {FireworksItem: {components: {fireworks: {flight_duration: 1, explosions: [{Trail: 1b, Flicker: 1b, Type: 0, Colors: [I; $(color)], FadeColors: [I;$(fade_color)]}]}}, id: "minecraft:firework_rocket", Count: 1}, Life: 0, LifeTime: 10}
+#1677215
+#$summon firework_rocket ~ ~1.5 ~ {FireworksItem:{components:{fireworks:{flight_duration:1,explosions:[{shape:"creeper",colors:[I;$(color)],fade_colors:[I;$(fade_color)]}]}},id:"firework_rocket",count:1}}
+$summon firework_rocket ~ ~1.5 ~ {FireworksItem:{components:{fireworks:{flight_duration:1,explosions:[{shape:"creeper",colors:[$(color1),$(color2),$(color3)],fade_colors:[$(fade_color1),$(fade_color2),$(fade_color3)]}]}},id:"firework_rocket",count:1}}

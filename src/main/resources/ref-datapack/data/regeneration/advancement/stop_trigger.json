@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "hurt_others": {
+      "trigger": "minecraft:player_hurt_entity"
+    },
+    "shot_crossbow": {
+      "trigger": "minecraft:shot_crossbow"
+    },
+    "hurt": {
+      "trigger": "minecraft:entity_hurt_player"
+    },
+    "using_item": {
+      "trigger": "minecraft:using_item"
+    }
+  },
+  "requirements": [
+    [
+      "hurt",
+      "using_item",
+      "shot_crossbow",
+      "hurt_others"
+    ]
+  ],
+  "rewards": {
+    "function": "regeneration:stop"
+  }
+}

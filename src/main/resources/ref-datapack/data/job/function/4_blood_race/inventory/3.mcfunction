@@ -1,0 +1,6 @@
+clear @s red_dye
+
+
+#item replace entity @s hotbar.2 with red_dye{HideFlags:255,display:{Name:[{"text": "冲锋","color": "white","italic": false}],Lore:[[{"text": "✎ 获得短暂速度提升 或 短距离垂直弹射","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "左键 或 右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 9 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
+
+item replace entity @s hotbar.2 with red_dye[custom_name={"text": "弹跳力","color": "white","italic": false},lore=[{"text": "✎ 短距离垂直弹射","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "9","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

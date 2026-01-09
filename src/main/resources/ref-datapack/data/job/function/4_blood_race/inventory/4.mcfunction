@@ -1,0 +1,3 @@
+clear @s yellow_dye
+
+item replace entity @s hotbar.3 with yellow_dye[custom_name={"text": "疾速力","color": "white","italic": false},lore=[{"text": "✎ 短时间获得速度","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "4","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

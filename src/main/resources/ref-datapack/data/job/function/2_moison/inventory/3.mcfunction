@@ -1,0 +1,5 @@
+clear @s ender_eye
+
+#item replace entity @s hotbar.2 with ender_eye{HideFlags:255,display:{Name:[{"text": "光影传送","color": "white","italic": false}],Lore:[[{"text": "✎ 传送至最近的你射出的光灵箭","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 15 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
+
+item replace entity @s hotbar.2 with ender_eye[custom_name={"text": "光影传送","color": "white","italic": false},lore=[{"text": "✎ 传送至40格内距离你最近的光灵箭","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "20","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]]] 1

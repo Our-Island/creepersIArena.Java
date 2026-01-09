@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 4989.0,
+                "max": 4990.0
+              },
+              "y": {
+                "min": 67.0,
+                "max": 68.0
+              },
+              "z": {
+                "min": 4978.0,
+                "max": 4979.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/1"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:painting"
+    },
+    "title": {
+      "text": "1. 画后拐角处",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：3 * 火药",
+      "color": "gray"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "reach:reach/0"
+}

@@ -1,0 +1,25 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:emerald"
+    },
+    "title": {
+      "text": "粒子商店",
+      "color": "white"
+    },
+    "description": [
+      {
+        "text": "粒子商店藏在各种地方\n找到它们后用*火药*与*TNT*购买粒子\n用粒子效果闪瞎别人(:",
+        "color": "gray"
+      }
+    ],
+    "frame": "challenge",
+    "show_toast": false,
+    "background": "minecraft:block/deepslate_bricks"
+  }
+}

@@ -1,0 +1,26 @@
+arena:
+  swamp:
+    name: "cia.arena.swamp"
+    type: battle
+    location: [ 10000, 100, 10000 ]
+    range:
+      from: [ 10050, 10050 ]
+      to: [ 9950, 9950 ]
+    spawnpoint:
+      - [ 10000, 100, 10000 ]
+      - [ 10030, 100, 10020 ]
+      - [ 9970, 100, 10030 ]
+
+  hall:
+    name: "cia.arena.hall"
+    type: steal
+    location: [ 30000, 100, 30000 ]
+    range:
+      from: [ 30050, 30050 ]
+      to: [ 29950, 29950 ]
+    spawnpoint:
+      red: [ 30040, 100, 30040 ]
+      blue: [ 29960, 100, 29960 ]
+    redstone-blocks:
+      - [ 29970, 100, 29970 ]
+      - [ [ 30030, 100, 30030 ], [ 30031, 101, 30031 ] ]

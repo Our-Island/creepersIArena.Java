@@ -1,0 +1,70 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:lantern"
+          ],
+          "components": {
+            "minecraft:custom_name": {
+              "color": "white",
+              "italic": false,
+              "text": "孔明灯"
+            },
+            "minecraft:lore": [
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 释放一个孔明灯"
+              },
+              {
+                "color": "gray",
+                "italic": false,
+                "text": "✎ 照亮并减速周围的敌人"
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "右键"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": "使用"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              },
+              {
+                "color": "gray",
+                "extra": [
+                  {
+                    "color": "white",
+                    "italic": false,
+                    "text": "14"
+                  },
+                  {
+                    "color": "gray",
+                    "italic": false,
+                    "text": " 秒冷却"
+                  }
+                ],
+                "italic": false,
+                "text": "❃ "
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:6_wolong/skill/2/trigger"
+  }
+}

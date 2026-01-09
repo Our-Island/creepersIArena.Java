@@ -1,0 +1,22 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "nbt": "{Tags:[\"job_6_3\"]}",
+              "distance": {
+                "absolute": {
+                  "min": 0,
+                  "max": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

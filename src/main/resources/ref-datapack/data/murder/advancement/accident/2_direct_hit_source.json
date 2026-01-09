@@ -1,0 +1,22 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "player_hurt_entity",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "player"
+            }
+          }
+        },
+        "entity": {
+          "type": "player"
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "murder:accident/2_direct_hit"
+  }
+}

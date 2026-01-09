@@ -1,0 +1,20 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "player_hurt_entity",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "minecraft:firework_rocket",
+              "nbt": "{Tags:[\"job_1_3\"]}"
+            }
+          }
+        },
+        "entity": {
+          "type": "player"
+        }
+      }
+    }
+  }
+}

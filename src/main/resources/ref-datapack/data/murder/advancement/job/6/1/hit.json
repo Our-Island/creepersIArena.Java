@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "player",
+              "equipment": {
+                "mainhand": {
+                  "items": [
+                    "minecraft:brush"
+                  ],
+                  "components": {
+                    "minecraft:custom_name": {
+                      "color": "white",
+                      "italic": false,
+                      "text": "朱雀羽扇"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

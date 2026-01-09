@@ -1,0 +1,83 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "player",
+              "equipment": {
+                "mainhand": {
+                  "items": [
+                    "minecraft:iron_sword"
+                  ],
+                  "components": {
+                    "minecraft:lore": [
+                      {
+                        "color": "gray",
+                        "text": "✎ 伤害 4 / 攻速 1.4",
+                        "italic": false
+                      },
+                      {
+                        "color": "gray",
+                        "extra": [
+                          {
+                            "color": "white",
+                            "text": "左键",
+                            "italic": false
+                          },
+                          {
+                            "color": "gray",
+                            "text": "使用",
+                            "italic": false
+                          }
+                        ],
+                        "text": "❃ ",
+                        "italic": false
+                      }
+                    ],
+                    "minecraft:attribute_modifiers": [
+                      {
+                        "amount": 3.0,
+                        "id": "a:a",
+                        "type": "minecraft:attack_damage",
+                        "operation": "add_value"
+                      },
+                      {
+                        "amount": -2.6,
+                        "id": "a:a",
+                        "type": "minecraft:attack_speed",
+                        "operation": "add_value"
+                      }
+                    ],
+                    "minecraft:unbreakable": {},
+                    "minecraft:tooltip_display": {
+                      "hidden_components": [
+                        "minecraft:attribute_modifiers",
+                        "minecraft:can_place_on",
+                        "minecraft:can_break",
+                        "minecraft:enchantments",
+                        "minecraft:fireworks",
+                        "minecraft:firework_explosion",
+                        "minecraft:trim",
+                        "minecraft:dyed_color",
+                        "minecraft:unbreakable",
+                        "minecraft:charged_projectiles"
+                      ]
+                    },
+                    "minecraft:custom_name": {
+                      "color": "white",
+                      "text": "愤怒之刃",
+                      "italic": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

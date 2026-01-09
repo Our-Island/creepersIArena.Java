@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:red_dye"
+    },
+    "title": {
+      "text": "1. 爱心粒子",
+      "color": "white"
+    },
+    "description": [
+      {
+        "text": "价格：10 * 火药",
+        "color": "gray"
+      }
+    ],
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "shop:0"
+}

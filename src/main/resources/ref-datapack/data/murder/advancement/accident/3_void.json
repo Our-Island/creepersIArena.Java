@@ -1,0 +1,34 @@
+{
+  "criteria": {
+    "any": {
+      "trigger": "minecraft:entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "tags": [
+              {
+                "expected": true,
+                "id": "minecraft:always_most_significant_fall"
+              },
+              {
+                "expected": true,
+                "id": "minecraft:bypasses_armor"
+              },
+              {
+                "expected": true,
+                "id": "minecraft:bypasses_invulnerability"
+              },
+              {
+                "expected": true,
+                "id": "minecraft:bypasses_resistance"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "murder:accident/3_void"
+  }
+}

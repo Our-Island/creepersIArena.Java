@@ -1,0 +1,2 @@
+execute positioned 4978 50 5005 run particle minecraft:soul ~ ~0.4 ~ 0.3 0 0.3 0.05 4 force @a[distance=..15]
+execute positioned 4978 50 5005 run particle minecraft:soul_fire_flame ~ ~0.2 ~ 0.3 0 0.3 0.05 3 force @a[distance=..15]

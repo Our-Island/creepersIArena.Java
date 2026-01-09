@@ -1,0 +1,48 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "position": {
+              "x": {
+                "min": 4929.0,
+                "max": 4930.0
+              },
+              "y": {
+                "min": 73.0,
+                "max": 75.0
+              },
+              "z": {
+                "min": 4971.0,
+                "max": 4972.0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "reach:reach/7"
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:stone"
+    },
+    "title": {
+      "text": "7. 无趣小山洞",
+      "color": "white"
+    },
+    "description": {
+      "text": "奖励：3 * 火药",
+      "color": "gray"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "reach:reach/0"
+}

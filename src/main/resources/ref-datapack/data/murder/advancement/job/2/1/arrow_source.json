@@ -1,0 +1,19 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "player_hurt_entity",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "nbt": "{Tags:[\"job_2_1\"]}"
+            }
+          }
+        },
+        "entity": {
+          "type": "player"
+        }
+      }
+    }
+  }
+}

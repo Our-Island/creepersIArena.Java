@@ -1,0 +1,20 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "player_hurt_entity",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "minecraft:firework_rocket",
+              "nbt": "{HasBeenShot: 1b, FireworksItem: {components: {\"minecraft:fireworks\": {explosions: [{fade_colors: [9029490, 6649971, 5861989], shape: \"creeper\", colors: [3724032, 1457973, 1990460]}], flight_duration: 3b}}, count: 1, id: \"minecraft:firework_rocket\"}}"
+            }
+          }
+        },
+        "entity": {
+          "type": "player"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+execute positioned 4988 50 5005 run particle minecraft:dust{color:[0,0,0],scale:1} ~ ~0.05 ~ 0.35 0.1 0.35 0.01 10 force @a[distance=..15]
+execute positioned 4988 50 5005 run particle minecraft:damage_indicator ~ ~0.1 ~ 0.5 0.4 0.5 0.001 2 force @a[distance=..15]

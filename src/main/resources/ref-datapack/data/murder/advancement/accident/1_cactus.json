@@ -1,0 +1,98 @@
+{
+  "criteria": {
+    "any": {
+      "trigger": "minecraft:entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "tags": [
+              {
+                "expected": false,
+                "id": "minecraft:is_projectile"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:is_explosion"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:is_drowning"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:no_impact"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:wither_immune_to"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:is_fall"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:damages_helmet"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:bypasses_invulnerability"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:bypasses_resistance"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:ignites_armor_stands"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:witch_resistant_to"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:is_lightning"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:always_triggers_silverfish"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:avoids_guardian_thorns"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:burns_armor_stands"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:always_most_significant_fall"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:bypasses_armor"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:bypasses_effects"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:avoids_guardian_thorns"
+              },
+              {
+                "expected": false,
+                "id": "minecraft:is_fire"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "murder:accident/1_cactus"
+  }
+}

@@ -1,0 +1,23 @@
+name: creepersIArena
+version: '0.0.1'
+main: top.ourisland.creepersiarena.CreepersIArena
+api-version: '1.21'
+prefix: "CIA"
+authors: [ "Chiloven945", "xqysp" ]
+description: "Creeper's Imagination Arena, but is implemented by a Paper plugin."
+website: "https://github.com/Our-Island/creepersIArena.Java"
+
+commands:
+  creepersiarena:
+    description: "Creeper's Imagination Arena main command."
+    aliases: [ creepersia, cia ]
+    usage: /creepersiarena
+    permission: creepersiaren.cia
+  choosejob:
+    description: Open job selection GUI.
+    usage: /choosejob
+    permission: creepersiarena.choosejob
+
+permissions:
+  creepersiarena.choosejob:
+    default: true

@@ -1,0 +1,6 @@
+clear @s player_head[custom_name={"text": "鱼嘶瀚","color": "white","italic": false}]
+
+#item replace entity @s hotbar.5 with obsidian{HideFlags:255,display:{Name:[{"text": "戈仑石人","color": "white","italic": false}],Lore:[[{"text": "✎ 高伤害低攻速，有一定抗击打能力","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "选择此职业","color": "gray","italic": false}]]},Unbreakable:1b} 1
+
+
+item replace entity @s hotbar.2 with player_head[custom_name={"text": "鱼嘶瀚","color": "white","italic": false},lore=[{"text": "✎ 击退与拉扯，隐身与变大","color": "gray","italic": false},{"text": "✎ 没错，就是我！没有人比我更懂MC！","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "选择此职业","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"},profile={id:[I;2080793942,-524468218,-1541115779,1949756395],properties:[{name:"textures",value:"eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzNiMTk1NWQzYjZlYjQyZjUwZTUzNmMxYTMyODVhYjczZWQ3ZTJiZTA1MWIwOWIyMWUxNzgxMWYxYTZkIn19fQ=="}]}] 1

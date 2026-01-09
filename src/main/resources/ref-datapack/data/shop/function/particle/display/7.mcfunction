@@ -1,0 +1,1 @@
+execute positioned 15028 67 15074 run particle minecraft:spore_blossom_air ~ ~2 ~ 0 0 0 0.0001 1 normal @a[distance=..15]

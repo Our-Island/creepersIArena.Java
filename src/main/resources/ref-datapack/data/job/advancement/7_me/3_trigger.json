@@ -1,0 +1,24 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:pufferfish"
+          ],
+          "components": {
+            "custom_name": {
+              "text": "我是一个鲸鱼！",
+              "color": "white",
+              "italic": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:7_me/skill/3/trigger"
+  }
+}

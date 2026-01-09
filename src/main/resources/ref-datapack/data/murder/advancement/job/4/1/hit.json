@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "type": {
+            "direct_entity": {
+              "type": "player",
+              "equipment": {
+                "mainhand": {
+                  "items": [
+                    "minecraft:golden_hoe"
+                  ],
+                  "components": {
+                    "minecraft:custom_name": {
+                      "color": "white",
+                      "text": "血镰",
+                      "italic": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

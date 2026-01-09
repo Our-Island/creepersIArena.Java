@@ -1,0 +1,70 @@
+{
+  "criteria": {
+    "a": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:jack_o_lantern"
+          ],
+          "components": {
+            "custom_name": {
+              "text": "南瓜惊喜",
+              "color": "white",
+              "italic": false
+            },
+            "lore": [
+              {
+                "text": "✎ 遮挡周围敌人视野",
+                "color": "gray",
+                "italic": false
+              },
+              {
+                "text": "✎ 闪现到前方并暂时获得隐身",
+                "color": "gray",
+                "italic": false
+              },
+              [
+                {
+                  "text": "❃ ",
+                  "color": "gray",
+                  "italic": false
+                },
+                {
+                  "text": "右键",
+                  "color": "white",
+                  "italic": false
+                },
+                {
+                  "text": "使用",
+                  "color": "gray",
+                  "italic": false
+                }
+              ],
+              [
+                {
+                  "text": "❃ ",
+                  "color": "gray",
+                  "italic": false
+                },
+                {
+                  "text": "7",
+                  "color": "white",
+                  "italic": false
+                },
+                {
+                  "text": " 秒冷却",
+                  "color": "gray",
+                  "italic": false
+                }
+              ]
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rewards": {
+    "function": "job:7_me/skill/2/trigger"
+  }
+}

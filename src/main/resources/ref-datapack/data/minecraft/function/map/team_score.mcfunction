@@ -1,0 +1,5 @@
+tellraw @a [{"text": "☄ ","color": "gold"},{"text": "击杀数:","color": "white"}]
+$tellraw @a [{"text": "☄ ","color": "gold"},{"text": "红队: $(team1)","color": "white"}]
+$tellraw @a [{"text": "☄ ","color": "gold"},{"text": "蓝队: $(team2)","color": "white"}]
+$tellraw @a [{"text": "☄ ","color": "gold"},{"text": "黄队: $(team3)","color": "white"}]
+$tellraw @a [{"text": "☄ ","color": "gold"},{"text": "绿队: $(team4)","color": "white"}]
