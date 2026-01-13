@@ -27,8 +27,8 @@ public record Region2D(World world, Bounds2D bounds) {
         int x = loc.getBlockX();
         int z = loc.getBlockZ();
 
-        int cx = Math.max(bounds.minX(), Math.min(bounds.maxX(), x));
-        int cz = Math.max(bounds.minZ(), Math.min(bounds.maxZ(), z));
+        double cx = Math.max(bounds.minX(), Math.min(bounds.maxX(), x));
+        double cz = Math.max(bounds.minZ(), Math.min(bounds.maxZ(), z));
 
         Location out = loc.clone();
         out.setX(cx + 0.5);

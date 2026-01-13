@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.config.model;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -67,7 +68,8 @@ public record GlobalConfig(
     public record Lobby(
             double x, double y, double z,
             double fromX, double fromZ,
-            double toX, double toZ
+            double toX, double toZ,
+            @Nullable Entry entry
     ) {
         public static Lobby fromSection(ConfigurationSection sec) {
             List<?> loc = sec.getList("location", List.of(0, 100, 0));
@@ -83,7 +85,8 @@ public record GlobalConfig(
             double toX = asDouble(to, 0, -100);
             double toZ = asDouble(to, 1, -100);
 
-            return new Lobby(x, y, z, fromX, fromZ, toX, toZ);
+            Entry entry = Entry.fromSection(sec.getConfigurationSection("entry"));
+            return new Lobby(x, y, z, fromX, fromZ, toX, toZ, entry);
         }
 
         private static double asDouble(List<?> list, int idx, double def) {
@@ -94,6 +97,43 @@ public record GlobalConfig(
                 return Double.parseDouble(String.valueOf(o));
             } catch (Exception ignored) {
                 return def;
+            }
+        }
+
+        public record Entry(
+                long timeMs,
+                double fromX, double fromY, double fromZ,
+                double toX, double toY, double toZ
+        ) {
+            public static @Nullable Entry fromSection(ConfigurationSection sec) {
+                if (sec == null) return null;
+
+                long time = sec.getLong("time", 0L);
+                if (time <= 0L) return null;
+
+                List<?> from = sec.getList("from", List.of(0, 0, 0));
+                List<?> to = sec.getList("to", List.of(0, 0, 0));
+
+                double fromX = asDouble3(from, 0, 0);
+                double fromY = asDouble3(from, 1, 0);
+                double fromZ = asDouble3(from, 2, 0);
+
+                double toX = asDouble3(to, 0, 0);
+                double toY = asDouble3(to, 1, 0);
+                double toZ = asDouble3(to, 2, 0);
+
+                return new Entry(time, fromX, fromY, fromZ, toX, toY, toZ);
+            }
+
+            private static double asDouble3(List<?> list, int idx, double def) {
+                if (list == null || list.size() <= idx) return def;
+                Object o = list.get(idx);
+                if (o instanceof Number n) return n.doubleValue();
+                try {
+                    return Double.parseDouble(String.valueOf(o));
+                } catch (Exception ignored) {
+                    return def;
+                }
             }
         }
     }

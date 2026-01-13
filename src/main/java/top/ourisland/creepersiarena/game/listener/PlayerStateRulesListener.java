@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.listener;
 
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,6 +24,8 @@ public final class PlayerStateRulesListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent e) {
         Player p = e.getPlayer();
+        if (p.getGameMode() != GameMode.ADVENTURE) return;
+
         var s = store.get(p);
         if (s == null) return;
 

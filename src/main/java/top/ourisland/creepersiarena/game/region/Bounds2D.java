@@ -1,32 +1,32 @@
 package top.ourisland.creepersiarena.game.region;
 
-public record Bounds2D(int minX, int maxX, int minZ, int maxZ) {
+public record Bounds2D(double minX, double maxX, double minZ, double maxZ) {
 
-    public static Bounds2D of(int x1, int z1, int x2, int z2) {
-        int minX = Math.min(x1, x2);
-        int maxX = Math.max(x1, x2);
-        int minZ = Math.min(z1, z2);
-        int maxZ = Math.max(z1, z2);
+    public static Bounds2D of(double x1, double z1, double x2, double z2) {
+        double minX = Math.min(x1, x2);
+        double maxX = Math.max(x1, x2);
+        double minZ = Math.min(z1, z2);
+        double maxZ = Math.max(z1, z2);
         return new Bounds2D(minX, maxX, minZ, maxZ);
     }
 
-    public boolean contains(int x, int z) {
+    public boolean contains(double x, double z) {
         return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
     }
 
-    public int width() {
+    public double width() {
         return maxX - minX + 1;
     }
 
-    public int depth() {
+    public double depth() {
         return maxZ - minZ + 1;
     }
 
-    public int centerX() {
+    public double centerX() {
         return (minX + maxX) / 2;
     }
 
-    public int centerZ() {
+    public double centerZ() {
         return (minZ + maxZ) / 2;
     }
 }

@@ -10,7 +10,7 @@ import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.inventory.InventorySnapshot;
-import top.ourisland.creepersiarena.game.lobby.inventory.KitService;
+import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
@@ -29,7 +29,7 @@ public final class PlayerTransitions {
     private final Plugin plugin;
     private final Logger log;
     private final PlayerSessionStore store;
-    private final KitService kitService;
+    private final LobbyItemService lobbyItemService;
     private final LobbyService lobbyService;
     private final ArenaManager arenaManager;
     private final Supplier<GlobalConfig> cfg;
@@ -38,7 +38,7 @@ public final class PlayerTransitions {
             Plugin plugin,
             Logger log,
             PlayerSessionStore store,
-            KitService kitService,
+            LobbyItemService lobbyItemService,
             LobbyService lobbyService,
             ArenaManager arenaManager,
             Supplier<GlobalConfig> cfg
@@ -46,7 +46,7 @@ public final class PlayerTransitions {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.log = Objects.requireNonNull(log, "log");
         this.store = Objects.requireNonNull(store, "store");
-        this.kitService = Objects.requireNonNull(kitService, "kitService");
+        this.lobbyItemService = Objects.requireNonNull(lobbyItemService, "kitService");
         this.lobbyService = Objects.requireNonNull(lobbyService, "lobbyService");
         this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
         this.cfg = Objects.requireNonNull(cfg, "cfg");
@@ -63,7 +63,7 @@ public final class PlayerTransitions {
         p.setGameMode(GameMode.ADVENTURE);
 
         p.teleport(hubAnchor());
-        kitService.applyHubKit(p, session, cfg());
+        lobbyItemService.applyHubKit(p, session, cfg());
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
@@ -102,7 +102,7 @@ public final class PlayerTransitions {
         p.setGameMode(GameMode.ADVENTURE);
 
         p.teleport(deathAnchor());
-        kitService.applyDeathKit(p, session, cfg());
+        lobbyItemService.applyDeathKit(p, session, cfg());
 
         log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
     }
@@ -165,7 +165,6 @@ public final class PlayerTransitions {
         log.info("[Transitions] {} leave arena (restore snapshot)", p.getName());
     }
 
-    // ---------- lobby actions (HUB / RESPAWN) 
     public void selectJob(Player p, String jobIdRaw) {
         PlayerSession s = ensureSession(p);
         if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
@@ -178,7 +177,6 @@ public final class PlayerTransitions {
 
         s.selectedJob(jobId);
 
-        // 不自动开始游戏，只刷新 UI（你后续可在“开始/准备”流程里使用 selectedJob）
         refreshLobbyKit(p);
 
         log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
@@ -189,9 +187,9 @@ public final class PlayerTransitions {
         if (s == null) return;
 
         if (s.state() == PlayerState.HUB) {
-            kitService.applyHubKit(p, s, cfg());
+            lobbyItemService.applyHubKit(p, s, cfg());
         } else if (s.state() == PlayerState.RESPAWN) {
-            kitService.applyDeathKit(p, s, cfg());
+            lobbyItemService.applyDeathKit(p, s, cfg());
         }
     }
 
@@ -200,7 +198,7 @@ public final class PlayerTransitions {
         if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
 
         int per = Math.max(1, cfg().ui().lobby().jobsPerPage());
-        int jobCount = kitService.totalJobs();
+        int jobCount = lobbyItemService.totalJobs();
         int maxPage = Math.max(0, (jobCount - 1) / per);
 
         int next = s.lobbyJobPage() + 1;
@@ -214,14 +212,14 @@ public final class PlayerTransitions {
 
     public void cycleTeam(Player p) {
         PlayerSession s = ensureSession(p);
-        if (s.state() != PlayerState.HUB) return; // 死亡大厅禁用队伍切换
+        if (s.state() != PlayerState.HUB) return;
 
         int maxTeam = cfg().game().battle().maxTeam();
         Integer cur = s.selectedTeam();
 
         Integer next;
         if (cur == null) next = 1;
-        else if (cur >= maxTeam) next = null; // 回到随机
+        else if (cur >= maxTeam) next = null;
         else next = cur + 1;
 
         s.selectedTeam(next);

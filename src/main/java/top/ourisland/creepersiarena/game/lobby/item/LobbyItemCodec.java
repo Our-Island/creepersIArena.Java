@@ -6,6 +6,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public final class LobbyItemCodec {
     private final NamespacedKey actionKey;
     private final NamespacedKey jobIdKey;
@@ -24,17 +26,18 @@ public final class LobbyItemCodec {
         return item;
     }
 
-    public @Nullable LobbyAction readAction(@Nullable ItemStack item) {
-        if (item == null) return null;
-        var meta = item.getItemMeta();
-        if (meta == null) return null;
-        var str = meta.getPersistentDataContainer().get(actionKey, PersistentDataType.STRING);
-        if (str == null) return null;
-        try {
-            return LobbyAction.valueOf(str);
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+    public LobbyAction readAction(@Nullable ItemStack item) {
+        return Optional.ofNullable(item)
+                .map(ItemStack::getItemMeta)
+                .map(meta -> meta.getPersistentDataContainer().get(actionKey, PersistentDataType.STRING))
+                .flatMap(str -> {
+                    try {
+                        return Optional.of(LobbyAction.valueOf(str));
+                    } catch (IllegalArgumentException e) {
+                        return Optional.empty();
+                    }
+                })
+                .orElse(null);
     }
 
     public ItemStack markJobId(ItemStack item, String jobId) {
@@ -45,10 +48,10 @@ public final class LobbyItemCodec {
     }
 
     public @Nullable String readJobId(@Nullable ItemStack item) {
-        if (item == null) return null;
-        var meta = item.getItemMeta();
-        if (meta == null) return null;
-        return meta.getPersistentDataContainer().get(jobIdKey, PersistentDataType.STRING);
+        return Optional.ofNullable(item)
+                .map(ItemStack::getItemMeta)
+                .map(meta -> meta.getPersistentDataContainer().get(jobIdKey, PersistentDataType.STRING))
+                .orElse(null);
     }
 
     public ItemStack markJobPage(ItemStack item, int page) {
@@ -59,9 +62,9 @@ public final class LobbyItemCodec {
     }
 
     public @Nullable Integer readJobPage(@Nullable ItemStack item) {
-        if (item == null) return null;
-        var meta = item.getItemMeta();
-        if (meta == null) return null;
-        return meta.getPersistentDataContainer().get(pageKey, PersistentDataType.INTEGER);
+        return Optional.ofNullable(item)
+                .map(ItemStack::getItemMeta)
+                .map(meta -> meta.getPersistentDataContainer().get(pageKey, PersistentDataType.INTEGER))
+                .orElse(null);
     }
 }

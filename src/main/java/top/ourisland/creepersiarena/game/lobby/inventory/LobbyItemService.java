@@ -9,11 +9,11 @@ import top.ourisland.creepersiarena.job.JobManager;
 
 import java.util.List;
 
-public final class KitService {
+public final class LobbyItemService {
     private final LobbyItemFactory items;
     private final JobManager jobs;
 
-    public KitService(LobbyItemFactory items, JobManager jobs) {
+    public LobbyItemService(LobbyItemFactory items, JobManager jobs) {
         this.items = items;
         this.jobs = jobs;
     }

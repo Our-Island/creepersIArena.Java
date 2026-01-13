@@ -10,7 +10,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 import top.ourisland.creepersiarena.game.lobby.LobbyManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.inventory.KitService;
+import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
@@ -37,7 +37,7 @@ public record BootstrapContext(
         LobbyService lobbyService,
         LobbyItemCodec lobbyItemCodec,
         LobbyItemFactory lobbyItemFactory,
-        KitService kitService,
+        LobbyItemService lobbyItemService,
 
         // Player runtime
         PlayerSessionStore sessionStore,

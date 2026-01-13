@@ -14,10 +14,17 @@ public final class ListenerBootstrap {
         PluginManager pm = Bukkit.getPluginManager();
 
         log.info("[Bootstrap] Register listener: PlayerConnectionListener.");
-        pm.registerEvents(new PlayerConnectionListener(ctx.plugin(), log, ctx.flow()), ctx.plugin());
+        pm.registerEvents(new PlayerConnectionListener(
+                ctx.plugin(),
+                log,
+                ctx.flow()
+        ), ctx.plugin());
 
         log.info("[Bootstrap] Register listener: PlayerStateRulesListener.");
-        pm.registerEvents(new PlayerStateRulesListener(ctx.sessionStore(), ctx.lobbyService()), ctx.plugin());
+        pm.registerEvents(new PlayerStateRulesListener(
+                ctx.sessionStore(),
+                ctx.lobbyService()
+        ), ctx.plugin());
 
         log.info("[Bootstrap] Register listener: HubActionListener.");
         pm.registerEvents(new HubActionListener(
@@ -34,7 +41,10 @@ public final class ListenerBootstrap {
         ), ctx.plugin());
 
         log.info("[Bootstrap] Register listener: ArenaDeathListener.");
-        pm.registerEvents(new ArenaDeathListener(ctx.sessionStore(), ctx.flow()), ctx.plugin());
+        pm.registerEvents(new ArenaDeathListener(
+                ctx.sessionStore(),
+                ctx.flow()
+        ), ctx.plugin());
 
         log.info("[Bootstrap] Register listener: SkillTriggerListener.");
         pm.registerEvents(new SkillTriggerListener(
@@ -44,7 +54,18 @@ public final class ListenerBootstrap {
         ), ctx.plugin());
 
         log.info("[Bootstrap] Register listener: SkillHotbarLockListener.");
-        pm.registerEvents(new SkillHotbarLockListener(ctx.skillItemCodec()), ctx.plugin());
+        pm.registerEvents(new SkillHotbarLockListener(
+                ctx.skillItemCodec()
+        ), ctx.plugin());
+
+        log.info("[Bootstrap] Register listener: LobbyEntryListener.");
+        pm.registerEvents(new LobbyEntryListener(
+                ctx.plugin(),
+                log,
+                ctx.lobbyService(),
+                ctx.sessionStore(),
+                ctx.flow()
+        ), ctx.plugin());
 
         log.info("[Bootstrap] All listeners registered.");
     }

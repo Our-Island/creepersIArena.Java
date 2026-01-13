@@ -10,6 +10,7 @@ import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
+import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.ModeRules;
 import top.ourisland.creepersiarena.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
@@ -284,6 +285,26 @@ public final class GameFlow {
         }
 
         log.info("[Flow] reload fix done.");
+    }
+
+    public void onHubEntryTriggered(Player p) {
+        var s = store.get(p);
+        if (s == null) return;
+        if (s.state() != PlayerState.HUB) return;
+
+        GameSession g = gameManager.active();
+        if (g == null) {
+            log.debug("[Flow] hubEntryTriggered ignored (no active game): name={}", p.getName());
+            transitions.toHub(p);
+            return;
+        }
+
+        if (g.mode() != GameModeType.BATTLE) {
+            log.debug("[Flow] hubEntryTriggered ignored (mode not battle): name={} mode={}", p.getName(), g.mode());
+            return;
+        }
+
+        transitions.toBattle(p);
     }
 
     public enum LeaveReason {QUIT, KICK}

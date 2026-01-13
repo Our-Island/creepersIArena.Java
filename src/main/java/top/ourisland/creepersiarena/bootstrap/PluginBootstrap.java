@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 import top.ourisland.creepersiarena.game.lobby.LobbyManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.inventory.KitService;
+import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
@@ -167,7 +167,7 @@ public final class PluginBootstrap {
         log.info("[Bootstrap] (7/12) Building lobby UI...");
         LobbyItemCodec lobbyItemCodec = new LobbyItemCodec(plugin);
         LobbyItemFactory lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec);
-        KitService kitService = new KitService(lobbyItemFactory, jobManager);
+        LobbyItemService lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
 
         // 6) skill system tick
         log.info("[Bootstrap] (8/12) Setting up skill...");
@@ -189,7 +189,7 @@ public final class PluginBootstrap {
                 plugin,
                 log,
                 sessionStore,
-                kitService,
+                lobbyItemService,
                 lobbyService,
                 arenaManager,
                 configManager::getGlobalConfig
@@ -239,7 +239,7 @@ public final class PluginBootstrap {
                 lobbyService,
                 lobbyItemCodec,
                 lobbyItemFactory,
-                kitService,
+                lobbyItemService,
 
                 sessionStore,
                 transitions,
@@ -303,7 +303,7 @@ public final class PluginBootstrap {
                 lobbyService,
                 lobbyItemCodec,
                 lobbyItemFactory,
-                kitService,
+                lobbyItemService,
 
                 sessionStore,
                 transitions,

@@ -9,6 +9,10 @@ lobbies:
     range:
       from: [ 100, 100 ]
       to: [ -100, -100 ]
+    entry:
+      time: 3000 #ms
+      from: [9, 103, 1]
+      to: [11, 100, -1]
 
   death:
     location: [ -500, 100, -500 ]

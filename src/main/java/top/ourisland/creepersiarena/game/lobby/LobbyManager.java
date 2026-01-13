@@ -18,78 +18,87 @@ public final class LobbyManager {
     private final World world;
     private final Logger logger;
 
-    public final Map<String, GlobalConfig.Lobby> lobbies = new LinkedHashMap<>();
-    private final Map<String, Region2D> lobbyRegions = new LinkedHashMap<>();
+    private final Map<String, LobbyInstance> lobbies = new LinkedHashMap<>();
 
     public LobbyManager(@NotNull World world, @NotNull Logger logger) {
         this.world = Objects.requireNonNull(world, "world");
         this.logger = Objects.requireNonNull(logger, "logger");
     }
 
-    public void reload(@NotNull GlobalConfig global) {
-        Objects.requireNonNull(global, "global");
+    public void reload(@NotNull GlobalConfig globalConfig) {
+        Objects.requireNonNull(globalConfig, "globalConfig");
+
         logger.info("[Lobby] Starting to (re)load lobbies...");
-
         lobbies.clear();
-        lobbyRegions.clear();
 
-        for (var e : global.lobbies().entrySet()) {
-            String id = e.getKey();
+        for (var e : globalConfig.lobbies().entrySet()) {
+            String lobbyId = e.getKey();
             GlobalConfig.Lobby lob = e.getValue();
 
-            lobbies.put(id, lob);
-
+            // anchor
             Location anchor = new Location(world, lob.x() + 0.5, lob.y(), lob.z() + 0.5);
 
-            int minX = (int) Math.floor(Math.min(lob.fromX(), lob.toX()));
-            int minZ = (int) Math.floor(Math.min(lob.fromZ(), lob.toZ()));
-            int maxX = (int) Math.floor(Math.max(lob.fromX(), lob.toX()));
-            int maxZ = (int) Math.floor(Math.max(lob.fromZ(), lob.toZ()));
+            // region (2D)
+            double minX = Math.min(lob.fromX(), lob.toX());
+            double maxX = Math.max(lob.fromX(), lob.toX());
+            double minZ = Math.min(lob.fromZ(), lob.toZ());
+            double maxZ = Math.max(lob.fromZ(), lob.toZ());
 
             Bounds2D b = Bounds2D.of(minX, minZ, maxX, maxZ);
-            lobbyRegions.put(id, new Region2D(world, b));
+            Region2D region = new Region2D(world, b);
 
-            logger.info("[Lobby] Lobby loaded: id={} anchor=({}, {}, {}) region=[({}, {}) -> ({}, {})]",
-                    id,
-                    (int) anchor.getX(),
-                    (int) anchor.getY(),
-                    (int) anchor.getZ(),
-                    minX, minZ, maxX, maxZ
+            // entry zone (3D, optional)
+            EntryZone entryZone = null;
+            var entry = lob.entry();
+            if (entry != null && entry.timeMs() > 0) {
+                entryZone = EntryZone.of(
+                        entry.timeMs(),
+                        entry.fromX(), entry.fromY(), entry.fromZ(),
+                        entry.toX(), entry.toY(), entry.toZ()
+                );
+                logger.info("[Lobby] Lobby entry loaded: id={} timeMs={} box=[({}, {}, {}) -> ({}, {}, {})]",
+                        lobbyId,
+                        entryZone.timeMs(),
+                        entryZone.minX(), entryZone.minY(), entryZone.minZ(),
+                        entryZone.maxX(), entryZone.maxY(), entryZone.maxZ()
+                );
+            }
+
+            lobbies.put(lobbyId, new LobbyInstance(lobbyId, anchor, region, entryZone));
+
+            logger.info("[Lobby] Lobby loaded: id={} anchor=({}, {}, {}) bounds=[({}, {}) -> ({}, {})]",
+                    lobbyId,
+                    (int) anchor.getX(), (int) anchor.getY(), (int) anchor.getZ(),
+                    b.minX(), b.minZ(), b.maxX(), b.maxZ()
             );
         }
 
-        logger.info("[Lobby] Finished (re)loading lobbies (count={}).", lobbies.size());
+        if (!lobbies.containsKey("hub")) {
+            logger.warn("[Lobby] Lobby 'hub' is not configured in config.yml (lobbies.hub).");
+        }
+        if (!lobbies.containsKey("death")) {
+            logger.warn("[Lobby] Lobby 'death' is not configured in config.yml (lobbies.death).");
+        }
+
+        logger.info("[Lobby] Finished (re)loading lobbies. (lobbies={})", lobbies.size());
     }
 
-    public @Nullable GlobalConfig.Lobby get(String id) {
+    public @Nullable LobbyInstance getLobby(String id) {
         return lobbies.get(id);
     }
 
-    public @NotNull Region2D region(String id) {
-        Region2D r = lobbyRegions.get(id);
-        if (r == null) throw new IllegalArgumentException("Unknown lobby id: " + id);
-        return r;
+    public Location anchorOrSpawn(String id) {
+        LobbyInstance l = lobbies.get(id);
+        return (l == null) ? world.getSpawnLocation() : l.anchor().clone();
     }
 
-    public @NotNull Location hubAnchor() {
-        return anchorOrSpawn("hub");
+    public @Nullable Region2D region(String id) {
+        LobbyInstance l = lobbies.get(id);
+        return (l == null) ? null : l.region();
     }
 
-    public @NotNull Location anchorOrSpawn(@NotNull String id) {
-        GlobalConfig.Lobby lob = lobbies.get(id);
-        if (lob == null) return world.getSpawnLocation();
-        return new Location(world, lob.x() + 0.5, lob.y(), lob.z() + 0.5);
-    }
-
-    public @NotNull Location deathAnchor() {
-        return anchorOrSpawn("death");
-    }
-
-    public boolean isInLobby(@NotNull Location loc) {
-        if (loc.getWorld() == null || !loc.getWorld().equals(world)) return false;
-        for (Region2D r : lobbyRegions.values()) {
-            if (r.contains(loc)) return true;
-        }
-        return false;
+    public @Nullable EntryZone entryZone(String id) {
+        LobbyInstance l = lobbies.get(id);
+        return (l == null) ? null : l.entryZone();
     }
 }
