@@ -19,8 +19,9 @@ public final class GameManager {
     private final Logger logger;
 
     private final Map<GameModeType, GameMode> modes = new EnumMap<>(GameModeType.class);
+    private final Map<GameModeType, Integer> autoIndex = new EnumMap<>(GameModeType.class);
+    private final Map<GameModeType, String> lastAutoArenaId = new EnumMap<>(GameModeType.class);
     private @Nullable GameRuntime runtime;
-
     private @Nullable GameSession active;
     private @Nullable ModeRules rules;
     private @Nullable ModeTimeline timeline;
@@ -56,15 +57,30 @@ public final class GameManager {
         return timeline;
     }
 
-    public void start(GameModeType type, String arenaId) {
+    public void startAuto(GameModeType type) {
+        List<ArenaInstance> list = arenaManager.arenasOf(type);
+        if (list.isEmpty()) throw new IllegalStateException("No arena for mode: " + type);
+
+        int n = list.size();
+        int idx = autoIndex.getOrDefault(type, 0) % n;
+
+        String lastId = lastAutoArenaId.get(type);
+        if (n > 1 && list.get(idx).id().equals(lastId)) {
+            idx = (idx + 1) % n;
+        }
+
+        ArenaInstance picked = list.get(idx);
+        autoIndex.put(type, (idx + 1) % n);
+        lastAutoArenaId.put(type, picked.id());
+
+        logger.info("[Game] startAuto picked arena: mode={} arena={} (candidates={})", type, picked.id(), n);
+
+        startWithArena(type, picked);
+    }
+
+    private void startWithArena(GameModeType type, ArenaInstance arena) {
         GameRuntime rt = runtime();
         GameMode mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
-
-        logger.info("[Game] Start requested: mode={} arenaId={}", type, arenaId);
-
-        ArenaInstance arena = arenaManager.getArena(arenaId);
-        if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
-        if (arena.type() != type) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
 
         GameSession session = new GameSession(type, arena);
         ModeLogic logic = mode.createLogic(session, rt);
@@ -85,31 +101,14 @@ public final class GameManager {
         return Objects.requireNonNull(runtime, "GameRuntime not bound");
     }
 
-    public void startAuto(GameModeType type) {
-        GameRuntime rt = runtime();
-        GameMode mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
+    public void start(GameModeType type, String arenaId) {
+        ArenaInstance arena = arenaManager.getArena(arenaId);
+        if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
+        if (arena.type() != type) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
 
-        List<ArenaInstance> list = arenaManager.arenasOf(type);
-        if (list.isEmpty()) throw new IllegalStateException("No arena for mode: " + type);
+        logger.info("[Game] Start requested: mode={} arenaId={}", type, arenaId);
 
-        ArenaInstance picked = list.getFirst();
-        logger.info("[Game] startAuto picked arena: mode={} arena={} (candidates={})",
-                type, picked.id(), list.size()
-        );
-
-        GameSession session = new GameSession(type, picked);
-        ModeLogic logic = mode.createLogic(session, rt);
-
-        this.active = session;
-        this.rules = logic.rules();
-        this.timeline = logic.timeline();
-
-        logger.info("[Game] Started: mode={} arena={} rules={} timeline={}",
-                type,
-                picked.id(),
-                rules.getClass().getSimpleName(),
-                timeline.getClass().getSimpleName()
-        );
+        startWithArena(type, arena);
     }
 
     public void endActive() {

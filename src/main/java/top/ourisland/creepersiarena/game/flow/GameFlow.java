@@ -21,6 +21,8 @@ import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -47,7 +49,6 @@ public final class GameFlow {
         this.transitions = Objects.requireNonNull(transitions, "transitions");
         this.respawns = Objects.requireNonNull(respawns, "respawns");
 
-        // 倒计时结束回到 Flow（BATTLE 用得到；STEAL 不会走这个倒计时）
         this.respawns.setCallback(this::onRespawnCountdownFinished);
     }
 
@@ -59,6 +60,7 @@ public final class GameFlow {
 
         PlayerSession s = store.get(p);
         if (s == null) return;
+        if (s.state() != PlayerState.RESPAWN) return;
 
         GameSession g = gameManager.active();
         if (g == null) {
@@ -66,7 +68,7 @@ public final class GameFlow {
             return;
         }
 
-        transitions.toBattle(p);
+        transitions.toBattle(p, g);
     }
 
     public void onPlayerLeaveServer(Player p, LeaveReason reason) {
@@ -119,22 +121,16 @@ public final class GameFlow {
     }
 
     private void applyJoinDecision(Player p, JoinDecision decision) {
-        if (decision instanceof JoinDecision.ToHub) {
-            transitions.toHub(p);
-            return;
-        }
+        GameSession g = gameManager.active();
+        if (g == null) return;
 
-        if (decision instanceof JoinDecision.ToBattle) {
-            transitions.toBattle(p);
-            return;
-        }
-
-        if (decision instanceof JoinDecision.ToSpectate(Location where)) {
-            if (where == null) {
-                GameSession g = gameManager.active();
-                where = (g == null) ? p.getLocation() : g.arena().anchor().clone().add(0, 8, 0);
-            }
-            transitions.toSpectate(p, where);
+        switch (decision) {
+            case JoinDecision.ToHub() -> transitions.toHub(p);
+            case JoinDecision.ToBattle() -> transitions.toBattle(p, g);
+            case JoinDecision.ToSpectate(Location where) -> transitions.toSpectate(
+                    p,
+                    (where != null) ? where : g.arena().anchor().clone().add(0, 8, 0)
+            );
         }
     }
 
@@ -157,33 +153,32 @@ public final class GameFlow {
     }
 
     private void applyRespawnDecision(Player p, RespawnDecision decision, RespawnEventHandle handle) {
-        if (decision instanceof RespawnDecision.Hub) {
-            Location hub = transitions.hubAnchor();
-            handle.setRespawnLocation(hub);
-            Bukkit.getScheduler().runTask(transitions.plugin(), () -> transitions.toHub(p));
-            return;
-        }
-
-        if (decision instanceof RespawnDecision.Spectate(Location where)) {
-            if (where == null) {
-                GameSession g = gameManager.active();
-                where = (g == null) ? p.getLocation() : g.arena().anchor().clone().add(0, 8, 0);
+        switch (decision) {
+            case RespawnDecision.Hub() -> {
+                handle.setRespawnLocation(transitions.hubAnchor());
+                Bukkit.getScheduler().runTask(transitions.plugin(), () -> transitions.toHub(p));
             }
-            Location finalWhere = where;
-            handle.setRespawnLocation(finalWhere);
-            Bukkit.getScheduler().runTask(transitions.plugin(), () -> transitions.toSpectate(p, finalWhere));
-            return;
-        }
 
-        if (decision instanceof RespawnDecision.DeathLobbyCountdown(int seconds1)) {
-            int seconds = Math.max(0, seconds1);
-            Location death = transitions.deathAnchor();
-            handle.setRespawnLocation(death);
+            case RespawnDecision.Spectate(Location where) -> {
+                Location finalWhere = (where != null) ? where :
+                        Optional.ofNullable(gameManager.active())
+                                .map(g -> g.arena().anchor().clone().add(0, 8, 0))
+                                .orElseGet(p::getLocation);
 
-            Bukkit.getScheduler().runTask(transitions.plugin(), () -> {
-                transitions.toRespawnLobby(p, seconds);
-                respawns.start(p, seconds);
-            });
+                handle.setRespawnLocation(finalWhere);
+                Bukkit.getScheduler().runTask(transitions.plugin(), () -> transitions.toSpectate(p, finalWhere));
+            }
+
+            case RespawnDecision.DeathLobbyCountdown(int seconds1) -> {
+                int seconds = Math.max(0, seconds1);
+                Location death = transitions.deathAnchor();
+                handle.setRespawnLocation(death);
+
+                Bukkit.getScheduler().runTask(transitions.plugin(), () -> {
+                    transitions.toRespawnLobby(p, seconds);
+                    respawns.start(p, seconds);
+                });
+            }
         }
     }
 
@@ -202,25 +197,26 @@ public final class GameFlow {
                 Bukkit.broadcastMessage(message);
                 return;
             }
-            case GameAction.ToHub(java.util.Set<UUID> players2) -> {
-                for (UUID id : players2) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null && p.isOnline()) transitions.toHub(p);
-                }
+            case GameAction.ToHub(Set<UUID> players2) -> {
+                players2.stream()
+                        .map(Bukkit::getPlayer)
+                        .filter(p -> p != null && p.isOnline())
+                        .forEach(transitions::toHub);
                 return;
             }
-            case GameAction.ToBattle(java.util.Set<UUID> players1) -> {
-                for (UUID id : players1) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null && p.isOnline()) transitions.toBattle(p);
-                }
+            case GameAction.ToBattle(Set<UUID> players1) -> {
+                Optional.ofNullable(gameManager.active())
+                        .ifPresent(g -> players1.stream()
+                                .map(Bukkit::getPlayer)
+                                .filter(p -> p != null && p.isOnline())
+                                .forEach(p -> transitions.toBattle(p, g)));
                 return;
             }
-            case GameAction.ToSpectate(java.util.Set<UUID> players, Location where) -> {
-                for (UUID id : players) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null && p.isOnline()) transitions.toSpectate(p, where);
-                }
+            case GameAction.ToSpectate(Set<UUID> players, Location where) -> {
+                players.stream()
+                        .map(Bukkit::getPlayer)
+                        .filter(p -> p != null && p.isOnline())
+                        .forEach(p -> transitions.toSpectate(p, where));
                 return;
             }
             case GameAction.EndGameAndBackToHub(String reason) -> {
@@ -259,7 +255,11 @@ public final class GameFlow {
         switch (action) {
             case JOB_PAGE_NEXT -> transitions.nextJobPage(p);
             case TEAM_CYCLE -> transitions.cycleTeam(p);
-            case BACK_TO_HUB -> transitions.toHub(p);
+            case BACK_TO_HUB -> {
+                respawns.cancel(p);
+                s.respawnSecondsRemaining(0);
+                transitions.toHub(p);
+            }
             case LEAVE -> transitions.restoreOutsideAndLeave(p);
         }
     }

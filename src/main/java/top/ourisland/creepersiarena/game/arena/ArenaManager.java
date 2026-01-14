@@ -145,6 +145,19 @@ public final class ArenaManager {
         return out;
     }
 
+    public @NotNull Location battleSpawnOrFallback(@NotNull ArenaInstance arena, @NotNull Location fallback) {
+        Objects.requireNonNull(arena, "arena");
+        Objects.requireNonNull(fallback, "fallback");
+
+        if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
+            return (arena.anchor() == null ? fallback.clone() : arena.anchor().clone());
+        }
+
+        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
+        int radius = 10;
+        return spawnpointSelector.pickBattleLeastCrowded(arena, online, radius);
+    }
+
     public SpawnpointSelector spawnpoints() {
         return spawnpointSelector;
     }

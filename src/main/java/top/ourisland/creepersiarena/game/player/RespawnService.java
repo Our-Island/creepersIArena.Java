@@ -78,7 +78,7 @@ public final class RespawnService {
                         log.warn("[Respawn] callback failed for {}", p.getName(), t);
                     }
                 } else {
-                    transitions.toBattleSpawn(p);
+                    transitions.toBattle(p);
                 }
                 return;
             }

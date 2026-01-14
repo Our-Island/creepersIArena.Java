@@ -7,10 +7,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.inventory.InventorySnapshot;
 import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
+import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
@@ -32,6 +34,7 @@ public final class PlayerTransitions {
     private final LobbyItemService lobbyItemService;
     private final LobbyService lobbyService;
     private final ArenaManager arenaManager;
+    private final BattleKitService battleKit;
     private final Supplier<GlobalConfig> cfg;
 
     public PlayerTransitions(
@@ -41,6 +44,7 @@ public final class PlayerTransitions {
             LobbyItemService lobbyItemService,
             LobbyService lobbyService,
             ArenaManager arenaManager,
+            BattleKitService battleKit,
             Supplier<GlobalConfig> cfg
     ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -49,6 +53,7 @@ public final class PlayerTransitions {
         this.lobbyItemService = Objects.requireNonNull(lobbyItemService, "kitService");
         this.lobbyService = Objects.requireNonNull(lobbyService, "lobbyService");
         this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
+        this.battleKit = Objects.requireNonNull(battleKit, "battleKit");
         this.cfg = Objects.requireNonNull(cfg, "cfg");
     }
 
@@ -126,27 +131,35 @@ public final class PlayerTransitions {
         log.debug("[Transitions] {} -> SPECTATE", p.getName());
     }
 
-    /**
-     * GameFlow 兼容：进入战场（BATTLE 默认出生点逻辑）
-     */
     public void toBattle(Player p) {
-        toBattleSpawn(p);
-    }
-
-    public void toBattleSpawn(Player p) {
         PlayerSession session = ensureSession(p);
         session.state(PlayerState.IN_GAME);
 
         p.setGameMode(GameMode.ADVENTURE);
 
-        // TODO: 这里你后续会从 BattleController / ArenaManager 决定 spawnpoint（附近玩家少优先）
         Location loc = arenaManager.anyBattleSpawnOrFallback(hubAnchor());
         p.teleport(loc);
 
-        // TODO: 这里后续接入职业 kit（技能 0/1/2 + 装备等）
+        battleKit.apply(p, session);
+
         p.sendActionBar(Component.text("进入战场"));
 
         log.debug("[Transitions] {} -> IN_GAME (battle spawn)", p.getName());
+    }
+
+    public void toBattle(Player p, GameSession g) {
+        PlayerSession session = ensureSession(p);
+        session.state(PlayerState.IN_GAME);
+
+        p.setGameMode(GameMode.ADVENTURE);
+
+        Location loc = arenaManager.battleSpawnOrFallback(g.arena(), hubAnchor());
+        p.teleport(loc);
+
+        battleKit.apply(p, session);
+
+        p.sendActionBar(Component.text("进入战场"));
+        log.debug("[Transitions] {} -> IN_GAME (battle spawn in arena={})", p.getName(), g.arena().id());
     }
 
     public int battleRespawnSecondsConfigured() {
