@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleMode;
 import top.ourisland.creepersiarena.game.mode.impl.steal.StealMode;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
@@ -183,6 +184,8 @@ public final class PluginBootstrap {
             return s != null && s.state() == PlayerState.IN_GAME;
         });
 
+        BattleKitService battleKitService = new BattleKitService(jobManager, skillItemFactory);
+
         // 7) transitions + respawn + game manager + flow + runtime
         log.info("[Bootstrap] (9/12) Creating PlayerTransitions and RespawnService...");
         PlayerTransitions transitions = new PlayerTransitions(
@@ -192,6 +195,7 @@ public final class PluginBootstrap {
                 lobbyItemService,
                 lobbyService,
                 arenaManager,
+                battleKitService,
                 configManager::getGlobalConfig
         );
 

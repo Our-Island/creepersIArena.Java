@@ -25,7 +25,7 @@ public class Skill3 implements Skill {
 
     @Override
     public Material itemType() {
-        return Material.FIREWORK_ROCKET;
+        return Material.COMPARATOR;
     }
 
     @Override
