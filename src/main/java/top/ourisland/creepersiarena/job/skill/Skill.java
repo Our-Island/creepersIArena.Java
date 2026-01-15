@@ -18,6 +18,8 @@ public interface Skill {
      */
     Material itemType();
 
+    int cooldown();
+
     /**
      * 写 Skill 时声明触发规则（可组合） 建议至少包含：TriggerSpec.triggers(...) + TriggerSpec.mainHandOnly() +
      * TriggerSpec.hotbarSlot(slot())

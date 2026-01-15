@@ -171,18 +171,23 @@ public final class PluginBootstrap {
         LobbyItemService lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
 
         // 6) skill system tick
-        log.info("[Bootstrap] (8/12) Setting up skill...");
+        log.info("[Bootstrap] (8/12) Setting up skill.");
         AtomicLong tick = new AtomicLong(0);
-        BukkitTask skillTickTask = Bukkit.getScheduler().runTaskTimer(plugin, tick::incrementAndGet, 1L, 1L);
 
         SkillItemCodec skillItemCodec = new SkillItemCodec(plugin);
         SkillItemFactory skillItemFactory = new SkillItemFactory(skillItemCodec);
 
         SkillContextFactory skillContextFactory = new SkillContextFactory(tick::get);
-        SkillEngine skillEngine = new SkillEngine(skillItemCodec, (player, skill, ctx) -> {
+
+        SkillEngine skillEngine = new SkillEngine(skillItemCodec, skillItemFactory, (player, skill, ctx) -> {
             var s = sessionStore.get(player);
             return s != null && s.state() == PlayerState.IN_GAME;
         });
+
+        BukkitTask skillTickTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            long now = tick.incrementAndGet();
+            skillEngine.tickCooldowns(Bukkit.getOnlinePlayers(), now);
+        }, 1L, 1L);
 
         BattleKitService battleKitService = new BattleKitService(jobManager, skillItemFactory);
 

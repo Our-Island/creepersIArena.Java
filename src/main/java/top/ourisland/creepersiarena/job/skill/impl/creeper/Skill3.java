@@ -29,6 +29,11 @@ public class Skill3 implements Skill {
     }
 
     @Override
+    public int cooldown() {
+        return 20;
+    }
+
+    @Override
     public TriggerSpec triggerSpec() {
         return TriggerSpec.triggers(
                         Trigger.RIGHT_CLICK_AIR,

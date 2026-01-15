@@ -30,6 +30,11 @@ public class Skill1 implements Skill {
     }
 
     @Override
+    public int cooldown() {
+        return 7;
+    }
+
+    @Override
     public TriggerSpec triggerSpec() {
         return TriggerSpec.triggers(Trigger.RIGHT_CLICK_AIR, Trigger.RIGHT_CLICK_BLOCK, Trigger.RIGHT_CLICK_ENTITY)
                 .and(TriggerSpec.mainHandOnly())

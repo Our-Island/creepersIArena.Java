@@ -29,6 +29,11 @@ public class Skill2 implements Skill {
     }
 
     @Override
+    public int cooldown() {
+        return 7;
+    }
+
+    @Override
     public TriggerSpec triggerSpec() {
         return TriggerSpec.triggers(Trigger.SHOOT)
                 .and(TriggerSpec.mainHandOnly())
