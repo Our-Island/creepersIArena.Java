@@ -5,10 +5,9 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import top.ourisland.creepersiarena.util.I18n;
+import top.ourisland.creepersiarena.util.LangKeyResolver;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public final class SkillItemFactory {
     private final SkillItemCodec codec;
@@ -17,26 +16,15 @@ public final class SkillItemFactory {
         this.codec = codec;
     }
 
-    public ItemStack create(Skill skill, Object... loreArgs) {
-        ItemStack item = new ItemStack(skill.itemType());
+    private static void decorateCooldownName(Skill skill, ItemStack item, String text) {
         ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
 
-        meta.displayName(I18n.langNP(SkillLangKeys.name(skill)));
-
-        List<Component> lore = IntStream.rangeClosed(1, 20)
-                .mapToObj(i -> SkillLangKeys.lore(skill, i))
-                .takeWhile(I18n::has)
-                .map(key -> (loreArgs == null || loreArgs.length == 0)
-                        ? I18n.langNP(key)
-                        : I18n.langNP(key, loreArgs)
-                )
-                .collect(Collectors.toList());
-
-        if (!lore.isEmpty()) meta.lore(lore);
+        Component name = Component.text(text).appendSpace()
+                .append(I18n.langNP(LangKeyResolver.skillName(skill)));
+        meta.displayName(name);
 
         item.setItemMeta(meta);
-        codec.mark(item, skill);
-        return item;
     }
 
     public ItemStack createCooldownSeconds(Skill skill, int secondsLeft) {
@@ -52,15 +40,18 @@ public final class SkillItemFactory {
         return Math.min(64, n);
     }
 
-    private static void decorateCooldownName(Skill skill, ItemStack item, String text) {
+    public ItemStack create(Skill skill, Object... loreArgs) {
+        ItemStack item = new ItemStack(skill.itemType());
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return;
 
-        Component name = Component.text(text).appendSpace()
-                .append(I18n.langNP(SkillLangKeys.name(skill)));
-        meta.displayName(name);
+        meta.displayName(I18n.langNP(LangKeyResolver.skillName(skill)));
+
+        List<Component> lore = LangKeyResolver.resolveSkillLore(skill, loreArgs);
+        if (!lore.isEmpty()) meta.lore(lore);
 
         item.setItemMeta(meta);
+        codec.mark(item, skill);
+        return item;
     }
 
     public ItemStack createCooldownLastSecondTicks(Skill skill, int ticksLeft) {
@@ -69,29 +60,5 @@ public final class SkillItemFactory {
         decorateCooldownName(skill, item, "[即将冷却完毕]");
         codec.mark(item, skill);
         return item;
-    }
-
-    public static final class SkillLangKeys {
-        private SkillLangKeys() {
-        }
-
-        public static String name(Skill skill) {
-            return base(skill) + ".name";
-        }
-
-        public static String base(Skill skill) {
-            String id = skill.id();
-            int dot = id.indexOf('.');
-            if (dot <= 0 || dot == id.length() - 1) {
-                throw new IllegalArgumentException("Invalid skill id (expected job.skill): " + id);
-            }
-            String job = id.substring(0, dot);
-            String sk = id.substring(dot + 1);
-            return "cia.job." + job + ".skill." + sk;
-        }
-
-        public static String lore(Skill skill, int line) {
-            return base(skill) + ".lore." + line;
-        }
     }
 }

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.job.impl;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.job.Job;
 import top.ourisland.creepersiarena.job.JobId;
@@ -14,6 +15,11 @@ public class CreeperJob implements Job {
     @Override
     public JobId id() {
         return JobId.CREEPER;
+    }
+
+    @Override
+    public ItemStack display() {
+        return ItemStack.of(Material.REDSTONE);
     }
 
     @Override

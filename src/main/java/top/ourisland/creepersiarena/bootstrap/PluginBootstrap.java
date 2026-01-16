@@ -167,7 +167,7 @@ public final class PluginBootstrap {
         // 5) lobby ui + kit
         log.info("[Bootstrap] (7/12) Building lobby UI...");
         LobbyItemCodec lobbyItemCodec = new LobbyItemCodec(plugin);
-        LobbyItemFactory lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec);
+        LobbyItemFactory lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec, jobManager);
         LobbyItemService lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
 
         // 6) skill system tick

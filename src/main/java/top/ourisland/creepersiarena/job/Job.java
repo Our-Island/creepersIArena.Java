@@ -8,6 +8,8 @@ import java.util.List;
 public interface Job {
     JobId id();
 
+    ItemStack display();
+
     /**
      * 约定：必须返回 3 个技能，对应 hotbar 0/1/2
      */
