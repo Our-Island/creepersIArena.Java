@@ -42,7 +42,7 @@ public final class SkillItemFactory {
     public ItemStack createCooldownSeconds(Skill skill, int secondsLeft) {
         int amount = clampAmount(secondsLeft);
         ItemStack item = new ItemStack(Material.STONE_BUTTON, amount);
-        decorateCooldownName(skill, item);
+        decorateCooldownName(skill, item, "[技能冷却中]");
         codec.mark(item, skill);
         return item;
     }
@@ -52,11 +52,11 @@ public final class SkillItemFactory {
         return Math.min(64, n);
     }
 
-    private static void decorateCooldownName(Skill skill, ItemStack item) {
+    private static void decorateCooldownName(Skill skill, ItemStack item, String text) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        Component name = Component.text("[冷却中] ")
+        Component name = Component.text(text).appendSpace()
                 .append(I18n.langNP(SkillLangKeys.name(skill)));
         meta.displayName(name);
 
@@ -66,7 +66,7 @@ public final class SkillItemFactory {
     public ItemStack createCooldownLastSecondTicks(Skill skill, int ticksLeft) {
         int amount = clampAmount(ticksLeft);
         ItemStack item = new ItemStack(Material.BIRCH_BUTTON, amount);
-        decorateCooldownName(skill, item);
+        decorateCooldownName(skill, item, "[即将冷却完毕]");
         codec.mark(item, skill);
         return item;
     }
