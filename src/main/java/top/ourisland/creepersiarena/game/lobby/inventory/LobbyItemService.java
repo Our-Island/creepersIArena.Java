@@ -5,6 +5,7 @@ import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
+import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;
 
 import java.util.List;
@@ -90,5 +91,15 @@ public final class LobbyItemService {
 
     public int totalJobs() {
         return jobs.getAllJobIds().size();
+    }
+
+    public String firstJobIdOrNull() {
+        List<String> ids = jobs.getAllJobIds();
+        return ids.isEmpty() ? null : ids.getFirst();
+    }
+
+    public boolean hasJobId(String jobIdRaw) {
+        JobId jid = JobId.fromId(jobIdRaw);
+        return jid != null && jobs.getJob(jid) != null;
     }
 }

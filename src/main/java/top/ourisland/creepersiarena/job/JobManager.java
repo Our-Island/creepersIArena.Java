@@ -14,6 +14,10 @@ public final class JobManager {
         jobs.put(job.id(), job);
     }
 
+    public Job getJob(String id) {
+        return getJob(JobId.fromId(id));
+    }
+
     public Job getJob(JobId id) {
         return jobs.get(id);
     }

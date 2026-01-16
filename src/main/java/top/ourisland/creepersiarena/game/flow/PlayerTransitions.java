@@ -3,7 +3,9 @@ package top.ourisland.creepersiarena.game.flow;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -19,6 +21,7 @@ import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.JobId;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -35,6 +38,7 @@ public final class PlayerTransitions {
     private final LobbyService lobbyService;
     private final ArenaManager arenaManager;
     private final BattleKitService battleKit;
+    private final NamespacedKey selectedJobKey;
     private final Supplier<GlobalConfig> cfg;
 
     public PlayerTransitions(
@@ -54,6 +58,7 @@ public final class PlayerTransitions {
         this.lobbyService = Objects.requireNonNull(lobbyService, "lobbyService");
         this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
         this.battleKit = Objects.requireNonNull(battleKit, "battleKit");
+        this.selectedJobKey = new NamespacedKey(plugin, "selected_job");
         this.cfg = Objects.requireNonNull(cfg, "cfg");
     }
 
@@ -78,16 +83,45 @@ public final class PlayerTransitions {
         );
     }
 
-    /**
-     * 第一次进入系统时抓取 outsideSnapshot（用于未来真正实现“离开竞技场/恢复原状”）。
-     */
+    public void selectJob(Player p, String jobIdRaw) {
+        PlayerSession s = ensureSession(p);
+        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
+
+        JobId jobId = JobId.fromId(jobIdRaw);
+        if (jobId == null) {
+            log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
+            return;
+        }
+
+        if (!lobbyItemService.hasJobId(jobId.toString())) {
+            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", p.getName(), jobIdRaw);
+            return;
+        }
+
+        s.selectedJob(jobId);
+        persistSelectedJob(p, jobId);
+
+        refreshLobbyKit(p);
+
+        log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
+    }
+
     public PlayerSession ensureSession(Player p) {
         PlayerSession s = store.getOrCreate(p);
+
         if (s.outsideSnapshot() == null) {
             s.outsideSnapshot(InventorySnapshot.capture(p));
             log.debug("[Transitions] snapshot captured for {}", p.getName());
         }
+
+        ensureSelectedJob(p, s);
+
         return s;
+    }
+
+    private void persistSelectedJob(Player p, JobId jobId) {
+        if (jobId == null) return;
+        p.getPersistentDataContainer().set(selectedJobKey, PersistentDataType.STRING, jobId.toString());
     }
 
     public Location hubAnchor() {
@@ -98,7 +132,6 @@ public final class PlayerTransitions {
         return cfg.get();
     }
 
-    // ---------- entry points 
     public void toRespawnLobby(Player p, int seconds) {
         PlayerSession session = ensureSession(p);
 
@@ -166,9 +199,6 @@ public final class PlayerTransitions {
         return cfg().game().battle().respawnTimeSeconds();
     }
 
-    /**
-     * 预留：离开竞技场（未来管理模式 / 指令用）。 目前没有 outsideLocation，所以只做“恢复背包 + 移除 session”。
-     */
     public void restoreOutsideAndLeave(Player p) {
         PlayerSession s = store.get(p);
         if (s != null && s.outsideSnapshot() != null) {
@@ -178,32 +208,39 @@ public final class PlayerTransitions {
         log.info("[Transitions] {} leave arena (restore snapshot)", p.getName());
     }
 
-    public void selectJob(Player p, String jobIdRaw) {
-        PlayerSession s = ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
-
-        JobId jobId = JobId.fromId(jobIdRaw);
-        if (jobId == null) {
-            log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
-            return;
-        }
-
-        s.selectedJob(jobId);
-
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
-    }
-
     public void refreshLobbyKit(Player p) {
         PlayerSession s = store.get(p);
         if (s == null) return;
 
-        if (s.state() == PlayerState.HUB) {
-            lobbyItemService.applyHubKit(p, s, cfg());
-        } else if (s.state() == PlayerState.RESPAWN) {
-            lobbyItemService.applyDeathKit(p, s, cfg());
+        switch (s.state()) {
+            case HUB -> lobbyItemService.applyHubKit(p, s, cfg());
+            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg());
+            case null, default -> {
+            }
         }
+    }
+
+    private void ensureSelectedJob(Player p, PlayerSession s) {
+        Optional.ofNullable(s.selectedJob())
+
+                .or(() -> Optional.ofNullable(
+                                p.getPersistentDataContainer().get(selectedJobKey, PersistentDataType.STRING)
+                        ).filter(lobbyItemService::hasJobId)
+                        .map(JobId::fromId))
+
+                .or(() -> Optional.ofNullable(
+                                lobbyItemService.firstJobIdOrNull()
+                        ).filter(lobbyItemService::hasJobId)
+                        .map(JobId::fromId)
+                        .map(jid -> {
+                            persistSelectedJob(p, jid);
+                            return jid;
+                        }))
+
+                .ifPresentOrElse(
+                        s::selectedJob,
+                        () -> log.warn("[Lobby] No available job to select for {}", p.getName())
+                );
     }
 
     public void nextJobPage(Player p) {
