@@ -109,7 +109,7 @@ jobs:
           docker run -d --name paper-ci \
             -e EULA=TRUE \
             -e TYPE=PAPER \
-            -e VERSION=1.21.11
+            -e VERSION=1.21.11 \
             -p 25565:25565 \
             -v "$(pwd)/paper-data:/data" \
             itzg/minecraft-server:java21
