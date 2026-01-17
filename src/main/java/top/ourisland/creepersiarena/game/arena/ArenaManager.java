@@ -157,8 +157,4 @@ public final class ArenaManager {
         int radius = 10;
         return spawnpointSelector.pickBattleLeastCrowded(arena, online, radius);
     }
-
-    public SpawnpointSelector spawnpoints() {
-        return spawnpointSelector;
-    }
 }

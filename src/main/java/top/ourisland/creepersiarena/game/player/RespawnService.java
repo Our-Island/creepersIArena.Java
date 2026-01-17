@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.player;
 
+import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,6 +23,7 @@ public final class RespawnService {
     private final PlayerTransitions transitions;
 
     private final Map<UUID, BukkitTask> tasks = new HashMap<>();
+    @Setter
     private Consumer<Player> callback;
 
     public RespawnService(Plugin plugin, Logger log, PlayerSessionStore store, PlayerTransitions transitions) {
@@ -29,13 +31,6 @@ public final class RespawnService {
         this.log = Objects.requireNonNull(log, "log");
         this.store = Objects.requireNonNull(store, "store");
         this.transitions = Objects.requireNonNull(transitions, "transitions");
-    }
-
-    /**
-     * 让倒计时结束后回到 Flow 统一处理（比如：STEAL 死亡直接观战、BATTLE 回战场等）。 如果未设置 callback，则使用默认行为：直接回战场出生点。
-     */
-    public void setCallback(Consumer<Player> callback) {
-        this.callback = callback;
     }
 
     /**

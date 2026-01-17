@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.config;
 
+import lombok.Getter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
@@ -14,9 +15,12 @@ import java.nio.file.Path;
 public final class ConfigManager {
     private final JavaPlugin plugin;
     private final Logger logger;
+    @Getter
     private final Path dataDir;
 
+    @Getter
     private GlobalConfig globalConfig = GlobalConfig.defaults();
+    @Getter
     private ArenaConfig arenaConfig = ArenaConfig.empty();
 
     public ConfigManager(JavaPlugin plugin, Logger logger) {
@@ -81,17 +85,5 @@ public final class ConfigManager {
             logger.error("[Config] Failed to load arena.yml, using empty config.", e);
             return ArenaConfig.empty();
         }
-    }
-
-    public GlobalConfig getGlobalConfig() {
-        return globalConfig;
-    }
-
-    public ArenaConfig getArenaConfig() {
-        return arenaConfig;
-    }
-
-    public Path getDataDir() {
-        return dataDir;
     }
 }
