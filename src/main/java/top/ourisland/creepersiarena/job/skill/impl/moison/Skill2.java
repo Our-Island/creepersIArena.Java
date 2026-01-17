@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.job.skill.impl.creeper;
+package top.ourisland.creepersiarena.job.skill.impl.moison;
 
 import top.ourisland.creepersiarena.job.skill.SkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillExecutor;
@@ -8,7 +8,7 @@ import top.ourisland.creepersiarena.job.skill.event.Trigger;
 
 import java.util.List;
 
-public class Skill3 implements SkillDefinition {
+public class Skill2 implements SkillDefinition {
 
     @Override
     public String id() {
@@ -22,12 +22,12 @@ public class Skill3 implements SkillDefinition {
 
     @Override
     public SkillType kind() {
-        return null;
+        return SkillType.ACTIVE;
     }
 
     @Override
     public int uiSlot() {
-        return 0;
+        return 1;
     }
 
     @Override

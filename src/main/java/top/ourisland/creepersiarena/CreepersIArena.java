@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.SkillEngine;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 
 public final class CreepersIArena extends JavaPlugin {
 
@@ -70,8 +70,8 @@ public final class CreepersIArena extends JavaPlugin {
         return bootstrap.ctx().jobManager();
     }
 
-    public SkillEngine skills() {
-        return bootstrap.ctx().skillEngine();
+    public SkillRuntime skills() {
+        return bootstrap.ctx().skillRuntime();
     }
 
     public PluginBootstrap bootstrap() {

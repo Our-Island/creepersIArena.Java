@@ -21,20 +21,20 @@ import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleMode;
 import top.ourisland.creepersiarena.game.mode.impl.steal.StealMode;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 import top.ourisland.creepersiarena.job.Job;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.impl.CreeperJob;
-import top.ourisland.creepersiarena.job.skill.SkillContextFactory;
-import top.ourisland.creepersiarena.job.skill.SkillEngine;
-import top.ourisland.creepersiarena.job.skill.SkillItemCodec;
-import top.ourisland.creepersiarena.job.skill.SkillItemFactory;
+import top.ourisland.creepersiarena.job.skill.SkillTickTask;
+import top.ourisland.creepersiarena.job.skill.runtime.InMemorySkillStateStore;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
+import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
+import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 import top.ourisland.creepersiarena.util.I18n;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 public final class PluginBootstrap {
 
@@ -172,24 +172,16 @@ public final class PluginBootstrap {
 
         // 6) skill system tick
         log.info("[Bootstrap] (8/12) Setting up skill.");
-        AtomicLong tick = new AtomicLong(0);
+        SkillItemCodec skillCodec = new SkillItemCodec(plugin);
+        var skillStore = new InMemorySkillStateStore();
+        SkillRegistry skillRegistry = new SkillRegistry(sessionStore, jobManager);
+        SkillRuntime skillRuntime = new SkillRuntime(skillRegistry, skillStore);
+        SkillHotbarRenderer skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
 
-        SkillItemCodec skillItemCodec = new SkillItemCodec(plugin);
-        SkillItemFactory skillItemFactory = new SkillItemFactory(skillItemCodec);
+        SkillTickTask tickTask = new SkillTickTask(plugin, sessionStore, skillRegistry, skillRuntime, skillRenderer);
+        BukkitTask skillTick = tickTask.runTaskTimer(plugin, 1L, 1L);
 
-        SkillContextFactory skillContextFactory = new SkillContextFactory(tick::get);
-
-        SkillEngine skillEngine = new SkillEngine(skillItemCodec, skillItemFactory, (player, skill, ctx) -> {
-            var s = sessionStore.get(player);
-            return s != null && s.state() == PlayerState.IN_GAME;
-        });
-
-        BukkitTask skillTickTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            long now = tick.incrementAndGet();
-            skillEngine.tickCooldowns(Bukkit.getOnlinePlayers(), now);
-        }, 1L, 1L);
-
-        BattleKitService battleKitService = new BattleKitService(jobManager, skillItemFactory);
+        BattleKitService battleKitService = new BattleKitService(jobManager, skillRegistry, skillRenderer, tickTask::nowTick);
 
         // 7) transitions + respawn + game manager + flow + runtime
         log.info("[Bootstrap] (9/12) Creating PlayerTransitions and RespawnService...");
@@ -259,27 +251,27 @@ public final class PluginBootstrap {
                 gameManager,
 
                 jobManager,
-                skillItemCodec,
-                skillItemFactory,
-                skillContextFactory,
-                skillEngine,
-
-                skillTickTask,
+                skillCodec,
+                skillRegistry,
+                skillRuntime,
+                skillRenderer,
+                tickTask::nowTick,
+                skillTick,
                 null
         );
 
         new ListenerBootstrap().register(context);
         log.info("[Bootstrap] Listeners registered.");
 
-        // 9) register all loaded skills
-        int registeredSkills = 0;
-        for (var job : jobManager.getAllJobs()) {
-            for (var sk : job.skills()) {
-                skillEngine.register(sk);
-                registeredSkills++;
-            }
-        }
-        log.info("[Bootstrap] Skill engine ready. Registered skills: {}.", registeredSkills);
+//        // 9) register all loaded skills
+//        int registeredSkills = 0;
+//        for (var job : jobManager.getAllJobs()) {
+//            for (var sk : job.skills()) {
+//                skillEngine.register(sk);
+//                registeredSkills++;
+//            }
+//        }
+//        log.info("[Bootstrap] Skill engine ready. Registered skills: {}.", registeredSkills);
 
         // 10) default start battle if possible
         log.info("[Bootstrap] Starting default mode (BATTLE) if possible...");
@@ -323,13 +315,13 @@ public final class PluginBootstrap {
                 gameManager,
 
                 jobManager,
-                skillItemCodec,
-                skillItemFactory,
-                skillContextFactory,
-                skillEngine,
-
-                skillTickTask,
-                gameTickTask
+                skillCodec,
+                skillRegistry,
+                skillRuntime,
+                skillRenderer,
+                tickTask::nowTick,
+                skillTick,
+                null
         );
 
         // 12) init already-online players (/reload)

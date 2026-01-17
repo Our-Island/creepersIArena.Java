@@ -1,48 +1,52 @@
 package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
-import org.bukkit.Material;
-import top.ourisland.creepersiarena.job.JobId;
-import top.ourisland.creepersiarena.job.skill.Skill;
-import top.ourisland.creepersiarena.job.skill.SkillContext;
-import top.ourisland.creepersiarena.job.skill.Trigger;
-import top.ourisland.creepersiarena.job.skill.TriggerSpec;
+import top.ourisland.creepersiarena.job.skill.SkillDefinition;
+import top.ourisland.creepersiarena.job.skill.SkillExecutor;
+import top.ourisland.creepersiarena.job.skill.SkillIcon;
+import top.ourisland.creepersiarena.job.skill.SkillType;
+import top.ourisland.creepersiarena.job.skill.event.Trigger;
 
-public class Skill2 implements Skill {
+import java.util.List;
+
+public class Skill2 implements SkillDefinition {
+
     @Override
     public String id() {
-        return "creeper.crossbow";
+        return "";
     }
 
     @Override
-    public JobId jobId() {
-        return JobId.CREEPER;
+    public String jobId() {
+        return "";
     }
 
     @Override
-    public int slot() {
-        return 1;
+    public SkillType kind() {
+        return null;
     }
 
     @Override
-    public Material itemType() {
-        return Material.CROSSBOW;
+    public int uiSlot() {
+        return 0;
     }
 
     @Override
-    public int cooldown() {
-        return 7;
+    public int cooldownSeconds() {
+        return 0;
     }
 
     @Override
-    public TriggerSpec triggerSpec() {
-        return TriggerSpec.triggers(Trigger.SHOOT)
-                .and(TriggerSpec.mainHandOnly())
-                .and(TriggerSpec.hotbarSlot(slot()))
-                .and(TriggerSpec.itemType(Material.CROSSBOW));
+    public List<Trigger> triggers() {
+        return List.of();
     }
 
     @Override
-    public void run(SkillContext ctx) {
+    public SkillIcon icon() {
+        return null;
+    }
 
+    @Override
+    public SkillExecutor executor() {
+        return null;
     }
 }

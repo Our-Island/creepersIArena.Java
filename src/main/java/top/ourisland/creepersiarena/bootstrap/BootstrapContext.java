@@ -17,10 +17,12 @@ import top.ourisland.creepersiarena.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.SkillContextFactory;
-import top.ourisland.creepersiarena.job.skill.SkillEngine;
-import top.ourisland.creepersiarena.job.skill.SkillItemCodec;
-import top.ourisland.creepersiarena.job.skill.SkillItemFactory;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
+import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
+import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
+
+import java.util.function.LongSupplier;
 
 public record BootstrapContext(
         JavaPlugin plugin,
@@ -51,10 +53,11 @@ public record BootstrapContext(
 
         // Jobs/skills
         JobManager jobManager,
-        SkillItemCodec skillItemCodec,
-        SkillItemFactory skillItemFactory,
-        SkillContextFactory skillContextFactory,
-        SkillEngine skillEngine,
+        SkillItemCodec skillCodec,
+        SkillRegistry skillRegistry,
+        SkillRuntime skillRuntime,
+        SkillHotbarRenderer skillRenderer,
+        LongSupplier skillNowTick,
 
         // Tasks
         BukkitTask skillTickTask,
