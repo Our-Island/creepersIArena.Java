@@ -29,6 +29,10 @@ tasks {
     }
 }
 
+tasks.test {
+    failOnNoDiscoveredTests = false
+}
+
 val targetJavaVersion = 21
 
 java {
