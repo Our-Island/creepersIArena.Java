@@ -26,15 +26,8 @@ public final class ListenerBootstrap {
                 ctx.lobbyService()
         ), ctx.plugin());
 
-        log.info("[Bootstrap] Register listener: HubActionListener.");
-        pm.registerEvents(new HubActionListener(
-                ctx.lobbyItemCodec(),
-                ctx.sessionStore(),
-                ctx.flow()
-        ), ctx.plugin());
-
-        log.info("[Bootstrap] Register listener: LobbyInventoryClickListener.");
-        pm.registerEvents(new LobbyInventoryClickListener(
+        log.info("[Bootstrap] Register listener: LobbyUiListener.");
+        pm.registerEvents(new LobbyUiListener(
                 ctx.lobbyItemCodec(),
                 ctx.sessionStore(),
                 ctx.flow()

@@ -39,7 +39,7 @@ public class Skill1 implements Skill {
         return TriggerSpec.triggers(Trigger.RIGHT_CLICK_AIR, Trigger.RIGHT_CLICK_BLOCK, Trigger.RIGHT_CLICK_ENTITY)
                 .and(TriggerSpec.mainHandOnly())
                 .and(TriggerSpec.hotbarSlot(slot()))
-                .and(TriggerSpec.itemType(Material.CREEPER_SPAWN_EGG));
+                .and(TriggerSpec.itemType(itemType()));
     }
 
     @Override
