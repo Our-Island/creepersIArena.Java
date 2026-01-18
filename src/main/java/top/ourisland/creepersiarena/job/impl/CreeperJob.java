@@ -39,8 +39,10 @@ public class CreeperJob implements Job {
     @Override
     public ItemStack[] armorTemplate() {
         return new ItemStack[] {
-                new ItemStack(Material.REDSTONE),
+                new ItemStack(Material.AIR),
+                new ItemStack(Material.AIR),
                 new ItemStack(Material.LEATHER_CHESTPLATE),
+                new ItemStack(Material.REDSTONE),
         };
     }
 }

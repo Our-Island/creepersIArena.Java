@@ -25,8 +25,8 @@ import java.util.List;
 
 public class Skill1 implements SkillDefinition {
 
-    private static final long FUSE_TICKS = 12L;
-    private static final double SPEED = 0.5;
+    private static final long FUSE_TICKS = 15L;
+    private static final double SPEED = 0.75;
     private static final String TAG = "cia_skill_creeper_boom";
 
     @Override
