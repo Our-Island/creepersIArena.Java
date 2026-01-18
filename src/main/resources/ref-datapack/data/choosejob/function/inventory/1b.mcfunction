@@ -1,5 +1,0 @@
-clear @s redstone
-
-#item replace entity @s hotbar.1 with creeper_spawn_egg{HideFlags:255,display:{Name:[{"text": "爆破者-苦力怕","color": "aqua","italic": false},{"text": " [选择中]","color": "aqua","italic": false}],Lore:[[{"text": "✎ 凭借范围伤害击败对手","color": "gray","italic": false}],[{"text": "已选择此职业","color": "gray","italic": false}]]},Enchantments:[{id:"unbreaking",lvl:1}],Unbreakable:1b} 1
-
-item replace entity @s hotbar.1 with redstone[custom_name=[{"text": "爆破者-苦力怕","color": "aqua","italic": false},{"text": " [选择中]","color": "aqua","italic": false}],lore=[{"text": "✎ 高额爆炸伤害与AOE同存","color": "gray","italic": false},{"text": "✎ 警告：瞄准好再发射！","color": "gray","italic": false},[{"text": "已选择此职业","color": "gray","italic": false}]],enchantments={unbreaking:1},tooltip_display={hidden_components:["enchantments"]}] 1

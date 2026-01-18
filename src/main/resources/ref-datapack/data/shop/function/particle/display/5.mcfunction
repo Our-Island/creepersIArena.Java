@@ -1,2 +1,0 @@
-execute positioned 4988 50 4995 run particle minecraft:composter ~ ~0.2 ~ 0.2 0.02 0.2 0.001 5 force @a[distance=..15]
-execute positioned 4988 50 4995 run particle minecraft:glow ~ ~0.2 ~ 0.2 0.02 0.2 0.001 5 force @a[distance=..15]

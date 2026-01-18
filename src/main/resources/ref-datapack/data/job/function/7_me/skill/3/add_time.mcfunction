@@ -1,1 +1,0 @@
-scoreboard players add @s job_7_3_time 120

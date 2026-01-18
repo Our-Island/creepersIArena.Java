@@ -1,5 +1,0 @@
-clear @s trapped_chest
-
-#item replace entity @s hotbar.8 with spectral_arrow{HideFlags:255,display:{Name:[{"text": "光灵储备","color": "white","italic": false}],Lore:[[{"text": "✎ 在使用1技能、3技能时，替换箭矢为光灵箭","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "被动","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 12 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
-
-item replace entity @s hotbar.8 with trapped_chest[custom_name={"text": "空城计","color": "white","italic": false},lore=[{"text": "✎ 当所有主动技能进入冷却时触发","color": "gray","italic": false},{"text": "✎ 减少所有主动技能冷却4秒","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "被动","color": "white","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "20","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]]] 1

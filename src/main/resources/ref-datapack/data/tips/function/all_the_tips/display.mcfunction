@@ -1,1 +1,0 @@
-$tellraw @s [{"text": "✍ ","color": "gray"},{"text": "你阅读了第$(number)次小提示","color": "gray"}]

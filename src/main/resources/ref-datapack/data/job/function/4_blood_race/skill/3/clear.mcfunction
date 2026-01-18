@@ -1,2 +1,0 @@
-
-effect clear @s levitation

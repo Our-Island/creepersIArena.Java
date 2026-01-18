@@ -1,5 +1,0 @@
-clear @s crying_obsidian
-
-#item replace entity @s hotbar.1 with obsidian{HideFlags:255,display:{Name:[{"text": "石化","color": "white","italic": false}],Lore:[[{"text": "✎ 接下来3秒内不会受击退并获得跳跃提升","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 10 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
-
-item replace entity @s hotbar.1 with crying_obsidian[custom_name={"text": "石化","color": "white","italic": false},lore=[{"text": "✎ 获得3秒免疫击退与跳跃提升","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "10","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

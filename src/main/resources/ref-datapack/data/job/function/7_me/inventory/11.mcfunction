@@ -1,5 +1,0 @@
-clear @s cod
-
-#item replace entity @s[scores={team=1}] armor.chest with leather_chestplate{HideFlags:255,display:{Name:[{"text": "迷彩服","color": "white","italic": false}],Lore:[[{"text": "✎ 或许能帮助爆破者隐藏","color": "gray","italic": false}]],color:19968},AttributeModifiers:[{AttributeName:"minecraft:armor",Amount:0d,id:"1",Operation:0,Slot:"chest",UUID:[I;1000,1000,1000,1000]}],Unbreakable:1b,Trim:{material:"minecraft:redstone",pattern:"minecraft:vex"}} 1
-
-item replace entity @s armor.head with cod[custom_name={"text": "鱼","color": "white","italic": false},lore=[[{"text": "✎ I'm a ","color": "gray","italic": false},{"text": "WHALE","color": "gray","italic": false,bold:true}]],tooltip_display={hidden_components:["attribute_modifiers","can_place_on","can_break","enchantments","fireworks","firework_explosion","trim","dyed_color","unbreakable","charged_projectiles"]}] 1

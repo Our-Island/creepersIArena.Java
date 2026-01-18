@@ -1,5 +1,0 @@
-clear @s blaze_powder
-
-#item replace entity @s hotbar.1 with blaze_powder{HideFlags:255,display:{Name:[{"text": "嗜血闪烁","color": "white","italic": false}],Lore:[[{"text": "✎ 传送至前方至多3格，并获得4点护甲*6秒","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用 │ 冷却","color": "gray","italic": false},{"text": " 10 ","color": "white","italic": false},{"text": "秒","color": "gray","italic": false}]]}} 1
-
-item replace entity @s hotbar.1 with blaze_powder[custom_name={"text": "嗜血闪现","color": "white","italic": false},lore=[{"text": "✎ 传送至前方，至多3格","color": "gray","italic": false},{"text": "✎ 获得6秒4点护甲","color": "gray","italic": false},[{"text": "❃ ","color": "gray","italic": false},{"text": "右键","color": "white","italic": false},{"text": "使用","color": "gray","italic": false}],[{"text": "❃ ","color": "gray","italic": false},{"text": "8","color": "white","italic": false},{"text": " 秒冷却","color": "gray","italic": false}]],consumable={consume_seconds:0,animation:"none",has_consume_particles:false,on_consume_effects:[],sound:"minecraft:ui.hud.bubble_pop"}] 1

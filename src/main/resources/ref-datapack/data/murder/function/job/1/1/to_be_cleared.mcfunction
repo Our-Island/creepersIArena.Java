@@ -1,1 +1,0 @@
-kill @e[tag=job_1_1_damage_source]
