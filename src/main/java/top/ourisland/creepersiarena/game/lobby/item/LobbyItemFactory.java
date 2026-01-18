@@ -2,8 +2,6 @@ package top.ourisland.creepersiarena.game.lobby.item;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
@@ -48,12 +46,6 @@ public final class LobbyItemFactory {
             );
 
             meta.setEnchantmentGlintOverride(selected);
-//            if (selected) {
-//                meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-//                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-//            } else {
-//                meta.removeEnchant(Enchantment.UNBREAKING);
-//            }
 
             item.setItemMeta(meta);
         }

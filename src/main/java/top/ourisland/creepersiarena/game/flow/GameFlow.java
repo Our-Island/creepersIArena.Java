@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.flow;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -194,7 +195,7 @@ public final class GameFlow {
                 return;
             }
             case GameAction.Broadcast(String message) -> {
-                Bukkit.broadcastMessage(message);
+                Bukkit.getServer().broadcast(Component.text(message));
                 return;
             }
             case GameAction.ToHub(Set<UUID> players2) -> {
@@ -220,7 +221,7 @@ public final class GameFlow {
                 return;
             }
             case GameAction.EndGameAndBackToHub(String reason) -> {
-                Bukkit.broadcastMessage("§6Game End: " + reason);
+                Bukkit.getServer().broadcast(Component.text("§6Game End: " + reason));
                 Bukkit.getOnlinePlayers().forEach(transitions::toHub);
                 return;
             }
