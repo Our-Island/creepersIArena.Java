@@ -23,7 +23,7 @@ public final class JobModule implements Module {
             ConfigManager cfg = rt.requireService(ConfigManager.class);
 
             JobManager jobManager = new JobManager();
-            Set<String> disabled = cfg.getGlobalConfig().disabledJobs();
+            Set<String> disabled = cfg.globalConfig().disabledJobs();
             int regJobs = registerBuiltinJobs(jobManager, disabled, rt.log());
             rt.log().info("[Job] Registered {} jobs with {} disabled.", regJobs, disabled);
 

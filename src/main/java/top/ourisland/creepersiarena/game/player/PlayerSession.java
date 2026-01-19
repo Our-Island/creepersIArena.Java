@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.game.player;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.game.lobby.inventory.InventorySnapshot;
@@ -10,7 +9,6 @@ import top.ourisland.creepersiarena.job.JobId;
 import java.util.UUID;
 
 @Data
-@Accessors(fluent = true)
 public final class PlayerSession {
     private final UUID playerId;
 

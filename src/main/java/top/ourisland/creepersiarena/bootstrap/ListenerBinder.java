@@ -1,16 +1,14 @@
 package top.ourisland.creepersiarena.bootstrap;
 
 import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.function.Supplier;
 
-@Getter
-@Accessors(fluent = true)
 public final class ListenerBinder {
+    @Getter
     private final BootstrapRuntime rt;
     private final PluginManager pm;
 

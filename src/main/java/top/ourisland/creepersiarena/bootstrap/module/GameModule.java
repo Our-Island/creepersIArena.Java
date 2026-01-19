@@ -47,7 +47,7 @@ public final class GameModule implements Module {
                     lobbyService,
                     arenaManager,
                     battleKitService,
-                    cfg::getGlobalConfig
+                    cfg::globalConfig
             );
             RespawnService respawns = new RespawnService(rt.plugin(), log, sessionStore, transitions);
 
@@ -64,7 +64,7 @@ public final class GameModule implements Module {
             );
 
             GameRuntime runtime = new GameRuntime(
-                    cfg::getGlobalConfig,
+                    cfg::globalConfig,
                     arenaManager,
                     sessionStore,
                     transitions,

@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.bootstrap;
 
 import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-@Accessors(fluent = true)
 public final class BootstrapRuntime {
     private final JavaPlugin plugin;
     private final Logger log;

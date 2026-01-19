@@ -50,7 +50,7 @@ public final class GameFlow {
         this.transitions = Objects.requireNonNull(transitions, "transitions");
         this.respawns = Objects.requireNonNull(respawns, "respawns");
 
-        this.respawns.setCallback(this::onRespawnCountdownFinished);
+        this.respawns.callback(this::onRespawnCountdownFinished);
     }
 
     /**

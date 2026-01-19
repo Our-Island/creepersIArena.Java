@@ -31,7 +31,7 @@ public final class LobbyModule implements Module {
             ConfigManager cfg = rt.requireService(ConfigManager.class);
 
             LobbyManager lobbyManager = new LobbyManager(world, log);
-            lobbyManager.reload(cfg.getGlobalConfig());
+            lobbyManager.reload(cfg.globalConfig());
 
             LobbyService lobbyService = new LobbyService(lobbyManager);
 

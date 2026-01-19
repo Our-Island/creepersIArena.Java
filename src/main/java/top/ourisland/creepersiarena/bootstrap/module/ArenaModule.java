@@ -27,7 +27,7 @@ public final class ArenaModule implements Module {
             ConfigManager cfg = rt.requireService(ConfigManager.class);
 
             ArenaManager arenaManager = new ArenaManager(world, log);
-            arenaManager.reload(cfg.getArenaConfig());
+            arenaManager.reload(cfg.arenaConfig());
 
             rt.putService(ArenaManager.class, arenaManager);
         }, "Loading arenas...", "Finished loading arenas.");

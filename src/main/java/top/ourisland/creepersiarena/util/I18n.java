@@ -23,7 +23,7 @@ public final class I18n {
     }
 
     public static void reload() {
-        String lang = configManager.getGlobalConfig().lang();
+        String lang = configManager.globalConfig().lang();
         loadBundle(lang);
     }
 
