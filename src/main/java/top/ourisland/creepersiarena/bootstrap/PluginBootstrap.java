@@ -62,6 +62,7 @@ public final class PluginBootstrap {
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Enabled in {}ms.", ms);
+        log.info("creepersIArena is enabled!");
     }
 
     private void runStage(StagePhase phase, int idx, int total, Module m) {
@@ -113,6 +114,7 @@ public final class PluginBootstrap {
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Disabled in {}ms.", ms);
+        log.info("creepersIArena is disabled!");
         rt = null;
     }
 }
