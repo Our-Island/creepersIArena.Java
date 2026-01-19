@@ -99,4 +99,12 @@ public final class GameModule implements Module {
             });
         }, "Stopping game runtime...", "Respawn tasks cancelled for online players.");
     }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            GameFlow flow = rt.requireService(GameFlow.class);
+            flow.onReloadFixOnlinePlayers();
+        }, "Fixing online players after reload...", "Online players fixed.");
+    }
 }

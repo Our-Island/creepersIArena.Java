@@ -15,6 +15,10 @@ public interface Module {
         return null;
     }
 
+    default StageTask reload(BootstrapRuntime rt) {
+        return null;
+    }
+
     default boolean registerListeners(ListenerBinder binder) {
         return false;
     }

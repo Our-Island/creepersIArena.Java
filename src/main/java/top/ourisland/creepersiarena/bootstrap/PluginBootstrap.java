@@ -65,6 +65,23 @@ public final class PluginBootstrap {
         log.info("creepersIArena is enabled!");
     }
 
+    public void reload() {
+        if (rt == null) return;
+
+        Logger log = rt.log();
+        long t0 = System.nanoTime();
+
+        int total = modules.size();
+        log.info("[Bootstrap] Reloading {} modules...", total);
+
+        for (int i = 0; i < total; i++) {
+            runStage(StagePhase.RELOAD, i + 1, total, modules.get(i));
+        }
+
+        long ms = (System.nanoTime() - t0) / 1_000_000L;
+        log.info("[Bootstrap] Reloaded in {}ms.", ms);
+    }
+
     private void runStage(StagePhase phase, int idx, int total, Module m) {
         String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
 
@@ -73,6 +90,7 @@ public final class PluginBootstrap {
                 case LOAD -> m.install(rt);
                 case START -> m.start(rt);
                 case STOP -> m.stop(rt);
+                case RELOAD -> m.reload(rt);
             };
 
             if (task == null) return;

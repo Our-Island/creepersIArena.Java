@@ -31,6 +31,18 @@ public final class JobModule implements Module {
         }, "Loading jobs...", "Finished loading jobs.");
     }
 
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            JobManager jm = rt.requireService(JobManager.class);
+
+            jm.clear();
+            int jobs = registerBuiltinJobs(jm, cfg.globalConfig().disabledJobs(), rt.log());
+            rt.log().info("[Job] Reloaded jobs: {}", jobs);
+        }, "Reloading jobs...", "Jobs reloaded.");
+    }
+
     public static int registerBuiltinJobs(JobManager jobManager, Set<String> disabledJobs, Logger log) {
         int count = 0;
         count += registerIfEnabled(jobManager, new CreeperJob(), disabledJobs, log);

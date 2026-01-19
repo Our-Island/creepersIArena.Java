@@ -23,4 +23,14 @@ public final class ConfigModule implements Module {
             rt.putService(ConfigManager.class, configManager);
         }, "Loading configs...", "Finished loading configs.");
     }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            ConfigManager cfg = rt.requireService(ConfigManager.class);
+
+            cfg.reloadAll();
+            I18n.init(cfg, rt.log());
+        }, "Reloading configs...", "Configs reloaded.");
+    }
 }

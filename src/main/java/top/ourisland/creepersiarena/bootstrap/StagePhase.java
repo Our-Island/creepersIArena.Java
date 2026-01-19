@@ -3,7 +3,8 @@ package top.ourisland.creepersiarena.bootstrap;
 public enum StagePhase {
     LOAD("Bootstrap-Load"),
     START("Bootstrap-Start"),
-    STOP("Bootstrap-Stop");
+    STOP("Bootstrap-Stop"),
+    RELOAD("Bootstrap-Reload");
 
     private final String tag;
 

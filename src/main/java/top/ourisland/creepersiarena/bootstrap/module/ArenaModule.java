@@ -42,4 +42,14 @@ public final class ArenaModule implements Module {
         ));
         return true;
     }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            ArenaManager arenaManager = rt.requireService(ArenaManager.class);
+
+            arenaManager.reload(cfg.arenaConfig());
+        }, "Reloading arenas...", "Arenas reloaded.");
+    }
 }

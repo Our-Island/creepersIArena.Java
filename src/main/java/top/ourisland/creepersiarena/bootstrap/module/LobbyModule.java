@@ -61,4 +61,14 @@ public final class LobbyModule implements Module {
 
         return true;
     }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            LobbyManager lobbyManager = rt.requireService(LobbyManager.class);
+
+            lobbyManager.reload(cfg.globalConfig());
+        }, "Reloading lobbies...", "Lobbies reloaded.");
+    }
 }
