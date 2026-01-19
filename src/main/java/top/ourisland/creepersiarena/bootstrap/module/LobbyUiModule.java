@@ -1,0 +1,53 @@
+package top.ourisland.creepersiarena.bootstrap.module;
+
+import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
+import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.StageTask;
+import top.ourisland.creepersiarena.game.flow.GameFlow;
+import top.ourisland.creepersiarena.game.listener.LobbyUiListener;
+import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
+import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.job.JobManager;
+
+import java.util.Map;
+
+public final class LobbyUiModule implements Module {
+    @Override
+    public String name() {
+        return "lobby-ui";
+    }
+
+    @Override
+    public StageTask install(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            JobManager jobManager = rt.requireService(JobManager.class);
+
+            LobbyItemCodec lobbyItemCodec = new LobbyItemCodec(rt.plugin());
+            LobbyItemFactory lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec, jobManager);
+            LobbyItemService lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
+
+            rt.putAllServices(Map.of(
+                    LobbyItemCodec.class, lobbyItemCodec,
+                    LobbyItemFactory.class, lobbyItemFactory,
+                    LobbyItemService.class, lobbyItemService
+            ));
+        }, "Building lobby UI...", "Finished building lobby UI.");
+    }
+
+    @Override
+    public boolean registerListeners(ListenerBinder binder) {
+        var rt = binder.rt();
+
+        binder.register("LobbyUiListener", () -> new LobbyUiListener(
+                rt.requireService(LobbyItemCodec.class),
+                rt.requireService(PlayerSessionStore.class),
+                rt.requireService(GameFlow.class)
+        ));
+
+        return true;
+    }
+
+}

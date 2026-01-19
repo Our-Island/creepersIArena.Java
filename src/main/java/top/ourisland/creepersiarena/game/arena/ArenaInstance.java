@@ -86,6 +86,13 @@ public record ArenaInstance(
         };
     }
 
+    public boolean matches(GameModeType type) {
+        return switch (type) {
+            case STEAL -> this.type().isBattle();
+            case BATTLE -> this.type().isSteal();
+        };
+    }
+
     public World world() {
         return anchor.getWorld();
     }

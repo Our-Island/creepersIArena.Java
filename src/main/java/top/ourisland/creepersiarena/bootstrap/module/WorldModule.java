@@ -1,0 +1,25 @@
+package top.ourisland.creepersiarena.bootstrap.module;
+
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.StageTask;
+
+public final class WorldModule implements Module {
+    @Override
+    public String name() {
+        return "world";
+    }
+
+    @Override
+    public StageTask install(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().getFirst();
+            if (world == null) throw new IllegalStateException("No world has been loaded, cannot start the plugin.");
+
+            rt.log().info("[World] Using world {} as main world.", world.getName());
+            rt.putService(World.class, world);
+        }, "Resolving world...", "Main using world resolved.");
+    }
+}
