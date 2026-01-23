@@ -7,6 +7,11 @@ import top.ourisland.creepersiarena.bootstrap.Module;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
+/**
+ * Module controlling game tick settings.
+ *
+ * @author Chiloven945
+ */
 public final class GameTickModule implements Module {
     @Override
     public String name() {

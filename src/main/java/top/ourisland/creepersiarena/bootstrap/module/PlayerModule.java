@@ -8,6 +8,11 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.PlayerConnectionListener;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
+/**
+ * Module controlling player related.
+ *
+ * @author Chiloven945
+ */
 public final class PlayerModule implements Module {
     @Override
     public String name() {

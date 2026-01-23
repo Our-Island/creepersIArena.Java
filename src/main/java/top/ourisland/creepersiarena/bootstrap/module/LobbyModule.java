@@ -16,6 +16,11 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
 import java.util.Map;
 
+/**
+ * Module controlling lobbies (hub, death).
+ *
+ * @author Chiloven945
+ */
 public final class LobbyModule implements Module {
     @Override
     public String name() {

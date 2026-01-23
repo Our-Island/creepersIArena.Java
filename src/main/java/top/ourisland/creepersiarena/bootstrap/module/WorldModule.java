@@ -6,6 +6,11 @@ import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.Module;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 
+/**
+ * Module getting default world that the game will run on.
+ *
+ * @author Chiloven945
+ */
 public final class WorldModule implements Module {
     @Override
     public String name() {

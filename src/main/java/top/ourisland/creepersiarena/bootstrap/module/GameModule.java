@@ -21,6 +21,11 @@ import top.ourisland.creepersiarena.game.player.RespawnService;
 
 import java.util.Map;
 
+/**
+ * Module controlling game runtime and game flow related.
+ *
+ * @author Chiloven945
+ */
 public final class GameModule implements Module {
     @Override
     public String name() {

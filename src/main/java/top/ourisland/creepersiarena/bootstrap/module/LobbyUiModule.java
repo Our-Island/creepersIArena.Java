@@ -14,6 +14,11 @@ import top.ourisland.creepersiarena.job.JobManager;
 
 import java.util.Map;
 
+/**
+ * Module controlling user interface in lobbies.
+ *
+ * @author Chiloven945
+ */
 public final class LobbyUiModule implements Module {
     @Override
     public String name() {

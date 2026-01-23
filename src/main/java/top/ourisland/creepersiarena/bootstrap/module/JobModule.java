@@ -11,6 +11,11 @@ import top.ourisland.creepersiarena.job.impl.CreeperJob;
 
 import java.util.Set;
 
+/**
+ * Module controlling job function in the game.
+ *
+ * @author Chiloven945
+ */
 public final class JobModule implements Module {
     @Override
     public String name() {

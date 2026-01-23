@@ -19,6 +19,11 @@ import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 
 import java.util.Map;
 
+/**
+ * Module controlling skills function used by the job.
+ *
+ * @author Chiloven945
+ */
 public final class SkillModule implements Module {
     @Override
     public String name() {

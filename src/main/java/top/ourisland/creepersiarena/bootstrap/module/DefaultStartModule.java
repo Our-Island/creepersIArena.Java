@@ -6,6 +6,11 @@ import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 
+/**
+ * Module that starts a default mode when loading.
+ *
+ * @author Chiloven945
+ */
 public final class DefaultStartModule implements Module {
     @Override
     public String name() {

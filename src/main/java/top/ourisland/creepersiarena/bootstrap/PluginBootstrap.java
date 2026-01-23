@@ -9,12 +9,22 @@ import top.ourisland.creepersiarena.bootstrap.module.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Main plugin bootstrap class.
+ *
+ * @author Chiloven945
+ */
 public final class PluginBootstrap {
 
     @Getter
     private final List<Module> modules = new ArrayList<>();
     private BootstrapRuntime rt;
 
+    /**
+     * Method should be called on plugin {@code onEnable()} method.
+     *
+     * @param plugin the {@link JavaPlugin} instance.
+     */
     public void enable(JavaPlugin plugin) {
         this.rt = new BootstrapRuntime(plugin);
 
@@ -65,23 +75,14 @@ public final class PluginBootstrap {
         log.info("creepersIArena is enabled!");
     }
 
-    public void reload() {
-        if (rt == null) return;
-
-        Logger log = rt.log();
-        long t0 = System.nanoTime();
-
-        int total = modules.size();
-        log.info("[Bootstrap] Reloading {} modules...", total);
-
-        for (int i = 0; i < total; i++) {
-            runStage(StagePhase.RELOAD, i + 1, total, modules.get(i));
-        }
-
-        long ms = (System.nanoTime() - t0) / 1_000_000L;
-        log.info("[Bootstrap] Reloaded in {}ms.", ms);
-    }
-
+    /**
+     * Universal stage running method.
+     *
+     * @param phase the phase to be run
+     * @param idx   the number of the module
+     * @param total the total number of modules
+     * @param m     the module to be executed
+     */
     private void runStage(StagePhase phase, int idx, int total, Module m) {
         String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
 
@@ -105,12 +106,35 @@ public final class PluginBootstrap {
         }
     }
 
+    /**
+     * Plugin hot-reload method. Should be used by command.
+     */
+    public void reload() {
+        if (rt == null) return;
+
+        Logger log = rt.log();
+        long t0 = System.nanoTime();
+
+        int total = modules.size();
+        log.info("[Bootstrap] Reloading {} modules...", total);
+
+        for (int i = 0; i < total; i++) {
+            runStage(StagePhase.RELOAD, i + 1, total, modules.get(i));
+        }
+
+        long ms = (System.nanoTime() - t0) / 1_000_000L;
+        log.info("[Bootstrap] Reloaded in {}ms.", ms);
+    }
+
     private void logIfPresent(String prefix, String message) {
         if (message != null && !message.isBlank()) {
             rt.log().info("{} {}", prefix, message);
         }
     }
 
+    /**
+     * Method should be called on plugin {@code onDisable()} method.
+     */
     public void disable() {
         if (rt == null) return;
 

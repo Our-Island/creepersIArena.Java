@@ -6,6 +6,11 @@ import top.ourisland.creepersiarena.bootstrap.Module;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
+/**
+ * Module attempting to fix issues occurred when reloading the plugin.
+ *
+ * @author Chiloven945
+ */
 public final class ReloadOnlinePlayersModule implements Module {
     @Override
     public String name() {

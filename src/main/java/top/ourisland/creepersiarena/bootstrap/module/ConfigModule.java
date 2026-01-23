@@ -6,6 +6,11 @@ import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.util.I18n;
 
+/**
+ * Module controlling configurations and internationalization & localization function.
+ *
+ * @author Chiloven945
+ */
 public final class ConfigModule implements Module {
     @Override
     public String name() {

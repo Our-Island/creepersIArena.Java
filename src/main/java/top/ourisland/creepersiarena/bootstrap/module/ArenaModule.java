@@ -12,6 +12,11 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.ArenaDeathListener;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
+/**
+ * Module controlling arena related features.
+ *
+ * @author Chiloven945
+ */
 public final class ArenaModule implements Module {
     @Override
     public String name() {
