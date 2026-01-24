@@ -92,16 +92,6 @@ jobs:
           echo "jar=$PLUGIN_JAR" >> "$GITHUB_OUTPUT"
           echo "Using plugin jar: $PLUGIN_JAR"
 
-      - name: Prepare Paper data dir
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p paper-data/plugins
-          echo "eula=true" > paper-data/eula.txt
-          cp -f "${{ steps.jar.outputs.jar }}" paper-data/plugins/
-          ls -la paper-data
-          ls -la paper-data/plugins
-
       - name: Start Paper (Docker)
         shell: bash
         run: |
