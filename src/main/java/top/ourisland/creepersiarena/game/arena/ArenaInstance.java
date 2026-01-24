@@ -1,14 +1,17 @@
 package top.ourisland.creepersiarena.game.arena;
 
+import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.jetbrains.annotations.NotNull;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.region.Bounds2D;
 import top.ourisland.creepersiarena.game.region.Region2D;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 运行时战场对象（由 config.model.ArenaConfig.ArenaDef 映射而来）
@@ -28,28 +31,24 @@ public record ArenaInstance(
         Map<String, Location> teamSpawnpoints
 ) {
     public ArenaInstance(
-            @NotNull String id,
-            @NotNull String nameKey,
-            @NotNull GameModeType type,
-            @NotNull Location anchor,
-            @NotNull Region2D region,
-            @NotNull List<Location> spawnpoints,
-            @NotNull Map<String, Location> teamSpawnpoints
+            @NonNull String id,
+            @NonNull String nameKey,
+            @NonNull GameModeType type,
+            @NonNull Location anchor,
+            @NonNull Region2D region,
+            @NonNull List<Location> spawnpoints,
+            @NonNull Map<String, Location> teamSpawnpoints
     ) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.nameKey = Objects.requireNonNull(nameKey, "nameKey");
-        this.type = Objects.requireNonNull(type, "type");
-        this.anchor = Objects.requireNonNull(anchor, "anchor");
-        this.region = Objects.requireNonNull(region, "region");
-        this.spawnpoints = List.copyOf(Objects.requireNonNull(spawnpoints, "spawnpoints"));
-        this.teamSpawnpoints = Map.copyOf(Objects.requireNonNull(teamSpawnpoints, "teamSpawnpoints"));
+        this.id = id;
+        this.nameKey = nameKey;
+        this.type = type;
+        this.anchor = anchor;
+        this.region = region;
+        this.spawnpoints = List.copyOf(spawnpoints);
+        this.teamSpawnpoints = Map.copyOf(teamSpawnpoints);
     }
 
-    public static ArenaInstance fromConfig(World world, String id, ArenaConfig.ArenaDef def) {
-        Objects.requireNonNull(world, "world");
-        Objects.requireNonNull(id, "id");
-        Objects.requireNonNull(def, "def");
-
+    public static ArenaInstance fromConfig(@NonNull World world, @NonNull String id, @NonNull ArenaConfig.ArenaDef def) {
         GameModeType type = parseMode(def.type());
 
         Location anchor = new Location(

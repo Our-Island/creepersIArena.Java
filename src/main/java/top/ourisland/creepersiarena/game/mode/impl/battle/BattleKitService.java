@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
+import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
@@ -9,7 +10,6 @@ import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 
-import java.util.Objects;
 import java.util.function.LongSupplier;
 
 public final class BattleKitService {
@@ -19,11 +19,16 @@ public final class BattleKitService {
     private final SkillHotbarRenderer skillRenderer;
     private final LongSupplier nowTick;
 
-    public BattleKitService(JobManager jobs, SkillRegistry skillRegistry, SkillHotbarRenderer skillRenderer, LongSupplier nowTick) {
-        this.jobs = Objects.requireNonNull(jobs, "jobs");
-        this.skillRegistry = Objects.requireNonNull(skillRegistry, "skillRegistry");
-        this.skillRenderer = Objects.requireNonNull(skillRenderer, "skillRenderer");
-        this.nowTick = Objects.requireNonNull(nowTick, "nowTick");
+    public BattleKitService(
+            @NonNull JobManager jobs,
+            @NonNull SkillRegistry skillRegistry,
+            @NonNull SkillHotbarRenderer skillRenderer,
+            @NonNull LongSupplier nowTick
+    ) {
+        this.jobs = jobs;
+        this.skillRegistry = skillRegistry;
+        this.skillRenderer = skillRenderer;
+        this.nowTick = nowTick;
     }
 
     public void apply(Player p, PlayerSession s) {

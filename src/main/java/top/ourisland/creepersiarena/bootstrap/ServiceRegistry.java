@@ -1,8 +1,9 @@
 package top.ourisland.creepersiarena.bootstrap;
 
+import lombok.NonNull;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Minimal type-keyed service registry for bootstrap wiring.
@@ -33,8 +34,8 @@ public final class ServiceRegistry {
      * @return the service instance
      * @throws NullPointerException if the service is missing
      */
-    <T> T require(Class<T> type) {
-        return Objects.requireNonNull(get(type), "Missing service: " + type.getName());
+    <T> T require(@NonNull Class<T> type) {
+        return get(type);
     }
 
     /**

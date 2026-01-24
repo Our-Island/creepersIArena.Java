@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.flow;
 
+import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,7 +22,6 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -38,17 +38,17 @@ public final class GameFlow {
     private final RespawnService respawns;
 
     public GameFlow(
-            Logger log,
-            PlayerSessionStore store,
-            GameManager gameManager,
-            PlayerTransitions transitions,
-            RespawnService respawns
+            @NonNull Logger log,
+            @NonNull PlayerSessionStore store,
+            @NonNull GameManager gameManager,
+            @NonNull PlayerTransitions transitions,
+            @NonNull RespawnService respawns
     ) {
-        this.log = Objects.requireNonNull(log, "log");
-        this.store = Objects.requireNonNull(store, "store");
-        this.gameManager = Objects.requireNonNull(gameManager, "gameManager");
-        this.transitions = Objects.requireNonNull(transitions, "transitions");
-        this.respawns = Objects.requireNonNull(respawns, "respawns");
+        this.log = log;
+        this.store = store;
+        this.gameManager = gameManager;
+        this.transitions = transitions;
+        this.respawns = respawns;
 
         this.respawns.callback(this::onRespawnCountdownFinished);
     }

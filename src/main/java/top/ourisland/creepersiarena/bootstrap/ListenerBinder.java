@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.bootstrap;
 
 import lombok.Getter;
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
@@ -32,8 +33,8 @@ public final class ListenerBinder {
      * @param rt bootstrap runtime (must not be null)
      * @throws NullPointerException if rt is null
      */
-    public ListenerBinder(BootstrapRuntime rt) {
-        this.rt = Objects.requireNonNull(rt, "rt");
+    public ListenerBinder(@NonNull BootstrapRuntime rt) {
+        this.rt = rt;
         this.pm = Bukkit.getPluginManager();
     }
 

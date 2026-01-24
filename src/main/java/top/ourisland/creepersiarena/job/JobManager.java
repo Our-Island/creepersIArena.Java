@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.job;
 
+import lombok.NonNull;
+
 import java.util.*;
 
 public final class JobManager {
@@ -9,8 +11,7 @@ public final class JobManager {
         jobs.clear();
     }
 
-    public void register(Job job) {
-        Objects.requireNonNull(job, "job");
+    public void register(@NonNull Job job) {
         jobs.put(job.id(), job);
     }
 

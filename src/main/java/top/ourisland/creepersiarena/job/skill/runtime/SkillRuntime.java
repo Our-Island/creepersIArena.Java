@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
+import lombok.NonNull;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.job.skill.SkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
@@ -7,7 +8,6 @@ import top.ourisland.creepersiarena.job.skill.event.SkillContext;
 import top.ourisland.creepersiarena.job.skill.event.Trigger;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 public final class SkillRuntime {
@@ -15,9 +15,12 @@ public final class SkillRuntime {
     private final SkillRegistry registry;
     private final SkillStateStore store;
 
-    public SkillRuntime(SkillRegistry registry, SkillStateStore store) {
-        this.registry = Objects.requireNonNull(registry, "registry");
-        this.store = Objects.requireNonNull(store, "store");
+    public SkillRuntime(
+            @NonNull SkillRegistry registry,
+            @NonNull SkillStateStore store
+    ) {
+        this.registry = registry;
+        this.store = store;
     }
 
     public void handle(SkillContext ctx) {

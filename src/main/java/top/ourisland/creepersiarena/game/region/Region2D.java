@@ -1,15 +1,17 @@
 package top.ourisland.creepersiarena.game.region;
 
+import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public record Region2D(World world, Bounds2D bounds) {
-    public Region2D(@NotNull World world, @NotNull Bounds2D bounds) {
-        this.world = Objects.requireNonNull(world, "world");
-        this.bounds = Objects.requireNonNull(bounds, "bounds");
+    public Region2D(
+            @NonNull World world,
+            @NonNull Bounds2D bounds
+    ) {
+        this.world = world;
+        this.bounds = bounds;
     }
 
     public boolean contains(@NotNull Location loc) {

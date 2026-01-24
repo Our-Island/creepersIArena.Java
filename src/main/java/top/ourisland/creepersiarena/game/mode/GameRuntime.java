@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.mode;
 
+import lombok.NonNull;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
@@ -8,7 +9,6 @@ import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class GameRuntime {
@@ -21,21 +21,21 @@ public final class GameRuntime {
     private final GameManager gameManager;
 
     public GameRuntime(
-            Supplier<GlobalConfig> cfg,
-            ArenaManager arenaManager,
-            PlayerSessionStore sessionStore,
-            PlayerTransitions transitions,
-            RespawnService respawns,
-            GameFlow flow,
-            GameManager gameManager
+            @NonNull Supplier<GlobalConfig> cfg,
+            @NonNull ArenaManager arenaManager,
+            @NonNull PlayerSessionStore sessionStore,
+            @NonNull PlayerTransitions transitions,
+            @NonNull RespawnService respawns,
+            @NonNull GameFlow flow,
+            @NonNull GameManager gameManager
     ) {
-        this.cfg = Objects.requireNonNull(cfg, "cfg");
-        this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
-        this.sessionStore = Objects.requireNonNull(sessionStore, "sessionStore");
-        this.transitions = Objects.requireNonNull(transitions, "transitions");
-        this.respawns = Objects.requireNonNull(respawns, "respawns");
-        this.flow = Objects.requireNonNull(flow, "flow");
-        this.gameManager = Objects.requireNonNull(gameManager, "gameManager");
+        this.cfg = cfg;
+        this.arenaManager = arenaManager;
+        this.sessionStore = sessionStore;
+        this.transitions = transitions;
+        this.respawns = respawns;
+        this.flow = flow;
+        this.gameManager = gameManager;
     }
 
     public GlobalConfig cfg() {

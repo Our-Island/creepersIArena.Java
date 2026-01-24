@@ -1,10 +1,9 @@
 package top.ourisland.creepersiarena.bootstrap;
 
 import lombok.Getter;
+import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * Describes a unit of work for a single bootstrap stage (install/start/stop/reload).
@@ -36,8 +35,12 @@ public final class StageTask {
      */
     private final String endMessage;
 
-    private StageTask(Runnable action, String beginMessage, String endMessage) {
-        this.action = Objects.requireNonNull(action, "action");
+    private StageTask(
+            @NonNull Runnable action,
+            @Nullable String beginMessage,
+            @Nullable String endMessage
+    ) {
+        this.action = action;
         this.beginMessage = beginMessage;
         this.endMessage = endMessage;
     }

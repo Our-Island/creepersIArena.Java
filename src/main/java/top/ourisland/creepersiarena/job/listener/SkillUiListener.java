@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.job.listener;
 
+import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,7 +19,6 @@ import top.ourisland.creepersiarena.job.skill.event.impl.InteractEvent;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 
-import java.util.Objects;
 import java.util.function.LongSupplier;
 
 public final class SkillUiListener implements Listener {
@@ -28,11 +28,16 @@ public final class SkillUiListener implements Listener {
     private final SkillRuntime runtime;
     private final LongSupplier nowTick;
 
-    public SkillUiListener(PlayerSessionStore sessions, SkillItemCodec codec, SkillRuntime runtime, LongSupplier nowTick) {
-        this.sessions = Objects.requireNonNull(sessions, "sessions");
-        this.codec = Objects.requireNonNull(codec, "codec");
-        this.runtime = Objects.requireNonNull(runtime, "runtime");
-        this.nowTick = Objects.requireNonNull(nowTick, "nowTick");
+    public SkillUiListener(
+            @NonNull PlayerSessionStore sessions,
+            @NonNull SkillItemCodec codec,
+            @NonNull SkillRuntime runtime,
+            @NonNull LongSupplier nowTick
+    ) {
+        this.sessions = sessions;
+        this.codec = codec;
+        this.runtime = runtime;
+        this.nowTick = nowTick;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

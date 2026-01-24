@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.arena;
 
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -23,14 +24,15 @@ public final class ArenaManager {
     private final Map<String, ArenaInstance> arenas = new LinkedHashMap<>();
     private final SpawnpointSelector spawnpointSelector = new SpawnpointSelector();
 
-    public ArenaManager(@NotNull World world, @NotNull Logger logger) {
-        this.world = Objects.requireNonNull(world, "world");
-        this.logger = Objects.requireNonNull(logger, "logger");
+    public ArenaManager(
+            @NonNull World world,
+            @NonNull Logger logger
+    ) {
+        this.world = world;
+        this.logger = logger;
     }
 
-    public void reload(@NotNull ArenaConfig arenaConfig) {
-        Objects.requireNonNull(arenaConfig, "arenaConfig");
-
+    public void reload(@NonNull ArenaConfig arenaConfig) {
         logger.info("[Arena] Starting to (re)load arenas...");
         arenas.clear();
 
@@ -113,9 +115,7 @@ public final class ArenaManager {
         return Collections.unmodifiableCollection(arenas.values());
     }
 
-    public @NotNull Location anyBattleSpawnOrFallback(@NotNull Location fallback) {
-        Objects.requireNonNull(fallback, "fallback");
-
+    public @NotNull Location anyBattleSpawnOrFallback(@NonNull Location fallback) {
         List<ArenaInstance> battles = arenasOf(GameModeType.BATTLE);
         if (battles.isEmpty()) {
             return fallback.clone();
@@ -145,16 +145,11 @@ public final class ArenaManager {
         return out;
     }
 
-    public @NotNull Location battleSpawnOrFallback(@NotNull ArenaInstance arena, @NotNull Location fallback) {
-        Objects.requireNonNull(arena, "arena");
-        Objects.requireNonNull(fallback, "fallback");
-
+    public @NotNull Location battleSpawn(@NonNull ArenaInstance arena) {
         if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
-            return (arena.anchor() == null ? fallback.clone() : arena.anchor().clone());
+            return arena.anchor().clone();
         }
 
-        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
-        int radius = 10;
-        return spawnpointSelector.pickBattleLeastCrowded(arena, online, radius);
+        return spawnpointSelector.pickBattleLeastCrowded(arena, Bukkit.getOnlinePlayers(), 10);
     }
 }

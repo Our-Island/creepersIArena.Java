@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.game;
 
+import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
@@ -21,22 +23,26 @@ public final class GameManager {
     private final Map<GameModeType, GameMode> modes = new EnumMap<>(GameModeType.class);
     private final Map<GameModeType, Integer> autoIndex = new EnumMap<>(GameModeType.class);
     private final Map<GameModeType, String> lastAutoArenaId = new EnumMap<>(GameModeType.class);
+
     private @Nullable GameRuntime runtime;
     private @Nullable GameSession active;
     private @Nullable ModeRules rules;
     private @Nullable ModeTimeline timeline;
 
-    public GameManager(ArenaManager arenaManager, Logger logger) {
-        this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
-        this.logger = Objects.requireNonNull(logger, "logger");
+    public GameManager(
+            @NonNull ArenaManager arenaManager,
+            @NonNull Logger logger
+    ) {
+        this.arenaManager = arenaManager;
+        this.logger = logger;
     }
 
     public ArenaManager arenaManager() {
         return arenaManager;
     }
 
-    public void bindRuntime(GameRuntime runtime) {
-        this.runtime = Objects.requireNonNull(runtime, "runtime");
+    public void bindRuntime(@NonNull GameRuntime runtime) {
+        this.runtime = runtime;
         logger.info("[Game] Runtime bound.");
     }
 
@@ -98,7 +104,7 @@ public final class GameManager {
     }
 
     public GameRuntime runtime() {
-        return Objects.requireNonNull(runtime, "GameRuntime not bound");
+        return runtime;
     }
 
     public void start(GameModeType type, String arenaId) {

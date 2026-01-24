@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.flow;
 
+import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -20,7 +21,6 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.JobId;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -42,24 +42,24 @@ public final class PlayerTransitions {
     private final Supplier<GlobalConfig> cfg;
 
     public PlayerTransitions(
-            Plugin plugin,
-            Logger log,
-            PlayerSessionStore store,
-            LobbyItemService lobbyItemService,
-            LobbyService lobbyService,
-            ArenaManager arenaManager,
-            BattleKitService battleKit,
-            Supplier<GlobalConfig> cfg
+            @NonNull Plugin plugin,
+            @NonNull Logger log,
+            @NonNull PlayerSessionStore store,
+            @NonNull LobbyItemService lobbyItemService,
+            @NonNull LobbyService lobbyService,
+            @NonNull ArenaManager arenaManager,
+            @NonNull BattleKitService battleKit,
+            @NonNull Supplier<GlobalConfig> cfg
     ) {
-        this.plugin = Objects.requireNonNull(plugin, "plugin");
-        this.log = Objects.requireNonNull(log, "log");
-        this.store = Objects.requireNonNull(store, "store");
-        this.lobbyItemService = Objects.requireNonNull(lobbyItemService, "kitService");
-        this.lobbyService = Objects.requireNonNull(lobbyService, "lobbyService");
-        this.arenaManager = Objects.requireNonNull(arenaManager, "arenaManager");
-        this.battleKit = Objects.requireNonNull(battleKit, "battleKit");
+        this.plugin = plugin;
+        this.log = log;
+        this.store = store;
+        this.lobbyItemService = lobbyItemService;
+        this.lobbyService = lobbyService;
+        this.arenaManager = arenaManager;
+        this.battleKit = battleKit;
+        this.cfg = cfg;
         this.selectedJobKey = new NamespacedKey(plugin, "selected_job");
-        this.cfg = Objects.requireNonNull(cfg, "cfg");
     }
 
     public Plugin plugin() {
@@ -186,7 +186,7 @@ public final class PlayerTransitions {
 
         p.setGameMode(GameMode.ADVENTURE);
 
-        Location loc = arenaManager.battleSpawnOrFallback(g.arena(), hubAnchor());
+        Location loc = arenaManager.battleSpawn(g.arena());
         p.teleport(loc);
 
         battleKit.apply(p, session);

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.player;
 
+import lombok.NonNull;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -11,7 +12,6 @@ import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -26,11 +26,16 @@ public final class RespawnService {
     @Setter
     private Consumer<Player> callback;
 
-    public RespawnService(Plugin plugin, Logger log, PlayerSessionStore store, PlayerTransitions transitions) {
-        this.plugin = Objects.requireNonNull(plugin, "plugin");
-        this.log = Objects.requireNonNull(log, "log");
-        this.store = Objects.requireNonNull(store, "store");
-        this.transitions = Objects.requireNonNull(transitions, "transitions");
+    public RespawnService(
+            @NonNull Plugin plugin,
+            @NonNull Logger log,
+            @NonNull PlayerSessionStore store,
+            @NonNull PlayerTransitions transitions
+    ) {
+        this.plugin = plugin;
+        this.log = log;
+        this.store = store;
+        this.transitions = transitions;
     }
 
     /**

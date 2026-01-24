@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
+import lombok.NonNull;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
@@ -10,16 +11,18 @@ import top.ourisland.creepersiarena.job.skill.SkillDefinition;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public final class SkillRegistry {
 
     private final PlayerSessionStore sessions;
     private final JobManager jobs;
 
-    public SkillRegistry(PlayerSessionStore sessions, JobManager jobs) {
-        this.sessions = Objects.requireNonNull(sessions, "sessions");
-        this.jobs = Objects.requireNonNull(jobs, "jobs");
+    public SkillRegistry(
+            @NonNull PlayerSessionStore sessions,
+            @NonNull JobManager jobs
+    ) {
+        this.sessions = sessions;
+        this.jobs = jobs;
     }
 
     public List<SkillDefinition> skillsOf(Player p) {
