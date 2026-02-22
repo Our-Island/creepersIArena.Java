@@ -5,7 +5,7 @@ import org.bukkit.World;
 import org.jspecify.annotations.NonNull;
 
 /**
- * A world-bound region with {@link Bounds}.
+ * A world-bound region with {@link IBounds}.
  *
  * <p>World match is checked by UID. Bounds checks use block coordinates:
  * <ul>
@@ -15,7 +15,7 @@ import org.jspecify.annotations.NonNull;
  *
  * @param <B> the type of bounds to be used
  */
-public interface Region<B extends Bounds> {
+public interface IRegion<B extends IBounds> {
 
     /**
      * Returns whether the given location is inside this region.

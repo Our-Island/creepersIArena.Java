@@ -2,16 +2,16 @@ package top.ourisland.creepersiarena.job.impl;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import top.ourisland.creepersiarena.job.Job;
+import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobId;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill1;
 import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill2;
 import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill3;
 
 import java.util.List;
 
-public class CreeperJob implements Job {
+public class CreeperJob implements IJob {
     @Override
     public JobId id() {
         return JobId.CREEPER;
@@ -28,7 +28,7 @@ public class CreeperJob implements Job {
     }
 
     @Override
-    public List<SkillDefinition> skills() {
+    public List<ISkillDefinition> skills() {
         return List.of(
                 new Skill1(),
                 new Skill2(),

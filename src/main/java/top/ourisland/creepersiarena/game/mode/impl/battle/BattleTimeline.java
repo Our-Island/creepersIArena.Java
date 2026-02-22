@@ -6,12 +6,12 @@ import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.ModeTimeline;
+import top.ourisland.creepersiarena.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.game.mode.context.TickContext;
 
 import java.util.List;
 
-public final class BattleTimeline implements ModeTimeline {
+public final class BattleTimeline implements IModeTimeline {
 
     private final GameRuntime runtime;
     private final GameSession session;

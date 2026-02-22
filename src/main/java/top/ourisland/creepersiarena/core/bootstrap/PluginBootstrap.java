@@ -17,7 +17,7 @@ import java.util.List;
 public final class PluginBootstrap {
 
     @Getter
-    private final List<BootstrapModule> bootstrapModules = new ArrayList<>();
+    private final List<IBootstrapModule> bootstrapModules = new ArrayList<>();
     private BootstrapRuntime rt;
 
     /**
@@ -61,7 +61,7 @@ public final class PluginBootstrap {
 
         ListenerBinder binder = new ListenerBinder(rt).verbose(false);
         int usedModules = 0;
-        for (BootstrapModule m : bootstrapModules) {
+        for (IBootstrapModule m : bootstrapModules) {
             try {
                 if (m.registerListeners(binder)) usedModules++;
             } catch (Throwable t) {
@@ -88,7 +88,7 @@ public final class PluginBootstrap {
      * @param total the total number of modules
      * @param m     the module to be executed
      */
-    private void runStage(StagePhase phase, int idx, int total, BootstrapModule m) {
+    private void runStage(StagePhase phase, int idx, int total, IBootstrapModule m) {
         String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
 
         try {

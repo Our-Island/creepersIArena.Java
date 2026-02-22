@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.PlayerConnectionListener;
@@ -13,7 +13,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
  *
  * @author Chiloven945
  */
-public final class PlayerModule implements BootstrapModule {
+public final class PlayerModule implements IBootstrapModule {
     @Override
     public String name() {
         return "player";

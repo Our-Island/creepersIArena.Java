@@ -9,7 +9,7 @@ import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.ModeTimeline;
+import top.ourisland.creepersiarena.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.game.mode.context.TickContext;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-public final class StealTimeline implements ModeTimeline {
+public final class StealTimeline implements IModeTimeline {
 
     private static final int PRE_SPECTATE_SECONDS = 5;
     private static final int PICK_BASE_SECONDS = 10;

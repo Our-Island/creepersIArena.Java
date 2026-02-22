@@ -7,17 +7,17 @@ public final class Triggers {
     private Triggers() {
     }
 
-    public static Trigger interactRightClick() {
+    public static ITrigger interactRightClick() {
         return ctx -> (ctx.event() instanceof InteractEvent ie)
                 && ie.action().isRightClick();
     }
 
-    public static Trigger interactLeftClick() {
+    public static ITrigger interactLeftClick() {
         return ctx -> (ctx.event() instanceof InteractEvent ie)
                 && ie.action().isLeftClick();
     }
 
-    public static Trigger tickEvery(long periodTicks) {
+    public static ITrigger tickEvery(long periodTicks) {
         return ctx -> (ctx.event() instanceof TickEvent(long nowTick))
                 && periodTicks > 0 && (nowTick % periodTicks == 0);
     }

@@ -1,5 +1,5 @@
 package top.ourisland.creepersiarena.job.skill.event;
 
-public interface SkillEvent {
+public interface ISkillEvent {
     SkillEventType type();
 }

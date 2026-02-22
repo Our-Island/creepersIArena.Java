@@ -1,10 +1,10 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.event.SkillContext;
-import top.ourisland.creepersiarena.job.skill.event.Trigger;
+import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public final class SkillRuntime {
 
     public void handle(SkillContext ctx) {
         Player p = ctx.player();
-        List<SkillDefinition> skills = registry.skillsOf(p);
+        List<ISkillDefinition> skills = registry.skillsOf(p);
         if (skills.isEmpty()) return;
 
         UUID pid = p.getUniqueId();
@@ -37,7 +37,7 @@ public final class SkillRuntime {
         double f = cooldownFactor.getAsDouble();
         if (Double.isNaN(f) || Double.isInfinite(f) || f < 0) f = 1.0;
 
-        for (SkillDefinition def : skills) {
+        for (ISkillDefinition def : skills) {
             if (def == null) continue;
 
             if (def.kind() == SkillType.ACTIVE) {
@@ -65,10 +65,10 @@ public final class SkillRuntime {
         }
     }
 
-    private boolean matchesAnyTrigger(SkillDefinition def, SkillContext ctx) {
-        List<Trigger> triggers = def.triggers();
+    private boolean matchesAnyTrigger(ISkillDefinition def, SkillContext ctx) {
+        List<ITrigger> triggers = def.triggers();
         if (triggers == null || triggers.isEmpty()) return false;
-        for (Trigger t : triggers) {
+        for (ITrigger t : triggers) {
             try {
                 if (t != null && t.matches(ctx)) return true;
             } catch (Throwable ignored) {

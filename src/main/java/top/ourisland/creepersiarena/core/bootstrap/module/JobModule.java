@@ -2,10 +2,10 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
-import top.ourisland.creepersiarena.job.Job;
+import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.impl.CreeperJob;
 
@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * @author Chiloven945
  */
-public final class JobModule implements BootstrapModule {
+public final class JobModule implements IBootstrapModule {
     @Override
     public String name() {
         return "job";
@@ -54,7 +54,7 @@ public final class JobModule implements BootstrapModule {
         return count;
     }
 
-    private static int registerIfEnabled(JobManager jobManager, Job job, Set<String> disabledJobs, Logger log) {
+    private static int registerIfEnabled(JobManager jobManager, IJob job, Set<String> disabledJobs, Logger log) {
         String id = job.id().toString();
         boolean disabled = disabledJobs != null && disabledJobs.stream()
                 .anyMatch(s -> s != null && s.trim().equalsIgnoreCase(id));

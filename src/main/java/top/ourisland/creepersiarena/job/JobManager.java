@@ -4,21 +4,21 @@ package top.ourisland.creepersiarena.job;
 import java.util.*;
 
 public final class JobManager {
-    private final Map<JobId, Job> jobs = new HashMap<>();
+    private final Map<JobId, IJob> jobs = new HashMap<>();
 
     public void clear() {
         jobs.clear();
     }
 
-    public void register(@lombok.NonNull Job job) {
+    public void register(@lombok.NonNull IJob job) {
         jobs.put(job.id(), job);
     }
 
-    public Job getJob(String id) {
+    public IJob getJob(String id) {
         return getJob(JobId.fromId(id));
     }
 
-    public Job getJob(JobId id) {
+    public IJob getJob(JobId id) {
         return jobs.get(id);
     }
 
@@ -28,7 +28,7 @@ public final class JobManager {
                 .toList();
     }
 
-    public Collection<Job> getAllJobs() {
+    public Collection<IJob> getAllJobs() {
         return Collections.unmodifiableCollection(jobs.values());
     }
 }

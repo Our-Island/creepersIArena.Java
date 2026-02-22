@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
-public final class SkillModule implements BootstrapModule {
+public final class SkillModule implements IBootstrapModule {
     @Override
     public String name() {
         return "skill";

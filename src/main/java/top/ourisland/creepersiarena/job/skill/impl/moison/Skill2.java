@@ -1,14 +1,14 @@
 package top.ourisland.creepersiarena.job.skill.impl.moison;
 
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
-import top.ourisland.creepersiarena.job.skill.SkillExecutor;
-import top.ourisland.creepersiarena.job.skill.SkillIcon;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
+import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.Trigger;
+import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 
 import java.util.List;
 
-public class Skill2 implements SkillDefinition {
+public class Skill2 implements ISkillDefinition {
 
     @Override
     public String id() {
@@ -36,17 +36,17 @@ public class Skill2 implements SkillDefinition {
     }
 
     @Override
-    public List<Trigger> triggers() {
+    public List<ITrigger> triggers() {
         return List.of();
     }
 
     @Override
-    public SkillIcon icon() {
+    public ISkillIcon icon() {
         return null;
     }
 
     @Override
-    public SkillExecutor executor() {
+    public ISkillExecutor executor() {
         return null;
     }
 }

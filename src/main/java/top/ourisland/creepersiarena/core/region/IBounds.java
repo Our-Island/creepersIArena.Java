@@ -11,7 +11,7 @@ package top.ourisland.creepersiarena.core.region;
  *
  * <p>All checks are inclusive.</p>
  */
-public interface Bounds {
+public interface IBounds {
 
     /**
      * If this bounds is 2D, Y is ignored and only XZ is checked.

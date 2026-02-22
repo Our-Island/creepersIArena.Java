@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>Printing the end message (if present).</li>
  * </ul>
  *
- * <p>A {@code null} {@link StageTask} returned by a {@link BootstrapModule} stage method indicates that
+ * <p>A {@code null} {@link StageTask} returned by a {@link IBootstrapModule} stage method indicates that
  * the stage is skipped and no stage logs should be printed for that module.</p>
  */
 @Getter

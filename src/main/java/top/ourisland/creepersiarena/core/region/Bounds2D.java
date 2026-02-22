@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.core.region;
 public record Bounds2D(
         double minX, double maxX,
         double minZ, double maxZ
-) implements Bounds {
+) implements IBounds {
 
     public static Bounds2D of(
             double x1, double z1,

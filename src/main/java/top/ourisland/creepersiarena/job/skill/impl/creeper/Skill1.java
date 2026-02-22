@@ -11,18 +11,18 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
-import top.ourisland.creepersiarena.job.skill.SkillExecutor;
-import top.ourisland.creepersiarena.job.skill.SkillIcon;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
+import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.Trigger;
+import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import top.ourisland.creepersiarena.job.skill.event.Triggers;
 import top.ourisland.creepersiarena.util.I18n;
 import top.ourisland.creepersiarena.util.LangKeyResolver;
 
 import java.util.List;
 
-public class Skill1 implements SkillDefinition {
+public class Skill1 implements ISkillDefinition {
 
     private static final long FUSE_TICKS = 15L;
     private static final double SPEED = 0.75;
@@ -54,7 +54,7 @@ public class Skill1 implements SkillDefinition {
     }
 
     @Override
-    public List<Trigger> triggers() {
+    public List<ITrigger> triggers() {
         return List.of(
                 Triggers.interactRightClick(),
                 Triggers.interactRightClick()
@@ -62,7 +62,7 @@ public class Skill1 implements SkillDefinition {
     }
 
     @Override
-    public SkillIcon icon() {
+    public ISkillIcon icon() {
         return player -> {
             ItemStack it = new ItemStack(Material.CREEPER_SPAWN_EGG);
             ItemMeta meta = it.getItemMeta();
@@ -78,7 +78,7 @@ public class Skill1 implements SkillDefinition {
     }
 
     @Override
-    public SkillExecutor executor() {
+    public ISkillExecutor executor() {
         return (ctx, store) -> {
             Player caster = ctx.player();
             if (caster == null) return;

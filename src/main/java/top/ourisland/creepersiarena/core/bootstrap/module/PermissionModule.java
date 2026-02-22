@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.permission.CiaPermissions;
@@ -10,7 +10,7 @@ import top.ourisland.creepersiarena.core.permission.LuckPermsService;
 /**
  * Registers permissions in code and optionally hooks LuckPerms.
  */
-public final class PermissionModule implements BootstrapModule {
+public final class PermissionModule implements IBootstrapModule {
 
     @Override
     public String name() {

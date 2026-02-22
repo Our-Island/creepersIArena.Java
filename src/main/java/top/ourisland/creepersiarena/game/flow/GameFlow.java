@@ -17,7 +17,7 @@ import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.game.mode.ModeRules;
+import top.ourisland.creepersiarena.game.mode.IModeRules;
 import top.ourisland.creepersiarena.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.game.mode.context.RespawnContext;
@@ -94,7 +94,7 @@ public final class GameFlow {
         PlayerSession s = transitions.ensureSession(p);
 
         GameSession g = gameManager.active();
-        ModeRules rules = gameManager.rules();
+        IModeRules rules = gameManager.rules();
 
         if (g != null) {
             g.addPlayer(p.getUniqueId());
@@ -260,7 +260,7 @@ public final class GameFlow {
         if (s == null) return;
 
         GameSession g = gameManager.active();
-        ModeRules rules = gameManager.rules();
+        IModeRules rules = gameManager.rules();
 
         RespawnDecision decision = (rules == null || g == null)
                 ? new RespawnDecision.Hub()
@@ -632,7 +632,7 @@ public final class GameFlow {
                     p.getName(), g.mode(), g.arena().id(), reason
             );
 
-            ModeRules rules = gameManager.rules();
+            IModeRules rules = gameManager.rules();
             if (rules != null && s != null) {
                 try {
                     rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));

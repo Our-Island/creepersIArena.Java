@@ -12,18 +12,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
-import top.ourisland.creepersiarena.job.skill.SkillExecutor;
-import top.ourisland.creepersiarena.job.skill.SkillIcon;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
+import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.Trigger;
+import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import top.ourisland.creepersiarena.job.skill.event.Triggers;
 import top.ourisland.creepersiarena.util.I18n;
 import top.ourisland.creepersiarena.util.LangKeyResolver;
 
 import java.util.List;
 
-public class Skill3 implements SkillDefinition {
+public class Skill3 implements ISkillDefinition {
 
     public static final String TAG_SKILL3_FW = "cia_skill3_fw";
     public static final String TAG_SKILL3_OWNER = "cia_skill3_owner:";
@@ -77,12 +77,12 @@ public class Skill3 implements SkillDefinition {
     }
 
     @Override
-    public List<Trigger> triggers() {
+    public List<ITrigger> triggers() {
         return List.of(Triggers.interactRightClick());
     }
 
     @Override
-    public SkillIcon icon() {
+    public ISkillIcon icon() {
         return player -> {
             ItemStack it = new ItemStack(Material.COMPARATOR);
             ItemMeta meta = it.getItemMeta();
@@ -97,7 +97,7 @@ public class Skill3 implements SkillDefinition {
     }
 
     @Override
-    public SkillExecutor executor() {
+    public ISkillExecutor executor() {
         return (ctx, store) -> {
             Player p = ctx.player();
             if (p == null) return;

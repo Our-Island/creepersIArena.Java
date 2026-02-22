@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -25,7 +25,7 @@ import java.util.Set;
  *
  * @author Chiloven945
  */
-public final class GameModule implements BootstrapModule {
+public final class GameModule implements IBootstrapModule {
 
     @Override
     public String name() {

@@ -5,7 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
-import top.ourisland.creepersiarena.job.Job;
+import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.util.I18n;
@@ -29,7 +29,7 @@ public final class LobbyItemFactory {
         boolean selected = s.selectedJob() != null && s.selectedJob().id().equals(jobId);
 
         JobId jid = JobId.fromId(jobId);
-        Job job = (jid == null) ? null : jobs.getJob(jid);
+        IJob job = (jid == null) ? null : jobs.getJob(jid);
         if (job == null) return null;
 
         ItemStack item = job.display().clone();

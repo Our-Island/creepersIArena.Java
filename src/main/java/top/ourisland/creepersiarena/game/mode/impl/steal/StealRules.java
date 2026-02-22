@@ -6,12 +6,12 @@ import top.ourisland.creepersiarena.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.ModeRules;
+import top.ourisland.creepersiarena.game.mode.IModeRules;
 import top.ourisland.creepersiarena.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.game.mode.context.RespawnContext;
 
-public final class StealRules implements ModeRules {
+public final class StealRules implements IModeRules {
 
     private final GameRuntime runtime;
     private final GameSession game;

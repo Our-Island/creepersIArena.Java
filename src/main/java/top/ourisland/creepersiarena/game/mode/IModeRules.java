@@ -6,7 +6,7 @@ import top.ourisland.creepersiarena.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.game.mode.context.RespawnContext;
 
-public interface ModeRules {
+public interface IModeRules {
     GameModeType type();
 
     JoinDecision onJoin(JoinContext ctx);

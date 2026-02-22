@@ -1,4 +1,4 @@
 package top.ourisland.creepersiarena.game.mode;
 
-public record ModeLogic(ModeRules rules, ModeTimeline timeline) {
+public record ModeLogic(IModeRules rules, IModeTimeline timeline) {
 }

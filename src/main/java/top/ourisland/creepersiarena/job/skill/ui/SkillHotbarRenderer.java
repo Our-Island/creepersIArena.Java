@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillStateStore;
 
@@ -25,13 +25,13 @@ public final class SkillHotbarRenderer {
         this.store = store;
     }
 
-    public void render(Player p, List<SkillDefinition> skills, long nowTick) {
+    public void render(Player p, List<ISkillDefinition> skills, long nowTick) {
         if (p == null || skills == null) return;
 
         PlayerInventory inv = p.getInventory();
 
-        SkillDefinition[] desired = new SkillDefinition[9];
-        for (SkillDefinition def : skills) {
+        ISkillDefinition[] desired = new ISkillDefinition[9];
+        for (ISkillDefinition def : skills) {
             if (def == null) continue;
             if (def.kind() != SkillType.ACTIVE) continue;
 
@@ -42,7 +42,7 @@ public final class SkillHotbarRenderer {
         }
 
         for (int slot = 0; slot <= 8; slot++) {
-            SkillDefinition def = desired[slot];
+            ISkillDefinition def = desired[slot];
             ItemStack cur = inv.getItem(slot);
 
             if (def == null) {
@@ -70,7 +70,7 @@ public final class SkillHotbarRenderer {
         }
     }
 
-    private ItemStack buildSkillItem(Player p, SkillDefinition def, long nowTick) {
+    private ItemStack buildSkillItem(Player p, ISkillDefinition def, long nowTick) {
         long remain = store.cooldownRemainingTicks(p.getUniqueId(), def.id(), nowTick);
 
         ItemStack base;

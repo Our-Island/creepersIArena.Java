@@ -22,7 +22,7 @@ package top.ourisland.creepersiarena.core.bootstrap;
  *   <li>Limit {@link #reload(BootstrapRuntime)} to configuration/state refresh that is safe during runtime.</li>
  * </ul>
  */
-public interface BootstrapModule {
+public interface IBootstrapModule {
     /**
      * The name of the module in lower case.
      *

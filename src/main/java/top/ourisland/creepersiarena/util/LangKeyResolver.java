@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.util;
 
 import net.kyori.adventure.text.Component;
 import top.ourisland.creepersiarena.job.JobId;
-import top.ourisland.creepersiarena.job.skill.SkillDefinition;
+import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 
 import java.util.List;
 import java.util.function.IntFunction;
@@ -55,7 +55,7 @@ public final class LangKeyResolver {
      * @param skill the skill definition (must not be null)
      * @return the language key for the skill name
      */
-    public static String skillName(SkillDefinition skill) {
+    public static String skillName(ISkillDefinition skill) {
         return skillBase(skill) + ".name";
     }
 
@@ -65,12 +65,12 @@ public final class LangKeyResolver {
      * <p>Key format:
      * <pre>{@code cia.job.<job>.skill.<skill>}</pre>
      *
-     * <p>This method delegates to {@link #skillBase(String)} using {@link SkillDefinition#id()}.</p>
+     * <p>This method delegates to {@link #skillBase(String)} using {@link ISkillDefinition#id()}.</p>
      *
      * @param skill the skill definition (must not be null)
      * @return the base skill key prefix
      */
-    public static String skillBase(@lombok.NonNull SkillDefinition skill) {
+    public static String skillBase(@lombok.NonNull ISkillDefinition skill) {
         return skillBase(skill.id());
     }
 
@@ -109,7 +109,7 @@ public final class LangKeyResolver {
      * @param loreArgs optional arguments forwarded to {@link I18n#langNP(String, Object...)} for placeholder replacement
      * @return resolved lore lines as {@link Component}s (possibly empty if the first line key is missing)
      */
-    public static List<Component> resolveSkillLore(@lombok.NonNull SkillDefinition skill, Object... loreArgs) {
+    public static List<Component> resolveSkillLore(@lombok.NonNull ISkillDefinition skill, Object... loreArgs) {
         return resolveLore(20, i -> skillLore(skill, i), loreArgs);
     }
 
@@ -150,11 +150,11 @@ public final class LangKeyResolver {
      * <pre>{@code cia.job.<job>.skill.<skill>.lore.<line>}</pre>
      *
      * @param skill the skill definition (may be null; but passing null will NPE in
-     *              {@link #skillBase(SkillDefinition)})
+     *              {@link #skillBase(ISkillDefinition)})
      * @param line  1-based line number
      * @return the language key for the skill lore line
      */
-    public static String skillLore(SkillDefinition skill, int line) {
+    public static String skillLore(ISkillDefinition skill, int line) {
         return skillBase(skill) + ".lore." + line;
     }
 

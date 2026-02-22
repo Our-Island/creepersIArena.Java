@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 public record SkillContext(
         Player player,
-        SkillEvent event,
+        ISkillEvent event,
         @Nullable ItemStack sourceItem,
         @Nullable String sourceSkillId,
         long nowTick

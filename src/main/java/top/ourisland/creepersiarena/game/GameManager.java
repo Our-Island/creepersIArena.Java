@@ -20,14 +20,14 @@ public final class GameManager {
     private final ArenaManager arenaManager;
     private final Logger logger;
 
-    private final Map<GameModeType, GameMode> modes = new EnumMap<>(GameModeType.class);
+    private final Map<GameModeType, IGameMode> modes = new EnumMap<>(GameModeType.class);
     private final Map<GameModeType, Integer> autoIndex = new EnumMap<>(GameModeType.class);
     private final Map<GameModeType, String> lastAutoArenaId = new EnumMap<>(GameModeType.class);
 
     private @Nullable GameRuntime runtime;
     private @Nullable GameSession active;
-    private @Nullable ModeRules rules;
-    private @Nullable ModeTimeline timeline;
+    private @Nullable IModeRules rules;
+    private @Nullable IModeTimeline timeline;
 
     public GameManager(
             @lombok.NonNull ArenaManager arenaManager,
@@ -42,7 +42,7 @@ public final class GameManager {
         logger.info("[Game] Runtime bound.");
     }
 
-    public void registerMode(GameMode mode) {
+    public void registerMode(IGameMode mode) {
         modes.put(mode.mode(), mode);
         logger.info("[Game] Mode {} registered: {}", mode.mode(), mode.getClass().getSimpleName());
     }
@@ -70,7 +70,7 @@ public final class GameManager {
 
     private void startWithArena(GameModeType type, ArenaInstance arena) {
         GameRuntime rt = runtime();
-        GameMode mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
+        IGameMode mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
 
         GameSession session = new GameSession(type, arena);
         ModeLogic logic = mode.createLogic(session, rt);
