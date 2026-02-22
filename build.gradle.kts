@@ -65,7 +65,7 @@ tasks.processResources {
     inputs.properties(props)
     filteringCharset = "UTF-8"
 
-    filesMatching("plugin.yml") {
+    filesMatching("paper-plugin.yml") {
         expand(props)
     }
 }

@@ -1,11 +1,15 @@
 name: creepersIArena
-version: '0.0.1'
+version: '${version}'
 main: top.ourisland.creepersiarena.CreepersIArena
-api-version: '1.21'
+api-version: '1.21.11'
+load: POSTWORLD
 prefix: "CIA"
 authors: [ "Chiloven945", "xqysp" ]
 description: "Creeper's Imagination Arena, but is implemented by a Paper plugin."
 website: "https://github.com/Our-Island/creepersIArena.Java"
+
+bootstrapper: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperBootstrap
+loader: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperLoader
 
 permissions:
   creepersiarena.choosejob:
