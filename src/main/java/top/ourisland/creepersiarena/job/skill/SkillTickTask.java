@@ -2,8 +2,6 @@ package top.ourisland.creepersiarena.job.skill;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.skill.event.SkillContext;
@@ -14,9 +12,8 @@ import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SkillTickTask extends BukkitRunnable {
+public final class SkillTickTask {
 
-    private final Plugin plugin;
     private final PlayerSessionStore sessions;
     private final SkillRegistry registry;
     private final SkillRuntime runtime;
@@ -24,12 +21,10 @@ public final class SkillTickTask extends BukkitRunnable {
 
     private final AtomicLong tick = new AtomicLong(0);
 
-    public SkillTickTask(Plugin plugin,
-                         PlayerSessionStore sessions,
+    public SkillTickTask(PlayerSessionStore sessions,
                          SkillRegistry registry,
                          SkillRuntime runtime,
                          SkillHotbarRenderer renderer) {
-        this.plugin = plugin;
         this.sessions = sessions;
         this.registry = registry;
         this.runtime = runtime;
@@ -40,8 +35,12 @@ public final class SkillTickTask extends BukkitRunnable {
         return tick.get();
     }
 
-    @Override
-    public void run() {
+    /**
+     * Executes one skill tick.
+     *
+     * <p>Scheduled via Paper/Folia schedulers from {@link top.ourisland.creepersiarena.bootstrap.module.SkillModule}.
+     */
+    public void tick() {
         long now = tick.incrementAndGet();
 
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -59,4 +58,5 @@ public final class SkillTickTask extends BukkitRunnable {
             renderer.render(p, registry.skillsOf(p), now);
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.bootstrap;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -28,7 +29,14 @@ public final class BootstrapRuntime {
     private final JavaPlugin plugin;
     private final Logger log;
     private final ServiceRegistry services = new ServiceRegistry();
-    private final List<BukkitTask> tasks = new ArrayList<>();
+
+    /**
+     * Cancellation handles for tasks created during bootstrap.
+     *
+     * <p>We intentionally store cancellation lambdas instead of concrete task types so we can track
+     * both BukkitScheduler tasks and Paper/Folia {@link ScheduledTask}s.
+     */
+    private final List<Runnable> tasks = new ArrayList<>();
 
     /**
      * Creates a runtime bound to the given plugin.
@@ -93,7 +101,16 @@ public final class BootstrapRuntime {
      * @param task task to track; null is ignored
      */
     public void trackTask(BukkitTask task) {
-        if (task != null) tasks.add(task);
+        if (task != null) tasks.add(task::cancel);
+    }
+
+    /**
+     * Tracks a Paper ScheduledTask so it can be cancelled later (typically on disable).
+     *
+     * @param task task to track; null is ignored
+     */
+    public void trackTask(ScheduledTask task) {
+        if (task != null) tasks.add(task::cancel);
     }
 
     /**
@@ -102,9 +119,9 @@ public final class BootstrapRuntime {
      * <p>This method suppresses and ignores cancellation errors to avoid breaking shutdown flows.</p>
      */
     public void cancelTrackedTasks() {
-        for (BukkitTask t : tasks) {
+        for (Runnable cancel : tasks) {
             try {
-                t.cancel();
+                cancel.run();
             } catch (Throwable ignored) {
             }
         }

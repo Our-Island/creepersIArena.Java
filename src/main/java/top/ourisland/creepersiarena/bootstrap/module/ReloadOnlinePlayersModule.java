@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
 import org.bukkit.Bukkit;
-import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
+import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
@@ -26,8 +26,8 @@ public final class ReloadOnlinePlayersModule implements BootstrapModule {
             if (online == 0) return;
 
             rt.log().info("[Player] Initializing {} already-online players.", online);
-            Bukkit.getScheduler().runTask(rt.plugin(),
-                    () -> Bukkit.getOnlinePlayers().forEach(p -> {
+            Bukkit.getServer().getGlobalRegionScheduler().run(rt.plugin(), task ->
+                    Bukkit.getOnlinePlayers().forEach(p -> {
                         try {
                             flow.onPlayerJoinServer(p);
                         } catch (Throwable t) {

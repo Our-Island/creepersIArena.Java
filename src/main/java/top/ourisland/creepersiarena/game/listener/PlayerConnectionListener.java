@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.game.listener;
 
 import lombok.NonNull;
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -32,14 +31,16 @@ public final class PlayerConnectionListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent e) {
         var p = e.getPlayer();
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        // Run next tick on the player's scheduler.
+        // Paper docs: https://docs.papermc.io/paper/dev/folia-support/
+        p.getScheduler().run(plugin, task -> {
             try {
                 log.info("[player] join: name={} uuid={}", p.getName(), p.getUniqueId());
                 flow.onPlayerJoinServer(p);
             } catch (Throwable t) {
                 log.warn("[player] join failed: name={}", p.getName(), t);
             }
-        });
+        }, null);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

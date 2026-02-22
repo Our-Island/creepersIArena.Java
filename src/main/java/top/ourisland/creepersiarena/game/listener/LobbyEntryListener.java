@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.listener;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -7,7 +8,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.lobby.EntryZone;
@@ -27,7 +27,7 @@ public final class LobbyEntryListener implements Listener {
     private final PlayerSessionStore store;
     private final GameFlow flow;
 
-    private final Map<UUID, BukkitTask> pending = new ConcurrentHashMap<>();
+    private final Map<UUID, ScheduledTask> pending = new ConcurrentHashMap<>();
 
     public LobbyEntryListener(Plugin plugin, Logger log, LobbyService lobbyService, PlayerSessionStore store, GameFlow flow) {
         this.plugin = plugin;
@@ -65,7 +65,7 @@ public final class LobbyEntryListener implements Listener {
         if (pending.containsKey(id)) return;
 
         long ticks = Math.max(1L, (long) Math.ceil(zone.timeMs() / 50.0));
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        ScheduledTask task = p.getScheduler().runDelayed(plugin, scheduledTask -> {
             pending.remove(id);
 
             Player now = Bukkit.getPlayer(id);
@@ -79,14 +79,16 @@ public final class LobbyEntryListener implements Listener {
 
             log.info("[LobbyEntry] join battle triggered: name={} stayedMs={}", now.getName(), zone.timeMs());
             flow.onHubEntryTriggered(now);
-        }, ticks);
+        }, () -> pending.remove(id), ticks);
 
-        pending.put(id, task);
+        if (task != null) {
+            pending.put(id, task);
+        }
         log.debug("[LobbyEntry] countdown started: name={} timeMs={} ticks={}", p.getName(), zone.timeMs(), ticks);
     }
 
     private void cancel(UUID id) {
-        BukkitTask t = pending.remove(id);
+        ScheduledTask t = pending.remove(id);
         if (t != null) t.cancel();
     }
 

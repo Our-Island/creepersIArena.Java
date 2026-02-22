@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
@@ -23,13 +23,14 @@ public final class GameTickModule implements BootstrapModule {
         return StageTask.of(() -> {
             GameFlow flow = rt.requireService(GameFlow.class);
 
-            BukkitTask gameTickTask = Bukkit.getScheduler().runTaskTimer(rt.plugin(), () -> {
-                try {
-                    flow.tick1s();
-                } catch (Throwable t) {
-                    rt.log().warn("[GameTick] error: {}", t.getMessage(), t);
-                }
-            }, 20L, 20L);
+            ScheduledTask gameTickTask = Bukkit.getServer().getGlobalRegionScheduler()
+                    .runAtFixedRate(rt.plugin(), task -> {
+                        try {
+                            flow.tick1s();
+                        } catch (Throwable t) {
+                            rt.log().warn("[GameTick] error: {}", t.getMessage(), t);
+                        }
+                    }, 20L, 20L);
 
             rt.trackTask(gameTickTask);
             rt.putService(GameTickHandle.class, new GameTickHandle(gameTickTask));
@@ -47,6 +48,6 @@ public final class GameTickModule implements BootstrapModule {
         }, "Stopping game tick...", "Finished scheduling game tick.");
     }
 
-    public record GameTickHandle(BukkitTask task) {
+    public record GameTickHandle(ScheduledTask task) {
     }
 }

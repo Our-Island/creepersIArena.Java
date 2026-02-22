@@ -422,14 +422,15 @@ public final class GameFlow {
                 int wait = Math.max(0, sec);
 
                 // If no delay, respawn directly to battle.
-                if (wait <= 0) {
+                if (wait == 0) {
                     respawns.cancel(p);
 
                     Location battleSpawn = transitions.battleSpawn(g);
                     handle.setRespawnLocation(battleSpawn);
 
                     // Apply kit/state next tick (after respawn is completed).
-                    Bukkit.getScheduler().runTask(plugin, () -> {
+                    // Use player's scheduler so it remains safe on Folia.
+                    p.getScheduler().run(plugin, task -> {
                         if (!p.isOnline()) return;
 
                         GameSession active = gameManager.active();
@@ -439,7 +440,7 @@ public final class GameFlow {
                         }
 
                         transitions.toBattle(p, active);
-                    });
+                    }, null);
 
                     return;
                 }
@@ -486,7 +487,7 @@ public final class GameFlow {
             case GameAction.ToBattle(Set<UUID> players) -> {
                 GameSession g = gameManager.active();
                 if (g == null) {
-                    forEachOnline(players, p -> transitions.toHub(p));
+                    forEachOnline(players, transitions::toHub);
                     return;
                 }
 

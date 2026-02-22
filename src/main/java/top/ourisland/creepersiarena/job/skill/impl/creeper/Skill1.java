@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Creeper;
@@ -96,7 +95,7 @@ public class Skill1 implements SkillDefinition {
             creeper.setVelocity(dir.multiply(SPEED));
 
             Plugin plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            creeper.getScheduler().runDelayed(plugin, task -> {
                 if (!creeper.isValid() || creeper.isDead()) return;
 
                 world.createExplosion(
@@ -108,7 +107,7 @@ public class Skill1 implements SkillDefinition {
                 );
 
                 creeper.remove();
-            }, FUSE_TICKS);
+            }, null, FUSE_TICKS);
         };
     }
 }

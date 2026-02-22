@@ -1,9 +1,10 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
-import org.bukkit.scheduler.BukkitTask;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.Bukkit;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
@@ -52,7 +53,6 @@ public final class SkillModule implements BootstrapModule {
             SkillHotbarRenderer skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
 
             SkillTickTask tickTask = new SkillTickTask(
-                    rt.plugin(),
                     sessionStore,
                     skillRegistry,
                     skillRuntime,
@@ -82,7 +82,9 @@ public final class SkillModule implements BootstrapModule {
         return StageTask.of(() -> {
             SkillTickTask tickTask = rt.requireService(SkillTickTask.class);
 
-            BukkitTask skillTick = tickTask.runTaskTimer(rt.plugin(), 1L, 1L);
+            ScheduledTask skillTick = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
+                    rt.plugin(), task -> tickTask.tick(), 1L, 1L
+            );
             rt.trackTask(skillTick);
 
             rt.putService(SkillTickHandle.class, new SkillTickHandle(skillTick));
@@ -118,6 +120,6 @@ public final class SkillModule implements BootstrapModule {
         return true;
     }
 
-    public record SkillTickHandle(BukkitTask task) {
+    public record SkillTickHandle(ScheduledTask task) {
     }
 }
