@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.game;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.action.GameAction;

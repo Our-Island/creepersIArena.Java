@@ -4,8 +4,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.game.region.Bounds2D;
-import top.ourisland.creepersiarena.game.region.Region2D;
+import top.ourisland.creepersiarena.core.region.Bounds2D;
+import top.ourisland.creepersiarena.core.region.Region2D;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

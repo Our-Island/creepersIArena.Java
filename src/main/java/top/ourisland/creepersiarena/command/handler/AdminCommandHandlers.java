@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.command.handler;
 
 import org.bukkit.command.CommandSender;
 import top.ourisland.creepersiarena.CreepersIArena;
-import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.game.GameManager;

@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import top.ourisland.creepersiarena.bootstrap.PluginBootstrap;
-import top.ourisland.creepersiarena.bootstrap.StagePhase;
+import top.ourisland.creepersiarena.core.bootstrap.PluginBootstrap;
+import top.ourisland.creepersiarena.core.bootstrap.StagePhase;
 
 /**
  * The main class of the plugin.

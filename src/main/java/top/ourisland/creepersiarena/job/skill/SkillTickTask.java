@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.job.skill;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.core.bootstrap.module.SkillModule;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.skill.event.SkillContext;
@@ -38,7 +39,7 @@ public final class SkillTickTask {
     /**
      * Executes one skill tick.
      *
-     * <p>Scheduled via Paper/Folia schedulers from {@link top.ourisland.creepersiarena.bootstrap.module.SkillModule}.
+     * <p>Scheduled via Paper/Folia schedulers from {@link SkillModule}.
      */
     public void tick() {
         long now = tick.incrementAndGet();

@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.command.service;
 
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.flow.LeaveReason;
 import top.ourisland.creepersiarena.util.Msg;

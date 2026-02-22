@@ -2,12 +2,11 @@ package top.ourisland.creepersiarena.game.lobby;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
-import top.ourisland.creepersiarena.game.region.Bounds2D;
-import top.ourisland.creepersiarena.game.region.Region2D;
+import top.ourisland.creepersiarena.core.region.Bounds2D;
+import top.ourisland.creepersiarena.core.region.Region2D;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

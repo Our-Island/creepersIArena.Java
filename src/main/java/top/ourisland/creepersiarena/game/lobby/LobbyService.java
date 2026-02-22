@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.game.lobby;
 import org.bukkit.Location;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import top.ourisland.creepersiarena.game.region.Region2D;
+import top.ourisland.creepersiarena.core.region.Region2D;
 
 public final class LobbyService {
 
