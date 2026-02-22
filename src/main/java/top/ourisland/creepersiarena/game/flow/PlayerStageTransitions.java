@@ -14,6 +14,7 @@ import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerState;
+import top.ourisland.creepersiarena.util.Msg;
 
 import java.util.function.Supplier;
 
@@ -109,7 +110,7 @@ final class PlayerStageTransitions {
         session.respawnSecondsRemaining(0);
 
         p.setGameMode(GameMode.SPECTATOR);
-        p.sendActionBar(Component.text("你现在是旁观者"));
+        Msg.actionBar(p, Component.text("你现在是旁观者"));
 
         log.debug("[Transitions] {} -> SPECTATE", p.getName());
     }
@@ -126,7 +127,7 @@ final class PlayerStageTransitions {
 
         battleKit.apply(p, session);
 
-        p.sendActionBar(Component.text("进入战场"));
+        Msg.actionBar(p, Component.text("进入战场"));
         log.debug("[Transitions] {} -> IN_GAME (battle spawn)", p.getName());
     }
 
@@ -142,7 +143,7 @@ final class PlayerStageTransitions {
 
         battleKit.apply(p, session);
 
-        p.sendActionBar(Component.text("进入战场"));
+        Msg.actionBar(p, Component.text("进入战场"));
         log.debug("[Transitions] {} -> IN_GAME (battle spawn in arena={})", p.getName(), g.arena().id());
     }
 

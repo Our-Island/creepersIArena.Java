@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.util.I18n;
+import top.ourisland.creepersiarena.util.Msg;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -26,18 +27,18 @@ public final class AdminCommandHandlers {
     }
 
     public void help(CommandSender sender) {
-        sender.sendMessage("/ciaa mode <battle|steal> | arena <arena_id> | skip [arena_id] | cooldown <factor> | regen <factor> | mutation [bool] | entrance <bool> | language <id> | reload | config <config|arena> <node> <value>");
+        Msg.send(sender, "/ciaa mode <battle|steal> | arena <arena_id> | skip [arena_id] | cooldown <factor> | regen <factor> | mutation [bool] | entrance <bool> | language <id> | reload | config <config|arena> <node> <value>");
     }
 
     public void mode(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ciaa mode <mode_id>");
+            Msg.send(sender, "Usage: /ciaa mode <mode_id>");
             return;
         }
 
         GameModeType type = parseMode(args[0]);
         if (type == null) {
-            sender.sendMessage("Unknown mode: " + args[0]);
+            Msg.send(sender, "Unknown mode: " + args[0]);
             return;
         }
 
@@ -50,12 +51,12 @@ public final class AdminCommandHandlers {
         if (active != null) gm.endActive();
 
         gm.startAuto(type);
-        sender.sendMessage("Mode switched to: " + type);
+        Msg.send(sender, "Mode switched to: " + type);
     }
 
     public void arena(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ciaa arena <arena_id>");
+            Msg.send(sender, "Usage: /ciaa arena <arena_id>");
             return;
         }
 
@@ -65,20 +66,20 @@ public final class AdminCommandHandlers {
         String arenaId = args[0];
         ArenaInstance inst = am.getArena(arenaId);
         if (inst == null) {
-            sender.sendMessage("Arena not found: " + arenaId);
+            Msg.send(sender, "Arena not found: " + arenaId);
             return;
         }
 
         GameModeType curMode = gm.active() == null ? null : gm.active().mode();
         if (curMode != null && inst.type() != curMode) {
-            sender.sendMessage("Arena mode mismatch. active=" + curMode + " arena=" + inst.type());
+            Msg.send(sender, "Arena mode mismatch. active=" + curMode + " arena=" + inst.type());
             return;
         }
 
         AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
         st.forcedNextArenaId(arenaId);
 
-        sender.sendMessage("Next arena set to: " + arenaId);
+        Msg.send(sender, "Next arena set to: " + arenaId);
     }
 
     public void skip(CommandSender sender, String[] args) {
@@ -99,62 +100,62 @@ public final class AdminCommandHandlers {
         if (arenaId != null) {
             try {
                 gm.start(targetMode, arenaId);
-                sender.sendMessage("Skipped. Started: mode=" + targetMode + " arena=" + arenaId);
+                Msg.send(sender, "Skipped. Started: mode=" + targetMode + " arena=" + arenaId);
                 return;
             } catch (Throwable t) {
-                sender.sendMessage("Failed to start with arena=" + arenaId + " (" + t.getMessage() + "), fallback to auto.");
+                Msg.send(sender, "Failed to start with arena=" + arenaId + " (" + t.getMessage() + "), fallback to auto.");
             }
         }
 
         gm.startAuto(targetMode);
-        sender.sendMessage("Skipped. Started: mode=" + targetMode + " arena=auto");
+        Msg.send(sender, "Skipped. Started: mode=" + targetMode + " arena=auto");
     }
 
     public void cooldown(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ciaa cooldown <factor>");
+            Msg.send(sender, "Usage: /ciaa cooldown <factor>");
             return;
         }
 
         Double v = parseDouble(args[0]);
         if (v == null || v.isNaN() || v.isInfinite() || v < 0) {
-            sender.sendMessage("Invalid factor: " + args[0]);
+            Msg.send(sender, "Invalid factor: " + args[0]);
             return;
         }
 
         AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
         st.cooldownFactor(v);
-        sender.sendMessage("Cooldown factor set to: " + v);
+        Msg.send(sender, "Cooldown factor set to: " + v);
     }
 
     public void regen(CommandSender sender, String[] args) {
-        sender.sendMessage("TBI");
+        Msg.send(sender, "TBI");
     }
 
     public void mutation(CommandSender sender, String[] args) {
-        sender.sendMessage("TBI");
+        Msg.send(sender, "TBI");
     }
 
     public void entrance(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ciaa entrance <boolean>");
+            Msg.send(sender, "Usage: /ciaa entrance <boolean>");
             return;
         }
 
         Boolean b = parseBoolean(args[0]);
         if (b == null) {
-            sender.sendMessage("Invalid boolean: " + args[0]);
+            Msg.send(sender, "Invalid boolean: " + args[0]);
             return;
         }
 
         AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
         st.entranceAllowed(b);
-        sender.sendMessage("Entrance allowed: " + b);
+        Msg.send(sender, "Entrance allowed: " + b);
     }
 
     public void language(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ciaa language <language_id>");
+            Msg.send(sender, "Usage: /ciaa language <language_id>");
             return;
         }
 
@@ -163,14 +164,14 @@ public final class AdminCommandHandlers {
 
         boolean ok = cfg.setGlobalNode("lang", lang);
         if (!ok) {
-            sender.sendMessage("Failed to write config.yml");
+            Msg.send(sender, "Failed to write config.yml");
             return;
         }
 
         cfg.reloadAll();
         I18n.reload();
 
-        sender.sendMessage("Default language set to: " + lang);
+        Msg.send(sender, "Default language set to: " + lang);
     }
 
     public void reload(CommandSender sender) {
@@ -179,16 +180,16 @@ public final class AdminCommandHandlers {
 
         if (rt.plugin() instanceof CreepersIArena pl) {
             pl.onReload();
-            sender.sendMessage("Reloaded.");
+            Msg.send(sender, "Reloaded.");
             return;
         }
 
-        sender.sendMessage("Reload unsupported.");
+        Msg.send(sender, "Reload unsupported.");
     }
 
     public void config(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("Usage: /ciaa config <config|arena> <node> <value>");
+            Msg.send(sender, "Usage: /ciaa config <config|arena> <node> <value>");
             return;
         }
 
@@ -204,19 +205,19 @@ public final class AdminCommandHandlers {
             case "config" -> ok = cfg.setGlobalNode(node, value);
             case "arena" -> ok = cfg.setArenaNode(node, value);
             default -> {
-                sender.sendMessage("Unknown target: " + file);
+                Msg.send(sender, "Unknown target: " + file);
                 return;
             }
         }
 
         if (!ok) {
-            sender.sendMessage("Write failed.");
+            Msg.send(sender, "Write failed.");
             return;
         }
 
         String currentValue = cfg.getGlobalNode(node).toString();
-        sender.sendMessage("Updated " + file + ".yml: " + node + " = " + value);
-        sender.sendMessage("Current value: " + currentValue);
-        sender.sendMessage("Run /ciaa reload to apply.");
+        Msg.send(sender, "Updated " + file + ".yml: " + node + " = " + value);
+        Msg.send(sender, "Current value: " + currentValue);
+        Msg.send(sender, "Run /ciaa reload to apply.");
     }
 }

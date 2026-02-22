@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.util.Msg;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -113,7 +114,7 @@ public final class RespawnService {
                 continue;
             }
 
-            p.sendActionBar(Component.text("复活倒计时: " + remain + "s"));
+            Msg.actionBar(p, Component.text("复活倒计时: " + remain + "s"));
             s.respawnSecondsRemaining(remain - 1);
         }
     }

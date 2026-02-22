@@ -7,6 +7,7 @@ import top.ourisland.creepersiarena.command.service.LeaveService;
 import top.ourisland.creepersiarena.command.service.UserLanguageService;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.job.JobManager;
+import top.ourisland.creepersiarena.util.Msg;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -22,7 +23,7 @@ public final class PlayerCommandHandlers {
     }
 
     public void help(CommandSender sender) {
-        sender.sendMessage("/cia join | leave | job <cia:id> | team <id|color> | language <id|default> | pref | admin");
+        Msg.send(sender, "/cia join | leave | job <cia:id> | team <id|color> | language <id|default> | pref | admin");
     }
 
     public void join(CommandSender sender) {
@@ -35,15 +36,15 @@ public final class PlayerCommandHandlers {
 
         switch (plan) {
             case GameFlow.JoinFromHubPlan.NotPlayer ignored ->
-                    p.sendMessage("Only players can use this command.");
+                    Msg.send(p, "Only players can use this command.");
             case GameFlow.JoinFromHubPlan.NoActiveGame ignored ->
-                    p.sendMessage("There is no active game.");
+                    Msg.send(p, "There is no active game.");
             case GameFlow.JoinFromHubPlan.ModeNotSupported(var mode) ->
-                    p.sendMessage("Current mode does not support /join: " + mode);
+                    Msg.send(p, "Current mode does not support /join: " + mode);
             case GameFlow.JoinFromHubPlan.NotInHub(var state) ->
-                    p.sendMessage("You can only /join from HUB (current=" + state + ").");
+                    Msg.send(p, "You can only /join from HUB (current=" + state + ").");
             case GameFlow.JoinFromHubPlan.Joined ignored ->
-                    p.sendMessage("Joined battle.");
+                    Msg.send(p, "Joined battle.");
         }
     }
 
@@ -68,18 +69,18 @@ public final class PlayerCommandHandlers {
 
         JobManager jm = rt.requireService(JobManager.class);
         if (jm.getJob(jobId) == null) {
-            sender.sendMessage("Unknown job: " + raw);
+            Msg.send(sender, "Unknown job: " + raw);
             return;
         }
 
         GameFlow flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectJob(p, jobId);
         if (!ok) {
-            sender.sendMessage("You can only choose job in hub/respawn.");
+            Msg.send(sender, "You can only choose job in hub/respawn.");
             return;
         }
 
-        p.sendMessage("Job selected: " + jobId);
+        Msg.send(p, "Job selected: " + jobId);
     }
 
     public void team(CommandSender sender, String[] args) {
@@ -95,11 +96,11 @@ public final class PlayerCommandHandlers {
         GameFlow flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectTeam(p, id);
         if (!ok) {
-            sender.sendMessage("You can only choose team in HUB.");
+            Msg.send(sender, "You can only choose team in HUB.");
             return;
         }
 
-        p.sendMessage("Team selected: " + (id == null ? "RANDOM" : id));
+        Msg.send(p, "Team selected: " + (id == null ? "RANDOM" : id));
     }
 
     public void language(CommandSender sender, String[] args) {
@@ -114,16 +115,16 @@ public final class PlayerCommandHandlers {
 
         if (v.equalsIgnoreCase("default")) {
             ul.set(p, null);
-            p.sendMessage("Language reset to default.");
+            Msg.send(p, "Language reset to default.");
             return;
         }
 
         ul.set(p, v);
-        p.sendMessage("Language set to: " + v);
+        Msg.send(p, "Language set to: " + v);
     }
 
     public void preference(CommandSender sender, String[] args) {
-        sender.sendMessage("TBI");
+        Msg.send(sender, "TBI");
     }
 
     public void chooseJob(CommandSender sender) {
@@ -134,10 +135,10 @@ public final class PlayerCommandHandlers {
         GameFlow flow = rt.requireService(GameFlow.class);
         boolean ok = flow.refreshLobbyKit(p);
         if (!ok) {
-            sender.sendMessage("You can only choose job in hub/respawn.");
+            Msg.send(sender, "You can only choose job in hub/respawn.");
             return;
         }
 
-        sender.sendMessage("Refreshed job selector.");
+        Msg.send(sender, "Refreshed job selector.");
     }
 }

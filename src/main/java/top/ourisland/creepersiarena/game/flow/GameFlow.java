@@ -27,6 +27,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.player.RespawnService;
+import top.ourisland.creepersiarena.util.Msg;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -471,7 +472,7 @@ public final class GameFlow {
                 for (UUID uuid : g.players()) {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null && p.isOnline()) {
-                        p.sendMessage(message);
+                        Msg.send(p, message);
                     }
                 }
             }
@@ -585,7 +586,7 @@ public final class GameFlow {
                 continue;
             }
 
-            p.sendActionBar(Component.text("返回大厅: " + remain + "s"));
+            Msg.actionBar(p, Component.text("返回大厅: " + remain + "s"));
             pendingLeaveToHub.put(uuid, new PendingLeave(remain - 1, plan.reason()));
         }
     }

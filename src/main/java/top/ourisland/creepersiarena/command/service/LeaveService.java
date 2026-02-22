@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.flow.LeaveReason;
+import top.ourisland.creepersiarena.util.Msg;
 
 /**
  * Command-layer adapter for "/cia leave".
@@ -28,15 +29,15 @@ public final class LeaveService {
 
         switch (plan) {
             case GameFlow.LeavePlan.NotPlayer ignored ->
-                    p.sendMessage("Only players can use this command.");
+                    Msg.send(p, "Only players can use this command.");
             case GameFlow.LeavePlan.NotInSession ignored ->
-                    p.sendMessage("You are not in CIA session.");
+                    Msg.send(p, "You are not in CIA session.");
             case GameFlow.LeavePlan.AlreadyInHub ignored ->
-                    p.sendMessage("You are already in HUB.");
+                    Msg.send(p, "You are already in HUB.");
             case GameFlow.LeavePlan.Immediate ignored ->
-                    p.sendMessage("Returned to HUB.");
+                    Msg.send(p, "Returned to HUB.");
             case GameFlow.LeavePlan.Scheduled(int seconds) ->
-                    p.sendMessage("Returning to HUB in " + seconds + "s...");
+                    Msg.send(p, "Returning to HUB in " + seconds + "s...");
         }
     }
 }
