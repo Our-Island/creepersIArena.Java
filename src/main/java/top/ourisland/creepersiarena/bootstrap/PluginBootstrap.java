@@ -39,6 +39,7 @@ public final class PluginBootstrap {
                 new LobbyUiModule(),
                 new SkillModule(),
                 new GameModule(),
+                new CommandModule(),
                 new DefaultStartModule(),
                 new GameTickModule(),
                 new ReloadOnlinePlayersModule()

@@ -38,9 +38,17 @@ public final class SkillModule implements BootstrapModule {
             JobManager jobManager = rt.requireService(JobManager.class);
 
             SkillItemCodec skillCodec = new SkillItemCodec(rt.plugin());
+
             var skillStore = new InMemorySkillStateStore();
+
             SkillRegistry skillRegistry = new SkillRegistry(sessionStore, jobManager);
-            SkillRuntime skillRuntime = new SkillRuntime(skillRegistry, skillStore);
+
+            SkillRuntime skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
+                var runtimeState = rt.getService(AdminRuntimeState.class);
+                if (runtimeState == null) return 1.0;
+                return runtimeState.cooldownFactor();
+            });
+
             SkillHotbarRenderer skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
 
             SkillTickTask tickTask = new SkillTickTask(

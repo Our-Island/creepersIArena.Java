@@ -140,6 +140,7 @@ public record GlobalConfig(
 
     public record Game(
             Set<String> disabledModes,
+            int leaveDelaySeconds,
             Battle battle,
             Steal steal
     ) {
@@ -147,15 +148,16 @@ public record GlobalConfig(
             if (sec == null) return defaults();
 
             Set<String> disabled = new HashSet<>(sec.getStringList("disabled-modes"));
+            int leaveDelay = sec.getInt("leave-delay-seconds", 5);
 
             Battle battle = Battle.fromSection(sec.getConfigurationSection("battle"));
             Steal steal = Steal.fromSection(sec.getConfigurationSection("steal"));
 
-            return new Game(disabled, battle, steal);
+            return new Game(disabled, Math.max(0, leaveDelay), battle, steal);
         }
 
         public static Game defaults() {
-            return new Game(Set.of(), Battle.defaults(), Steal.defaults());
+            return new Game(Set.of(), 5, Battle.defaults(), Steal.defaults());
         }
 
         public record Battle(

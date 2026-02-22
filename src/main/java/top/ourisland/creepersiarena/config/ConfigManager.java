@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.config;
 
 import lombok.Getter;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
@@ -11,6 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class ConfigManager {
     private final JavaPlugin plugin;
@@ -37,6 +41,88 @@ public final class ConfigManager {
         this.globalConfig = loadGlobal();
         this.arenaConfig = loadArena();
     }
+
+    public boolean setGlobalNode(String node, Object value) {
+        return setNode("config.yml", node, value);
+    }
+
+    private boolean setNode(String filename, String node, Object value) {
+        ensureDataDir();
+        copyDefaultIfAbsent(filename);
+
+        Path p = dataDir.resolve(filename);
+        try {
+            YamlConfiguration yml = YamlConfiguration.loadConfiguration(p.toFile());
+            yml.set(node, value);
+            yml.save(p.toFile());
+            return true;
+        } catch (Throwable t) {
+            logger.warn("[Config] Failed to write {} node={} value={}: {}", filename, node, value, t.getMessage(), t);
+            return false;
+        }
+    }
+
+    public boolean setArenaNode(String node, Object value) {
+        return setNode("arena.yml", node, value);
+    }
+
+    public List<String> listGlobalKeys() {
+        return listKeys("config.yml");
+    }
+
+    public List<String> listArenaKeys() {
+        return listKeys("arena.yml");
+    }
+
+    private List<String> listKeys(String filename) {
+        ensureDataDir();
+        copyDefaultIfAbsent(filename);
+
+        Path p = dataDir.resolve(filename);
+        try {
+            YamlConfiguration yml = YamlConfiguration.loadConfiguration(p.toFile());
+            List<String> out = new ArrayList<>();
+            collectKeys(yml, "", out);
+            Collections.sort(out);
+            return out;
+        } catch (Throwable t) {
+            logger.warn("[Config] Failed to list keys for {}: {}", filename, t.getMessage(), t);
+            return List.of();
+        }
+    }
+
+    private void collectKeys(ConfigurationSection sec, String prefix, List<String> out) {
+        if (sec == null) return;
+        for (String k : sec.getKeys(false)) {
+            String full = prefix.isEmpty() ? k : (prefix + "." + k);
+            out.add(full);
+            ConfigurationSection child = sec.getConfigurationSection(k);
+            if (child != null) collectKeys(child, full, out);
+        }
+    }
+
+    public Object getGlobalNode(String node) {
+        return getNode("config.yml", node);
+    }
+
+    private Object getNode(String filename, String node) {
+        ensureDataDir();
+        copyDefaultIfAbsent(filename);
+
+        Path p = dataDir.resolve(filename);
+        try {
+            YamlConfiguration yml = YamlConfiguration.loadConfiguration(p.toFile());
+            return yml.get(node);
+        } catch (Throwable t) {
+            logger.warn("[Config] Failed to read {} node={}: {}", filename, node, t.getMessage(), t);
+            return null;
+        }
+    }
+
+    public Object getArenaNode(String node) {
+        return getNode("arena.yml", node);
+    }
+
 
     private void ensureDataDir() {
         try {

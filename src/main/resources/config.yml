@@ -24,9 +24,26 @@ game:
   disabled-modes:
     - example_mode
 
+  cooldown:
+    enable: true
+    factor: 1
+
+  regeneration:
+    enable: true
+    health-per-regen: 1
+    per-regen-time: 1
+
+  mutation:
+    enable: true
+    time: # support static number / random range (inclusive)
+      - 900       # gap
+      - [ 60, 180 ] # mutation time
+    tps: [ 10, 40 ]
+
   battle:
     single-game-time: 600
     respawn-time: 10
+    leave-in-game-time: 5
 
     max-team: 4
     team-auto-balancing: true
