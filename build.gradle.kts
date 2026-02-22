@@ -18,6 +18,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly("org.projectlombok:lombok:1.18.42")
     compileOnly("org.jetbrains:annotations:26.0.2-1")
+    compileOnly("net.luckperms:api:5.5")
 
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 

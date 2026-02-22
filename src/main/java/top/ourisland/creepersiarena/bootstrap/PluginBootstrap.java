@@ -28,12 +28,14 @@ public final class PluginBootstrap {
     public void enable(JavaPlugin plugin) {
         this.rt = new BootstrapRuntime(plugin);
 
+        // Add modules alphabetically, please
         bootstrapModules.clear();
         bootstrapModules.addAll(List.of(
                 new ConfigModule(),
                 new WorldModule(),
                 new ArenaModule(),
                 new LobbyModule(),
+                new PermissionModule(),
                 new PlayerModule(),
                 new JobModule(),
                 new LobbyUiModule(),

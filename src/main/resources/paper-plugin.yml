@@ -4,51 +4,15 @@ main: top.ourisland.creepersiarena.CreepersIArena
 api-version: '1.21.11'
 load: POSTWORLD
 prefix: "CIA"
-authors: [ "Chiloven945", "xqysp" ]
+authors: [ "Our-Island", "Chiloven945", "xqysp" ]
 description: "Creeper's Imagination Arena, but is implemented by a Paper plugin."
 website: "https://github.com/Our-Island/creepersIArena.Java"
 
 bootstrapper: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperBootstrap
 loader: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperLoader
 
-permissions:
-  creepersiarena.choosejob:
-    default: true
-
-  creepersiarena.command:
-    default: true
-  creepersiarena.command.join:
-    default: true
-  creepersiarena.command.leave:
-    default: true
-  creepersiarena.command.job:
-    default: true
-  creepersiarena.command.team:
-    default: true
-  creepersiarena.command.language:
-    default: true
-  creepersiarena.command.preference:
-    default: true
-
-  creepersiarena.command.admin:
-    default: op
-  creepersiarena.command.admin.mode:
-    default: op
-  creepersiarena.command.admin.arena:
-    default: op
-  creepersiarena.command.admin.skip:
-    default: op
-  creepersiarena.command.admin.cooldown:
-    default: op
-  creepersiarena.command.admin.regeneration:
-    default: op
-  creepersiarena.command.admin.mutation:
-    default: op
-  creepersiarena.command.admin.entrance:
-    default: op
-  creepersiarena.command.admin.language:
-    default: op
-  creepersiarena.command.admin.reload:
-    default: op
-  creepersiarena.command.admin.config:
-    default: op
+dependencies:
+  server:
+    LuckPerms:
+      required: false
+      load: BEFORE
