@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.bootstrap;
 
-import lombok.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +33,7 @@ public final class ServiceRegistry {
      * @return the service instance
      * @throws NullPointerException if the service is missing
      */
-    <T> T require(@NonNull Class<T> type) {
+    <T> T require(@lombok.NonNull Class<T> type) {
         return get(type);
     }
 

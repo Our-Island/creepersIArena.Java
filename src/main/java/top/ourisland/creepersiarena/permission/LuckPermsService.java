@@ -3,8 +3,8 @@ package top.ourisland.creepersiarena.permission;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -17,11 +17,11 @@ public final class LuckPermsService {
 
     private final LuckPerms api;
 
-    private LuckPermsService(@NotNull LuckPerms api) {
+    private LuckPermsService(@NonNull LuckPerms api) {
         this.api = api;
     }
 
-    public @NotNull LuckPerms api() {
+    public @NonNull LuckPerms api() {
         return api;
     }
 
@@ -30,7 +30,7 @@ public final class LuckPermsService {
      *
      * @return service instance if LuckPerms is present; otherwise null
      */
-    public static @Nullable LuckPermsService tryLoad(@NotNull Plugin plugin, @NotNull Logger log) {
+    public static @Nullable LuckPermsService tryLoad(@NonNull Plugin plugin, @NonNull Logger log) {
         // If LuckPerms is not installed, LuckPermsProvider#get throws IllegalStateException.
         if (!plugin.getServer().getPluginManager().isPluginEnabled("LuckPerms")) {
             return null;

@@ -1,19 +1,18 @@
 package top.ourisland.creepersiarena.job.skill.ui;
 
-import lombok.NonNull;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public final class SkillItemCodec {
 
     private final NamespacedKey skillIdKey;
     private final NamespacedKey slotKey;
 
-    public SkillItemCodec(@NonNull Plugin plugin) {
+    public SkillItemCodec(@lombok.NonNull Plugin plugin) {
         this.skillIdKey = new NamespacedKey(plugin, "skill_id");
         this.slotKey = new NamespacedKey(plugin, "skill_slot");
     }

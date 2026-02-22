@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.flow;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -52,15 +51,15 @@ public final class GameFlow {
     private final Map<UUID, PendingLeave> pendingLeaveToHub = new HashMap<>();
 
     public GameFlow(
-            @NonNull Plugin plugin,
-            @NonNull Logger log,
-            @NonNull Supplier<GlobalConfig> cfg,
-            @NonNull PlayerSessionStore store,
-            @NonNull GameManager gameManager,
-            @NonNull LobbyItemService lobbyItemService,
-            @NonNull LobbyService lobbyService,
-            @NonNull ArenaManager arenaManager,
-            @NonNull BattleKitService battleKit
+            @lombok.NonNull Plugin plugin,
+            @lombok.NonNull Logger log,
+            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull PlayerSessionStore store,
+            @lombok.NonNull GameManager gameManager,
+            @lombok.NonNull LobbyItemService lobbyItemService,
+            @lombok.NonNull LobbyService lobbyService,
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull BattleKitService battleKit
     ) {
         this.plugin = plugin;
         this.log = log;

@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.flow;
 
-import lombok.NonNull;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
@@ -32,10 +31,10 @@ final class PlayerSessionFacade {
     private final NamespacedKey outsideSnapshotKey;
 
     PlayerSessionFacade(
-            @NonNull Plugin plugin,
-            @NonNull Logger log,
-            @NonNull PlayerSessionStore store,
-            @NonNull LobbyItemService lobbyItemService
+            @lombok.NonNull Plugin plugin,
+            @lombok.NonNull Logger log,
+            @lombok.NonNull PlayerSessionStore store,
+            @lombok.NonNull LobbyItemService lobbyItemService
     ) {
         this.log = log;
         this.store = store;

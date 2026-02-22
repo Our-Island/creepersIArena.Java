@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.flow;
 
-import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -24,10 +23,10 @@ final class PlayerLobbyTransitions {
     private final Supplier<GlobalConfig> cfg;
 
     PlayerLobbyTransitions(
-            @NonNull Logger log,
-            @NonNull PlayerSessionFacade sessions,
-            @NonNull LobbyItemService lobbyItemService,
-            @NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Logger log,
+            @lombok.NonNull PlayerSessionFacade sessions,
+            @lombok.NonNull LobbyItemService lobbyItemService,
+            @lombok.NonNull Supplier<GlobalConfig> cfg
     ) {
         this.log = log;
         this.sessions = sessions;

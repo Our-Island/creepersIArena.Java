@@ -1,10 +1,9 @@
 package top.ourisland.creepersiarena.game.lobby;
 
-import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.region.Bounds2D;
@@ -21,14 +20,14 @@ public final class LobbyManager {
     private final Map<String, LobbyInstance> lobbies = new LinkedHashMap<>();
 
     public LobbyManager(
-            @NonNull World world,
-            @NonNull Logger logger
+            @lombok.NonNull World world,
+            @lombok.NonNull Logger logger
     ) {
         this.world = world;
         this.logger = logger;
     }
 
-    public void reload(@NonNull GlobalConfig globalConfig) {
+    public void reload(@lombok.NonNull GlobalConfig globalConfig) {
         logger.info("[Lobby] Starting to (re)load lobbies...");
         lobbies.clear();
 

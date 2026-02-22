@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.game.region;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * A world-bound region with {@link Bounds}.
@@ -22,7 +22,7 @@ public interface Region<B extends Bounds> {
      *
      * <p>World must match (by UID). Then checks block coords with the underlying bounds.</p>
      */
-    default boolean contains(@NotNull Location loc) {
+    default boolean contains(@NonNull Location loc) {
         if (loc.getWorld() == null) return false;
         if (!loc.getWorld().getUID().equals(world().getUID())) return false;
 
@@ -45,7 +45,7 @@ public interface Region<B extends Bounds> {
      *
      * <p>Coordinates are snapped to block centers (+0.5) on clamped axes.</p>
      */
-    default Location clamp(@NotNull Location loc) {
+    default Location clamp(@NonNull Location loc) {
         if (bounds().hasY()) return clampXYZ(loc);
         return clampXZ(loc);
     }
@@ -53,7 +53,7 @@ public interface Region<B extends Bounds> {
     /**
      * Clamps XZ into bounds, keeps Y unchanged.
      */
-    default Location clampXZ(@NotNull Location loc) {
+    default Location clampXZ(@NonNull Location loc) {
         Location base = normalizeWorld(loc);
 
         int x = base.getBlockX();
@@ -73,7 +73,7 @@ public interface Region<B extends Bounds> {
      *
      * @throws UnsupportedOperationException if this region is 2D
      */
-    default Location clampXYZ(@NotNull Location loc) {
+    default Location clampXYZ(@NonNull Location loc) {
         if (!bounds().hasY()) throw new UnsupportedOperationException("This region has no Y dimension.");
 
         Location base = normalizeWorld(loc);
@@ -124,7 +124,7 @@ public interface Region<B extends Bounds> {
         );
     }
 
-    private Location normalizeWorld(@NotNull Location loc) {
+    private Location normalizeWorld(@NonNull Location loc) {
         if (loc.getWorld() == null || !loc.getWorld().getUID().equals(world().getUID())) {
             Location cloned = loc.clone();
             cloned.setWorld(world());

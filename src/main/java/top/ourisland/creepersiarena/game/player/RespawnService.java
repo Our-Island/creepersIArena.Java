@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.player;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -27,8 +26,8 @@ public final class RespawnService {
     private Consumer<Player> callback;
 
     public RespawnService(
-            @NonNull Logger log,
-            @NonNull PlayerSessionStore store
+            @lombok.NonNull Logger log,
+            @lombok.NonNull PlayerSessionStore store
     ) {
         this.log = log;
         this.store = store;

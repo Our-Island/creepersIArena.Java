@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.util;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.skill.SkillDefinition;
@@ -71,7 +70,7 @@ public final class LangKeyResolver {
      * @param skill the skill definition (must not be null)
      * @return the base skill key prefix
      */
-    public static String skillBase(@NonNull SkillDefinition skill) {
+    public static String skillBase(@lombok.NonNull SkillDefinition skill) {
         return skillBase(skill.id());
     }
 
@@ -88,7 +87,7 @@ public final class LangKeyResolver {
      * @throws IllegalArgumentException if {@code skillId} does not contain a dot separator,
      *                                  starts/ends with a dot, or otherwise cannot be split into {@code job} and {@code skill}
      */
-    public static String skillBase(@NonNull String skillId) {
+    public static String skillBase(@lombok.NonNull String skillId) {
         int dot = skillId.indexOf('.');
         if (dot <= 0 || dot == skillId.length() - 1) {
             throw new IllegalArgumentException("Invalid skill id (expected job.skill): " + skillId);
@@ -110,7 +109,7 @@ public final class LangKeyResolver {
      * @param loreArgs optional arguments forwarded to {@link I18n#langNP(String, Object...)} for placeholder replacement
      * @return resolved lore lines as {@link Component}s (possibly empty if the first line key is missing)
      */
-    public static List<Component> resolveSkillLore(@NonNull SkillDefinition skill, Object... loreArgs) {
+    public static List<Component> resolveSkillLore(@lombok.NonNull SkillDefinition skill, Object... loreArgs) {
         return resolveLore(20, i -> skillLore(skill, i), loreArgs);
     }
 
@@ -132,7 +131,7 @@ public final class LangKeyResolver {
      * @param loreArgs optional arguments forwarded to {@link I18n#langNP(String, Object...)}
      * @return resolved lore lines as {@link Component}s (possibly empty)
      */
-    public static List<Component> resolveLore(int maxLines, @NonNull IntFunction<String> lineKey, Object... loreArgs) {
+    public static List<Component> resolveLore(int maxLines, @lombok.NonNull IntFunction<String> lineKey, Object... loreArgs) {
         int max = Math.max(1, maxLines);
 
         return IntStream.rangeClosed(1, max)
@@ -181,7 +180,7 @@ public final class LangKeyResolver {
      * @param jobId the job id (must not be null)
      * @return the base job key prefix
      */
-    public static String jobBase(@NonNull JobId jobId) {
+    public static String jobBase(@lombok.NonNull JobId jobId) {
         return "cia.job." + jobId;
     }
 
@@ -197,7 +196,7 @@ public final class LangKeyResolver {
      * @param loreArgs optional arguments forwarded to {@link I18n#langNP(String, Object...)} for placeholder replacement
      * @return resolved lore lines as {@link Component}s (possibly empty if the first line key is missing)
      */
-    public static List<Component> resolveJobLore(@NonNull JobId jobId, Object... loreArgs) {
+    public static List<Component> resolveJobLore(@lombok.NonNull JobId jobId, Object... loreArgs) {
         return resolveLore(20, i -> jobLore(jobId, i), loreArgs);
     }
 

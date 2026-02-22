@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import lombok.NonNull;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
@@ -18,8 +17,8 @@ public final class SkillRegistry {
     private final JobManager jobs;
 
     public SkillRegistry(
-            @NonNull PlayerSessionStore sessions,
-            @NonNull JobManager jobs
+            @lombok.NonNull PlayerSessionStore sessions,
+            @lombok.NonNull JobManager jobs
     ) {
         this.sessions = sessions;
         this.jobs = jobs;

@@ -1,13 +1,12 @@
 package top.ourisland.creepersiarena.game.region;
 
-import lombok.NonNull;
 import org.bukkit.World;
 
 public record Region2D(World world, Bounds2D bounds) implements Region<Bounds2D> {
 
     public Region2D(
-            @NonNull World world,
-            @NonNull Bounds2D bounds
+            @lombok.NonNull World world,
+            @lombok.NonNull Bounds2D bounds
     ) {
         this.world = world;
         this.bounds = bounds;

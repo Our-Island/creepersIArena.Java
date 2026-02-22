@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.flow;
 
-import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -28,14 +27,14 @@ final class PlayerTransitions {
     private final PlayerLobbyTransitions lobby;
 
     PlayerTransitions(
-            @NonNull Plugin plugin,
-            @NonNull Logger log,
-            @NonNull PlayerSessionStore store,
-            @NonNull LobbyItemService lobbyItemService,
-            @NonNull LobbyService lobbyService,
-            @NonNull ArenaManager arenaManager,
-            @NonNull BattleKitService battleKit,
-            @NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Plugin plugin,
+            @lombok.NonNull Logger log,
+            @lombok.NonNull PlayerSessionStore store,
+            @lombok.NonNull LobbyItemService lobbyItemService,
+            @lombok.NonNull LobbyService lobbyService,
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull BattleKitService battleKit,
+            @lombok.NonNull Supplier<GlobalConfig> cfg
     ) {
         this.sessions = new PlayerSessionFacade(plugin, log, store, lobbyItemService);
         this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, arenaManager, battleKit, cfg);

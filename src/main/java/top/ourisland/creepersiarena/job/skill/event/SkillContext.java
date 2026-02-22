@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.job.skill.event;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record SkillContext(
         Player player,

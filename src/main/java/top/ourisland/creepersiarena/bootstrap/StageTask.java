@@ -1,9 +1,8 @@
 package top.ourisland.creepersiarena.bootstrap;
 
 import lombok.Getter;
-import lombok.NonNull;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Describes a unit of work for a single bootstrap stage (install/start/stop/reload).
@@ -36,7 +35,7 @@ public final class StageTask {
     private final String endMessage;
 
     private StageTask(
-            @NonNull Runnable action,
+            @lombok.NonNull Runnable action,
             @Nullable String beginMessage,
             @Nullable String endMessage
     ) {
@@ -54,7 +53,7 @@ public final class StageTask {
      * @return a new {@link StageTask}
      */
     public static StageTask of(
-            @NotNull Runnable action,
+            @NonNull Runnable action,
             @Nullable String beginMessage,
             @Nullable String endMessage
     ) {

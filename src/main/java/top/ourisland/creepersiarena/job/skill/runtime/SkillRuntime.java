@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import lombok.NonNull;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.job.skill.SkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
@@ -18,9 +17,9 @@ public final class SkillRuntime {
     private final DoubleSupplier cooldownFactor;
 
     public SkillRuntime(
-            @NonNull SkillRegistry registry,
-            @NonNull SkillStateStore store,
-            @NonNull DoubleSupplier cooldownFactor
+            @lombok.NonNull SkillRegistry registry,
+            @lombok.NonNull SkillStateStore store,
+            @lombok.NonNull DoubleSupplier cooldownFactor
     ) {
         this.registry = registry;
         this.store = store;

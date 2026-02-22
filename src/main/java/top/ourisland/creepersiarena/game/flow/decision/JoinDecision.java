@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.game.flow.decision;
 
 import org.bukkit.Location;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 模式只做决策，不做动作；GameFlow 负责执行。

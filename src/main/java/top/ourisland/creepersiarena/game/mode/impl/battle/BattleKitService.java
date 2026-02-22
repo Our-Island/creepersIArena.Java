@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
-import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
@@ -20,10 +19,10 @@ public final class BattleKitService {
     private final LongSupplier nowTick;
 
     public BattleKitService(
-            @NonNull JobManager jobs,
-            @NonNull SkillRegistry skillRegistry,
-            @NonNull SkillHotbarRenderer skillRenderer,
-            @NonNull LongSupplier nowTick
+            @lombok.NonNull JobManager jobs,
+            @lombok.NonNull SkillRegistry skillRegistry,
+            @lombok.NonNull SkillHotbarRenderer skillRenderer,
+            @lombok.NonNull LongSupplier nowTick
     ) {
         this.jobs = jobs;
         this.skillRegistry = skillRegistry;

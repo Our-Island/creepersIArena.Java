@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.arena;
 
-import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.World;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
@@ -31,13 +30,13 @@ public record ArenaInstance(
         Map<String, Location> teamSpawnpoints
 ) {
     public ArenaInstance(
-            @NonNull String id,
-            @NonNull String nameKey,
-            @NonNull GameModeType type,
-            @NonNull Location anchor,
-            @NonNull Region2D region,
-            @NonNull List<Location> spawnpoints,
-            @NonNull Map<String, Location> teamSpawnpoints
+            @lombok.NonNull String id,
+            @lombok.NonNull String nameKey,
+            @lombok.NonNull GameModeType type,
+            @lombok.NonNull Location anchor,
+            @lombok.NonNull Region2D region,
+            @lombok.NonNull List<Location> spawnpoints,
+            @lombok.NonNull Map<String, Location> teamSpawnpoints
     ) {
         this.id = id;
         this.nameKey = nameKey;
@@ -48,7 +47,7 @@ public record ArenaInstance(
         this.teamSpawnpoints = Map.copyOf(teamSpawnpoints);
     }
 
-    public static ArenaInstance fromConfig(@NonNull World world, @NonNull String id, @NonNull ArenaConfig.ArenaDef def) {
+    public static ArenaInstance fromConfig(@lombok.NonNull World world, @lombok.NonNull String id, @lombok.NonNull ArenaConfig.ArenaDef def) {
         GameModeType type = parseMode(def.type());
 
         Location anchor = new Location(

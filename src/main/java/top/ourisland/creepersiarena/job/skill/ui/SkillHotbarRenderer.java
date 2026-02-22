@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.job.skill.ui;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,8 +18,8 @@ public final class SkillHotbarRenderer {
     private final SkillStateStore store;
 
     public SkillHotbarRenderer(
-            @NonNull SkillItemCodec codec,
-            @NonNull SkillStateStore store
+            @lombok.NonNull SkillItemCodec codec,
+            @lombok.NonNull SkillStateStore store
     ) {
         this.codec = codec;
         this.store = store;

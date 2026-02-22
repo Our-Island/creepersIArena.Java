@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.game.flow.action;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.UUID;

@@ -4,7 +4,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 

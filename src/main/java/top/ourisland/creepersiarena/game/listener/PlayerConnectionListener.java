@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.listener;
 
-import lombok.NonNull;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -19,9 +18,9 @@ public final class PlayerConnectionListener implements Listener {
     private final GameFlow flow;
 
     public PlayerConnectionListener(
-            @NonNull JavaPlugin plugin,
-            @NonNull Logger log,
-            @NonNull GameFlow flow
+            @lombok.NonNull JavaPlugin plugin,
+            @lombok.NonNull Logger log,
+            @lombok.NonNull GameFlow flow
     ) {
         this.plugin = plugin;
         this.log = log;

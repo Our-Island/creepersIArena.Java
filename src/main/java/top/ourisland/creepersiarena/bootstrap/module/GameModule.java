@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
-import lombok.NonNull;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
@@ -34,7 +33,7 @@ public final class GameModule implements BootstrapModule {
     }
 
     @Override
-    public StageTask install(@NonNull BootstrapRuntime rt) {
+    public StageTask install(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
             ConfigManager cfg = rt.requireService(ConfigManager.class);
             GlobalConfig gcfg = cfg.globalConfig();
@@ -86,7 +85,7 @@ public final class GameModule implements BootstrapModule {
     }
 
     @Override
-    public StageTask stop(@NonNull BootstrapRuntime rt) {
+    public StageTask stop(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
             GameManager gm = rt.getService(GameManager.class);
             if (gm != null) {
@@ -99,7 +98,7 @@ public final class GameModule implements BootstrapModule {
     }
 
     @Override
-    public StageTask reload(@NonNull BootstrapRuntime rt) {
+    public StageTask reload(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
             GameFlow flow = rt.getService(GameFlow.class);
             if (flow != null) {

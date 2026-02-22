@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.game.lobby;
 
 import org.bukkit.Location;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.region.Region2D;
 
 public record LobbyInstance(

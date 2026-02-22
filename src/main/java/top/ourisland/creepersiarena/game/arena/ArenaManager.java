@@ -1,12 +1,11 @@
 package top.ourisland.creepersiarena.game.arena;
 
-import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -25,14 +24,14 @@ public final class ArenaManager {
     private final SpawnpointSelector spawnpointSelector = new SpawnpointSelector();
 
     public ArenaManager(
-            @NonNull World world,
-            @NonNull Logger logger
+            @lombok.NonNull World world,
+            @lombok.NonNull Logger logger
     ) {
         this.world = world;
         this.logger = logger;
     }
 
-    public void reload(@NonNull ArenaConfig arenaConfig) {
+    public void reload(@lombok.NonNull ArenaConfig arenaConfig) {
         logger.info("[Arena] Starting to (re)load arenas...");
         arenas.clear();
 
@@ -115,7 +114,7 @@ public final class ArenaManager {
         return Collections.unmodifiableCollection(arenas.values());
     }
 
-    public @NotNull Location anyBattleSpawnOrFallback(@NonNull Location fallback) {
+    public @NonNull Location anyBattleSpawnOrFallback(@lombok.NonNull Location fallback) {
         List<ArenaInstance> battles = arenasOf(GameModeType.BATTLE);
         if (battles.isEmpty()) {
             return fallback.clone();
@@ -145,7 +144,7 @@ public final class ArenaManager {
         return out;
     }
 
-    public @NotNull Location battleSpawn(@NonNull ArenaInstance arena) {
+    public @NonNull Location battleSpawn(@lombok.NonNull ArenaInstance arena) {
         if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
             return arena.anchor().clone();
         }

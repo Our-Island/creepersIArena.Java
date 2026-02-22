@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.flow;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -36,13 +35,13 @@ final class PlayerStageTransitions {
     private final Supplier<GlobalConfig> cfg;
 
     PlayerStageTransitions(
-            @NonNull Logger log,
-            @NonNull PlayerSessionFacade sessions,
-            @NonNull LobbyItemService lobbyItemService,
-            @NonNull LobbyService lobbyService,
-            @NonNull ArenaManager arenaManager,
-            @NonNull BattleKitService battleKit,
-            @NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Logger log,
+            @lombok.NonNull PlayerSessionFacade sessions,
+            @lombok.NonNull LobbyItemService lobbyItemService,
+            @lombok.NonNull LobbyService lobbyService,
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull BattleKitService battleKit,
+            @lombok.NonNull Supplier<GlobalConfig> cfg
     ) {
         this.log = log;
         this.sessions = sessions;

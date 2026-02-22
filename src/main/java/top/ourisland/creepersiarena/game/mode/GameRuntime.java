@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.game.mode;
 
 import lombok.Getter;
-import lombok.NonNull;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
@@ -22,9 +21,9 @@ public final class GameRuntime {
     private final PlayerSessionStore sessionStore;
 
     public GameRuntime(
-            @NonNull Supplier<GlobalConfig> cfg,
-            @NonNull ArenaManager arenaManager,
-            @NonNull PlayerSessionStore sessionStore
+            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull PlayerSessionStore sessionStore
     ) {
         this.cfg = cfg;
         this.arenaManager = arenaManager;

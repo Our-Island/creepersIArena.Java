@@ -1,10 +1,9 @@
 package top.ourisland.creepersiarena.game.lobby.item;
 
-import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.job.Job;
 import top.ourisland.creepersiarena.job.JobId;
@@ -19,14 +18,14 @@ public final class LobbyItemFactory {
     private final JobManager jobs;
 
     public LobbyItemFactory(
-            @NonNull LobbyItemCodec codec,
-            @NonNull JobManager jobs
+            @lombok.NonNull LobbyItemCodec codec,
+            @lombok.NonNull JobManager jobs
     ) {
         this.codec = codec;
         this.jobs = jobs;
     }
 
-    public @Nullable ItemStack jobSelectButton(@NonNull String jobId, @NonNull PlayerSession s) {
+    public @Nullable ItemStack jobSelectButton(@lombok.NonNull String jobId, @lombok.NonNull PlayerSession s) {
         boolean selected = s.selectedJob() != null && s.selectedJob().id().equals(jobId);
 
         JobId jid = JobId.fromId(jobId);

@@ -5,8 +5,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import org.bukkit.command.CommandSender;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -26,19 +26,19 @@ public final class Msg {
      * Basic: Component / plain
      * ========================= */
 
-    public static void send(@NotNull CommandSender sender, @NotNull Component message) {
+    public static void send(@NonNull CommandSender sender, @NonNull Component message) {
         sender.sendMessage(message);
     }
 
-    public static void send(@NotNull CommandSender sender, @NotNull String plainText) {
+    public static void send(@NonNull CommandSender sender, @NonNull String plainText) {
         sender.sendMessage(Component.text(plainText));
     }
 
-    public static void actionBar(@NotNull CommandSender sender, @NotNull Component message) {
+    public static void actionBar(@NonNull CommandSender sender, @NonNull Component message) {
         sender.sendActionBar(message);
     }
 
-    public static void actionBar(@NotNull CommandSender sender, @NotNull String plainText) {
+    public static void actionBar(@NonNull CommandSender sender, @NonNull String plainText) {
         sender.sendActionBar(Component.text(plainText));
     }
 
@@ -46,11 +46,11 @@ public final class Msg {
      * MiniMessage
      * ========================= */
 
-    public static void sendMini(@NotNull CommandSender sender, @NotNull String miniMessage) {
+    public static void sendMini(@NonNull CommandSender sender, @NonNull String miniMessage) {
         sender.sendMessage(MINI.deserialize(miniMessage));
     }
 
-    public static void actionBarMini(@NotNull CommandSender sender, @NotNull String miniMessage) {
+    public static void actionBarMini(@NonNull CommandSender sender, @NonNull String miniMessage) {
         sender.sendActionBar(MINI.deserialize(miniMessage));
     }
 
@@ -59,7 +59,7 @@ public final class Msg {
      * ========================= */
 
     public static void title(
-            @NotNull CommandSender sender,
+            @NonNull CommandSender sender,
             @Nullable Component title,
             @Nullable Component subtitle
     ) {
@@ -67,18 +67,18 @@ public final class Msg {
     }
 
     public static void title(
-            @NotNull CommandSender sender,
+            @NonNull CommandSender sender,
             @Nullable Component title,
             @Nullable Component subtitle,
-            @NotNull Duration fadeIn,
-            @NotNull Duration stay,
-            @NotNull Duration fadeOut
+            @NonNull Duration fadeIn,
+            @NonNull Duration stay,
+            @NonNull Duration fadeOut
     ) {
         sender.showTitle(Title.title(nn(title), nn(subtitle), Title.Times.times(fadeIn, stay, fadeOut)));
     }
 
     public static void titleMini(
-            @NotNull CommandSender sender,
+            @NonNull CommandSender sender,
             @Nullable String titleMini,
             @Nullable String subtitleMini
     ) {
@@ -89,12 +89,12 @@ public final class Msg {
     }
 
     public static void titleMini(
-            @NotNull CommandSender sender,
+            @NonNull CommandSender sender,
             @Nullable String titleMini,
             @Nullable String subtitleMini,
-            @NotNull Duration fadeIn,
-            @NotNull Duration stay,
-            @NotNull Duration fadeOut
+            @NonNull Duration fadeIn,
+            @NonNull Duration stay,
+            @NonNull Duration fadeOut
     ) {
         sender.showTitle(Title.title(
                 MINI.deserialize(ns(titleMini)),
@@ -107,24 +107,24 @@ public final class Msg {
      * Audience overloads
      * ========================= */
 
-    public static void send(@NotNull Audience audience, @NotNull Component message) {
+    public static void send(@NonNull Audience audience, @NonNull Component message) {
         audience.sendMessage(message);
     }
 
-    public static void sendMini(@NotNull Audience audience, @NotNull String miniMessage) {
+    public static void sendMini(@NonNull Audience audience, @NonNull String miniMessage) {
         audience.sendMessage(MINI.deserialize(miniMessage));
     }
 
-    public static void actionBar(@NotNull Audience audience, @NotNull Component message) {
+    public static void actionBar(@NonNull Audience audience, @NonNull Component message) {
         audience.sendActionBar(message);
     }
 
-    public static void actionBarMini(@NotNull Audience audience, @NotNull String miniMessage) {
+    public static void actionBarMini(@NonNull Audience audience, @NonNull String miniMessage) {
         audience.sendActionBar(MINI.deserialize(miniMessage));
     }
 
     public static void title(
-            @NotNull Audience audience,
+            @NonNull Audience audience,
             @Nullable Component title,
             @Nullable Component subtitle
     ) {
@@ -132,7 +132,7 @@ public final class Msg {
     }
 
     public static void titleMini(
-            @NotNull Audience audience,
+            @NonNull Audience audience,
             @Nullable String titleMini,
             @Nullable String subtitleMini
     ) {
@@ -146,11 +146,11 @@ public final class Msg {
      * Private helpers
      * ========================= */
 
-    private static @NotNull Component nn(@Nullable Component c) {
+    private static @NonNull Component nn(@Nullable Component c) {
         return c == null ? Component.empty() : c;
     }
 
-    private static @NotNull String ns(@Nullable String s) {
+    private static @NonNull String ns(@Nullable String s) {
         return s == null ? "" : s;
     }
 }

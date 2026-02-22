@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.game.flow.decision;
 
 import org.bukkit.Location;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public sealed interface RespawnDecision {
 

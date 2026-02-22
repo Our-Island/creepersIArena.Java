@@ -1,8 +1,7 @@
 package top.ourisland.creepersiarena.game.protection;
 
-import lombok.NonNull;
 import org.bukkit.Location;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
@@ -17,8 +16,8 @@ public final class ProtectionService {
     private final LobbyService lobbyService;
 
     public ProtectionService(
-            @NonNull ArenaManager arenaManager,
-            @NonNull LobbyService lobbyService
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull LobbyService lobbyService
     ) {
         this.arenaManager = arenaManager;
         this.lobbyService = lobbyService;

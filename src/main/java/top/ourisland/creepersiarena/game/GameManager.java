@@ -1,8 +1,7 @@
 package top.ourisland.creepersiarena.game;
 
 import lombok.Getter;
-import lombok.NonNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
@@ -32,14 +31,14 @@ public final class GameManager {
     private @Nullable ModeTimeline timeline;
 
     public GameManager(
-            @NonNull ArenaManager arenaManager,
-            @NonNull Logger logger
+            @lombok.NonNull ArenaManager arenaManager,
+            @lombok.NonNull Logger logger
     ) {
         this.arenaManager = arenaManager;
         this.logger = logger;
     }
 
-    public void bindRuntime(@NonNull GameRuntime runtime) {
+    public void bindRuntime(@lombok.NonNull GameRuntime runtime) {
         this.runtime = runtime;
         logger.info("[Game] Runtime bound.");
     }
