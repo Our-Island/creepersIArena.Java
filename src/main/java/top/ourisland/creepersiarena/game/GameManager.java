@@ -1,9 +1,10 @@
 package top.ourisland.creepersiarena.game;
 
+import lombok.Getter;
 import lombok.NonNull;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.action.GameAction;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Getter
 public final class GameManager {
 
     private final ArenaManager arenaManager;
@@ -37,10 +39,6 @@ public final class GameManager {
         this.logger = logger;
     }
 
-    public ArenaManager arenaManager() {
-        return arenaManager;
-    }
-
     public void bindRuntime(@NonNull GameRuntime runtime) {
         this.runtime = runtime;
         logger.info("[Game] Runtime bound.");
@@ -49,18 +47,6 @@ public final class GameManager {
     public void registerMode(GameMode mode) {
         modes.put(mode.mode(), mode);
         logger.info("[Game] Mode {} registered: {}", mode.mode(), mode.getClass().getSimpleName());
-    }
-
-    public @Nullable GameSession active() {
-        return active;
-    }
-
-    public @Nullable ModeRules rules() {
-        return rules;
-    }
-
-    public @Nullable ModeTimeline timeline() {
-        return timeline;
     }
 
     public void startAuto(GameModeType type) {
@@ -101,10 +87,6 @@ public final class GameManager {
                 (rules == null ? "null" : rules.getClass().getSimpleName()),
                 (timeline == null ? "null" : timeline.getClass().getSimpleName())
         );
-    }
-
-    public GameRuntime runtime() {
-        return runtime;
     }
 
     public void start(GameModeType type, String arenaId) {

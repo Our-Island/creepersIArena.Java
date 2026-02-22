@@ -152,4 +152,8 @@ public final class ArenaManager {
 
         return spawnpointSelector.pickBattleLeastCrowded(arena, Bukkit.getOnlinePlayers(), 10);
     }
+
+    public Collection<String> allArenaIds() {
+        return arenas.keySet();
+    }
 }

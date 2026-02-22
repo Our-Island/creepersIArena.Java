@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.bootstrap.module;
 
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.LobbyUiListener;
@@ -19,7 +19,7 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
-public final class LobbyUiModule implements Module {
+public final class LobbyUiModule implements BootstrapModule {
     @Override
     public String name() {
         return "lobby-ui";

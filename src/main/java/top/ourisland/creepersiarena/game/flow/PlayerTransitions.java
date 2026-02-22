@@ -1,47 +1,33 @@
 package top.ourisland.creepersiarena.game.flow;
 
 import lombok.NonNull;
-import net.kyori.adventure.text.Component;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.inventory.InventorySnapshot;
 import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.game.player.PlayerState;
-import top.ourisland.creepersiarena.job.JobId;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * 负责“玩家在不同状态之间的切换” + “大厅/死亡大厅 UI 行为的实现”。
- * <p>
- * 说明： - 这是一个偏 Application 的 service（所以放在 flow 下）。 - 这里不做模式决策（BATTLE/STEAL 的规则在 GameFlow + ModeRules/Timeline）。
+ * Package-private facade for internal player transitions.
+ *
+ * <p>IMPORTANT: Do NOT register this as a service. External callers must go through {@link GameFlow}.</p>
  */
-public final class PlayerTransitions {
+final class PlayerTransitions {
 
-    private final Plugin plugin;
-    private final Logger log;
-    private final PlayerSessionStore store;
-    private final LobbyItemService lobbyItemService;
-    private final LobbyService lobbyService;
-    private final ArenaManager arenaManager;
-    private final BattleKitService battleKit;
-    private final NamespacedKey selectedJobKey;
-    private final Supplier<GlobalConfig> cfg;
+    private final PlayerSessionFacade sessions;
+    private final PlayerStageTransitions stage;
+    private final PlayerLobbyTransitions lobby;
 
-    public PlayerTransitions(
+    PlayerTransitions(
             @NonNull Plugin plugin,
             @NonNull Logger log,
             @NonNull PlayerSessionStore store,
@@ -51,230 +37,81 @@ public final class PlayerTransitions {
             @NonNull BattleKitService battleKit,
             @NonNull Supplier<GlobalConfig> cfg
     ) {
-        this.plugin = plugin;
-        this.log = log;
-        this.store = store;
-        this.lobbyItemService = lobbyItemService;
-        this.lobbyService = lobbyService;
-        this.arenaManager = arenaManager;
-        this.battleKit = battleKit;
-        this.cfg = cfg;
-        this.selectedJobKey = new NamespacedKey(plugin, "selected_job");
+        this.sessions = new PlayerSessionFacade(plugin, log, store, lobbyItemService);
+        this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, arenaManager, battleKit, cfg);
+        this.lobby = new PlayerLobbyTransitions(log, sessions, lobbyItemService, cfg);
     }
 
-    public Plugin plugin() {
-        return plugin;
+    PlayerSession getSession(Player p) {
+        return sessions.get(p);
     }
 
-    public void toHub(Player p) {
-        PlayerSession session = ensureSession(p);
-
-        session.state(PlayerState.HUB);
-        p.setGameMode(GameMode.ADVENTURE);
-
-        p.teleport(hubAnchor());
-        lobbyItemService.applyHubKit(p, session, cfg());
-
-        log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
-                p.getName(),
-                session.selectedJob() == null ? "null" : session.selectedJob().id(),
-                session.selectedTeam(),
-                session.lobbyJobPage()
-        );
+    PlayerSession ensureSession(Player p) {
+        return sessions.ensureSession(p);
     }
 
-    public void selectJob(Player p, String jobIdRaw) {
-        PlayerSession s = ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
-
-        JobId jobId = JobId.fromId(jobIdRaw);
-        if (jobId == null) {
-            log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
-            return;
-        }
-
-        if (!lobbyItemService.hasJobId(jobId.toString())) {
-            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", p.getName(), jobIdRaw);
-            return;
-        }
-
-        s.selectedJob(jobId);
-        persistSelectedJob(p, jobId);
-
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
+    Location hubAnchor() {
+        return stage.hubAnchor();
     }
 
-    public PlayerSession ensureSession(Player p) {
-        PlayerSession s = store.getOrCreate(p);
-
-        if (s.outsideSnapshot() == null) {
-            s.outsideSnapshot(InventorySnapshot.capture(p));
-            log.debug("[Transitions] snapshot captured for {}", p.getName());
-        }
-
-        ensureSelectedJob(p, s);
-
-        return s;
+    Location deathAnchor() {
+        return stage.deathAnchor();
     }
 
-    private void persistSelectedJob(Player p, JobId jobId) {
-        if (jobId == null) return;
-        p.getPersistentDataContainer().set(selectedJobKey, PersistentDataType.STRING, jobId.toString());
+    Location battleSpawn(GameSession g) {
+        return stage.battleSpawn(g);
     }
 
-    public Location hubAnchor() {
-        return lobbyService.lobbyAnchor("hub");
+    int battleRespawnSecondsConfigured() {
+        return stage.battleRespawnSecondsConfigured();
     }
 
-    private GlobalConfig cfg() {
-        return cfg.get();
+    void toHub(Player p) {
+        stage.toHub(p);
     }
 
-    public void toRespawnLobby(Player p, int seconds) {
-        PlayerSession session = ensureSession(p);
-
-        session.state(PlayerState.RESPAWN);
-        session.respawnSecondsRemaining(Math.max(0, seconds));
-        p.setGameMode(GameMode.ADVENTURE);
-
-        p.teleport(deathAnchor());
-        lobbyItemService.applyDeathKit(p, session, cfg());
-
-        log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
+    void toRespawnLobby(Player p, int seconds) {
+        stage.toRespawnLobby(p, seconds);
     }
 
-    public Location deathAnchor() {
-        return lobbyService.lobbyAnchor("death");
+    void toSpectate(Player p, Location where) {
+        stage.toSpectate(p, where);
     }
 
-    public void toSpectate(Player p, Location where) {
-        if (where != null) {
-            p.teleport(where);
-        }
-        toSpectate(p);
+    void toSpectate(Player p) {
+        stage.toSpectate(p);
     }
 
-    public void toSpectate(Player p) {
-        PlayerSession session = ensureSession(p);
-        session.state(PlayerState.SPECTATE);
-        p.setGameMode(GameMode.SPECTATOR);
-        p.sendActionBar(Component.text("你现在是旁观者"));
-        log.debug("[Transitions] {} -> SPECTATE", p.getName());
+    void toBattle(Player p) {
+        stage.toBattle(p);
     }
 
-    public void toBattle(Player p) {
-        PlayerSession session = ensureSession(p);
-        session.state(PlayerState.IN_GAME);
-
-        p.setGameMode(GameMode.ADVENTURE);
-
-        Location loc = arenaManager.anyBattleSpawnOrFallback(hubAnchor());
-        p.teleport(loc);
-
-        battleKit.apply(p, session);
-
-        p.sendActionBar(Component.text("进入战场"));
-
-        log.debug("[Transitions] {} -> IN_GAME (battle spawn)", p.getName());
+    void toBattle(Player p, GameSession g) {
+        stage.toBattle(p, g);
     }
 
-    public void toBattle(Player p, GameSession g) {
-        PlayerSession session = ensureSession(p);
-        session.state(PlayerState.IN_GAME);
-
-        p.setGameMode(GameMode.ADVENTURE);
-
-        Location loc = arenaManager.battleSpawn(g.arena());
-        p.teleport(loc);
-
-        battleKit.apply(p, session);
-
-        p.sendActionBar(Component.text("进入战场"));
-        log.debug("[Transitions] {} -> IN_GAME (battle spawn in arena={})", p.getName(), g.arena().id());
+    void refreshLobbyKit(Player p) {
+        lobby.refreshLobbyKit(p);
     }
 
-    public int battleRespawnSecondsConfigured() {
-        return cfg().game().battle().respawnTimeSeconds();
+    void selectJob(Player p, String jobIdRaw) {
+        lobby.selectJob(p, jobIdRaw);
     }
 
-    public void restoreOutsideAndLeave(Player p) {
-        PlayerSession s = store.get(p);
-        if (s != null && s.outsideSnapshot() != null) {
-            s.outsideSnapshot().restore(p);
-        }
-        store.remove(p);
-        log.info("[Transitions] {} leave arena (restore snapshot)", p.getName());
+    void nextJobPage(Player p) {
+        lobby.nextJobPage(p);
     }
 
-    public void refreshLobbyKit(Player p) {
-        PlayerSession s = store.get(p);
-        if (s == null) return;
-
-        switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(p, s, cfg());
-            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg());
-            case null, default -> {
-            }
-        }
+    void cycleTeam(Player p) {
+        lobby.cycleTeam(p);
     }
 
-    private void ensureSelectedJob(Player p, PlayerSession s) {
-        Optional.ofNullable(s.selectedJob())
-
-                .or(() -> Optional.ofNullable(
-                                p.getPersistentDataContainer().get(selectedJobKey, PersistentDataType.STRING)
-                        ).filter(lobbyItemService::hasJobId)
-                        .map(JobId::fromId))
-
-                .or(() -> Optional.ofNullable(
-                                lobbyItemService.firstJobIdOrNull()
-                        ).filter(lobbyItemService::hasJobId)
-                        .map(JobId::fromId)
-                        .map(jid -> {
-                            persistSelectedJob(p, jid);
-                            return jid;
-                        }))
-
-                .ifPresentOrElse(
-                        s::selectedJob,
-                        () -> log.warn("[Lobby] No available job to select for {}", p.getName())
-                );
+    void selectTeam(Player p, Integer teamId) {
+        lobby.selectTeam(p, teamId);
     }
 
-    public void nextJobPage(Player p) {
-        PlayerSession s = ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
-
-        int per = Math.max(1, cfg().ui().lobby().jobsPerPage());
-        int jobCount = lobbyItemService.totalJobs();
-        int maxPage = Math.max(0, (jobCount - 1) / per);
-
-        int next = s.lobbyJobPage() + 1;
-        if (next > maxPage) next = 0;
-
-        s.lobbyJobPage(next);
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} job page -> {}/{}", p.getName(), next, maxPage);
-    }
-
-    public void cycleTeam(Player p) {
-        PlayerSession s = ensureSession(p);
-        if (s.state() != PlayerState.HUB) return;
-
-        int maxTeam = cfg().game().battle().maxTeam();
-        Integer cur = s.selectedTeam();
-
-        Integer next;
-        if (cur == null) next = 1;
-        else if (cur >= maxTeam) next = null;
-        else next = cur + 1;
-
-        s.selectedTeam(next);
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} team -> {}", p.getName(), next == null ? "RANDOM" : next);
+    void leaveToOutside(Player p) {
+        sessions.restoreOutsideSnapshotAndClear(p);
+        sessions.remove(p);
     }
 }

@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.game.mode.GameModeType;
  *
  * @author Chiloven945
  */
-public final class DefaultStartModule implements Module {
+public final class DefaultStartModule implements BootstrapModule {
     @Override
     public String name() {
         return "default-start";

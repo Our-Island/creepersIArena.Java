@@ -1,107 +1,120 @@
 package top.ourisland.creepersiarena.game.player;
 
 import lombok.NonNull;
-import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+/**
+ * Respawn countdown ticker.
+ *
+ * <p>Important: this service ONLY manages countdown + callback.
+ * It must NOT directly call transitions / change player stage. That is handled by {@code GameFlow}.</p>
+ */
 public final class RespawnService {
 
-    private final Plugin plugin;
     private final Logger log;
     private final PlayerSessionStore store;
-    private final PlayerTransitions transitions;
 
-    private final Map<UUID, BukkitTask> tasks = new HashMap<>();
-    @Setter
+    private final Set<UUID> ticking = new HashSet<>();
     private Consumer<Player> callback;
 
     public RespawnService(
-            @NonNull Plugin plugin,
             @NonNull Logger log,
-            @NonNull PlayerSessionStore store,
-            @NonNull PlayerTransitions transitions
+            @NonNull PlayerSessionStore store
     ) {
-        this.plugin = plugin;
         this.log = log;
         this.store = store;
-        this.transitions = transitions;
+    }
+
+    public void callback(Consumer<Player> callback) {
+        this.callback = callback;
+    }
+
+    public void startOrReset(Player p, int seconds) {
+        if (p == null) return;
+
+        PlayerSession s = store.get(p);
+        if (s == null) return;
+
+        int sec = Math.max(0, seconds);
+        s.respawnSecondsRemaining(sec);
+
+        if (sec == 0) {
+            ticking.remove(p.getUniqueId());
+            if (callback != null) callback.accept(p);
+            return;
+        }
+
+        ticking.add(p.getUniqueId());
+        log.debug("[Respawn] startOrReset: name={} sec={}", p.getName(), sec);
+    }
+
+    public void cancel(Player p) {
+        if (p == null) return;
+
+        ticking.remove(p.getUniqueId());
+
+        PlayerSession s = store.get(p);
+        if (s != null) {
+            s.respawnSecondsRemaining(0);
+        }
+    }
+
+    public void cancelAll() {
+        ticking.clear();
     }
 
     /**
-     * 以配置的默认复活时间启动倒计时。
+     * Called by the global 1-second ticker (see GameTickModule -> GameFlow.tick1s()).
      */
-    public void start(Player p) {
-        PlayerSession s = store.getOrCreate(p);
-        if (s.respawnSecondsRemaining() <= 0) {
-            s.respawnSecondsRemaining(transitions.battleRespawnSecondsConfigured());
-        }
-        startInternal(p);
-    }
+    public void tick1s() {
+        if (ticking.isEmpty()) return;
 
-    private void startInternal(Player p) {
-        UUID id = p.getUniqueId();
+        // Copy to avoid CME when callback changes state or cancels.
+        UUID[] uuids = ticking.toArray(UUID[]::new);
 
-        cancel(p);
-
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!p.isOnline()) {
-                cancel(p);
-                return;
+        for (UUID uuid : uuids) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) {
+                ticking.remove(uuid);
+                continue;
             }
 
             PlayerSession s = store.get(p);
             if (s == null) {
-                cancel(p);
-                return;
+                ticking.remove(uuid);
+                continue;
+            }
+
+            if (s.state() != PlayerState.RESPAWN) {
+                ticking.remove(uuid);
+                continue;
             }
 
             int remain = s.respawnSecondsRemaining();
-            if (remain <= 0) {
-                cancel(p);
 
-                Consumer<Player> cb = this.callback;
-                if (cb != null) {
+            if (remain <= 1) {
+                s.respawnSecondsRemaining(0);
+                ticking.remove(uuid);
+                if (callback != null) {
                     try {
-                        cb.accept(p);
+                        callback.accept(p);
                     } catch (Throwable t) {
-                        log.warn("[Respawn] callback failed for {}", p.getName(), t);
+                        log.warn("[Respawn] callback failed: {}", t.getMessage(), t);
                     }
-                } else {
-                    transitions.toBattle(p);
                 }
-                return;
+                continue;
             }
 
-            p.sendActionBar(Component.text("复活倒计时： " + remain + " 秒"));
+            p.sendActionBar(Component.text("复活倒计时: " + remain + "s"));
             s.respawnSecondsRemaining(remain - 1);
-        }, 0L, 20L);
-
-        tasks.put(id, task);
-        log.debug("[Respawn] {} respawn task started ({}s)", p.getName(), store.getOrCreate(p).respawnSecondsRemaining());
-    }
-
-    public void cancel(Player p) {
-        BukkitTask task = tasks.remove(p.getUniqueId());
-        if (task != null) task.cancel();
-    }
-
-    /**
-     * 以指定秒数启动倒计时（由 Flow/模式决定）。
-     */
-    public void start(Player p, int seconds) {
-        PlayerSession s = store.getOrCreate(p);
-        s.respawnSecondsRemaining(Math.max(0, seconds));
-        startInternal(p);
+        }
     }
 }

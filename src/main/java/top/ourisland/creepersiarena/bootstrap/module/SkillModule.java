@@ -3,8 +3,9 @@ package top.ourisland.creepersiarena.bootstrap.module;
 import org.bukkit.scheduler.BukkitTask;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
+import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.JobManager;
@@ -24,7 +25,7 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
-public final class SkillModule implements Module {
+public final class SkillModule implements BootstrapModule {
     @Override
     public String name() {
         return "skill";

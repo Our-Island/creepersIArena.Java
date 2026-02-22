@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
+import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
 public final class LobbyUiListener implements Listener {
@@ -41,7 +42,8 @@ public final class LobbyUiListener implements Listener {
         if (!isClick) return;
 
         Player p = e.getPlayer();
-        if (!store.get(p).state().isLobbyState()) return;
+        PlayerSession s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return;
 
         ItemStack item = e.getItem();
         if (item == null) return;
@@ -51,18 +53,15 @@ public final class LobbyUiListener implements Listener {
         handleLobbyUiItem(p, item);
     }
 
-
     private void handleLobbyUiItem(Player p, ItemStack item) {
         p.playSound(p, "minecraft:ui.button.click", SoundCategory.UI, 1.0f, 1.0f);
 
-        // 1) action 物品（翻页/切队/回大厅/预留离开）
         LobbyAction action = codec.readAction(item);
         if (action != null) {
             flow.onLobbyAction(p, action, codec.readJobPage(item), codec.readJobId(item));
             return;
         }
 
-        // 2) 职业选择（hotbar / inventory 都走这里）
         String jobId = codec.readJobId(item);
         if (jobId != null) {
             flow.onLobbySelectJob(p, jobId);
@@ -72,7 +71,9 @@ public final class LobbyUiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (!store.get(p).state().isLobbyState()) return;
+
+        PlayerSession s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return;
 
         e.setCancelled(true);
 
@@ -85,7 +86,9 @@ public final class LobbyUiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onDrag(InventoryDragEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (!store.get(p).state().isLobbyState()) return;
+
+        PlayerSession s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return;
 
         e.setCancelled(true);
     }
@@ -93,7 +96,9 @@ public final class LobbyUiListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onSwap(PlayerSwapHandItemsEvent e) {
         Player p = e.getPlayer();
-        if (!store.get(p).state().isLobbyState()) return;
+
+        PlayerSession s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return;
 
         e.setCancelled(true);
 

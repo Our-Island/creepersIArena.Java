@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.bootstrap.module;
 
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.job.Job;
@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * @author Chiloven945
  */
-public final class JobModule implements Module {
+public final class JobModule implements BootstrapModule {
     @Override
     public String name() {
         return "job";

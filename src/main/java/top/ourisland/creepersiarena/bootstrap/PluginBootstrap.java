@@ -17,7 +17,7 @@ import java.util.List;
 public final class PluginBootstrap {
 
     @Getter
-    private final List<Module> modules = new ArrayList<>();
+    private final List<BootstrapModule> bootstrapModules = new ArrayList<>();
     private BootstrapRuntime rt;
 
     /**
@@ -28,8 +28,8 @@ public final class PluginBootstrap {
     public void enable(JavaPlugin plugin) {
         this.rt = new BootstrapRuntime(plugin);
 
-        modules.clear();
-        modules.addAll(List.of(
+        bootstrapModules.clear();
+        bootstrapModules.addAll(List.of(
                 new ConfigModule(),
                 new WorldModule(),
                 new ArenaModule(),
@@ -47,16 +47,16 @@ public final class PluginBootstrap {
         Logger log = rt.log();
         long t0 = System.nanoTime();
 
-        int total = modules.size();
+        int total = bootstrapModules.size();
         log.info("[Bootstrap] Installing {} modules...", total);
 
         for (int i = 0; i < total; i++) {
-            runStage(StagePhase.LOAD, i + 1, total, modules.get(i));
+            runStage(StagePhase.LOAD, i + 1, total, bootstrapModules.get(i));
         }
 
         ListenerBinder binder = new ListenerBinder(rt).verbose(false);
         int usedModules = 0;
-        for (Module m : modules) {
+        for (BootstrapModule m : bootstrapModules) {
             try {
                 if (m.registerListeners(binder)) usedModules++;
             } catch (Throwable t) {
@@ -67,7 +67,7 @@ public final class PluginBootstrap {
 
         log.info("[Bootstrap] Starting {} modules...", total);
         for (int i = 0; i < total; i++) {
-            runStage(StagePhase.START, i + 1, total, modules.get(i));
+            runStage(StagePhase.START, i + 1, total, bootstrapModules.get(i));
         }
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
@@ -83,7 +83,7 @@ public final class PluginBootstrap {
      * @param total the total number of modules
      * @param m     the module to be executed
      */
-    private void runStage(StagePhase phase, int idx, int total, Module m) {
+    private void runStage(StagePhase phase, int idx, int total, BootstrapModule m) {
         String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
 
         try {
@@ -107,7 +107,7 @@ public final class PluginBootstrap {
     }
 
     /**
-     * Plugin hot-reload method. Should be used by command.
+     * Plugin hot-reload method. Call to hot-reload the plugin.
      */
     public void reload() {
         if (rt == null) return;
@@ -115,11 +115,11 @@ public final class PluginBootstrap {
         Logger log = rt.log();
         long t0 = System.nanoTime();
 
-        int total = modules.size();
+        int total = bootstrapModules.size();
         log.info("[Bootstrap] Reloading {} modules...", total);
 
         for (int i = 0; i < total; i++) {
-            runStage(StagePhase.RELOAD, i + 1, total, modules.get(i));
+            runStage(StagePhase.RELOAD, i + 1, total, bootstrapModules.get(i));
         }
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
@@ -147,9 +147,9 @@ public final class PluginBootstrap {
             log.warn("[Bootstrap] Unregister listeners failed: {}", t.getMessage(), t);
         }
 
-        int total = modules.size();
+        int total = bootstrapModules.size();
         for (int i = total - 1; i >= 0; i--) {
-            runStage(StagePhase.STOP, i + 1, total, modules.get(i));
+            runStage(StagePhase.STOP, i + 1, total, bootstrapModules.get(i));
         }
 
         rt.cancelTrackedTasks();

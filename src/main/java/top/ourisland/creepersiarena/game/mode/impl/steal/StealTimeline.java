@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -59,7 +61,7 @@ public final class StealTimeline implements ModeTimeline {
         st.phase = StealPhase.COUNTDOWN;
         st.remaining = Math.max(1, cfg.game().steal().prepareTimeSeconds());
 
-        return List.of(new GameAction.Broadcast("§eSTEAL：人数达标，倒计时 " + st.remaining + "s"));
+        return List.of(new GameAction.Broadcast(Component.text("STEAL：人数达标，倒计时 " + st.remaining + "s", NamedTextColor.GOLD)));
     }
 
     private List<GameAction> tickCountdown(GlobalConfig cfg) {
@@ -67,18 +69,17 @@ public final class StealTimeline implements ModeTimeline {
         if (ready < cfg.game().steal().minPlayerToStart()) {
             st.phase = StealPhase.LOBBY;
             st.remaining = 0;
-            return List.of(new GameAction.Broadcast("§cSTEAL：人数不足，倒计时取消"));
+            return List.of(new GameAction.Broadcast(Component.text("STEAL：人数不足，倒计时取消", NamedTextColor.RED)));
         }
 
         st.remaining--;
         if (st.remaining > 0) {
             if (st.remaining == 10 || st.remaining == 5 || st.remaining <= 3) {
-                return List.of(new GameAction.Broadcast("§eSTEAL：倒计时 " + st.remaining + "s"));
+                return List.of(new GameAction.Broadcast(Component.text("STEAL：倒计时 " + st.remaining + "s", NamedTextColor.YELLOW)));
             }
             return List.of();
         }
 
-        // 锁定参赛者、分队（仍然写在 timeline 里；后续可再拆 service）
         lockParticipants();
         assignTeamsBalanced();
 
@@ -86,7 +87,7 @@ public final class StealTimeline implements ModeTimeline {
         st.remaining = PRE_SPECTATE_SECONDS;
 
         return List.of(
-                new GameAction.Broadcast("§7STEAL：地图展示…"),
+                new GameAction.Broadcast(Component.text("§7STEAL：地图展示…", NamedTextColor.DARK_AQUA)),
                 new GameAction.ToSpectate(session.players(), session.arena().anchor().clone().add(0, 8, 0))
         );
     }
@@ -99,7 +100,7 @@ public final class StealTimeline implements ModeTimeline {
 
         // 这里不直接 ToBattle：因为 STEAL 的“基地/选职业”阶段你可能需要不同 kit；
         // 当前最小实现：仍回 hub，让玩家选职业（后续你再加“基地 kit”）
-        return List.of(new GameAction.Broadcast("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）"));
+        return List.of(new GameAction.Broadcast(Component.text("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）", NamedTextColor.AQUA)));
     }
 
     private List<GameAction> tickPickBase(GlobalConfig cfg) {
@@ -108,7 +109,7 @@ public final class StealTimeline implements ModeTimeline {
         st.phase = StealPhase.ROUND_PLAYING;
         st.remaining = Math.max(1, cfg.game().steal().timePerRoundSeconds());
 
-        return List.of(new GameAction.Broadcast("§cSTEAL：开局！回合时长 " + st.remaining + "s"));
+        return List.of(new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)));
     }
 
     private List<GameAction> tickRoundPlaying(GlobalConfig cfg) {
@@ -117,7 +118,7 @@ public final class StealTimeline implements ModeTimeline {
         st.phase = StealPhase.ROUND_END;
         st.remaining = ROUND_END_SECONDS;
 
-        return List.of(new GameAction.Broadcast("§fSTEAL：回合结束，结算中…"));
+        return List.of(new GameAction.Broadcast(Component.text("§fSTEAL：回合结束，结算中…", NamedTextColor.WHITE)));
     }
 
     private List<GameAction> tickRoundEnd(GlobalConfig cfg) {
@@ -129,7 +130,7 @@ public final class StealTimeline implements ModeTimeline {
         if (st.roundIndex >= total) {
             st.phase = StealPhase.GAME_END;
             st.remaining = GAME_END_SECONDS;
-            return List.of(new GameAction.Broadcast("§6STEAL：整局结束！"));
+            return List.of(new GameAction.Broadcast(Component.text("STEAL：整局结束！", NamedTextColor.GOLD)));
         }
 
         reviveParticipantsForNextRound();
@@ -138,7 +139,7 @@ public final class StealTimeline implements ModeTimeline {
         st.remaining = PRE_SPECTATE_SECONDS;
 
         return List.of(
-                new GameAction.Broadcast("§7STEAL：准备下一回合（" + (st.roundIndex + 1) + "/" + total + "）…"),
+                new GameAction.Broadcast(Component.text("STEAL：准备下一回合（" + (st.roundIndex + 1) + "/" + total + "）…", NamedTextColor.GRAY)),
                 new GameAction.ToSpectate(session.players(), session.arena().anchor().clone().add(0, 8, 0))
         );
     }
@@ -150,14 +151,12 @@ public final class StealTimeline implements ModeTimeline {
         st.phase = StealPhase.LOBBY;
         st.remaining = 0;
 
-        // 最小实现：回 hub 可再次准备
         return List.of(
-                new GameAction.Broadcast("§aSTEAL：已回到大厅，可再次准备"),
+                new GameAction.Broadcast(Component.text("STEAL：已回到大厅，可再次准备", NamedTextColor.GREEN)),
                 new GameAction.ToHub(session.players())
         );
     }
 
-    // ---------- helpers：这里依赖 PlayerSessionStore（通过 runtime.sessionStore） ----------
     private int countReadyOnline() {
         int c = 0;
         for (UUID id : session.players()) {
@@ -179,8 +178,6 @@ public final class StealTimeline implements ModeTimeline {
 
             s.stealParticipant(participant);
             s.stealAlive(true);
-
-            // 非参赛者此处不强制改状态：由规则层 join/respawn 做，Flow 迁移
         }
     }
 

@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
@@ -36,7 +38,7 @@ public final class BattleTimeline implements ModeTimeline {
 
         // TODO: 结算/换图：先最小实现 -> 全部回 hub
         return List.of(
-                new GameAction.Broadcast("§6BATTLE：本局结束！"),
+                new GameAction.Broadcast(Component.text("BATTLE：本局结束！", NamedTextColor.GOLD)),
                 new GameAction.ToHub(session.players())
         );
     }

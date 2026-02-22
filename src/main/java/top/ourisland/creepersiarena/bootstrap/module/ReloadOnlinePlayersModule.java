@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.bootstrap.module;
 
 import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
  *
  * @author Chiloven945
  */
-public final class ReloadOnlinePlayersModule implements Module {
+public final class ReloadOnlinePlayersModule implements BootstrapModule {
     @Override
     public String name() {
         return "reload-online-players";

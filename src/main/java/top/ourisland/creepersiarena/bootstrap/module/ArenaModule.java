@@ -4,7 +4,7 @@ import org.bukkit.World;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
@@ -17,7 +17,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
  *
  * @author Chiloven945
  */
-public final class ArenaModule implements Module {
+public final class ArenaModule implements BootstrapModule {
     @Override
     public String name() {
         return "arena";

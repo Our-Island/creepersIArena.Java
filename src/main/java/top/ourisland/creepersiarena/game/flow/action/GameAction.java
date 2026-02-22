@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.flow.action;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.util.UUID;
  */
 public sealed interface GameAction {
 
-    record Broadcast(String message) implements GameAction {
+    record Broadcast(Component message) implements GameAction {
     }
 
     record ToHub(Set<UUID> players) implements GameAction {

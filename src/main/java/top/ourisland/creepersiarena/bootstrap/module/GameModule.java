@@ -1,15 +1,14 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
-import org.bukkit.Bukkit;
-import org.slf4j.Logger;
+import lombok.NonNull;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
-import top.ourisland.creepersiarena.game.flow.PlayerTransitions;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
@@ -17,99 +16,95 @@ import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleMode;
 import top.ourisland.creepersiarena.game.mode.impl.steal.StealMode;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.game.player.RespawnService;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Module controlling game runtime and game flow related.
  *
  * @author Chiloven945
  */
-public final class GameModule implements Module {
+public final class GameModule implements BootstrapModule {
+
     @Override
     public String name() {
         return "game";
     }
 
     @Override
-    public StageTask install(BootstrapRuntime rt) {
+    public StageTask install(@NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            Logger log = rt.log();
-
             ConfigManager cfg = rt.requireService(ConfigManager.class);
-            PlayerSessionStore sessionStore = rt.requireService(PlayerSessionStore.class);
-            LobbyItemService lobbyItemService = rt.requireService(LobbyItemService.class);
-            LobbyService lobbyService = rt.requireService(LobbyService.class);
+            GlobalConfig gcfg = cfg.globalConfig();
+
+            PlayerSessionStore store = rt.requireService(PlayerSessionStore.class);
             ArenaManager arenaManager = rt.requireService(ArenaManager.class);
-            BattleKitService battleKitService = rt.requireService(BattleKitService.class);
+            LobbyItemService lobbyItems = rt.requireService(LobbyItemService.class);
+            LobbyService lobbyService = rt.requireService(LobbyService.class);
+            BattleKitService battleKit = rt.requireService(BattleKitService.class);
 
-            PlayerTransitions transitions = new PlayerTransitions(
-                    rt.plugin(),
-                    log,
-                    sessionStore,
-                    lobbyItemService,
-                    lobbyService,
-                    arenaManager,
-                    battleKitService,
-                    cfg::globalConfig
-            );
-            RespawnService respawns = new RespawnService(rt.plugin(), log, sessionStore, transitions);
+            // 1) GameManager: register modes
+            GameManager gameManager = new GameManager(arenaManager, rt.log());
+            Set<String> disabled = new HashSet<>();
+            for (String s : gcfg.game().disabledModes()) {
+                if (s != null) disabled.add(s.trim().toUpperCase());
+            }
 
-            GameManager gameManager = new GameManager(arenaManager, log);
-            gameManager.registerMode(new BattleMode());
-            gameManager.registerMode(new StealMode());
+            if (!disabled.contains("BATTLE")) {
+                gameManager.registerMode(new BattleMode());
+            }
 
-            GameFlow flow = new GameFlow(
-                    log,
-                    sessionStore,
-                    gameManager,
-                    transitions,
-                    respawns
-            );
+            if (!disabled.contains("STEAL")) {
+                gameManager.registerMode(new StealMode());
+            }
 
-            GameRuntime runtime = new GameRuntime(
-                    cfg::globalConfig,
-                    arenaManager,
-                    sessionStore,
-                    transitions,
-                    respawns,
-                    flow,
-                    gameManager
-            );
-
+            // 2) Runtime for rules/timelines
+            GameRuntime runtime = new GameRuntime(cfg::globalConfig, arenaManager, store);
             gameManager.bindRuntime(runtime);
 
+            // 3) GameFlow: external entry point
+            GameFlow flow = new GameFlow(
+                    rt.plugin(),
+                    rt.log(),
+                    cfg::globalConfig,
+                    store,
+                    gameManager,
+                    lobbyItems,
+                    lobbyService,
+                    arenaManager,
+                    battleKit
+            );
+
             rt.putAllServices(Map.of(
-                    PlayerTransitions.class, transitions,
-                    RespawnService.class, respawns,
                     GameManager.class, gameManager,
-                    GameFlow.class, flow,
-                    GameRuntime.class, runtime
+                    GameRuntime.class, runtime,
+                    GameFlow.class, flow
             ));
-        }, "Start to load game runtime...", "Finished loading game runtime.");
+        }, "Loading game runtime...", "Game runtime loaded.");
     }
 
     @Override
-    public StageTask stop(BootstrapRuntime rt) {
+    public StageTask stop(@NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            RespawnService respawns = rt.getService(RespawnService.class);
-            if (respawns == null) return;
-
-            Bukkit.getOnlinePlayers().forEach(p -> {
+            GameManager gm = rt.getService(GameManager.class);
+            if (gm != null) {
                 try {
-                    respawns.cancel(p);
+                    gm.endActive();
                 } catch (Throwable ignored) {
                 }
-            });
-        }, "Stopping game runtime...", "Respawn tasks cancelled for online players.");
+            }
+        }, "Stopping game runtime...", "Game runtime stopped.");
     }
 
     @Override
-    public StageTask reload(BootstrapRuntime rt) {
+    public StageTask reload(@NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameFlow flow = rt.requireService(GameFlow.class);
-            flow.onReloadFixOnlinePlayers();
+            GameFlow flow = rt.getService(GameFlow.class);
+            if (flow != null) {
+                flow.onReloadFixOnlinePlayers();
+            }
         }, "Fixing online players after reload...", "Online players fixed.");
     }
 }

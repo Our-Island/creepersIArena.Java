@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.bootstrap.module;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
  *
  * @author Chiloven945
  */
-public final class GameTickModule implements Module {
+public final class GameTickModule implements BootstrapModule {
     @Override
     public String name() {
         return "game-tick";

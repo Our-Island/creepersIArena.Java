@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.bootstrap.module;
 
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.util.I18n;
@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.util.I18n;
  *
  * @author Chiloven945
  */
-public final class ConfigModule implements Module {
+public final class ConfigModule implements BootstrapModule {
     @Override
     public String name() {
         return "config";

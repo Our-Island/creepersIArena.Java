@@ -4,7 +4,7 @@ import org.bukkit.World;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
-public final class LobbyModule implements Module {
+public final class LobbyModule implements BootstrapModule {
     @Override
     public String name() {
         return "lobby";

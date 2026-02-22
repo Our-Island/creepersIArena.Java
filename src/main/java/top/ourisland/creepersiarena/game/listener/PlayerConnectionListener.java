@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
+import top.ourisland.creepersiarena.game.flow.LeaveReason;
 
 public final class PlayerConnectionListener implements Listener {
 
@@ -43,11 +44,11 @@ public final class PlayerConnectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
-        flow.onPlayerLeaveServer(e.getPlayer(), GameFlow.LeaveReason.QUIT);
+        flow.onPlayerLeaveServer(e.getPlayer(), LeaveReason.QUIT);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onKick(PlayerKickEvent e) {
-        flow.onPlayerLeaveServer(e.getPlayer(), GameFlow.LeaveReason.KICK);
+        flow.onPlayerLeaveServer(e.getPlayer(), LeaveReason.KICK);
     }
 }

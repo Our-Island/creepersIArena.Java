@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.bootstrap.module;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import top.ourisland.creepersiarena.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.bootstrap.Module;
+import top.ourisland.creepersiarena.bootstrap.BootstrapModule;
 import top.ourisland.creepersiarena.bootstrap.StageTask;
 
 /**
@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.bootstrap.StageTask;
  *
  * @author Chiloven945
  */
-public final class WorldModule implements Module {
+public final class WorldModule implements BootstrapModule {
     @Override
     public String name() {
         return "world";
