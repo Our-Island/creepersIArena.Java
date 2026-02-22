@@ -1,5 +1,6 @@
 plugins {
     java
+    id("org.jetbrains.kotlin.jvm") version "2.3.10"
     id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
@@ -15,12 +16,17 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly("org.projectlombok:lombok:1.18.42")
     compileOnly("org.jspecify:jspecify:1.0.0")
-    compileOnly("net.luckperms:api:5.5")
-
+    compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
+
+    // Compile only, use CiaPaperLoader to download when used
+    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.3.10")
+//    compileOnly("org.jetbrains.kotlin:kotlin-reflect:2.3.10")
+//    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("net.luckperms:api:5.5")
 
     testCompileOnly("org.projectlombok:lombok:1.18.42")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
@@ -48,6 +54,10 @@ java {
             languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
         }
     }
+}
+
+kotlin {
+    jvmToolchain(targetJavaVersion)
 }
 
 tasks.withType<JavaCompile>().configureEach {

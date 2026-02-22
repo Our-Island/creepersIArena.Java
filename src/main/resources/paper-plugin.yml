@@ -8,8 +8,8 @@ authors: [ "Our-Island", "Chiloven945", "xqysp" ]
 description: "Creeper's Imagination Arena, but is implemented by a Paper plugin."
 website: "https://github.com/Our-Island/creepersIArena.Java"
 
-bootstrapper: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperBootstrap
-loader: top.ourisland.creepersiarena.bootstrap.paper.CiaPaperLoader
+bootstrapper: top.ourisland.creepersiarena.core.bootstrap.paper.CiaPaperBootstrap
+loader: top.ourisland.creepersiarena.core.bootstrap.paper.CiaPaperLoader
 
 dependencies:
   server:
