@@ -16,6 +16,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.util.Msg;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
@@ -71,7 +72,9 @@ final class PlayerStageTransitions {
         session.respawnSecondsRemaining(0);
 
         p.setGameMode(GameMode.ADVENTURE);
-        p.teleport(hubAnchor());
+
+        Location to = hubAnchor();
+        teleportAsync(p, to, "HUB");
 
         lobbyItemService.applyHubKit(p, session, cfg.get());
 
@@ -90,7 +93,9 @@ final class PlayerStageTransitions {
         session.respawnSecondsRemaining(Math.max(0, seconds));
 
         p.setGameMode(GameMode.ADVENTURE);
-        p.teleport(deathAnchor());
+
+        Location to = deathAnchor();
+        teleportAsync(p, to, "RESPAWN");
 
         lobbyItemService.applyDeathKit(p, session, cfg.get());
 
@@ -99,7 +104,7 @@ final class PlayerStageTransitions {
 
     void toSpectate(Player p, Location where) {
         if (where != null) {
-            p.teleport(where);
+            teleportAsync(p, where, "SPECTATE(where)");
         }
         toSpectate(p);
     }
@@ -123,7 +128,7 @@ final class PlayerStageTransitions {
         p.setGameMode(GameMode.ADVENTURE);
 
         Location loc = arenaManager.anyBattleSpawnOrFallback(hubAnchor());
-        p.teleport(loc);
+        teleportAsync(p, loc, "BATTLE(any)");
 
         battleKit.apply(p, session);
 
@@ -139,7 +144,7 @@ final class PlayerStageTransitions {
         p.setGameMode(GameMode.ADVENTURE);
 
         Location loc = arenaManager.battleSpawn(g.arena());
-        p.teleport(loc);
+        teleportAsync(p, loc, "BATTLE(arena=" + g.arena().id() + ")");
 
         battleKit.apply(p, session);
 
@@ -150,5 +155,19 @@ final class PlayerStageTransitions {
     Location battleSpawn(GameSession g) {
         if (g == null) return hubAnchor();
         return arenaManager.battleSpawn(g.arena());
+    }
+
+    private void teleportAsync(Player p, Location to, String reason) {
+        if (p == null || to == null) return;
+
+        CompletableFuture<Boolean> f = p.teleportAsync(to);
+        f.thenAccept(success -> {
+            if (!success) {
+                log.warn("[Transitions] teleportAsync failed: player={} reason={} to={}", p.getName(), reason, to);
+            }
+        }).exceptionally(t -> {
+            log.warn("[Transitions] teleportAsync error: player={} reason={} to={}", p.getName(), reason, to, t);
+            return null;
+        });
     }
 }

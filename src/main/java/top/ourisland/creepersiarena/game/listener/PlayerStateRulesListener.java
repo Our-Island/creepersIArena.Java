@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.game.listener;
 
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,23 +24,28 @@ public final class PlayerStateRulesListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent e) {
+        // Paper optimization: only run boundary checks when the player changed blocks.
+        if (!e.hasChangedBlock()) return;
+
         Player p = e.getPlayer();
         if (p.getGameMode() != GameMode.ADVENTURE) return;
 
         var s = store.get(p);
         if (s == null) return;
 
+        Location to = e.getTo();
+
         if (s.state() == PlayerState.HUB) {
             var region = lobbyService.lobbyRegion("hub");
-            if (region != null && !region.contains(p.getLocation())) {
-                p.teleport(region.clampXZ(p.getLocation()));
+            if (region != null && !region.contains(to)) {
+                e.setTo(region.clampXZ(to));
             }
         }
 
         if (s.state() == PlayerState.RESPAWN) {
             var region = lobbyService.lobbyRegion("death");
-            if (region != null && !region.contains(p.getLocation())) {
-                p.teleport(region.clampXZ(p.getLocation()));
+            if (region != null && !region.contains(to)) {
+                e.setTo(region.clampXZ(to));
             }
         }
     }
