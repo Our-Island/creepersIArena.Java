@@ -14,8 +14,8 @@ import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.IModeRules;
 import top.ourisland.creepersiarena.game.mode.context.JoinContext;
@@ -153,7 +153,6 @@ public final class GameFlow {
         switch (action) {
             case JOB_PAGE_NEXT -> transitions.nextJobPage(p);
             case TEAM_CYCLE -> transitions.cycleTeam(p);
-
             case BACK_TO_HUB -> leaveToHubNow(p, LeaveReason.COMMAND);
         }
     }
@@ -303,6 +302,15 @@ public final class GameFlow {
         // Fallback
         leaveToHubNow(p, reason);
         return new LeavePlan.Immediate();
+    }
+
+    /**
+     * Unified helper: end current active game session (if any) and send its players back to HUB.
+     *
+     * <p>This is the same behavior used by timelines (via {@link GameAction.EndGameAndBackToHub}).</p>
+     */
+    public void endGameAndBackToHub(String reason) {
+        applyGameAction(new GameAction.EndGameAndBackToHub(reason));
     }
 
     /**
@@ -666,4 +674,5 @@ public final class GameFlow {
 
     private record PendingLeave(int secondsRemaining, LeaveReason reason) {
     }
+
 }

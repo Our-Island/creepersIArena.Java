@@ -39,7 +39,8 @@ public final class BattleTimeline implements IModeTimeline {
         // TODO: 结算/换图：先最小实现 -> 全部回 hub
         return List.of(
                 new GameAction.Broadcast(Component.text("BATTLE：本局结束！", NamedTextColor.GOLD)),
-                new GameAction.ToHub(session.players())
+                new GameAction.EndGameAndBackToHub("BATTLE_TIMEOUT")
         );
     }
+
 }

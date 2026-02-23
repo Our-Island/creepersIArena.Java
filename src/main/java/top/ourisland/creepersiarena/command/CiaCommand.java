@@ -14,10 +14,10 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.command.handler.AdminCommandHandlers;
 import top.ourisland.creepersiarena.command.handler.PlayerCommandHandlers;
 import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.job.JobManager;
@@ -50,7 +50,8 @@ public final class CiaCommand {
         registerRedirect(commands, "language", child(root, "language"), P_BASE + ".language", List.of());
         registerRedirect(commands, "preference", child(root, "preference"), P_BASE + ".preference", List.of("pref"));
         registerRedirect(commands, "choosejob", child(root, "choosejob"), P_CHOOSEJOB, List.of());
-        registerRedirect(commands, "ciaa", child(root, "admin"), P_ADMIN, List.of());
+        LiteralCommandNode<CommandSourceStack> ciaaRoot = buildAdminSubtree(rt, admin, "ciaa").build();
+        commands.register(ciaaRoot, "CreepersIArena admin commands", List.of());
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildRoot(
@@ -141,7 +142,7 @@ public final class CiaCommand {
                     return 1;
                 }));
 
-        root.then(buildAdminSubtree(rt, admin));
+        root.then(buildAdminSubtree(rt, admin, "admin"));
 
         return root;
     }
@@ -191,8 +192,12 @@ public final class CiaCommand {
         return suggestWithPrefix(b, values);
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> buildAdminSubtree(BootstrapRuntime rt, AdminCommandHandlers admin) {
-        LiteralArgumentBuilder<CommandSourceStack> adm = Commands.literal("admin")
+    private static LiteralArgumentBuilder<CommandSourceStack> buildAdminSubtree(
+            BootstrapRuntime rt,
+            AdminCommandHandlers admin,
+            String literalName
+    ) {
+        LiteralArgumentBuilder<CommandSourceStack> adm = Commands.literal(literalName)
                 .requires(src -> hasPerm(src, P_ADMIN))
                 .executes(ctx -> {
                     admin.help(sender(ctx));
@@ -316,7 +321,7 @@ public final class CiaCommand {
         adm.then(Commands.literal("config")
                         .requires(src -> hasPerm(src, P_ADMIN + ".config"))
                         .then(argWord("target")
-                                .suggests((c, b) -> suggestStatic(b, List.of("config", "arena")))
+                                .suggests((c, b) -> suggestStatic(b, List.of("config", "arena", "skill")))
                                 .then(argWord("node")
                                         .suggests((c, b) -> suggestConfigNodes(rt, c, b))
                                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("value", StringArgumentType.greedyString())
@@ -366,13 +371,27 @@ public final class CiaCommand {
             return b.buildFuture();
         }
 
-        List<String> keys = "arena".equalsIgnoreCase(target) ? cfg.listArenaKeys() : cfg.listGlobalKeys();
+        List<String> keys;
+        if ("arena".equalsIgnoreCase(target)) {
+            keys = cfg.listArenaKeys();
+        } else if ("skill".equalsIgnoreCase(target)) {
+            keys = cfg.listSkillKeys();
+        } else {
+            keys = cfg.listGlobalKeys();
+        }
 
         String remain = b.getRemaining() == null ? "" : b.getRemaining().toLowerCase(Locale.ROOT);
         for (String k : keys) {
             if (!remain.isEmpty() && !k.toLowerCase(Locale.ROOT).startsWith(remain)) continue;
 
-            Object v = "arena".equalsIgnoreCase(target) ? cfg.getArenaNode(k) : cfg.getGlobalNode(k);
+            Object v;
+            if ("arena".equalsIgnoreCase(target)) {
+                v = cfg.getArenaNode(k);
+            } else if ("skill".equalsIgnoreCase(target)) {
+                v = cfg.getSkillNode(k);
+            } else {
+                v = cfg.getGlobalNode(k);
+            }
             b.suggest(k, new LiteralMessage(formatConfigValue(v)));
         }
 
@@ -396,7 +415,14 @@ public final class CiaCommand {
             return b.buildFuture();
         }
 
-        Object v = "arena".equalsIgnoreCase(target) ? cfg.getArenaNode(node) : cfg.getGlobalNode(node);
+        Object v;
+        if ("arena".equalsIgnoreCase(target)) {
+            v = cfg.getArenaNode(node);
+        } else if ("skill".equalsIgnoreCase(target)) {
+            v = cfg.getSkillNode(node);
+        } else {
+            v = cfg.getGlobalNode(node);
+        }
 
         String current = suggestLiteralForValue(v);
         if (current != null && !current.isBlank()) {

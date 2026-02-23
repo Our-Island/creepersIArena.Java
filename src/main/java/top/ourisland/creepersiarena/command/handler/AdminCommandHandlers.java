@@ -2,13 +2,14 @@ package top.ourisland.creepersiarena.command.handler;
 
 import org.bukkit.command.CommandSender;
 import top.ourisland.creepersiarena.CreepersIArena;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
+import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.Msg;
@@ -27,7 +28,17 @@ public final class AdminCommandHandlers {
     }
 
     public void help(CommandSender sender) {
-        Msg.send(sender, "/ciaa mode <battle|steal> | arena <arena_id> | skip [arena_id] | cooldown <factor> | regen <factor> | mutation [bool] | entrance <bool> | language <id> | reload | config <config|arena> <node> <value>");
+        Msg.send(sender, """
+                /ciaa mode <battle|steal>
+                /ciaa arena <arena_id>
+                /ciaa skip [arena_id]
+                /ciaa cooldown <factor>
+                /ciaa regen <factor>
+                /ciaa mutation [bool]
+                /ciaa entrance <bool>
+                /ciaa language <id>
+                /ciaa reload
+                /ciaa config <config|arena|skill> <node> <value>""");
     }
 
     public void mode(CommandSender sender, String[] args) {
@@ -47,8 +58,10 @@ public final class AdminCommandHandlers {
         st.forcedNextArenaId(null);
 
         GameManager gm = rt.requireService(GameManager.class);
-        GameSession active = gm.active();
-        if (active != null) gm.endActive();
+        GameFlow flow = rt.requireService(GameFlow.class);
+        if (gm.active() != null) {
+            flow.endGameAndBackToHub("ADMIN_MODE_SWITCH");
+        }
 
         gm.startAuto(type);
         Msg.send(sender, "Mode switched to: " + type);
@@ -85,6 +98,7 @@ public final class AdminCommandHandlers {
     public void skip(CommandSender sender, String[] args) {
         AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
         GameManager gm = rt.requireService(GameManager.class);
+        GameFlow flow = rt.requireService(GameFlow.class);
 
         String overrideArena = (args.length >= 1) ? args[0] : null;
 
@@ -94,7 +108,7 @@ public final class AdminCommandHandlers {
             targetMode = (g == null) ? GameModeType.BATTLE : g.mode();
         }
 
-        gm.endActive();
+        flow.endGameAndBackToHub("ADMIN_SKIP");
 
         String arenaId = overrideArena != null ? overrideArena : st.forcedNextArenaId();
         if (arenaId != null) {
@@ -189,7 +203,7 @@ public final class AdminCommandHandlers {
 
     public void config(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            Msg.send(sender, "Usage: /ciaa config <config|arena> <node> <value>");
+            Msg.send(sender, "Usage: /ciaa config <config|arena|skill> <node> <value>");
             return;
         }
 
@@ -204,6 +218,7 @@ public final class AdminCommandHandlers {
         switch (file) {
             case "config" -> ok = cfg.setGlobalNode(node, value);
             case "arena" -> ok = cfg.setArenaNode(node, value);
+            case "skill" -> ok = cfg.setSkillNode(node, value);
             default -> {
                 Msg.send(sender, "Unknown target: " + file);
                 return;
@@ -215,7 +230,14 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        String currentValue = cfg.getGlobalNode(node).toString();
+        Object cur;
+        switch (file) {
+            case "config" -> cur = cfg.getGlobalNode(node);
+            case "arena" -> cur = cfg.getArenaNode(node);
+            case "skill" -> cur = cfg.getSkillNode(node);
+            default -> cur = null;
+        }
+        String currentValue = cur == null ? "null" : String.valueOf(cur);
         Msg.send(sender, "Updated " + file + ".yml: " + node + " = " + value);
         Msg.send(sender, "Current value: " + currentValue);
         Msg.send(sender, "Run /ciaa reload to apply.");
