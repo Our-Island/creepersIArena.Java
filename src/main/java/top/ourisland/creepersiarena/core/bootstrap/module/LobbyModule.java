@@ -61,7 +61,8 @@ public final class LobbyModule implements IBootstrapModule {
 
         binder.register("PlayerStateRulesListener", () -> new PlayerStateRulesListener(
                 rt.requireService(PlayerSessionStore.class),
-                rt.requireService(LobbyService.class)
+                rt.requireService(LobbyService.class),
+                rt.requireService(ConfigManager.class)
         ));
 
         return true;
@@ -76,4 +77,5 @@ public final class LobbyModule implements IBootstrapModule {
             lobbyManager.reload(cfg.globalConfig());
         }, "Reloading lobbies...", "Lobbies reloaded.");
     }
+
 }

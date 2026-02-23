@@ -11,7 +11,8 @@ public record GlobalConfig(
         Set<String> disabledJobs,
         Map<String, Lobby> lobbies,
         Game game,
-        Ui ui
+        Ui ui,
+        World world
 ) {
 
     public static GlobalConfig defaults() {
@@ -20,7 +21,8 @@ public record GlobalConfig(
                 Set.of(),
                 Map.of(),
                 Game.defaults(),
-                Ui.defaults()
+                Ui.defaults(),
+                World.defaults()
         );
     }
 
@@ -47,7 +49,21 @@ public record GlobalConfig(
         // ui
         Ui ui = Ui.fromSection(yml.getConfigurationSection("ui"));
 
-        return new GlobalConfig(lang, disabledJobs, lobbies, game, ui);
+        // world
+        World world = World.fromSection(yml.getConfigurationSection("world"));
+
+        return new GlobalConfig(lang, disabledJobs, lobbies, game, ui, world);
+    }
+
+    private static double asDouble(List<?> list, int idx, double def) {
+        if (list == null || list.size() <= idx) return def;
+        Object o = list.get(idx);
+        if (o instanceof Number n) return n.doubleValue();
+        try {
+            return Double.parseDouble(String.valueOf(o));
+        } catch (Exception ignored) {
+            return def;
+        }
     }
 
     // ---------------- sub models ----------------
@@ -89,17 +105,6 @@ public record GlobalConfig(
             return new Lobby(x, y, z, fromX, fromZ, toX, toZ, entry);
         }
 
-        private static double asDouble(List<?> list, int idx, double def) {
-            if (list == null || list.size() <= idx) return def;
-            Object o = list.get(idx);
-            if (o instanceof Number n) return n.doubleValue();
-            try {
-                return Double.parseDouble(String.valueOf(o));
-            } catch (Exception ignored) {
-                return def;
-            }
-        }
-
         public record Entry(
                 long timeMs,
                 double fromX, double fromY, double fromZ,
@@ -114,26 +119,15 @@ public record GlobalConfig(
                 List<?> from = sec.getList("from", List.of(0, 0, 0));
                 List<?> to = sec.getList("to", List.of(0, 0, 0));
 
-                double fromX = asDouble3(from, 0, 0);
-                double fromY = asDouble3(from, 1, 0);
-                double fromZ = asDouble3(from, 2, 0);
+                double fromX = asDouble(from, 0, 0);
+                double fromY = asDouble(from, 1, 0);
+                double fromZ = asDouble(from, 2, 0);
 
-                double toX = asDouble3(to, 0, 0);
-                double toY = asDouble3(to, 1, 0);
-                double toZ = asDouble3(to, 2, 0);
+                double toX = asDouble(to, 0, 0);
+                double toY = asDouble(to, 1, 0);
+                double toZ = asDouble(to, 2, 0);
 
                 return new Entry(time, fromX, fromY, fromZ, toX, toY, toZ);
-            }
-
-            private static double asDouble3(List<?> list, int idx, double def) {
-                if (list == null || list.size() <= idx) return def;
-                Object o = list.get(idx);
-                if (o instanceof Number n) return n.doubleValue();
-                try {
-                    return Double.parseDouble(String.valueOf(o));
-                } catch (Exception ignored) {
-                    return def;
-                }
             }
         }
     }
@@ -229,7 +223,17 @@ public record GlobalConfig(
         }
     }
 
-    // -------- 通用坐标/范围 --------
+    public record World(boolean enablePortals) {
+        public static World fromSection(ConfigurationSection sec) {
+            if (sec == null) return defaults();
+            boolean isPortals = sec.getBoolean("enable-portals", true);
+            return new World(isPortals);
+        }
+
+        public static World defaults() {
+            return new World(true);
+        }
+    }
 
     public record Vec3(int x, int y, int z) {
         public static Vec3 fromList(List<?> list) {
@@ -267,4 +271,5 @@ public record GlobalConfig(
             return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
         }
     }
+
 }

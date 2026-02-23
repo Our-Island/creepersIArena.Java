@@ -60,3 +60,6 @@ ui:
   lobby:
     job-select-mode: hotbar
     jobs-per-page: 5
+
+world:
+  disable-portals: true

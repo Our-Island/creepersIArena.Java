@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.game.listener;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -9,6 +10,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
+import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
@@ -16,10 +19,16 @@ import top.ourisland.creepersiarena.game.player.PlayerState;
 public final class PlayerStateRulesListener implements Listener {
     private final PlayerSessionStore store;
     private final LobbyService lobbyService;
+    private final ConfigManager configManager;
 
-    public PlayerStateRulesListener(PlayerSessionStore store, LobbyService lobbyService) {
+    public PlayerStateRulesListener(
+            PlayerSessionStore store,
+            LobbyService lobbyService,
+            ConfigManager configManager
+    ) {
         this.store = store;
         this.lobbyService = lobbyService;
+        this.configManager = configManager;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -119,4 +128,14 @@ public final class PlayerStateRulesListener implements Listener {
 
         if (st != PlayerState.IN_GAME) e.setCancelled(true);
     }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerPortal(PlayerPortalEvent e) {
+        if (!configManager.globalConfig().world().enablePortals()) return;
+
+        if (e.getTo().getWorld() != null && e.getTo().getWorld().getEnvironment() == World.Environment.NETHER) {
+            e.setCancelled(true);
+        }
+    }
+
 }
