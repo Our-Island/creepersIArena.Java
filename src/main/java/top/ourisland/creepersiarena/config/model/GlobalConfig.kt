@@ -1,275 +1,320 @@
-package top.ourisland.creepersiarena.config.model;
+package top.ourisland.creepersiarena.config.model
 
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.jspecify.annotations.Nullable;
+import org.bukkit.configuration.ConfigurationSection
+import org.bukkit.configuration.file.YamlConfiguration
+import org.jspecify.annotations.Nullable
+import java.util.*
 
-import java.util.*;
-
-public record GlobalConfig(
-        String lang,
-        Set<String> disabledJobs,
-        Map<String, Lobby> lobbies,
-        Game game,
-        Ui ui,
-        World world
+/**
+ * Global configuration model loaded from config.yml.
+ *
+ * This Kotlin version keeps the same JVM-facing accessor names as the original Java `record`
+ * (e.g. `lang()`, `disabledJobs()`, `world().enablePortals()`), so existing Java/Kotlin callers
+ * don't need any changes.
+ */
+data class GlobalConfig(
+    @get:JvmName("lang") val lang: String,
+    @get:JvmName("disabledJobs") val disabledJobs: Set<String>,
+    @get:JvmName("lobbies") val lobbies: Map<String, Lobby>,
+    @get:JvmName("game") val game: Game,
+    @get:JvmName("ui") val ui: Ui,
+    @get:JvmName("world") val world: World,
 ) {
 
-    public static GlobalConfig defaults() {
-        return new GlobalConfig(
-                "en_us",
-                Set.of(),
-                Map.of(),
-                Game.defaults(),
-                Ui.defaults(),
-                World.defaults()
-        );
-    }
+    companion object {
+        fun defaults(): GlobalConfig = GlobalConfig(
+            "en_us",
+            setOf(),
+            mapOf(),
+            Game.defaults(),
+            Ui.defaults(),
+            World.defaults(),
+        )
 
-    public static GlobalConfig fromYaml(YamlConfiguration yml) {
-        String lang = yml.getString("lang", "en_us");
+        @JvmStatic
+        fun fromYaml(yml: YamlConfiguration): GlobalConfig {
+            val lang = yml.getString("lang", "en_us") ?: "en_us"
 
-        Set<String> disabledJobs = new HashSet<>(yml.getStringList("disabled-jobs"));
+            val disabledJobs = HashSet(yml.getStringList("disabled-jobs"))
 
-        // lobbies
-        Map<String, Lobby> lobbies = new HashMap<>();
-        ConfigurationSection lobbiesSec = yml.getConfigurationSection("lobbies");
-        if (lobbiesSec != null) {
-            for (String key : lobbiesSec.getKeys(false)) {
-                ConfigurationSection sec = lobbiesSec.getConfigurationSection(key);
-                if (sec == null) continue;
-                Lobby lobby = Lobby.fromSection(sec);
-                lobbies.put(key, lobby);
+            // lobbies
+            val lobbies = HashMap<String, Lobby>()
+            val lobbiesSec = yml.getConfigurationSection("lobbies")
+            if (lobbiesSec != null) {
+                for (key in lobbiesSec.getKeys(false)) {
+                    val sec = lobbiesSec.getConfigurationSection(key) ?: continue
+                    lobbies[key] = Lobby.fromSection(sec)
+                }
             }
+
+            // game
+            val game = Game.fromSection(yml.getConfigurationSection("game"))
+
+            // ui
+            val ui = Ui.fromSection(yml.getConfigurationSection("ui"))
+
+            // world
+            val world = World.fromSection(yml.getConfigurationSection("world"))
+
+            return GlobalConfig(lang, disabledJobs, lobbies, game, ui, world)
         }
 
-        // game
-        Game game = Game.fromSection(yml.getConfigurationSection("game"));
-
-        // ui
-        Ui ui = Ui.fromSection(yml.getConfigurationSection("ui"));
-
-        // world
-        World world = World.fromSection(yml.getConfigurationSection("world"));
-
-        return new GlobalConfig(lang, disabledJobs, lobbies, game, ui, world);
-    }
-
-    private static double asDouble(List<?> list, int idx, double def) {
-        if (list == null || list.size() <= idx) return def;
-        Object o = list.get(idx);
-        if (o instanceof Number n) return n.doubleValue();
-        try {
-            return Double.parseDouble(String.valueOf(o));
-        } catch (Exception ignored) {
-            return def;
+        private fun asDouble(list: List<*>?, idx: Int, def: Double): Double {
+            if (list == null || list.size <= idx) return def
+            val o = list[idx]
+            if (o is Number) return o.toDouble()
+            return try {
+                o?.toString()?.toDouble() ?: def
+            } catch (_: Exception) {
+                def
+            }
         }
     }
 
     // ---------------- sub models ----------------
 
-    public enum JobSelectMode {
+    enum class JobSelectMode {
         HOTBAR,
         INVENTORY;
 
-        public static JobSelectMode fromConfig(String s) {
-            if (s == null) return HOTBAR;
-            return switch (s.trim().toLowerCase(Locale.ROOT)) {
-                case "inventory", "inv", "bag" -> INVENTORY;
-                default -> HOTBAR;
-            };
-        }
-    }
-
-    public record Lobby(
-            double x, double y, double z,
-            double fromX, double fromZ,
-            double toX, double toZ,
-            @Nullable Entry entry
-    ) {
-        public static Lobby fromSection(ConfigurationSection sec) {
-            List<?> loc = sec.getList("location", List.of(0, 100, 0));
-            List<?> from = sec.getList("range.from", List.of(100, 100));
-            List<?> to = sec.getList("range.to", List.of(-100, -100));
-
-            double x = asDouble(loc, 0, 0);
-            double y = asDouble(loc, 1, 100);
-            double z = asDouble(loc, 2, 0);
-
-            double fromX = asDouble(from, 0, 100);
-            double fromZ = asDouble(from, 1, 100);
-            double toX = asDouble(to, 0, -100);
-            double toZ = asDouble(to, 1, -100);
-
-            Entry entry = Entry.fromSection(sec.getConfigurationSection("entry"));
-            return new Lobby(x, y, z, fromX, fromZ, toX, toZ, entry);
-        }
-
-        public record Entry(
-                long timeMs,
-                double fromX, double fromY, double fromZ,
-                double toX, double toY, double toZ
-        ) {
-            public static @Nullable Entry fromSection(ConfigurationSection sec) {
-                if (sec == null) return null;
-
-                long time = sec.getLong("time", 0L);
-                if (time <= 0L) return null;
-
-                List<?> from = sec.getList("from", List.of(0, 0, 0));
-                List<?> to = sec.getList("to", List.of(0, 0, 0));
-
-                double fromX = asDouble(from, 0, 0);
-                double fromY = asDouble(from, 1, 0);
-                double fromZ = asDouble(from, 2, 0);
-
-                double toX = asDouble(to, 0, 0);
-                double toY = asDouble(to, 1, 0);
-                double toZ = asDouble(to, 2, 0);
-
-                return new Entry(time, fromX, fromY, fromZ, toX, toY, toZ);
+        companion object {
+            fun fromConfig(s: String?): JobSelectMode {
+                if (s == null) return HOTBAR
+                return when (s.trim().lowercase(Locale.ROOT)) {
+                    "inventory", "inv", "bag" -> INVENTORY
+                    else -> HOTBAR
+                }
             }
         }
     }
 
-    public record Game(
-            Set<String> disabledModes,
-            int leaveDelaySeconds,
-            Battle battle,
-            Steal steal
+    data class Lobby(
+        @get:JvmName("x") val x: Double,
+        @get:JvmName("y") val y: Double,
+        @get:JvmName("z") val z: Double,
+        @get:JvmName("fromX") val fromX: Double,
+        @get:JvmName("fromZ") val fromZ: Double,
+        @get:JvmName("toX") val toX: Double,
+        @get:JvmName("toZ") val toZ: Double,
+        @get:JvmName("entry") val entry: @Nullable Entry?,
     ) {
-        public static Game fromSection(ConfigurationSection sec) {
-            if (sec == null) return defaults();
+        companion object {
+            fun fromSection(sec: ConfigurationSection): Lobby {
+                val loc = sec.getList("location", listOf(0, 100, 0))
+                val from = sec.getList("range.from", listOf(100, 100))
+                val to = sec.getList("range.to", listOf(-100, -100))
 
-            Set<String> disabled = new HashSet<>(sec.getStringList("disabled-modes"));
-            int leaveDelay = sec.getInt("leave-delay-seconds", 5);
+                val x = asDouble(loc, 0, 0.0)
+                val y = asDouble(loc, 1, 100.0)
+                val z = asDouble(loc, 2, 0.0)
 
-            Battle battle = Battle.fromSection(sec.getConfigurationSection("battle"));
-            Steal steal = Steal.fromSection(sec.getConfigurationSection("steal"));
+                val fromX = asDouble(from, 0, 100.0)
+                val fromZ = asDouble(from, 1, 100.0)
+                val toX = asDouble(to, 0, -100.0)
+                val toZ = asDouble(to, 1, -100.0)
 
-            return new Game(disabled, Math.max(0, leaveDelay), battle, steal);
+                val entry = Entry.fromSection(sec.getConfigurationSection("entry"))
+                return Lobby(x, y, z, fromX, fromZ, toX, toZ, entry)
+            }
         }
 
-        public static Game defaults() {
-            return new Game(Set.of(), 5, Battle.defaults(), Steal.defaults());
-        }
-
-        public record Battle(
-                int singleGameTimeSeconds,
-                int respawnTimeSeconds,
-                int maxTeam,
-                boolean teamAutoBalancing,
-                boolean forceBalancing
+        data class Entry(
+            @get:JvmName("timeMs") val timeMs: Long,
+            @get:JvmName("fromX") val fromX: Double,
+            @get:JvmName("fromY") val fromY: Double,
+            @get:JvmName("fromZ") val fromZ: Double,
+            @get:JvmName("toX") val toX: Double,
+            @get:JvmName("toY") val toY: Double,
+            @get:JvmName("toZ") val toZ: Double,
         ) {
-            public static Battle fromSection(ConfigurationSection sec) {
-                if (sec == null) return defaults();
-                return new Battle(
+            companion object {
+                fun fromSection(sec: ConfigurationSection?): @Nullable Entry? {
+                    if (sec == null) return null
+                    val time = sec.getLong("time", 0L)
+                    if (time <= 0L) return null
+
+                    val from = sec.getList("from", listOf(0, 0, 0))
+                    val to = sec.getList("to", listOf(0, 0, 0))
+
+                    val fromX = asDouble(from, 0, 0.0)
+                    val fromY = asDouble(from, 1, 0.0)
+                    val fromZ = asDouble(from, 2, 0.0)
+
+                    val toX = asDouble(to, 0, 0.0)
+                    val toY = asDouble(to, 1, 0.0)
+                    val toZ = asDouble(to, 2, 0.0)
+
+                    return Entry(time, fromX, fromY, fromZ, toX, toY, toZ)
+                }
+            }
+        }
+    }
+
+    data class Game(
+        @get:JvmName("disabledModes") val disabledModes: Set<String>,
+        @get:JvmName("leaveDelaySeconds") val leaveDelaySeconds: Int,
+        @get:JvmName("battle") val battle: Battle,
+        @get:JvmName("steal") val steal: Steal,
+    ) {
+        companion object {
+            fun fromSection(sec: ConfigurationSection?): Game {
+                if (sec == null) return defaults()
+
+                val disabled = HashSet(sec.getStringList("disabled-modes"))
+                val leaveDelay = sec.getInt("leave-delay-seconds", 5).coerceAtLeast(0)
+
+                val battle = Battle.fromSection(sec.getConfigurationSection("battle"))
+                val steal = Steal.fromSection(sec.getConfigurationSection("steal"))
+
+                return Game(disabled, leaveDelay, battle, steal)
+            }
+
+            fun defaults(): Game = Game(setOf(), 5, Battle.defaults(), Steal.defaults())
+        }
+
+        data class Battle(
+            @get:JvmName("singleGameTimeSeconds") val singleGameTimeSeconds: Int,
+            @get:JvmName("respawnTimeSeconds") val respawnTimeSeconds: Int,
+            @get:JvmName("maxTeam") val maxTeam: Int,
+            @get:JvmName("teamAutoBalancing") val teamAutoBalancing: Boolean,
+            @get:JvmName("forceBalancing") val forceBalancing: Boolean,
+        ) {
+            companion object {
+                fun fromSection(sec: ConfigurationSection?): Battle {
+                    if (sec == null) return defaults()
+                    return Battle(
                         sec.getInt("single-game-time", 600),
                         sec.getInt("respawn-time", 10),
                         sec.getInt("max-team", 4),
                         sec.getBoolean("team-auto-balancing", true),
-                        sec.getBoolean("force-balancing", false)
-                );
-            }
+                        sec.getBoolean("force-balancing", false),
+                    )
+                }
 
-            public static Battle defaults() {
-                return new Battle(600, 10, 4, true, false);
+                fun defaults(): Battle = Battle(600, 10, 4, true, false)
             }
         }
 
-        public record Steal(
-                int minPlayerToStart,
-                int prepareTimeSeconds,
-                int totalRound,
-                int timePerRoundSeconds
+        data class Steal(
+            @get:JvmName("minPlayerToStart") val minPlayerToStart: Int,
+            @get:JvmName("prepareTimeSeconds") val prepareTimeSeconds: Int,
+            @get:JvmName("totalRound") val totalRound: Int,
+            @get:JvmName("timePerRoundSeconds") val timePerRoundSeconds: Int,
         ) {
-            public static Steal fromSection(ConfigurationSection sec) {
-                if (sec == null) return defaults();
-                return new Steal(
+            companion object {
+                fun fromSection(sec: ConfigurationSection?): Steal {
+                    if (sec == null) return defaults()
+                    return Steal(
                         sec.getInt("min-player-to-start", 2),
                         sec.getInt("prepare-time", 30),
                         sec.getInt("total-round", 10),
-                        sec.getInt("time-per-round", 10)
-                );
-            }
+                        sec.getInt("time-per-round", 10),
+                    )
+                }
 
-            public static Steal defaults() {
-                return new Steal(2, 30, 10, 10);
-            }
-        }
-    }
-
-    public record Ui(LobbyUi lobby) {
-        public static Ui fromSection(ConfigurationSection sec) {
-            if (sec == null) return defaults();
-            return new Ui(LobbyUi.fromSection(sec.getConfigurationSection("lobby")));
-        }
-
-        public static Ui defaults() {
-            return new Ui(LobbyUi.defaults());
-        }
-    }
-
-    public record LobbyUi(JobSelectMode jobSelectMode, int jobsPerPage) {
-        public static LobbyUi fromSection(ConfigurationSection sec) {
-            if (sec == null) return defaults();
-            String mode = sec.getString("job-select-mode", "hotbar");
-            int perPage = sec.getInt("jobs-per-page", 5);
-            return new LobbyUi(JobSelectMode.fromConfig(mode), perPage);
-        }
-
-        public static LobbyUi defaults() {
-            return new LobbyUi(JobSelectMode.HOTBAR, 5);
-        }
-    }
-
-    public record World(boolean enablePortals) {
-        public static World fromSection(ConfigurationSection sec) {
-            if (sec == null) return defaults();
-            boolean isPortals = sec.getBoolean("enable-portals", true);
-            return new World(isPortals);
-        }
-
-        public static World defaults() {
-            return new World(true);
-        }
-    }
-
-    public record Vec3(int x, int y, int z) {
-        public static Vec3 fromList(List<?> list) {
-            if (list == null || list.size() < 3) return new Vec3(0, 0, 0);
-            return new Vec3(
-                    toInt(list.get(0)),
-                    toInt(list.get(1)),
-                    toInt(list.get(2))
-            );
-        }
-
-        private static int toInt(Object o) {
-            if (o instanceof Number n) return n.intValue();
-            try {
-                return Integer.parseInt(String.valueOf(o));
-            } catch (Exception e) {
-                return 0;
+                fun defaults(): Steal = Steal(2, 30, 10, 10)
             }
         }
     }
 
-    public record Range2D(int minX, int maxX, int minZ, int maxZ) {
-        public static Range2D fromSection(ConfigurationSection sec) {
-            if (sec == null) return new Range2D(0, 0, 0, 0);
-            List<?> from = sec.getList("from");
-            List<?> to = sec.getList("to");
-            int fx = (from != null && from.size() >= 2) ? Vec3.toInt(from.get(0)) : 0;
-            int fz = (from != null && from.size() >= 2) ? Vec3.toInt(from.get(1)) : 0;
-            int tx = (to != null && to.size() >= 2) ? Vec3.toInt(to.get(0)) : 0;
-            int tz = (to != null && to.size() >= 2) ? Vec3.toInt(to.get(1)) : 0;
-            return new Range2D(Math.min(fx, tx), Math.max(fx, tx), Math.min(fz, tz), Math.max(fz, tz));
+    data class Ui(
+        @get:JvmName("lobby") val lobby: LobbyUi,
+    ) {
+        companion object {
+            fun fromSection(sec: ConfigurationSection?): Ui {
+                if (sec == null) return defaults()
+                return Ui(LobbyUi.fromSection(sec.getConfigurationSection("lobby")))
+            }
+
+            fun defaults(): Ui = Ui(LobbyUi.defaults())
+        }
+    }
+
+    data class LobbyUi(
+        @get:JvmName("jobSelectMode") val jobSelectMode: JobSelectMode,
+        @get:JvmName("jobsPerPage") val jobsPerPage: Int,
+    ) {
+        companion object {
+            fun fromSection(sec: ConfigurationSection?): LobbyUi {
+                if (sec == null) return defaults()
+                val mode = sec.getString("job-select-mode", "hotbar")
+                val perPage = sec.getInt("jobs-per-page", 5)
+                return LobbyUi(JobSelectMode.fromConfig(mode), perPage)
+            }
+
+            fun defaults(): LobbyUi = LobbyUi(JobSelectMode.HOTBAR, 5)
+        }
+    }
+
+    data class World(
+        @get:JvmName("enablePortals") val enablePortals: Boolean,
+    ) {
+        companion object {
+            fun fromSection(sec: ConfigurationSection?): World {
+                if (sec == null) return defaults()
+                return World(sec.getBoolean("enable-portals", true))
+            }
+
+            fun defaults(): World = World(true)
+        }
+    }
+
+    data class Vec3(
+        @get:JvmName("x") val x: Int,
+        @get:JvmName("y") val y: Int,
+        @get:JvmName("z") val z: Int,
+    ) {
+        companion object {
+            fun fromList(list: List<*>?): Vec3 {
+                if (list == null || list.size < 3) return Vec3(0, 0, 0)
+                return Vec3(toInt(list[0]), toInt(list[1]), toInt(list[2]))
+            }
+
+            private fun toInt(o: Any?): Int {
+                if (o is Number) return o.toInt()
+                return try {
+                    o?.toString()?.toInt() ?: 0
+                } catch (_: Exception) {
+                    0
+                }
+            }
+        }
+    }
+
+    data class Range2D(
+        @get:JvmName("minX") val minX: Int,
+        @get:JvmName("maxX") val maxX: Int,
+        @get:JvmName("minZ") val minZ: Int,
+        @get:JvmName("maxZ") val maxZ: Int,
+    ) {
+        companion object {
+            fun fromSection(sec: ConfigurationSection?): Range2D {
+                if (sec == null) return Range2D(0, 0, 0, 0)
+                val from = sec.getList("from")
+                val to = sec.getList("to")
+                val fx = if (from != null && from.size >= 2) toInt(from[0]) else 0
+                val fz = if (from != null && from.size >= 2) toInt(from[1]) else 0
+                val tx = if (to != null && to.size >= 2) toInt(to[0]) else 0
+                val tz = if (to != null && to.size >= 2) toInt(to[1]) else 0
+                return Range2D(
+                    minOf(fx, tx),
+                    maxOf(fx, tx),
+                    minOf(fz, tz),
+                    maxOf(fz, tz),
+                )
+            }
+
+            private fun toInt(o: Any?): Int {
+                if (o is Number) return o.toInt()
+                return try {
+                    o?.toString()?.toInt() ?: 0
+                } catch (_: Exception) {
+                    0
+                }
+            }
         }
 
-        public boolean contains(int x, int z) {
-            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
-        }
+        fun contains(x: Int, z: Int): Boolean = x in minX..maxX && z in minZ..maxZ
     }
 
 }

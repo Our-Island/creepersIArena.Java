@@ -201,6 +201,7 @@ public final class AdminCommandHandlers {
         Msg.send(sender, "Reload unsupported.");
     }
 
+    // TODO: modify a field with object will break the config
     public void config(CommandSender sender, String[] args) {
         if (args.length < 3) {
             Msg.send(sender, "Usage: /ciaa config <config|arena|skill> <node> <value>");

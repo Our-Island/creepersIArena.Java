@@ -1,83 +1,97 @@
-package top.ourisland.creepersiarena.config.model;
+package top.ourisland.creepersiarena.config.model
 
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection
+import org.bukkit.configuration.file.YamlConfiguration
+import top.ourisland.creepersiarena.config.model.GlobalConfig.Range2D
+import top.ourisland.creepersiarena.config.model.GlobalConfig.Vec3
+import java.util.*
 
-import java.util.*;
-
-import static top.ourisland.creepersiarena.config.model.GlobalConfig.Range2D;
-import static top.ourisland.creepersiarena.config.model.GlobalConfig.Vec3;
-
-public record ArenaConfig(
-        Map<String, ArenaDef> arenas
+/**
+ * Arena configuration model loaded from arena.yml.
+ *
+ * Keeps the same JVM-facing accessor names as the original Java `record`.
+ */
+data class ArenaConfig(
+    @get:JvmName("arenas")
+    val arenas: Map<String, ArenaDef>,
 ) {
-    public static ArenaConfig fromYaml(YamlConfiguration yml) {
-        ConfigurationSection root = yml.getConfigurationSection("arena");
-        if (root == null) return empty();
+    companion object {
+        @JvmStatic
+        fun fromYaml(yml: YamlConfiguration): ArenaConfig {
+            val root = yml.getConfigurationSection("arena") ?: return empty()
 
-        Map<String, ArenaDef> map = new LinkedHashMap<>();
-        for (String id : root.getKeys(false)) {
-            ConfigurationSection sec = root.getConfigurationSection(id);
-            if (sec == null) continue;
-            map.put(id, ArenaDef.fromSection(id, sec));
-        }
-        return new ArenaConfig(Collections.unmodifiableMap(map));
-    }
-
-    public static ArenaConfig empty() {
-        return new ArenaConfig(Map.of());
-    }
-
-    public ArenaDef get(String id) {
-        return arenas.get(id);
-    }
-
-    public record ArenaDef(
-            String id,
-            String nameKey,
-            String type,
-            Vec3 location,
-            Range2D range,
-            List<Vec3> spawnpoints,
-            Map<String, Vec3> teamSpawnpoints,
-            List<Object> redstoneBlocksRaw
-    ) {
-        static ArenaDef fromSection(String id, ConfigurationSection sec) {
-            String nameKey = sec.getString("name", "cia.arena." + id);
-            String type = sec.getString("type", "battle");
-
-            Vec3 loc = Vec3.fromList(sec.getList("location"));
-            Range2D range = Range2D.fromSection(sec.getConfigurationSection("range"));
-
-            Object spObj = sec.get("spawnpoint");
-
-            List<Vec3> listSpawn = new ArrayList<>();
-            Map<String, Vec3> teamSpawn = new LinkedHashMap<>();
-
-            if (spObj instanceof List<?> list) {
-                for (Object o : list) {
-                    if (o instanceof List<?> l2) listSpawn.add(Vec3.fromList(l2));
-                }
-            } else if (spObj instanceof ConfigurationSection spSec) {
-                for (String k : spSec.getKeys(false)) {
-                    teamSpawn.put(k, Vec3.fromList(spSec.getList(k)));
-                }
-            } else if (spObj instanceof Map<?, ?> m) {
-                for (var e : m.entrySet()) {
-                    teamSpawn.put(String.valueOf(e.getKey()), Vec3.fromList((List<?>) e.getValue()));
-                }
+            val map = LinkedHashMap<String, ArenaDef>()
+            for (id in root.getKeys(false)) {
+                val sec = root.getConfigurationSection(id) ?: continue
+                map[id] = ArenaDef.fromSection(id, sec)
             }
+            return ArenaConfig(Collections.unmodifiableMap(map))
+        }
 
-            List<Object> redstoneRaw = new ArrayList<>();
-            Object rs = sec.get("redstone-blocks");
-            if (rs instanceof List<?> rsl) redstoneRaw.addAll(rsl);
+        @JvmStatic
+        fun empty(): ArenaConfig = ArenaConfig(mapOf())
+    }
 
-            return new ArenaDef(
-                    id, nameKey, type, loc, range,
+    fun get(id: String): ArenaDef? = arenas[id]
+
+    data class ArenaDef(
+        @get:JvmName("id") val id: String,
+        @get:JvmName("nameKey") val nameKey: String,
+        @get:JvmName("type") val type: String,
+        @get:JvmName("location") val location: Vec3,
+        @get:JvmName("range") val range: Range2D,
+        @get:JvmName("spawnpoints") val spawnpoints: List<Vec3>,
+        @get:JvmName("teamSpawnpoints") val teamSpawnpoints: Map<String, Vec3>,
+        @get:JvmName("redstoneBlocksRaw") val redstoneBlocksRaw: List<Any?>,
+    ) {
+        companion object {
+            internal fun fromSection(id: String, sec: ConfigurationSection): ArenaDef {
+                val nameKey = sec.getString("name", "cia.arena.$id") ?: "cia.arena.$id"
+                val type = sec.getString("type", "battle") ?: "battle"
+
+                val loc = Vec3.fromList(sec.getList("location"))
+                val range = Range2D.fromSection(sec.getConfigurationSection("range"))
+
+                val spObj = sec.get("spawnpoint")
+
+                val listSpawn = ArrayList<Vec3>()
+                val teamSpawn = LinkedHashMap<String, Vec3>()
+
+                when (spObj) {
+                    is List<*> -> {
+                        for (o in spObj) {
+                            if (o is List<*>) listSpawn.add(Vec3.fromList(o))
+                        }
+                    }
+
+                    is ConfigurationSection -> {
+                        for (k in spObj.getKeys(false)) {
+                            teamSpawn[k] = Vec3.fromList(spObj.getList(k))
+                        }
+                    }
+
+                    is Map<*, *> -> {
+                        for ((k, v) in spObj) {
+                            if (v is List<*>) teamSpawn[k.toString()] = Vec3.fromList(v)
+                        }
+                    }
+                }
+
+                val redstoneRaw = ArrayList<Any?>()
+                val rs = sec.get("redstone-blocks")
+                if (rs is List<*>) redstoneRaw.addAll(rs)
+
+                return ArenaDef(
+                    id,
+                    nameKey,
+                    type,
+                    loc,
+                    range,
                     Collections.unmodifiableList(listSpawn),
                     Collections.unmodifiableMap(teamSpawn),
-                    Collections.unmodifiableList(redstoneRaw)
-            );
+                    Collections.unmodifiableList(redstoneRaw),
+                )
+            }
         }
     }
 }

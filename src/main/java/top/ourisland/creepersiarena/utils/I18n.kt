@@ -90,7 +90,7 @@ object I18n {
      */
     @JvmStatic
     fun reload() {
-        loadBundle(configManager!!.globalConfig().lang())
+        loadBundle(configManager!!.globalConfig.lang)
     }
 
     private fun loadBundle(lang: String) {
