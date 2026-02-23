@@ -1,156 +1,187 @@
-package top.ourisland.creepersiarena.util;
+package top.ourisland.creepersiarena.utils
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.title.Title;
-import org.bukkit.command.CommandSender;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-
-import java.time.Duration;
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.title.Title
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.utils.Msg.title
+import top.ourisland.creepersiarena.utils.Msg.titleMini
+import java.time.Duration
 
 /**
- * Message helper to unify output through Adventure {@link Audience}.
+ * Adventure messaging helper used across the plugin.
  *
- * <p>On Paper, {@link CommandSender} implements {@link Audience}, so any sender can be used directly.</p>
+ * ## Why this exists
+ * - Paper uses the Adventure API natively. Most outputs should be sent as [Component]s.
+ * - On Paper, [CommandSender] implements [Audience], so you can safely call Adventure methods on any sender
+ *   (players, console, command blocks, etc.).
+ *
+ * ## MiniMessage
+ * MiniMessage strings (e.g. `"<red>Hello</red>"`) are parsed via [MiniMessage] and sent as Components.
+ *
+ * ## Null handling (title/subtitle)
+ * For convenience, [title] / [titleMini] treat `null` title or subtitle as empty (`""` / [Component.empty]).
+ *
+ * @see Audience
+ * @see MiniMessage
+ * @see Title
  */
-public final class Msg {
+object Msg {
 
-    private static final MiniMessage MINI = MiniMessage.miniMessage();
-
-    private Msg() {
-    }
+    private val MINI: MiniMessage = MiniMessage.miniMessage()
 
     /* =========================
-     * Basic: Component / plain
+     * Basic: Component / plain text
      * ========================= */
 
-    public static void send(@NonNull CommandSender sender, @NonNull Component message) {
-        sender.sendMessage(message);
-    }
+    /** Sends a component message to a command sender. */
+    @JvmStatic
+    fun send(sender: CommandSender, message: Component) =
+        sender.sendMessage(message)
 
-    public static void send(@NonNull CommandSender sender, @NonNull String plainText) {
-        sender.sendMessage(Component.text(plainText));
-    }
+    /** Sends a plain-text message (no formatting) to a command sender. */
+    @JvmStatic
+    fun send(sender: CommandSender, plainText: String) =
+        sender.sendMessage(Component.text(plainText))
 
-    public static void actionBar(@NonNull CommandSender sender, @NonNull Component message) {
-        sender.sendActionBar(message);
-    }
+    /** Sends a component action bar to a command sender. */
+    @JvmStatic
+    fun actionBar(sender: CommandSender, message: Component) =
+        sender.sendActionBar(message)
 
-    public static void actionBar(@NonNull CommandSender sender, @NonNull String plainText) {
-        sender.sendActionBar(Component.text(plainText));
-    }
+    /** Sends a plain-text action bar (no formatting) to a command sender. */
+    @JvmStatic
+    fun actionBar(sender: CommandSender, plainText: String) =
+        sender.sendActionBar(Component.text(plainText))
 
     /* =========================
      * MiniMessage
      * ========================= */
 
-    public static void sendMini(@NonNull CommandSender sender, @NonNull String miniMessage) {
-        sender.sendMessage(MINI.deserialize(miniMessage));
-    }
+    /** Parses [miniMessage] with MiniMessage and sends it as a normal chat message. */
+    @JvmStatic
+    fun sendMini(sender: CommandSender, miniMessage: String) =
+        sender.sendMessage(mini(miniMessage))
 
-    public static void actionBarMini(@NonNull CommandSender sender, @NonNull String miniMessage) {
-        sender.sendActionBar(MINI.deserialize(miniMessage));
-    }
+    /** Parses [miniMessage] with MiniMessage and sends it as an action bar. */
+    @JvmStatic
+    fun actionBarMini(sender: CommandSender, miniMessage: String) =
+        sender.sendActionBar(mini(miniMessage))
 
     /* =========================
      * Title / Subtitle
      * ========================= */
 
-    public static void title(
-            @NonNull CommandSender sender,
-            @Nullable Component title,
-            @Nullable Component subtitle
+    /**
+     * Shows a title/subtitle to the sender.
+     *
+     * @param title title component; `null` is treated as empty.
+     * @param subtitle subtitle component; `null` is treated as empty.
+     */
+    @JvmStatic
+    fun title(sender: CommandSender, title: Component?, subtitle: Component?) =
+        sender.showTitle(titleOf(title, subtitle))
+
+    /**
+     * Shows a title/subtitle with custom timings.
+     *
+     * @param fadeIn time to fade in
+     * @param stay time to stay
+     * @param fadeOut time to fade out
+     */
+    @JvmStatic
+    fun title(
+        sender: CommandSender,
+        title: Component?,
+        subtitle: Component?,
+        fadeIn: Duration,
+        stay: Duration,
+        fadeOut: Duration
     ) {
-        sender.showTitle(Title.title(nn(title), nn(subtitle)));
+        sender.showTitle(titleOf(title, subtitle, fadeIn, stay, fadeOut))
     }
 
-    public static void title(
-            @NonNull CommandSender sender,
-            @Nullable Component title,
-            @Nullable Component subtitle,
-            @NonNull Duration fadeIn,
-            @NonNull Duration stay,
-            @NonNull Duration fadeOut
-    ) {
-        sender.showTitle(Title.title(nn(title), nn(subtitle), Title.Times.times(fadeIn, stay, fadeOut)));
-    }
+    /**
+     * Parses MiniMessage strings and shows them as a title/subtitle.
+     *
+     * `null` title/subtitle are treated as empty strings.
+     */
+    @JvmStatic
+    fun titleMini(sender: CommandSender, titleMini: String?, subtitleMini: String?) =
+        sender.showTitle(titleOf(mini(titleMini), mini(subtitleMini)))
 
-    public static void titleMini(
-            @NonNull CommandSender sender,
-            @Nullable String titleMini,
-            @Nullable String subtitleMini
+    /**
+     * Parses MiniMessage strings and shows them as a title/subtitle with custom timings.
+     *
+     * `null` title/subtitle are treated as empty strings.
+     */
+    @JvmStatic
+    fun titleMini(
+        sender: CommandSender,
+        titleMini: String?,
+        subtitleMini: String?,
+        fadeIn: Duration,
+        stay: Duration,
+        fadeOut: Duration
     ) {
-        sender.showTitle(Title.title(
-                MINI.deserialize(ns(titleMini)),
-                MINI.deserialize(ns(subtitleMini))
-        ));
-    }
-
-    public static void titleMini(
-            @NonNull CommandSender sender,
-            @Nullable String titleMini,
-            @Nullable String subtitleMini,
-            @NonNull Duration fadeIn,
-            @NonNull Duration stay,
-            @NonNull Duration fadeOut
-    ) {
-        sender.showTitle(Title.title(
-                MINI.deserialize(ns(titleMini)),
-                MINI.deserialize(ns(subtitleMini)),
-                Title.Times.times(fadeIn, stay, fadeOut)
-        ));
+        sender.showTitle(titleOf(mini(titleMini), mini(subtitleMini), fadeIn, stay, fadeOut))
     }
 
     /* =========================
      * Audience overloads
      * ========================= */
 
-    public static void send(@NonNull Audience audience, @NonNull Component message) {
-        audience.sendMessage(message);
-    }
+    /** Sends a component message to an [Audience]. */
+    @JvmStatic
+    fun send(audience: Audience, message: Component) =
+        audience.sendMessage(message)
 
-    public static void sendMini(@NonNull Audience audience, @NonNull String miniMessage) {
-        audience.sendMessage(MINI.deserialize(miniMessage));
-    }
+    /** Parses [miniMessage] and sends it to an [Audience]. */
+    @JvmStatic
+    fun sendMini(audience: Audience, miniMessage: String) =
+        audience.sendMessage(mini(miniMessage))
 
-    public static void actionBar(@NonNull Audience audience, @NonNull Component message) {
-        audience.sendActionBar(message);
-    }
+    /** Sends a component action bar to an [Audience]. */
+    @JvmStatic
+    fun actionBar(audience: Audience, message: Component) =
+        audience.sendActionBar(message)
 
-    public static void actionBarMini(@NonNull Audience audience, @NonNull String miniMessage) {
-        audience.sendActionBar(MINI.deserialize(miniMessage));
-    }
+    /** Parses [miniMessage] and sends it as an action bar to an [Audience]. */
+    @JvmStatic
+    fun actionBarMini(audience: Audience, miniMessage: String) =
+        audience.sendActionBar(mini(miniMessage))
 
-    public static void title(
-            @NonNull Audience audience,
-            @Nullable Component title,
-            @Nullable Component subtitle
-    ) {
-        audience.showTitle(Title.title(nn(title), nn(subtitle)));
-    }
+    /** Shows a title/subtitle to an [Audience]. `null` becomes empty. */
+    @JvmStatic
+    fun title(audience: Audience, title: Component?, subtitle: Component?) =
+        audience.showTitle(titleOf(title, subtitle))
 
-    public static void titleMini(
-            @NonNull Audience audience,
-            @Nullable String titleMini,
-            @Nullable String subtitleMini
-    ) {
-        audience.showTitle(Title.title(
-                MINI.deserialize(ns(titleMini)),
-                MINI.deserialize(ns(subtitleMini))
-        ));
-    }
+    /** Parses MiniMessage strings and shows them as a title/subtitle to an [Audience]. */
+    @JvmStatic
+    fun titleMini(audience: Audience, titleMini: String?, subtitleMini: String?) =
+        audience.showTitle(titleOf(mini(titleMini), mini(subtitleMini)))
 
     /* =========================
      * Private helpers
      * ========================= */
 
-    private static @NonNull Component nn(@Nullable Component c) {
-        return c == null ? Component.empty() : c;
-    }
+    private fun mini(input: String?): Component =
+        MINI.deserialize(input.orEmpty())
 
-    private static @NonNull String ns(@Nullable String s) {
-        return s == null ? "" : s;
-    }
+    private fun titleOf(title: Component?, subtitle: Component?): Title =
+        Title.title(title ?: Component.empty(), subtitle ?: Component.empty())
+
+    private fun titleOf(
+        title: Component?,
+        subtitle: Component?,
+        fadeIn: Duration,
+        stay: Duration,
+        fadeOut: Duration
+    ): Title = Title.title(
+        title ?: Component.empty(),
+        subtitle ?: Component.empty(),
+        Title.Times.times(fadeIn, stay, fadeOut)
+    )
+
 }

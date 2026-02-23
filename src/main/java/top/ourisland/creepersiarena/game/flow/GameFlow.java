@@ -26,7 +26,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.player.RespawnService;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.*;
 import java.util.function.Supplier;

@@ -4,7 +4,7 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
-import top.ourisland.creepersiarena.util.I18n;
+import top.ourisland.creepersiarena.utils.I18n;
 
 /**
  * Module controlling configurations and internationalization & localization function.

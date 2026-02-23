@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.Locale;
 import java.util.Optional;

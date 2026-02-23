@@ -8,8 +8,8 @@ import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.util.I18n;
-import top.ourisland.creepersiarena.util.LangKeyResolver;
+import top.ourisland.creepersiarena.utils.I18n;
+import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 

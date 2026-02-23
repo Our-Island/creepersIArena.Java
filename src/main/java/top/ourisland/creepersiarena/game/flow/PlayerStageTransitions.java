@@ -13,7 +13,7 @@ import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerState;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;

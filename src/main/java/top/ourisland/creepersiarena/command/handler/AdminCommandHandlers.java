@@ -10,8 +10,8 @@ import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.util.I18n;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.I18n;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.Arrays;
 import java.util.Locale;

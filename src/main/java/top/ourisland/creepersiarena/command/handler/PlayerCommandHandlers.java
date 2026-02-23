@@ -7,7 +7,7 @@ import top.ourisland.creepersiarena.command.service.LeaveService;
 import top.ourisland.creepersiarena.command.service.UserLanguageService;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.Locale;
 import java.util.Optional;

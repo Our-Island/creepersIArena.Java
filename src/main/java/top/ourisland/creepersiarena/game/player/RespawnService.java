@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.util.Msg;
+import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.HashSet;
 import java.util.Set;

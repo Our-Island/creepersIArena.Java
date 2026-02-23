@@ -18,8 +18,8 @@ import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import top.ourisland.creepersiarena.job.skill.event.Triggers;
-import top.ourisland.creepersiarena.util.I18n;
-import top.ourisland.creepersiarena.util.LangKeyResolver;
+import top.ourisland.creepersiarena.utils.I18n;
+import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 

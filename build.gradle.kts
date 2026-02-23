@@ -2,6 +2,7 @@ plugins {
     java
     id("org.jetbrains.kotlin.jvm") version "2.3.10"
     id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.10"
 }
 
 group = "top.ourisland"
@@ -58,6 +59,10 @@ java {
 
 kotlin {
     jvmToolchain(targetJavaVersion)
+}
+
+kotlinLombok {
+    lombokConfigurationFile(file("lombok.config"))
 }
 
 tasks.withType<JavaCompile>().configureEach {
