@@ -53,7 +53,8 @@ public final class SkillTickTask {
                     new TickEvent(now),
                     null,
                     null,
-                    now
+                    now,
+                    runtime.skillConfig()
             ));
 
             renderer.render(p, registry.skillsOf(p), now);

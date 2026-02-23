@@ -62,7 +62,8 @@ public final class SkillUiListener implements Listener {
                 new InteractEvent(e.getAction(), true),
                 item,
                 skillId,
-                tick
+                tick,
+                runtime.skillConfig()
         ));
     }
 
@@ -100,4 +101,5 @@ public final class SkillUiListener implements Listener {
 
         e.setCancelled(true);
     }
+
 }

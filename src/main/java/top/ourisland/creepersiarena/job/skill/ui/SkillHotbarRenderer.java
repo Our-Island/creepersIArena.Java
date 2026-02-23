@@ -9,6 +9,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.utils.I18n;
+import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 
@@ -25,6 +27,11 @@ public final class SkillHotbarRenderer {
         this.store = store;
     }
 
+    private static ItemStack safeClone(ItemStack it) {
+        if (it == null) return new ItemStack(Material.BARRIER);
+        return it.clone();
+    }
+
     public void render(Player p, List<ISkillDefinition> skills, long nowTick) {
         if (p == null || skills == null) return;
 
@@ -33,7 +40,7 @@ public final class SkillHotbarRenderer {
         ISkillDefinition[] desired = new ISkillDefinition[9];
         for (ISkillDefinition def : skills) {
             if (def == null) continue;
-            if (def.kind() != SkillType.ACTIVE) continue;
+            if (def.type() != SkillType.ACTIVE) continue;
 
             int slot = def.uiSlot();
             if (slot < 0 || slot > 8) continue;
@@ -77,16 +84,16 @@ public final class SkillHotbarRenderer {
         if (remain > 0) {
             if (remain <= 20) {
                 base = new ItemStack(Material.BIRCH_BUTTON);
-                base.setAmount((int) Math.max(1, Math.min(64, remain)));
+                base.setAmount(Math.clamp(remain, 1, 64));
             } else {
                 long sec = (remain + 19) / 20; // ceil
                 base = new ItemStack(Material.STONE_BUTTON);
-                base.setAmount((int) Math.max(1, Math.min(64, sec)));
+                base.setAmount(Math.clamp(sec, 1, 64));
             }
 
             ItemMeta meta = base.getItemMeta();
             if (meta != null) {
-                meta.displayName(Component.text("[冷却中] " + def.id()));
+                meta.displayName(Component.text("[冷却中] " + I18n.langStrNP(LangKeyResolver.skillName(def))));
                 base.setItemMeta(meta);
             }
         } else {
@@ -98,8 +105,4 @@ public final class SkillHotbarRenderer {
         return base;
     }
 
-    private static ItemStack safeClone(ItemStack it) {
-        if (it == null) return new ItemStack(Material.BARRIER);
-        return it.clone();
-    }
 }

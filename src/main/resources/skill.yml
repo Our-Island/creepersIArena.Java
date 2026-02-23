@@ -1,0 +1,32 @@
+# Skill configuration file (skill.yml)
+# Key structure:
+# <namespace>:
+#   <job-id>:
+#     <skill-name>:
+#       cooldown-seconds: <int>
+#       ... other skill-specific fields ...
+#
+# Skill id is "<job-id>.<skill-name>" (e.g. "creeper.fireworks").
+
+cia:
+  creeper:
+    creeper:
+      cooldown-seconds: 7
+      fuse-ticks: 15
+      speed: 1.75
+      explosion-power: 2.0
+
+    crossbow:
+      cooldown-seconds: 7
+      flight: 3
+      speed: 1.9
+
+    fireworks:
+      cooldown-seconds: 20
+      flight: 1
+      ride-ticks: 8
+      forward: 1.0
+      up: 0.6
+      slow-falling-ticks: 20
+      spawn-forward: 0.8
+      spawn-up: 0.2

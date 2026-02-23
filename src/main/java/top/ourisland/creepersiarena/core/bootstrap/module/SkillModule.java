@@ -2,11 +2,12 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
+import top.ourisland.creepersiarena.command.AdminRuntimeState;
+import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.JobManager;
@@ -48,7 +49,7 @@ public final class SkillModule implements IBootstrapModule {
                 var runtimeState = rt.getService(AdminRuntimeState.class);
                 if (runtimeState == null) return 1.0;
                 return runtimeState.cooldownFactor();
-            });
+            }, () -> rt.requireService(ConfigManager.class).skillConfig());
 
             SkillHotbarRenderer skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
 
@@ -122,4 +123,5 @@ public final class SkillModule implements IBootstrapModule {
 
     public record SkillTickHandle(ScheduledTask task) {
     }
+
 }

@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,8 @@ public final class ConfigManager {
     private GlobalConfig globalConfig = GlobalConfig.defaults();
     @Getter
     private ArenaConfig arenaConfig = ArenaConfig.empty();
+    @Getter
+    private SkillConfig skillConfig = SkillConfig.defaults();
 
     public ConfigManager(JavaPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -37,13 +40,19 @@ public final class ConfigManager {
         ensureDataDir();
         copyDefaultIfAbsent("config.yml");
         copyDefaultIfAbsent("arena.yml");
+        copyDefaultIfAbsent("skill.yml");
 
         this.globalConfig = loadGlobal();
         this.arenaConfig = loadArena();
+        this.skillConfig = loadSkill();
     }
 
     public boolean setGlobalNode(String node, Object value) {
         return setNode("config.yml", node, value);
+    }
+
+    public boolean setSkillNode(String node, Object value) {
+        return setNode("skill.yml", node, value);
     }
 
     private boolean setNode(String filename, String node, Object value) {
@@ -72,6 +81,10 @@ public final class ConfigManager {
 
     public List<String> listArenaKeys() {
         return listKeys("arena.yml");
+    }
+
+    public List<String> listSkillKeys() {
+        return listKeys("skill.yml");
     }
 
     private List<String> listKeys(String filename) {
@@ -103,6 +116,10 @@ public final class ConfigManager {
 
     public Object getGlobalNode(String node) {
         return getNode("config.yml", node);
+    }
+
+    public Object getSkillNode(String node) {
+        return getNode("skill.yml", node);
     }
 
     private Object getNode(String filename, String node) {
@@ -172,4 +189,17 @@ public final class ConfigManager {
             return ArenaConfig.empty();
         }
     }
+
+
+    private SkillConfig loadSkill() {
+        Path p = dataDir.resolve("skill.yml");
+        try {
+            YamlConfiguration yml = YamlConfiguration.loadConfiguration(p.toFile());
+            return SkillConfig.fromYaml(yml);
+        } catch (Exception e) {
+            logger.warn("[Config] Failed to load skill.yml: {}", e.getMessage(), e);
+            return SkillConfig.defaults();
+        }
+    }
+
 }

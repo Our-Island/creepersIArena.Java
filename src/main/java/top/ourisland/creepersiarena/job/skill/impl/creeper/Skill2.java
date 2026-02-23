@@ -9,6 +9,7 @@ import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -22,9 +23,39 @@ import java.util.List;
 
 public class Skill2 implements ISkillDefinition {
 
-    private static final int FLIGHT = 3;          // 对应 flight_duration:3b
-    private static final double SPEED = 1.9;      // 发射速度（你可以调手感）
+    private static final int FLIGHT = 3;
+    private static final double SPEED = 1.9;
     private static final String ID = "creeper.crossbow";
+
+    private static ItemStack buildRocket() {
+        ItemStack rocket = new ItemStack(Material.FIREWORK_ROCKET);
+        ItemMeta im = rocket.getItemMeta();
+        if (im instanceof FireworkMeta meta) {
+            meta.clearEffects();
+            meta.addEffect(buildEffect());
+            meta.setPower(FLIGHT);
+            rocket.setItemMeta(meta);
+        }
+        return rocket;
+    }
+
+    private static FireworkEffect buildEffect() {
+        return FireworkEffect.builder()
+                .with(FireworkEffect.Type.CREEPER)
+                .withColor(
+                        Color.fromRGB(3724032),
+                        Color.fromRGB(1457973),
+                        Color.fromRGB(1990460)
+                )
+                .withFade(
+                        Color.fromRGB(9029490),
+                        Color.fromRGB(6649971),
+                        Color.fromRGB(5861989)
+                )
+                .trail(false)
+                .flicker(false)
+                .build();
+    }
 
     @Override
     public String id() {
@@ -37,7 +68,7 @@ public class Skill2 implements ISkillDefinition {
     }
 
     @Override
-    public SkillType kind() {
+    public SkillType type() {
         return SkillType.ACTIVE;
     }
 
@@ -85,68 +116,35 @@ public class Skill2 implements ISkillDefinition {
             Player p = ctx.player();
             if (p == null) return;
 
+            SkillConfig cfg = ctx.skillConfig();
+            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
+            double speed = cfg.getDouble(id(), "speed", SPEED);
+
             World w = p.getWorld();
             Vector dir = p.getEyeLocation().getDirection().normalize();
 
-            // 发射点：眼前一点，避免卡在自己身体里
             Location spawn = p.getEyeLocation().add(dir.clone().multiply(0.6));
 
-            // 生成烟花实体并按方向射出去
-            Firework fw = w.spawn(spawn, Firework.class, f -> {
+            w.spawn(spawn, Firework.class, f -> {
                 f.setShooter(p);
 
                 FireworkMeta meta = f.getFireworkMeta();
                 meta.clearEffects();
                 meta.addEffect(buildEffect());
-                meta.setPower(FLIGHT);
+                meta.setPower(flight);
                 f.setFireworkMeta(meta);
 
-                // crossbow 发射的火箭更像“直线弹道”，这里用 setVelocity 模拟
-                f.setVelocity(dir.multiply(SPEED));
+                f.setVelocity(dir.multiply(speed));
 
-                // 让它更像“被射出”，而不是正常竖直起飞
                 try {
                     f.setShotAtAngle(true);
                 } catch (Throwable ignored) {
-                    // 版本不支持就忽略
                 }
             });
 
-            // 播放弩射击音效（更像“发射弩”）
             p.playSound(p, Sound.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-            // 可选：挥手动画
             p.swingMainHand();
         };
     }
 
-    private static ItemStack buildRocket() {
-        ItemStack rocket = new ItemStack(Material.FIREWORK_ROCKET);
-        ItemMeta im = rocket.getItemMeta();
-        if (im instanceof FireworkMeta meta) {
-            meta.clearEffects();
-            meta.addEffect(buildEffect());
-            meta.setPower(FLIGHT);
-            rocket.setItemMeta(meta);
-        }
-        return rocket;
-    }
-
-    private static FireworkEffect buildEffect() {
-        return FireworkEffect.builder()
-                .with(FireworkEffect.Type.CREEPER)
-                .withColor(
-                        Color.fromRGB(3724032),
-                        Color.fromRGB(1457973),
-                        Color.fromRGB(1990460)
-                )
-                .withFade(
-                        Color.fromRGB(9029490),
-                        Color.fromRGB(6649971),
-                        Color.fromRGB(5861989)
-                )
-                .trail(false)
-                .flicker(false)
-                .build();
-    }
 }

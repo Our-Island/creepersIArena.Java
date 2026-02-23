@@ -21,7 +21,7 @@ public class Skill1 implements ISkillDefinition {
     }
 
     @Override
-    public SkillType kind() {
+    public SkillType type() {
         return SkillType.ACTIVE;
     }
 
@@ -49,4 +49,5 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return null;
     }
+
 }

@@ -12,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -29,8 +30,8 @@ public class Skill3 implements ISkillDefinition {
     public static final String TAG_SKILL3_OWNER = "cia_skill3_owner:";
 
     private static final int FLIGHT = 1;
-    private static final int RIDE_TICKS = 8;
-    private static final double FORWARD = 1;
+    private static final int RIDE_TICKS = 20;
+    private static final double FORWARD = 0.84;
     private static final double UP = 0.6;
 
     private static FireworkEffect buildEffect() {
@@ -62,7 +63,7 @@ public class Skill3 implements ISkillDefinition {
     }
 
     @Override
-    public SkillType kind() {
+    public SkillType type() {
         return SkillType.ACTIVE;
     }
 
@@ -102,17 +103,26 @@ public class Skill3 implements ISkillDefinition {
             Player p = ctx.player();
             if (p == null) return;
 
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 20, 0, true, false, false));
+            SkillConfig cfg = ctx.skillConfig();
+            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
+            int rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
+            double forward = cfg.getDouble(id(), "forward", FORWARD);
+            double up = cfg.getDouble(id(), "up", UP);
+            int slowFallingTicks = Math.max(0, cfg.getInt(id(), "slow-falling-ticks", 20));
+            double spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
+            double spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
+
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, slowFallingTicks, 0, true, false, false));
 
             World w = p.getWorld();
             Vector dir = p.getLocation().getDirection().normalize();
-            Location spawn = p.getLocation().add(dir.clone().multiply(0.8)).add(0, 0.2, 0);
+            Location spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
 
             Firework fw = w.spawn(spawn, Firework.class, f -> {
                 FireworkMeta m = f.getFireworkMeta();
                 m.clearEffects();
                 m.addEffect(buildEffect());
-                m.setPower(FLIGHT);
+                m.setPower(flight);
                 f.setFireworkMeta(m);
 
                 f.addScoreboardTag(TAG_SKILL3_FW);
@@ -135,12 +145,12 @@ public class Skill3 implements ISkillDefinition {
                     return;
                 }
 
-                Vector vel = dir.clone().multiply(FORWARD);
-                vel.setY(UP);
+                Vector vel = dir.clone().multiply(forward);
+                vel.setY(up);
                 fw.setVelocity(vel);
 
                 t[0]++;
-                if (t[0] >= RIDE_TICKS) {
+                if (t[0] >= rideTicks) {
                     task.cancel();
 
                     if (p.isInsideVehicle()) {
@@ -156,4 +166,5 @@ public class Skill3 implements ISkillDefinition {
             }, null, 1L, 1L);
         };
     }
+
 }

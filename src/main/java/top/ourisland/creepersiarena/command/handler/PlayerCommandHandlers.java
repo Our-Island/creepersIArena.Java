@@ -23,7 +23,14 @@ public final class PlayerCommandHandlers {
     }
 
     public void help(CommandSender sender) {
-        Msg.send(sender, "/cia join | leave | job <cia:id> | team <id|color> | language <id|default> | pref | admin");
+        Msg.send(sender, """
+                /cia join
+                /cia leave
+                /cia job <cia:id>
+                /cia team <id|color>
+                /cia language <id|default>
+                /cia pref
+                /cia admin""");
     }
 
     public void join(CommandSender sender) {

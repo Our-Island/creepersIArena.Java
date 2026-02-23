@@ -11,6 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -24,8 +25,8 @@ import java.util.List;
 
 public class Skill1 implements ISkillDefinition {
 
-    private static final long FUSE_TICKS = 15L;
-    private static final double SPEED = 0.75;
+    private static final long FUSE_TICKS = 20L;
+    private static final double SPEED = 1.75;
     private static final String TAG = "cia_skill_creeper_boom";
 
     @Override
@@ -39,7 +40,7 @@ public class Skill1 implements ISkillDefinition {
     }
 
     @Override
-    public SkillType kind() {
+    public SkillType type() {
         return SkillType.ACTIVE;
     }
 
@@ -85,6 +86,12 @@ public class Skill1 implements ISkillDefinition {
 
             World world = caster.getWorld();
 
+
+            SkillConfig cfg = ctx.skillConfig();
+            long fuseTicks = cfg.getLong(id(), "fuse-ticks", FUSE_TICKS);
+            double speed = cfg.getDouble(id(), "speed", SPEED);
+            float explosionPower = (float) cfg.getDouble(id(), "explosion-power", 2.0);
+
             Vector dir = caster.getLocation().getDirection().normalize();
             var spawnLoc = caster.getLocation().add(dir.clone().multiply(1.2)).add(0, 0.2, 0);
 
@@ -92,7 +99,7 @@ public class Skill1 implements ISkillDefinition {
             creeper.addScoreboardTag(TAG);
             creeper.setInvulnerable(true);
             creeper.setCollidable(false);
-            creeper.setVelocity(dir.multiply(SPEED));
+            creeper.setVelocity(dir.multiply(speed));
 
             Plugin plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
             creeper.getScheduler().runDelayed(plugin, task -> {
@@ -100,14 +107,15 @@ public class Skill1 implements ISkillDefinition {
 
                 world.createExplosion(
                         creeper.getLocation(),
-                        2.0f,
+                        explosionPower,
                         false,
                         false,
                         creeper
                 );
 
                 creeper.remove();
-            }, null, FUSE_TICKS);
+            }, null, Math.max(1L, fuseTicks));
         };
     }
+
 }

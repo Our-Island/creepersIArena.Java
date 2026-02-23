@@ -9,10 +9,14 @@ public interface ISkillDefinition {
 
     String jobId();
 
-    SkillType kind();
+    SkillType type();
 
     int uiSlot();
 
+    /**
+     * The default cooldown second of the skill. Could be changed by the skill.yml.
+     * @return
+     */
     int cooldownSeconds();
 
     List<ITrigger> triggers();
@@ -20,4 +24,5 @@ public interface ISkillDefinition {
     ISkillIcon icon();
 
     ISkillExecutor executor();
+
 }
