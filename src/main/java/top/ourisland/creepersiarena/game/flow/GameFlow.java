@@ -14,7 +14,7 @@ import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
 import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.game.mode.IModeRules;
@@ -120,8 +120,6 @@ public final class GameFlow {
 
     /**
      * Called by PlayerQuitEvent / PlayerKickEvent.
-     *
-     * <p>Meaning: player leaves CIA completely (restore outside snapshot + remove session).</p>
      */
     public void onPlayerQuitServer(Player p, LeaveReason reason) {
         if (p == null) return;
@@ -132,8 +130,7 @@ public final class GameFlow {
         PlayerSession s = store.get(p);
         detachFromActiveGame(p, s, reason);
 
-        // restore inventory snapshot & remove session
-        transitions.leaveToOutside(p);
+        transitions.removeSession(p);
 
         log.debug("[Flow] player left, session removed: name={} reason={}", p.getName(), reason);
     }
@@ -157,11 +154,7 @@ public final class GameFlow {
             case JOB_PAGE_NEXT -> transitions.nextJobPage(p);
             case TEAM_CYCLE -> transitions.cycleTeam(p);
 
-            // Death lobby: back to hub (and give up this round)
             case BACK_TO_HUB -> leaveToHubNow(p, LeaveReason.COMMAND);
-
-            // Leave CIA completely (restore outside inventory snapshot)
-            case LEAVE -> leaveToOutsideNow(p, LeaveReason.COMMAND);
         }
     }
 
@@ -310,13 +303,6 @@ public final class GameFlow {
         // Fallback
         leaveToHubNow(p, reason);
         return new LeavePlan.Immediate();
-    }
-
-    /**
-     * Leave CIA completely (restore outside inventory snapshot).
-     */
-    public void requestLeaveToOutside(Player p, LeaveReason reason) {
-        leaveToOutsideNow(p, reason);
     }
 
     /**
@@ -607,20 +593,6 @@ public final class GameFlow {
         detachFromActiveGame(p, s, reason);
 
         transitions.toHub(p);
-    }
-
-    private void leaveToOutsideNow(Player p, LeaveReason reason) {
-        if (p == null) return;
-
-        cancelPendingLeave(p);
-        respawns.cancel(p);
-
-        PlayerSession s = store.get(p);
-        detachFromActiveGame(p, s, reason);
-
-        transitions.leaveToOutside(p);
-
-        log.info("[Flow] leave to outside: name={} reason={}", p.getName(), reason);
     }
 
     private void detachFromActiveGame(Player p, PlayerSession s, LeaveReason reason) {

@@ -41,7 +41,7 @@ public final class StealRules implements IModeRules {
 
     @Override
     public void onLeave(LeaveContext ctx) {
-        // leave 只做清理：Flow 会 remove game.players + restoreOutside
+        // leave 只做清理：Flow 会 remove game.players
     }
 
     @Override

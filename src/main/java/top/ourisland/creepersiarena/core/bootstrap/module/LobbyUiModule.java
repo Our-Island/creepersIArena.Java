@@ -6,7 +6,7 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.LobbyUiListener;
-import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;

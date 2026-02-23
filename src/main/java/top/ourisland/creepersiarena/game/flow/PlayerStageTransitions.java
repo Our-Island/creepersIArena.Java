@@ -9,7 +9,7 @@ import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameSession;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.lobby.inventory.LobbyItemService;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerState;

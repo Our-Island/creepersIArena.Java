@@ -1,9 +1,8 @@
-package top.ourisland.creepersiarena.game.lobby.inventory;
+package top.ourisland.creepersiarena.game.lobby.item;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
-import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;

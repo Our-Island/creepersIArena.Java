@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.game.player;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.game.lobby.inventory.InventorySnapshot;
 import top.ourisland.creepersiarena.job.JobId;
 
 import java.util.UUID;
@@ -17,8 +16,6 @@ public final class PlayerSession {
     private JobId selectedJob;
     private Integer selectedTeam;
     private int lobbyJobPage = 0;
-
-    private InventorySnapshot outsideSnapshot;
 
     private int respawnSecondsRemaining = 0;
     private Location battleSpawnOverride;
