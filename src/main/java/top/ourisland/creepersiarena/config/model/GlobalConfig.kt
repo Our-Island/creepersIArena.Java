@@ -169,7 +169,12 @@ data class GlobalConfig(
                 return Game(disabled, leaveDelay, battle, steal)
             }
 
-            fun defaults(): Game = Game(setOf(), 5, Battle.defaults(), Steal.defaults())
+            fun defaults(): Game = Game(
+                disabledModes = setOf(),
+                leaveDelaySeconds = 5,
+                battle = Battle.defaults(),
+                steal = Steal.defaults()
+            )
         }
 
         data class Battle(
@@ -191,7 +196,13 @@ data class GlobalConfig(
                     )
                 }
 
-                fun defaults(): Battle = Battle(600, 10, 4, true, false)
+                fun defaults(): Battle = Battle(
+                    singleGameTimeSeconds = 600,
+                    respawnTimeSeconds = 10,
+                    maxTeam = 4,
+                    teamAutoBalancing = true,
+                    forceBalancing = false
+                )
             }
         }
 
@@ -212,7 +223,12 @@ data class GlobalConfig(
                     )
                 }
 
-                fun defaults(): Steal = Steal(2, 30, 10, 10)
+                fun defaults(): Steal = Steal(
+                    minPlayerToStart = 2,
+                    prepareTimeSeconds = 30,
+                    totalRound = 10,
+                    timePerRoundSeconds = 10
+                )
             }
         }
     }
@@ -242,7 +258,10 @@ data class GlobalConfig(
                 return LobbyUi(JobSelectMode.fromConfig(mode), perPage)
             }
 
-            fun defaults(): LobbyUi = LobbyUi(JobSelectMode.HOTBAR, 5)
+            fun defaults(): LobbyUi = LobbyUi(
+                jobSelectMode = JobSelectMode.HOTBAR,
+                jobsPerPage = 5
+            )
         }
     }
 

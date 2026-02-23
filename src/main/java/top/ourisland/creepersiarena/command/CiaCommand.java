@@ -367,7 +367,7 @@ public final class CiaCommand {
         String target;
         try {
             target = ctx.getArgument("target", String.class);
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             return b.buildFuture();
         }
 
@@ -411,7 +411,7 @@ public final class CiaCommand {
         try {
             target = ctx.getArgument("target", String.class);
             node = ctx.getArgument("node", String.class);
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             return b.buildFuture();
         }
 

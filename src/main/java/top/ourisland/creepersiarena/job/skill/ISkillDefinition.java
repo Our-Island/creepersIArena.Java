@@ -15,7 +15,8 @@ public interface ISkillDefinition {
 
     /**
      * The default cooldown second of the skill. Could be changed by the skill.yml.
-     * @return
+     *
+     * @return the cooldown seconds
      */
     int cooldownSeconds();
 

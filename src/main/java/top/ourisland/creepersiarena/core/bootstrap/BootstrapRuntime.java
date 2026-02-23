@@ -122,7 +122,7 @@ public final class BootstrapRuntime {
         for (Runnable cancel : tasks) {
             try {
                 cancel.run();
-            } catch (Throwable ignored) {
+            } catch (Throwable _) {
             }
         }
         tasks.clear();

@@ -1,9 +1,9 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
+import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.utils.I18n;
 
 /**

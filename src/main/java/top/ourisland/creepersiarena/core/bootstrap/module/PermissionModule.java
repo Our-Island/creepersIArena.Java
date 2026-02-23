@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.permission.LuckPermsService;

@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.bukkit.Bukkit;
-import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 

@@ -43,7 +43,7 @@ public final class GameTickModule implements IBootstrapModule {
             GameTickHandle h = rt.getService(GameTickHandle.class);
             try {
                 h.task().cancel();
-            } catch (Throwable ignored) {
+            } catch (Throwable _) {
             }
         }, "Stopping game tick...", "Finished scheduling game tick.");
     }

@@ -32,7 +32,10 @@ public class SkillImplementationListener implements Listener {
         for (String tag : fw.getScoreboardTags()) {
             if (tag.startsWith(Skill3.TAG_SKILL3_OWNER)) {
                 String s = tag.substring(Skill3.TAG_SKILL3_OWNER.length());
-                try { owner = UUID.fromString(s); } catch (IllegalArgumentException ignored) {}
+                try {
+                    owner = UUID.fromString(s);
+                } catch (IllegalArgumentException _) {
+                }
                 break;
             }
         }

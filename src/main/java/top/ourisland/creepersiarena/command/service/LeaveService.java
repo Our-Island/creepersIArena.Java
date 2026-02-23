@@ -28,16 +28,11 @@ public final class LeaveService {
         GameFlow.LeavePlan plan = flow.requestLeaveToHub(p, LeaveReason.COMMAND);
 
         switch (plan) {
-            case GameFlow.LeavePlan.NotPlayer ignored ->
-                    Msg.send(p, "Only players can use this command.");
-            case GameFlow.LeavePlan.NotInSession ignored ->
-                    Msg.send(p, "You are not in CIA session.");
-            case GameFlow.LeavePlan.AlreadyInHub ignored ->
-                    Msg.send(p, "You are already in HUB.");
-            case GameFlow.LeavePlan.Immediate ignored ->
-                    Msg.send(p, "Returned to HUB.");
-            case GameFlow.LeavePlan.Scheduled(int seconds) ->
-                    Msg.send(p, "Returning to HUB in " + seconds + "s...");
+            case GameFlow.LeavePlan.NotPlayer _ -> Msg.send(p, "Only players can use this command.");
+            case GameFlow.LeavePlan.NotInSession _ -> Msg.send(p, "You are not in CIA session.");
+            case GameFlow.LeavePlan.AlreadyInHub _ -> Msg.send(p, "You are already in HUB.");
+            case GameFlow.LeavePlan.Immediate _ -> Msg.send(p, "Returned to HUB.");
+            case GameFlow.LeavePlan.Scheduled(int seconds) -> Msg.send(p, "Returning to HUB in " + seconds + "s...");
         }
     }
 }

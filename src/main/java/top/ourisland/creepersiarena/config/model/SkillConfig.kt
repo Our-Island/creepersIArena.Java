@@ -4,8 +4,7 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.MemorySection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
-import java.util.Collections
-import kotlin.jvm.JvmStatic
+import java.util.*
 
 /**
  * Skill-specific configuration loaded from skill.yml.
@@ -53,7 +52,11 @@ class SkillConfig private constructor(
             return SkillConfig(map)
         }
 
-        private fun collectSections(sec: ConfigurationSection, prefix: String, out: MutableMap<String, ConfigurationSection>) {
+        private fun collectSections(
+            sec: ConfigurationSection,
+            prefix: String,
+            out: MutableMap<String, ConfigurationSection>
+        ) {
             for (key in sec.getKeys(false)) {
                 val child = sec.getConfigurationSection(key) ?: continue
                 val id = if (prefix.isEmpty()) key else "$prefix.$key"

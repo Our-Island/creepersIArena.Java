@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "top.ourisland"
-version = "0.0.1"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -43,7 +43,7 @@ tasks.test {
     failOnNoDiscoveredTests = false
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 25
 
 java {
     val javaVersion = JavaVersion.toVersion(targetJavaVersion)

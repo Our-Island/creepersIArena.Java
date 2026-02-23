@@ -1,10 +1,10 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
+import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.config.ConfigManager;
-import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
@@ -48,7 +48,7 @@ public final class GameModule implements IBootstrapModule {
             GameManager gameManager = new GameManager(arenaManager, rt.log());
             Set<String> disabled = new HashSet<>();
             for (String s : gcfg.game().disabledModes()) {
-                if (s != null) disabled.add(s.trim().toUpperCase());
+                disabled.add(s.trim().toUpperCase());
             }
 
             if (!disabled.contains("BATTLE")) {
@@ -91,7 +91,7 @@ public final class GameModule implements IBootstrapModule {
             if (gm != null) {
                 try {
                     gm.endActive();
-                } catch (Throwable ignored) {
+                } catch (Throwable _) {
                 }
             }
         }, "Stopping game runtime...", "Game runtime stopped.");

@@ -2,9 +2,9 @@ package top.ourisland.creepersiarena.command.handler;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.command.service.LeaveService;
 import top.ourisland.creepersiarena.command.service.UserLanguageService;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.utils.Msg;
@@ -42,16 +42,13 @@ public final class PlayerCommandHandlers {
         GameFlow.JoinFromHubPlan plan = flow.requestJoinFromHub(p);
 
         switch (plan) {
-            case GameFlow.JoinFromHubPlan.NotPlayer ignored ->
-                    Msg.send(p, "Only players can use this command.");
-            case GameFlow.JoinFromHubPlan.NoActiveGame ignored ->
-                    Msg.send(p, "There is no active game.");
+            case GameFlow.JoinFromHubPlan.NotPlayer _ -> Msg.send(p, "Only players can use this command.");
+            case GameFlow.JoinFromHubPlan.NoActiveGame _ -> Msg.send(p, "There is no active game.");
             case GameFlow.JoinFromHubPlan.ModeNotSupported(var mode) ->
                     Msg.send(p, "Current mode does not support /join: " + mode);
             case GameFlow.JoinFromHubPlan.NotInHub(var state) ->
                     Msg.send(p, "You can only /join from HUB (current=" + state + ").");
-            case GameFlow.JoinFromHubPlan.Joined ignored ->
-                    Msg.send(p, "Joined battle.");
+            case GameFlow.JoinFromHubPlan.Joined _ -> Msg.send(p, "Joined battle.");
         }
     }
 

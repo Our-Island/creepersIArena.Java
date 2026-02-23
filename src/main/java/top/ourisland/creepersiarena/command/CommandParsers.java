@@ -54,7 +54,7 @@ public final class CommandParsers {
     public static Integer parseInt(String s) {
         try {
             return Integer.parseInt(String.valueOf(s).trim());
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             return null;
         }
     }
@@ -62,7 +62,7 @@ public final class CommandParsers {
     public static Double parseDouble(String s) {
         try {
             return Double.parseDouble(String.valueOf(s).trim());
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             return null;
         }
     }
@@ -72,11 +72,7 @@ public final class CommandParsers {
         String v = raw.trim();
         int colon = v.indexOf(':');
         if (colon <= 0) return v;
-        String ns = v.substring(0, colon).trim().toLowerCase(Locale.ROOT);
-        String id = v.substring(colon + 1).trim();
-        if (ns.isEmpty()) return id;
-        if (ns.equals("cia")) return id;
-        return id;
+        return v.substring(colon + 1).trim();
     }
 
     public static Integer parseTeamId(String token) {

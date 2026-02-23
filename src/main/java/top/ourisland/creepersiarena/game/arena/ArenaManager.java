@@ -9,9 +9,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
-import top.ourisland.creepersiarena.game.mode.GameModeType;
 import top.ourisland.creepersiarena.core.region.Bounds2D;
 import top.ourisland.creepersiarena.core.region.Region2D;
+import top.ourisland.creepersiarena.game.mode.GameModeType;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;

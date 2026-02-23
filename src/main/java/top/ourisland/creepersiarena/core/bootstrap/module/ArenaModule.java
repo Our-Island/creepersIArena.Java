@@ -2,11 +2,11 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.bukkit.World;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
-import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
+import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.ArenaDeathListener;

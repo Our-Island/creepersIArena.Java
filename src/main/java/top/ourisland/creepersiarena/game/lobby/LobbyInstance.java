@@ -9,5 +9,5 @@ public record LobbyInstance(
         Location anchor,
         Region2D region,
         @Nullable EntryZone entryZone
-        ) {
+) {
 }

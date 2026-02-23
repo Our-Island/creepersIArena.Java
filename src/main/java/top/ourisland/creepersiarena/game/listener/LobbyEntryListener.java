@@ -104,7 +104,7 @@ public final class LobbyEntryListener implements Listener {
         for (var e : pending.entrySet()) {
             try {
                 e.getValue().cancel();
-            } catch (Throwable ignored) {
+            } catch (Throwable _) {
             }
         }
         pending.clear();

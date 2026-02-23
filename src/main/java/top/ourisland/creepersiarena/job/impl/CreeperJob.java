@@ -38,7 +38,7 @@ public class CreeperJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate() {
-        return new ItemStack[] {
+        return new ItemStack[]{
                 new ItemStack(Material.AIR),
                 new ItemStack(Material.AIR),
                 new ItemStack(Material.LEATHER_CHESTPLATE),

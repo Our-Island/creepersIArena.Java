@@ -290,7 +290,7 @@ public final class GameFlow {
         // IN_GAME -> delayed.
         if (s.state() == PlayerState.IN_GAME) {
             int wait = Math.max(0, cfg.get().game().leaveDelaySeconds());
-            if (wait <= 0) {
+            if (wait == 0) {
                 leaveToHubNow(p, reason);
                 return new LeavePlan.Immediate();
             }
@@ -376,8 +376,8 @@ public final class GameFlow {
         }
 
         switch (decision) {
-            case JoinDecision.ToHub ignored -> transitions.toHub(p);
-            case JoinDecision.ToBattle ignored -> {
+            case JoinDecision.ToHub _ -> transitions.toHub(p);
+            case JoinDecision.ToBattle _ -> {
                 if (g == null) {
                     transitions.toHub(p);
                 } else {
@@ -406,7 +406,7 @@ public final class GameFlow {
         }
 
         switch (decision) {
-            case RespawnDecision.Hub ignored -> {
+            case RespawnDecision.Hub _ -> {
                 respawns.cancel(p);
                 transitions.toHub(p);
                 handle.setRespawnLocation(transitions.hubAnchor());
@@ -470,13 +470,11 @@ public final class GameFlow {
                 }
             }
 
-            case GameAction.ToHub(Set<UUID> players) -> {
-                forEachOnline(players, p -> {
-                    cancelPendingLeave(p);
-                    respawns.cancel(p);
-                    transitions.toHub(p);
-                });
-            }
+            case GameAction.ToHub(Set<UUID> players) -> forEachOnline(players, p -> {
+                cancelPendingLeave(p);
+                respawns.cancel(p);
+                transitions.toHub(p);
+            });
 
             case GameAction.ToBattle(Set<UUID> players) -> {
                 GameSession g = gameManager.active();

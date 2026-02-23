@@ -98,7 +98,7 @@ public final class SkillModule implements IBootstrapModule {
             SkillTickHandle h = rt.getService(SkillTickHandle.class);
             try {
                 h.task().cancel();
-            } catch (Throwable ignored) {
+            } catch (Throwable _) {
             }
         }, "Stopping skill tick task...", "Skill tick task stopped.");
     }

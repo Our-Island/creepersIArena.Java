@@ -107,7 +107,7 @@ final class PlayerLobbyTransitions {
         PlayerSession s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB) return;
 
-        Integer next = (teamId == null) ? null : Math.max(1, Math.min(teamId, cfg.get().game().battle().maxTeam()));
+        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, cfg.get().game().battle().maxTeam());
 
         s.selectedTeam(next);
         refreshLobbyKit(p);

@@ -76,7 +76,7 @@ public final class SkillRuntime {
         for (ITrigger t : triggers) {
             try {
                 if (t != null && t.matches(ctx)) return true;
-            } catch (Throwable ignored) {
+            } catch (Throwable _) {
             }
         }
         return false;
@@ -87,7 +87,7 @@ public final class SkillRuntime {
         try {
             SkillConfig c = skillConfig.get();
             return c == null ? SkillConfig.defaults() : c;
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             return SkillConfig.defaults();
         }
     }

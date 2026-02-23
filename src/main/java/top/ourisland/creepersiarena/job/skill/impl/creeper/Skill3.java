@@ -130,7 +130,7 @@ public class Skill3 implements ISkillDefinition {
 
                 try {
                     f.setShotAtAngle(true);
-                } catch (Throwable ignored) {
+                } catch (Throwable _) {
                 }
             });
 

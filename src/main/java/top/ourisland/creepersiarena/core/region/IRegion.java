@@ -59,8 +59,8 @@ public interface IRegion<B extends IBounds> {
         int x = base.getBlockX();
         int z = base.getBlockZ();
 
-        double cx = Math.max(bounds().minX(), Math.min(bounds().maxX(), x));
-        double cz = Math.max(bounds().minZ(), Math.min(bounds().maxZ(), z));
+        double cx = Math.clamp(bounds().maxX(), bounds().minX(), x);
+        double cz = Math.clamp(bounds().maxZ(), bounds().minZ(), z);
 
         Location out = base.clone();
         out.setX(cx + 0.5);
@@ -82,9 +82,9 @@ public interface IRegion<B extends IBounds> {
         int y = base.getBlockY();
         int z = base.getBlockZ();
 
-        double cx = Math.max(bounds().minX(), Math.min(bounds().maxX(), x));
-        double cy = Math.max(bounds().minY(), Math.min(bounds().maxY(), y));
-        double cz = Math.max(bounds().minZ(), Math.min(bounds().maxZ(), z));
+        double cx = Math.clamp(bounds().maxX(), bounds().minX(), x);
+        double cy = Math.clamp(bounds().maxY(), bounds().minY(), y);
+        double cz = Math.clamp(bounds().maxZ(), bounds().minZ(), z);
 
         Location out = base.clone();
         out.setX(cx + 0.5);

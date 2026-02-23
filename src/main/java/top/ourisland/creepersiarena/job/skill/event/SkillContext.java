@@ -1,9 +1,9 @@
 package top.ourisland.creepersiarena.job.skill.event;
 
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.config.model.SkillConfig;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 
 public record SkillContext(
         Player player,

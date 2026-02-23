@@ -21,10 +21,6 @@ public final class LuckPermsService {
         this.api = api;
     }
 
-    public @NonNull LuckPerms api() {
-        return api;
-    }
-
     /**
      * Attempts to resolve LuckPerms API.
      *
@@ -42,5 +38,9 @@ public final class LuckPermsService {
             log.warn("[LuckPerms] Plugin present but API not available yet: {}", e.getMessage());
             return null;
         }
+    }
+
+    public @NonNull LuckPerms api() {
+        return api;
     }
 }
