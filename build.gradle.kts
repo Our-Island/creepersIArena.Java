@@ -1,8 +1,8 @@
 plugins {
     java
-    id("org.jetbrains.kotlin.jvm") version "2.3.10"
+    id("org.jetbrains.kotlin.jvm") version "2.3.20"
     id("xyz.jpenilla.run-paper") version "3.0.2"
-    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.10"
+    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.20"
 }
 
 group = "top.ourisland"
@@ -22,7 +22,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 
     // Compile only, use CiaPaperLoader to download when used
-    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.3.10")
+    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.3.20")
 //    compileOnly("org.jetbrains.kotlin:kotlin-reflect:2.3.10")
 //    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
