@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "top.ourisland"
-version = "0.1.0-SNAPSHOT"
+version = property("cia-version") as String
 
 repositories {
     mavenCentral()
@@ -16,26 +16,34 @@ repositories {
     }
 }
 
+val javaVersion = (property("java-version") as String).toInt()
+val kotlinVersion = property("kotlin-version") as String
+
+val minecraftVersion = property("minecraft-version") as String
+val paperApiVersion = property("paper-api") as String
+
+val lombokVersion = property("lombok-version") as String
+
 dependencies {
     compileOnly("org.jspecify:jspecify:1.0.0")
-    compileOnly("org.projectlombok:lombok:1.18.42")
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
+    compileOnly("org.projectlombok:lombok:${lombokVersion}")
+    annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 
     // Compile only, use CiaPaperLoader to download when used
-    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.3.10")
-//    compileOnly("org.jetbrains.kotlin:kotlin-reflect:2.3.10")
+    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
+//    compileOnly("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
 //    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${paperApiVersion}")
     compileOnly("net.luckperms:api:5.5")
 
-    testCompileOnly("org.projectlombok:lombok:1.18.42")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
+    testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
+    testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 }
 
 tasks {
     runServer {
-        minecraftVersion("1.21.11")
+        minecraftVersion(minecraftVersion)
     }
 }
 
@@ -43,22 +51,20 @@ tasks.test {
     failOnNoDiscoveredTests = false
 }
 
-val targetJavaVersion = 25
-
 java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
+    val jv = JavaVersion.toVersion(javaVersion)
+    sourceCompatibility = jv
+    targetCompatibility = jv
 
-    if (JavaVersion.current() < javaVersion) {
+    if (JavaVersion.current() < jv) {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
+            languageVersion.set(JavaLanguageVersion.of(javaVersion))
         }
     }
 }
 
 kotlin {
-    jvmToolchain(targetJavaVersion)
+    jvmToolchain(javaVersion)
 }
 
 kotlinLombok {
@@ -68,8 +74,8 @@ kotlinLombok {
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
-        options.release.set(targetJavaVersion)
+    if (javaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
+        options.release.set(javaVersion)
     }
 }
 
