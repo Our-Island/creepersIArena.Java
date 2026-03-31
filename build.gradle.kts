@@ -2,7 +2,7 @@ plugins {
     java
     id("org.jetbrains.kotlin.jvm") version "2.3.20"
     id("xyz.jpenilla.run-paper") version "3.0.2"
-    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.10"
+    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.20"
 }
 
 group = "top.ourisland"
