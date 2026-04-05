@@ -1,0 +1,29 @@
+[versions]
+java = "25"
+kotlin = "2.3.20"
+kotlinx-coroutines = "1.10.2"
+run-paper = "3.0.2"
+
+minecraft = "1.21.11"
+paper-api = "1.21.11-R0.1-SNAPSHOT"
+
+luckperms = "5.5"
+
+lombok = "1.18.44"
+jspecify = "1.0.0"
+
+[libraries]
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
+
+luckperms-api = { module = "net.luckperms:api", version.ref = "luckperms" }
+
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-plugin-lombok = { id = "org.jetbrains.kotlin.plugin.lombok", version.ref = "kotlin" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }

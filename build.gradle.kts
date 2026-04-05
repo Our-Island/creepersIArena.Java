@@ -1,12 +1,15 @@
 plugins {
     java
-    id("org.jetbrains.kotlin.jvm") version "2.3.20"
-    id("xyz.jpenilla.run-paper") version "3.0.2"
-    id("org.jetbrains.kotlin.plugin.lombok") version "2.3.20"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.lombok)
+    alias(libs.plugins.run.paper)
 }
 
-group = "top.ourisland"
-version = property("cia-version") as String
+val javaVersionInt = libs.versions.java.get().toInt()
+
+group = property("group") as String
+version = property("version") as String
+description = property("description") as String
 
 repositories {
     mavenCentral()
@@ -16,34 +19,25 @@ repositories {
     }
 }
 
-val javaVersion = (property("java-version") as String).toInt()
-val kotlinVersion = property("kotlin-version") as String
-
-val minecraftVersion = property("minecraft-version") as String
-val paperApiVersion = property("paper-api") as String
-
-val lombokVersion = property("lombok-version") as String
-
 dependencies {
-    compileOnly("org.jspecify:jspecify:1.0.0")
-    compileOnly("org.projectlombok:lombok:${lombokVersion}")
-    annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
-
     // Compile only, use CiaPaperLoader to download when used
-    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
-//    compileOnly("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
-//    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+//    compileOnly(libs.kotlin.reflect)
+//    compileOnly(libs.kotlinx.coroutines.core)
 
-    compileOnly("io.papermc.paper:paper-api:${paperApiVersion}")
-    compileOnly("net.luckperms:api:5.5")
+    compileOnly(libs.paper.api)
 
-    testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
-    testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+    compileOnly(libs.luckperms.api)
+
+    compileOnly(libs.jspecify)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 }
 
 tasks {
     runServer {
-        minecraftVersion(minecraftVersion)
+        minecraftVersion(libs.versions.minecraft.get())
     }
 }
 
@@ -52,19 +46,19 @@ tasks.test {
 }
 
 java {
-    val jv = JavaVersion.toVersion(javaVersion)
+    val jv = JavaVersion.toVersion(javaVersionInt)
     sourceCompatibility = jv
     targetCompatibility = jv
 
     if (JavaVersion.current() < jv) {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(javaVersion))
+            languageVersion.set(JavaLanguageVersion.of(javaVersionInt))
         }
     }
 }
 
 kotlin {
-    jvmToolchain(javaVersion)
+    jvmToolchain(javaVersionInt)
 }
 
 kotlinLombok {
@@ -73,10 +67,7 @@ kotlinLombok {
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
-
-    if (javaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
-        options.release.set(javaVersion)
-    }
+    options.release.set(javaVersionInt)
 }
 
 tasks.processResources {
