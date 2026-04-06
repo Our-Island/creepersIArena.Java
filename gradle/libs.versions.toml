@@ -5,7 +5,7 @@ kotlinx-coroutines = "1.10.2"
 run-paper = "3.0.2"
 
 minecraft = "26.1.1"
-paper-api = "26.1.1.build.20-alpha"
+paper-api = "26.1.1.build.28-alpha"
 
 luckperms = "5.5"
 
