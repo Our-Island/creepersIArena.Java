@@ -81,19 +81,11 @@ public record ArenaInstance(
     }
 
     private static GameModeType parseMode(String raw) {
-        if (raw == null) return GameModeType.BATTLE;
-        String s = raw.trim().toLowerCase();
-        return switch (s) {
-            case "steal" -> GameModeType.STEAL;
-            default -> GameModeType.BATTLE;
-        };
+        return raw == null ? GameModeType.BATTLE : GameModeType.of(raw);
     }
 
     public boolean matches(GameModeType type) {
-        return switch (type) {
-            case STEAL -> this.type().isBattle();
-            case BATTLE -> this.type().isSteal();
-        };
+        return this.type().equals(type);
     }
 
     public World world() {

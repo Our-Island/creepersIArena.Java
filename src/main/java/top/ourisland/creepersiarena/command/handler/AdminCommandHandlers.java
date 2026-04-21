@@ -48,7 +48,8 @@ public final class AdminCommandHandlers {
         }
 
         GameModeType type = parseMode(args[0]);
-        if (type == null) {
+        var gm = rt.requireService(GameManager.class);
+        if (!gm.hasMode(type)) {
             Msg.send(sender, "Unknown mode: " + args[0]);
             return;
         }
@@ -57,7 +58,6 @@ public final class AdminCommandHandlers {
         st.forcedNextMode(type);
         st.forcedNextArenaId(null);
 
-        var gm = rt.requireService(GameManager.class);
         var flow = rt.requireService(GameFlow.class);
         if (gm.active() != null) {
             flow.endGameAndBackToHub("ADMIN_MODE_SWITCH");
@@ -84,7 +84,7 @@ public final class AdminCommandHandlers {
         }
 
         GameModeType curMode = gm.active() == null ? null : gm.active().mode();
-        if (curMode != null && inst.type() != curMode) {
+        if (curMode != null && !inst.type().equals(curMode)) {
             Msg.send(sender, "Arena mode mismatch. active=" + curMode + " arena=" + inst.type());
             return;
         }

@@ -9,7 +9,7 @@ import top.ourisland.creepersiarena.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.game.mode.*;
 import top.ourisland.creepersiarena.game.mode.context.TickContext;
 
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,9 +20,9 @@ public final class GameManager {
     private final ArenaManager arenaManager;
     private final Logger logger;
 
-    private final Map<GameModeType, IGameMode> modes = new EnumMap<>(GameModeType.class);
-    private final Map<GameModeType, Integer> autoIndex = new EnumMap<>(GameModeType.class);
-    private final Map<GameModeType, String> lastAutoArenaId = new EnumMap<>(GameModeType.class);
+    private final Map<GameModeType, IGameMode> modes = new LinkedHashMap<>();
+    private final Map<GameModeType, Integer> autoIndex = new LinkedHashMap<>();
+    private final Map<GameModeType, String> lastAutoArenaId = new LinkedHashMap<>();
 
     private @Nullable GameRuntime runtime;
     private @Nullable GameSession active;
@@ -40,6 +40,16 @@ public final class GameManager {
     public void bindRuntime(@lombok.NonNull GameRuntime runtime) {
         this.runtime = runtime;
         logger.info("[Game] Runtime bound.");
+    }
+
+    public void clearModes() {
+        modes.clear();
+        autoIndex.clear();
+        lastAutoArenaId.clear();
+    }
+
+    public boolean hasMode(GameModeType type) {
+        return type != null && modes.containsKey(type);
     }
 
     public void registerMode(IGameMode mode) {
@@ -90,7 +100,7 @@ public final class GameManager {
     public void start(GameModeType type, String arenaId) {
         var arena = arenaManager.getArena(arenaId);
         if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
-        if (arena.type() != type) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
+        if (!arena.type().equals(type)) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
 
         logger.info("[Game] Start requested: mode={} arenaId={}", type, arenaId);
 

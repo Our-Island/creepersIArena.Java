@@ -7,6 +7,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -18,36 +19,18 @@ import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 
+@CiaSkillDef(
+        id = "creeper.creeper",
+        job = "creeper",
+        type = SkillType.ACTIVE,
+        slot = 0,
+        defaultCooldown = 7
+)
 public class Skill1 implements ISkillDefinition {
 
     private static final long FUSE_TICKS = 20L;
     private static final double SPEED = 1.75;
     private static final String TAG = "cia_skill_creeper_boom";
-
-    @Override
-    public String id() {
-        return "creeper.creeper";
-    }
-
-    @Override
-    public String jobId() {
-        return "creeper";
-    }
-
-    @Override
-    public SkillType type() {
-        return SkillType.ACTIVE;
-    }
-
-    @Override
-    public int uiSlot() {
-        return 0;
-    }
-
-    @Override
-    public int cooldownSeconds() {
-        return 7;
-    }
 
     @Override
     public List<ITrigger> triggers() {

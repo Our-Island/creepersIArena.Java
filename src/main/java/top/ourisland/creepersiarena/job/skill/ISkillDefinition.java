@@ -1,25 +1,36 @@
 package top.ourisland.creepersiarena.job.skill;
 
+import top.ourisland.creepersiarena.core.component.metadata.SkillMetadata;
 import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 
 import java.util.List;
 
 public interface ISkillDefinition {
 
-    String id();
+    default String id() {
+        return SkillMetadata.of(getClass()).id();
+    }
 
-    String jobId();
+    default String jobId() {
+        return SkillMetadata.of(getClass()).job().id();
+    }
 
-    SkillType type();
+    default SkillType type() {
+        return SkillMetadata.of(getClass()).type();
+    }
 
-    int uiSlot();
+    default int uiSlot() {
+        return SkillMetadata.of(getClass()).slot();
+    }
 
     /**
      * The default cooldown second of the skill. Could be changed by the skill.yml.
      *
      * @return the cooldown seconds
      */
-    int cooldownSeconds();
+    default int cooldownSeconds() {
+        return SkillMetadata.of(getClass()).defaultCooldown();
+    }
 
     List<ITrigger> triggers();
 

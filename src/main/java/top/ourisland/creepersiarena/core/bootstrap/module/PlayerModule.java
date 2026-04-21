@@ -4,6 +4,7 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.PlayerConnectionListener;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
@@ -13,6 +14,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "player", order = 600)
 public final class PlayerModule implements IBootstrapModule {
 
     @Override

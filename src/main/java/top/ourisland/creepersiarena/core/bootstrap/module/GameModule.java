@@ -1,18 +1,20 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
+import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.game.mode.IGameMode;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleMode;
-import top.ourisland.creepersiarena.game.mode.impl.steal.StealMode;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
 import java.util.HashSet;
@@ -24,6 +26,7 @@ import java.util.Set;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "game", order = 1000)
 public final class GameModule implements IBootstrapModule {
 
     @Override
@@ -36,6 +39,7 @@ public final class GameModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var cfg = rt.requireService(ConfigManager.class);
             var gcfg = cfg.globalConfig();
+            var catalog = rt.requireService(ComponentCatalog.class);
 
             var store = rt.requireService(PlayerSessionStore.class);
             var arenaManager = rt.requireService(ArenaManager.class);
@@ -43,26 +47,12 @@ public final class GameModule implements IBootstrapModule {
             var lobbyService = rt.requireService(LobbyService.class);
             var battleKit = rt.requireService(BattleKitService.class);
 
-            // 1) GameManager: register modes
             var gameManager = new GameManager(arenaManager, rt.log());
-            Set<String> disabled = new HashSet<>();
-            for (String s : gcfg.game().disabledModes()) {
-                disabled.add(s.trim().toUpperCase());
-            }
+            registerModes(gameManager, catalog, gcfg.game().disabledModes(), rt.log());
 
-            if (!disabled.contains("BATTLE")) {
-                gameManager.registerMode(new BattleMode());
-            }
-
-            if (!disabled.contains("STEAL")) {
-                gameManager.registerMode(new StealMode());
-            }
-
-            // 2) Runtime for rules/timelines
             var runtime = new GameRuntime(cfg::globalConfig, arenaManager, store);
             gameManager.bindRuntime(runtime);
 
-            // 3) GameFlow: external entry point
             var flow = new GameFlow(
                     rt.plugin(),
                     rt.log(),
@@ -83,6 +73,33 @@ public final class GameModule implements IBootstrapModule {
         }, "Loading game runtime...", "Game runtime loaded.");
     }
 
+    private void registerModes(
+            GameManager gameManager,
+            ComponentCatalog catalog,
+            Iterable<String> disabledModes,
+            Logger log
+    ) {
+        Set<String> disabled = new HashSet<>();
+        if (disabledModes != null) {
+            for (String s : disabledModes) {
+                if (s != null) disabled.add(s.trim().toLowerCase());
+            }
+        }
+
+        for (IGameMode mode : catalog.modes()) {
+            String id = mode.mode().id();
+            if (!mode.enabled()) {
+                log.info("[Game] Mode disabled by annotation: {}", id);
+                continue;
+            }
+            if (disabled.contains(id)) {
+                log.info("[Game] Mode disabled by config: {}", id);
+                continue;
+            }
+            gameManager.registerMode(mode);
+        }
+    }
+
     @Override
     public StageTask stop(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
@@ -99,6 +116,12 @@ public final class GameModule implements IBootstrapModule {
     @Override
     public StageTask reload(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
+            var cfg = rt.requireService(ConfigManager.class);
+            var catalog = rt.requireService(ComponentCatalog.class);
+            var gm = rt.requireService(GameManager.class);
+            gm.clearModes();
+            registerModes(gm, catalog, cfg.globalConfig().game().disabledModes(), rt.log());
+
             var flow = rt.getService(GameFlow.class);
             if (flow != null) {
                 flow.onReloadFixOnlinePlayers();

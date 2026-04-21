@@ -1,40 +1,64 @@
 package top.ourisland.creepersiarena.job;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
-public enum JobId {
+public final class JobId {
 
-    CREEPER("creeper"),
-    MOISON("moison"),
-    AVENGER("avenger"),
-    BLOODLINE("bloodline"),
-    GOLEM("golem"),
-    WOLONG("wolong"),
-    YSAHAN("ysahan");
+    private static final Map<String, JobId> CACHE = new ConcurrentHashMap<>();
+
+    public static final JobId CREEPER = of("creeper");
+    public static final JobId MOISON = of("moison");
+    public static final JobId AVENGER = of("avenger");
+    public static final JobId BLOODLINE = of("bloodline");
+    public static final JobId GOLEM = of("golem");
+    public static final JobId WOLONG = of("wolong");
+    public static final JobId YSAHAN = of("ysahan");
 
     private final String id;
 
-    JobId(String id) {
+    private JobId(String id) {
         this.id = id;
     }
 
-    public static JobId fromId(String id) {
-        if (id == null) return null;
-        String needle = id.trim().toLowerCase(Locale.ROOT);
-        for (JobId j : values()) {
-            if (j.id.equalsIgnoreCase(needle)) return j;
-            if (j.name().equalsIgnoreCase(needle)) return j;
-        }
-        return null;
+    public static JobId of(String raw) {
+        String normalized = normalize(raw);
+        if (normalized.isBlank()) throw new IllegalArgumentException("job id is blank");
+        return CACHE.computeIfAbsent(normalized, JobId::new);
+    }
+
+    public static JobId fromId(String raw) {
+        if (raw == null) return null;
+        String normalized = normalize(raw);
+        if (normalized.isBlank()) return null;
+        return of(normalized);
+    }
+
+    private static String normalize(String raw) {
+        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public String id() {
+        return id;
     }
 
     @Override
     public String toString() {
-        return this.id;
+        return id;
     }
 
-    public String id() {
-        return this.id;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JobId jobId)) return false;
+        return id.equals(jobId.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
 }

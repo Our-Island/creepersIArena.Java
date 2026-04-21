@@ -36,16 +36,14 @@ public final class ArenaManager {
         logger.info("[Arena] Starting to (re)load arenas...");
         arenas.clear();
 
-        int battle = 0, steal = 0;
+        Map<String, Integer> counts = new LinkedHashMap<>();
 
         for (var e : arenaConfig.arenas().entrySet()) {
             String id = e.getKey();
             ArenaConfig.ArenaDef def = e.getValue();
             ArenaInstance inst = toInstance(def);
             arenas.put(id, inst);
-
-            if (inst.type() == GameModeType.BATTLE) battle++;
-            if (inst.type() == GameModeType.STEAL) steal++;
+            counts.merge(inst.type().id(), 1, Integer::sum);
 
             logger.info("[Arena] Arena loaded: id={} type={} nameKey={} anchor=({}, {}, {}) spawnpoints={} teamSpawns={}",
                     inst.id(),
@@ -59,9 +57,7 @@ public final class ArenaManager {
             );
         }
 
-        logger.info("[Arena] Finished (re)loading arenas (arenas={} battle={} steal={})",
-                arenas.size(), battle, steal
-        );
+        logger.info("[Arena] Finished (re)loading arenas (arenas={} byType={})", arenas.size(), counts);
     }
 
     private ArenaInstance toInstance(ArenaConfig.ArenaDef def) {
@@ -94,13 +90,7 @@ public final class ArenaManager {
     }
 
     private GameModeType parseType(String s) {
-        if (s == null) return GameModeType.BATTLE;
-        String t = s.trim().toLowerCase(Locale.ROOT);
-        return switch (t) {
-            case "steal" -> GameModeType.STEAL;
-            case "battle" -> GameModeType.BATTLE;
-            default -> GameModeType.BATTLE;
-        };
+        return s == null ? GameModeType.BATTLE : GameModeType.of(s);
     }
 
     private Location toLocation(GlobalConfig.Vec3 v) {
@@ -140,7 +130,7 @@ public final class ArenaManager {
     public List<ArenaInstance> arenasOf(GameModeType type) {
         List<ArenaInstance> out = new ArrayList<>();
         for (ArenaInstance a : arenas.values()) {
-            if (a.type() == type) out.add(a);
+            if (a.type().equals(type)) out.add(a);
         }
         return out;
     }

@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -22,6 +23,7 @@ import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 
+@CiaSkillDef(id = "creeper.fireworks", job = "creeper", type = SkillType.ACTIVE, slot = 2, defaultCooldown = 20)
 public class Skill3 implements ISkillDefinition {
 
     public static final String TAG_SKILL3_FW = "cia_skill3_fw";
@@ -31,49 +33,6 @@ public class Skill3 implements ISkillDefinition {
     private static final int RIDE_TICKS = 20;
     private static final double FORWARD = 0.84;
     private static final double UP = 0.6;
-
-    private static FireworkEffect buildEffect() {
-        return FireworkEffect.builder()
-                .with(FireworkEffect.Type.CREEPER)
-                .withColor(
-                        Color.fromRGB(14221236),
-                        Color.fromRGB(9568176),
-                        Color.fromRGB(8454097)
-                )
-                .withFade(
-                        Color.fromRGB(6721280),
-                        Color.fromRGB(39445),
-                        Color.fromRGB(35668)
-                )
-                .trail(false)
-                .flicker(false)
-                .build();
-    }
-
-    @Override
-    public String id() {
-        return "creeper.fireworks";
-    }
-
-    @Override
-    public String jobId() {
-        return "creeper";
-    }
-
-    @Override
-    public SkillType type() {
-        return SkillType.ACTIVE;
-    }
-
-    @Override
-    public int uiSlot() {
-        return 2;
-    }
-
-    @Override
-    public int cooldownSeconds() {
-        return 20;
-    }
 
     @Override
     public List<ITrigger> triggers() {
@@ -163,6 +122,24 @@ public class Skill3 implements ISkillDefinition {
                 }
             }, null, 1L, 1L);
         };
+    }
+
+    private static FireworkEffect buildEffect() {
+        return FireworkEffect.builder()
+                .with(FireworkEffect.Type.CREEPER)
+                .withColor(
+                        Color.fromRGB(14221236),
+                        Color.fromRGB(9568176),
+                        Color.fromRGB(8454097)
+                )
+                .withFade(
+                        Color.fromRGB(6721280),
+                        Color.fromRGB(39445),
+                        Color.fromRGB(35668)
+                )
+                .trail(false)
+                .flicker(false)
+                .build();
     }
 
 }

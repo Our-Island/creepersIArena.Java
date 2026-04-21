@@ -4,6 +4,7 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.listener.LobbyUiListener;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
@@ -19,7 +20,9 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "lobby_ui", order = 800)
 public final class LobbyUiModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "lobby-ui";

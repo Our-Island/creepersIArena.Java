@@ -18,6 +18,7 @@ import top.ourisland.creepersiarena.command.handler.AdminCommandHandlers;
 import top.ourisland.creepersiarena.command.handler.PlayerCommandHandlers;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.job.JobManager;
@@ -213,7 +214,7 @@ public final class CiaCommand {
         adm.then(Commands.literal("mode")
                 .requires(src -> hasPerm(src, P_ADMIN + ".mode"))
                 .then(argWord("mode_id")
-                        .suggests((c, b) -> suggestStatic(b, List.of("battle", "steal")))
+                        .suggests((_, b) -> suggestModeIds(rt, b))
                         .executes(ctx -> {
                             admin.mode(sender(ctx), new String[]{StringArgumentType.getString(ctx, "mode_id")});
                             return 1;
@@ -357,6 +358,18 @@ public final class CiaCommand {
             if (remain.isEmpty() || v.toLowerCase(Locale.ROOT).startsWith(remain)) b.suggest(v);
         }
         return b.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestModeIds(
+            BootstrapRuntime rt,
+            SuggestionsBuilder b
+    ) {
+        var gm = rt.requireService(GameManager.class);
+        List<String> ids = gm.modes().keySet().stream()
+                .map(Object::toString)
+                .sorted()
+                .toList();
+        return suggestWithPrefix(b, ids);
     }
 
     private static CompletableFuture<Suggestions> suggestArenaIds(

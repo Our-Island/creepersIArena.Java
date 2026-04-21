@@ -4,6 +4,7 @@ import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.utils.I18n;
 
 /**
@@ -11,6 +12,7 @@ import top.ourisland.creepersiarena.utils.I18n;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "config", order = 100)
 public final class ConfigModule implements IBootstrapModule {
 
     @Override

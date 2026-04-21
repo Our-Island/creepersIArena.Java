@@ -14,18 +14,13 @@ public final class CommandParsers {
     }
 
     public static GameModeType parseMode(String s) {
-        if (s == null) return null;
-        String v = s.trim().toLowerCase(Locale.ROOT);
-        return switch (v) {
-            case "battle" -> GameModeType.BATTLE;
-            case "steal" -> GameModeType.STEAL;
-            default -> null;
-        };
+        return GameModeType.fromId(s);
     }
 
-    public static Object parseValue(String raw) {
-        if (raw == null) return "";
-        String v = raw.trim();
+    public static Object parseValue(String s) {
+        if (s == null) return null;
+        String v = s.trim();
+
         if (v.equalsIgnoreCase("null")) return null;
 
         Boolean b = parseBoolean(v);

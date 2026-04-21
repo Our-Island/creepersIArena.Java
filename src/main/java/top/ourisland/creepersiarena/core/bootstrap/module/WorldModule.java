@@ -5,12 +5,14 @@ import org.bukkit.World;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 
 /**
  * Module getting default world that the game will run on.
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "world", order = 200)
 public final class WorldModule implements IBootstrapModule {
 
     @Override

@@ -312,7 +312,7 @@ public final class GameFlow {
             return new JoinFromHubPlan.NoActiveGame();
         }
 
-        if (g.mode() != GameModeType.BATTLE) {
+        if (!g.mode().equals(GameModeType.BATTLE)) {
             return new JoinFromHubPlan.ModeNotSupported(g.mode());
         }
 
@@ -619,7 +619,11 @@ public final class GameFlow {
         log.info("[Flow] reload fix done.");
     }
 
-    public sealed interface LeavePlan permits LeavePlan.NotPlayer, LeavePlan.NotInSession, LeavePlan.AlreadyInHub, LeavePlan.Immediate, LeavePlan.Scheduled {
+    public sealed interface LeavePlan permits LeavePlan.NotPlayer,
+            LeavePlan.NotInSession,
+            LeavePlan.AlreadyInHub,
+            LeavePlan.Immediate,
+            LeavePlan.Scheduled {
 
         record NotPlayer() implements LeavePlan {
 
@@ -679,7 +683,10 @@ public final class GameFlow {
 
     }
 
-    private record PendingLeave(int secondsRemaining, LeaveReason reason) {
+    private record PendingLeave(
+            int secondsRemaining,
+            LeaveReason reason
+    ) {
 
     }
 

@@ -8,6 +8,8 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.JobManager;
@@ -27,6 +29,7 @@ import java.util.Map;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "skill", order = 900)
 public final class SkillModule implements IBootstrapModule {
 
     @Override
@@ -39,10 +42,12 @@ public final class SkillModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var sessionStore = rt.requireService(PlayerSessionStore.class);
             var jobManager = rt.requireService(JobManager.class);
+            var catalog = rt.requireService(ComponentCatalog.class);
 
             var skillCodec = new SkillItemCodec(rt.plugin());
             var skillStore = new InMemorySkillStateStore();
-            var skillRegistry = new SkillRegistry(sessionStore, jobManager);
+            var skillRegistry = new SkillRegistry(sessionStore);
+            skillRegistry.replaceAll(catalog.skills());
 
             var skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
                 var runtimeState = rt.getService(AdminRuntimeState.class);
@@ -102,6 +107,16 @@ public final class SkillModule implements IBootstrapModule {
             } catch (Throwable _) {
             }
         }, "Stopping skill tick task...", "Skill tick task stopped.");
+    }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var catalog = rt.requireService(ComponentCatalog.class);
+            var registry = rt.requireService(SkillRegistry.class);
+            registry.replaceAll(catalog.skills());
+            rt.log().info("[Skill] Reloaded skills: {}", catalog.skills().size());
+        }, "Reloading skills...", "Skills reloaded.");
     }
 
     @Override

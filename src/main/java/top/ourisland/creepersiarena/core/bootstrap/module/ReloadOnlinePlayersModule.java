@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
 /**
@@ -11,6 +12,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
  *
  * @author Chiloven945
  */
+@CiaBootstrapModule(name = "reload_online_players", order = 1400)
 public final class ReloadOnlinePlayersModule implements IBootstrapModule {
 
     @Override

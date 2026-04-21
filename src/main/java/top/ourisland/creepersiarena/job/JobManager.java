@@ -1,11 +1,10 @@
 package top.ourisland.creepersiarena.job;
 
-
 import java.util.*;
 
 public final class JobManager {
 
-    private final Map<JobId, IJob> jobs = new HashMap<>();
+    private final Map<JobId, IJob> jobs = new LinkedHashMap<>();
 
     public void clear() {
         jobs.clear();

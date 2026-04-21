@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap;
 
+import top.ourisland.creepersiarena.core.component.metadata.BootstrapModuleMetadata;
+
 /**
  * A bootstrap module representing a logical unit of initialization and lifecycle management.
  *
@@ -29,12 +31,15 @@ public interface IBootstrapModule {
      *
      * @return stable module name used in logs (e.g. "config", "arena", "skill")
      */
-    String name();
+    default String name() {
+        return BootstrapModuleMetadata.of(getClass()).name();
+    }
 
     /**
      * Install/wire services for this module.
      *
      * @param rt bootstrap runtime
+     *
      * @return a stage task, or null to skip
      */
     default StageTask install(BootstrapRuntime rt) {
@@ -45,6 +50,7 @@ public interface IBootstrapModule {
      * Start runtime components (tasks, schedulers, etc.) for this module.
      *
      * @param rt bootstrap runtime
+     *
      * @return a stage task, or null to skip
      */
     default StageTask start(BootstrapRuntime rt) {
@@ -55,6 +61,7 @@ public interface IBootstrapModule {
      * Stop runtime components for this module.
      *
      * @param rt bootstrap runtime
+     *
      * @return a stage task, or null to skip
      */
     default StageTask stop(BootstrapRuntime rt) {
@@ -71,6 +78,7 @@ public interface IBootstrapModule {
      * methods will NOT be executed!</p>
      *
      * @param rt bootstrap runtime
+     *
      * @return a stage task, or null to skip
      */
     default StageTask reload(BootstrapRuntime rt) {
@@ -81,7 +89,9 @@ public interface IBootstrapModule {
      * Register Bukkit event listeners used by this module.
      *
      * @param binder binder used to register listeners
+     *
      * @return true if this module registered one or more listeners; false otherwise
+     *
      * @see ListenerBinder
      */
     default boolean registerListeners(ListenerBinder binder) {

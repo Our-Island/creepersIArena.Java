@@ -8,7 +8,9 @@ import top.ourisland.creepersiarena.command.service.UserLanguageService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 
+@CiaBootstrapModule(name = "command", order = 1100)
 public final class CommandModule implements IBootstrapModule {
 
     @Override

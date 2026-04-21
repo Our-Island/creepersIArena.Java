@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -18,66 +19,11 @@ import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
 import java.util.List;
 
+@CiaSkillDef(id = "creeper.crossbow", job = "creeper", type = SkillType.ACTIVE, slot = 1, defaultCooldown = 7)
 public class Skill2 implements ISkillDefinition {
 
     private static final int FLIGHT = 3;
     private static final double SPEED = 1.9;
-    private static final String ID = "creeper.crossbow";
-
-    private static ItemStack buildRocket() {
-        var rocket = new ItemStack(Material.FIREWORK_ROCKET);
-        var im = rocket.getItemMeta();
-        if (im instanceof FireworkMeta meta) {
-            meta.clearEffects();
-            meta.addEffect(buildEffect());
-            meta.setPower(FLIGHT);
-            rocket.setItemMeta(meta);
-        }
-        return rocket;
-    }
-
-    private static FireworkEffect buildEffect() {
-        return FireworkEffect.builder()
-                .with(FireworkEffect.Type.CREEPER)
-                .withColor(
-                        Color.fromRGB(3724032),
-                        Color.fromRGB(1457973),
-                        Color.fromRGB(1990460)
-                )
-                .withFade(
-                        Color.fromRGB(9029490),
-                        Color.fromRGB(6649971),
-                        Color.fromRGB(5861989)
-                )
-                .trail(false)
-                .flicker(false)
-                .build();
-    }
-
-    @Override
-    public String id() {
-        return ID;
-    }
-
-    @Override
-    public String jobId() {
-        return "creeper";
-    }
-
-    @Override
-    public SkillType type() {
-        return SkillType.ACTIVE;
-    }
-
-    @Override
-    public int uiSlot() {
-        return 1;
-    }
-
-    @Override
-    public int cooldownSeconds() {
-        return 7;
-    }
 
     @Override
     public List<ITrigger> triggers() {
@@ -107,6 +53,36 @@ public class Skill2 implements ISkillDefinition {
         };
     }
 
+    private static ItemStack buildRocket() {
+        var rocket = new ItemStack(Material.FIREWORK_ROCKET);
+        var im = rocket.getItemMeta();
+        if (im instanceof FireworkMeta meta) {
+            meta.clearEffects();
+            meta.addEffect(buildEffect());
+            meta.setPower(FLIGHT);
+            rocket.setItemMeta(meta);
+        }
+        return rocket;
+    }
+
+    private static FireworkEffect buildEffect() {
+        return FireworkEffect.builder()
+                             .with(FireworkEffect.Type.CREEPER)
+                             .withColor(
+                                     Color.fromRGB(3724032),
+                                     Color.fromRGB(1457973),
+                                     Color.fromRGB(1990460)
+                             )
+                             .withFade(
+                                     Color.fromRGB(9029490),
+                                     Color.fromRGB(6649971),
+                                     Color.fromRGB(5861989)
+                             )
+                             .trail(false)
+                             .flicker(false)
+                             .build();
+    }
+
     @Override
     public ISkillExecutor executor() {
         return (ctx, store) -> {
@@ -122,22 +98,26 @@ public class Skill2 implements ISkillDefinition {
 
             Location spawn = p.getEyeLocation().add(dir.clone().multiply(0.6));
 
-            w.spawn(spawn, Firework.class, f -> {
-                f.setShooter(p);
+            w.spawn(
+                    spawn,
+                    Firework.class,
+                    f -> {
+                        f.setShooter(p);
 
-                var meta = f.getFireworkMeta();
-                meta.clearEffects();
-                meta.addEffect(buildEffect());
-                meta.setPower(flight);
-                f.setFireworkMeta(meta);
+                        var meta = f.getFireworkMeta();
+                        meta.clearEffects();
+                        meta.addEffect(buildEffect());
+                        meta.setPower(flight);
+                        f.setFireworkMeta(meta);
 
-                f.setVelocity(dir.multiply(speed));
+                        f.setVelocity(dir.multiply(speed));
 
-                try {
-                    f.setShotAtAngle(true);
-                } catch (Throwable _) {
-                }
-            });
+                        try {
+                            f.setShotAtAngle(true);
+                        } catch (Throwable _) {
+                        }
+                    }
+            );
 
             p.playSound(p, Sound.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0f, 1.0f);
             p.swingMainHand();
