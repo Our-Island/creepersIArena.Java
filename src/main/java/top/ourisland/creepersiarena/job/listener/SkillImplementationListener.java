@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill3;
 import java.util.UUID;
 
 public class SkillImplementationListener implements Listener {
+
     @EventHandler(ignoreCancelled = true)
     public void onExplosionDamage(EntityDamageByEntityEvent e) {
         if (!(e.getDamager() instanceof Creeper c)) return;
@@ -45,4 +46,5 @@ public class SkillImplementationListener implements Listener {
             e.setCancelled(true);
         }
     }
+
 }

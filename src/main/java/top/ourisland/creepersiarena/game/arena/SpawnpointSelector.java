@@ -10,7 +10,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class SpawnpointSelector {
 
-    public Location pickBattleLeastCrowded(ArenaInstance arena, Collection<? extends Player> candidates, double radius) {
+    public Location pickBattleLeastCrowded(
+            ArenaInstance arena,
+            Collection<? extends Player> candidates,
+            double radius
+    ) {
         List<Location> sp = arena.spawnpoints();
         if (sp.isEmpty()) return arena.anchor();
 
@@ -57,4 +61,5 @@ public final class SpawnpointSelector {
         Location loc = arena.teamSpawnpoints().get(teamKey);
         return loc == null ? arena.anchor() : loc.clone();
     }
+
 }

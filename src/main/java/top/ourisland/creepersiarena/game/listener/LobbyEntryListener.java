@@ -29,7 +29,13 @@ public final class LobbyEntryListener implements Listener {
 
     private final Map<UUID, ScheduledTask> pending = new ConcurrentHashMap<>();
 
-    public LobbyEntryListener(Plugin plugin, Logger log, LobbyService lobbyService, PlayerSessionStore store, GameFlow flow) {
+    public LobbyEntryListener(
+            Plugin plugin,
+            Logger log,
+            LobbyService lobbyService,
+            PlayerSessionStore store,
+            GameFlow flow
+    ) {
         this.plugin = plugin;
         this.log = log;
         this.lobbyService = lobbyService;
@@ -65,7 +71,7 @@ public final class LobbyEntryListener implements Listener {
         if (pending.containsKey(id)) return;
 
         long ticks = Math.max(1L, (long) Math.ceil(zone.timeMs() / 50.0));
-        ScheduledTask task = p.getScheduler().runDelayed(plugin, scheduledTask -> {
+        var task = p.getScheduler().runDelayed(plugin, _ -> {
             pending.remove(id);
 
             Player now = Bukkit.getPlayer(id);
@@ -109,4 +115,5 @@ public final class LobbyEntryListener implements Listener {
         }
         pending.clear();
     }
+
 }

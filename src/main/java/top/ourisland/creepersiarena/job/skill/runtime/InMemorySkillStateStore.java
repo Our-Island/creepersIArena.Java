@@ -19,4 +19,5 @@ public final class InMemorySkillStateStore implements SkillStateStore {
         if (m == null) return 0;
         return m.getOrDefault(skillId, 0L);
     }
+
 }

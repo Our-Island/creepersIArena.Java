@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 
 public final class LobbyItemCodec {
+
     private final NamespacedKey actionKey;
     private final NamespacedKey jobIdKey;
     private final NamespacedKey pageKey;
@@ -67,4 +68,5 @@ public final class LobbyItemCodec {
                 .map(meta -> meta.getPersistentDataContainer().get(pageKey, PersistentDataType.INTEGER))
                 .orElse(null);
     }
+
 }

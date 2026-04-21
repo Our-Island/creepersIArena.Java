@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.game.mode.GameModeType;
  * @author Chiloven945
  */
 public final class DefaultStartModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "default-start";
@@ -20,8 +21,9 @@ public final class DefaultStartModule implements IBootstrapModule {
     @Override
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameManager gameManager = rt.requireService(GameManager.class);
+            var gameManager = rt.requireService(GameManager.class);
             gameManager.startAuto(GameModeType.BATTLE);
         }, "Starting default mode BATTLE if possible...", "Default mode started or queued.");
     }
+
 }

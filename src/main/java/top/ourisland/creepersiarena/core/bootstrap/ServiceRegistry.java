@@ -14,6 +14,7 @@ import java.util.Map;
  * <p>Not thread-safe. Use on the Bukkit main thread.</p>
  */
 public final class ServiceRegistry {
+
     private final Map<Class<?>, Object> map = new HashMap<>();
 
     /**
@@ -47,4 +48,5 @@ public final class ServiceRegistry {
         Object v = map.get(type);
         return type.cast(v);
     }
+
 }

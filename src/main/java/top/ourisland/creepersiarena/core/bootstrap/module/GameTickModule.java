@@ -13,6 +13,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
  * @author Chiloven945
  */
 public final class GameTickModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "game-tick";
@@ -21,9 +22,9 @@ public final class GameTickModule implements IBootstrapModule {
     @Override
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameFlow flow = rt.requireService(GameFlow.class);
+            var flow = rt.requireService(GameFlow.class);
 
-            ScheduledTask gameTickTask = Bukkit.getServer().getGlobalRegionScheduler()
+            var gameTickTask = Bukkit.getServer().getGlobalRegionScheduler()
                     .runAtFixedRate(rt.plugin(), task -> {
                         try {
                             flow.tick1s();
@@ -40,7 +41,7 @@ public final class GameTickModule implements IBootstrapModule {
     @Override
     public StageTask stop(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameTickHandle h = rt.getService(GameTickHandle.class);
+            var h = rt.getService(GameTickHandle.class);
             try {
                 h.task().cancel();
             } catch (Throwable _) {
@@ -49,5 +50,7 @@ public final class GameTickModule implements IBootstrapModule {
     }
 
     public record GameTickHandle(ScheduledTask task) {
+
     }
+
 }

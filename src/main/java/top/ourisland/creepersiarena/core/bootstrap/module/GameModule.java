@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.config.ConfigManager;
-import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -35,17 +34,17 @@ public final class GameModule implements IBootstrapModule {
     @Override
     public StageTask install(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
-            GlobalConfig gcfg = cfg.globalConfig();
+            var cfg = rt.requireService(ConfigManager.class);
+            var gcfg = cfg.globalConfig();
 
-            PlayerSessionStore store = rt.requireService(PlayerSessionStore.class);
-            ArenaManager arenaManager = rt.requireService(ArenaManager.class);
-            LobbyItemService lobbyItems = rt.requireService(LobbyItemService.class);
-            LobbyService lobbyService = rt.requireService(LobbyService.class);
-            BattleKitService battleKit = rt.requireService(BattleKitService.class);
+            var store = rt.requireService(PlayerSessionStore.class);
+            var arenaManager = rt.requireService(ArenaManager.class);
+            var lobbyItems = rt.requireService(LobbyItemService.class);
+            var lobbyService = rt.requireService(LobbyService.class);
+            var battleKit = rt.requireService(BattleKitService.class);
 
             // 1) GameManager: register modes
-            GameManager gameManager = new GameManager(arenaManager, rt.log());
+            var gameManager = new GameManager(arenaManager, rt.log());
             Set<String> disabled = new HashSet<>();
             for (String s : gcfg.game().disabledModes()) {
                 disabled.add(s.trim().toUpperCase());
@@ -60,11 +59,11 @@ public final class GameModule implements IBootstrapModule {
             }
 
             // 2) Runtime for rules/timelines
-            GameRuntime runtime = new GameRuntime(cfg::globalConfig, arenaManager, store);
+            var runtime = new GameRuntime(cfg::globalConfig, arenaManager, store);
             gameManager.bindRuntime(runtime);
 
             // 3) GameFlow: external entry point
-            GameFlow flow = new GameFlow(
+            var flow = new GameFlow(
                     rt.plugin(),
                     rt.log(),
                     cfg::globalConfig,
@@ -87,7 +86,7 @@ public final class GameModule implements IBootstrapModule {
     @Override
     public StageTask stop(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameManager gm = rt.getService(GameManager.class);
+            var gm = rt.getService(GameManager.class);
             if (gm != null) {
                 try {
                     gm.endActive();
@@ -100,10 +99,11 @@ public final class GameModule implements IBootstrapModule {
     @Override
     public StageTask reload(@lombok.NonNull BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameFlow flow = rt.getService(GameFlow.class);
+            var flow = rt.getService(GameFlow.class);
             if (flow != null) {
                 flow.onReloadFixOnlinePlayers();
             }
         }, "Fixing online players after reload...", "Online players fixed.");
     }
+
 }

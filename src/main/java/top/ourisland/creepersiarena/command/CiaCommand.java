@@ -37,8 +37,8 @@ public final class CiaCommand {
     }
 
     public static void register(BootstrapRuntime rt, Commands commands) {
-        PlayerCommandHandlers player = new PlayerCommandHandlers(rt);
-        AdminCommandHandlers admin = new AdminCommandHandlers(rt);
+        var player = new PlayerCommandHandlers(rt);
+        var admin = new AdminCommandHandlers(rt);
 
         LiteralCommandNode<CommandSourceStack> root = buildRoot(rt, player, admin).build();
         commands.register(root, "CreepersIArena commands", List.of("cia", "creepersiarena"));
@@ -180,15 +180,21 @@ public final class CiaCommand {
         return RequiredArgumentBuilder.argument(name, StringArgumentType.word());
     }
 
-    private static CompletableFuture<Suggestions> suggestJobIds(BootstrapRuntime rt, SuggestionsBuilder b) {
-        JobManager jm = rt.requireService(JobManager.class);
+    private static CompletableFuture<Suggestions> suggestJobIds(
+            BootstrapRuntime rt,
+            SuggestionsBuilder b
+    ) {
+        var jm = rt.requireService(JobManager.class);
         List<String> raw = jm.getAllJobIds();
         List<String> out = new ArrayList<>(raw.size());
         for (String id : raw) out.add("cia:" + id);
         return suggestWithPrefix(b, out);
     }
 
-    private static CompletableFuture<Suggestions> suggestStatic(SuggestionsBuilder b, List<String> values) {
+    private static CompletableFuture<Suggestions> suggestStatic(
+            SuggestionsBuilder b,
+            List<String> values
+    ) {
         return suggestWithPrefix(b, values);
     }
 
@@ -342,7 +348,10 @@ public final class CiaCommand {
         return adm;
     }
 
-    private static CompletableFuture<Suggestions> suggestWithPrefix(SuggestionsBuilder b, List<String> values) {
+    private static CompletableFuture<Suggestions> suggestWithPrefix(
+            SuggestionsBuilder b,
+            List<String> values
+    ) {
         String remain = b.getRemaining() == null ? "" : b.getRemaining().toLowerCase(Locale.ROOT);
         for (String v : values) {
             if (remain.isEmpty() || v.toLowerCase(Locale.ROOT).startsWith(remain)) b.suggest(v);
@@ -350,8 +359,11 @@ public final class CiaCommand {
         return b.buildFuture();
     }
 
-    private static CompletableFuture<Suggestions> suggestArenaIds(BootstrapRuntime rt, SuggestionsBuilder b) {
-        ArenaManager am = rt.requireService(ArenaManager.class);
+    private static CompletableFuture<Suggestions> suggestArenaIds(
+            BootstrapRuntime rt,
+            SuggestionsBuilder b
+    ) {
+        var am = rt.requireService(ArenaManager.class);
         List<String> ids = am.arenas().stream().map(ArenaInstance::id).toList();
         return suggestWithPrefix(b, ids);
     }
@@ -361,7 +373,7 @@ public final class CiaCommand {
             CommandContext<CommandSourceStack> ctx,
             SuggestionsBuilder b
     ) {
-        ConfigManager cfg = rt.getService(ConfigManager.class);
+        var cfg = rt.getService(ConfigManager.class);
         if (cfg == null) return b.buildFuture();
 
         String target;
@@ -403,7 +415,7 @@ public final class CiaCommand {
             CommandContext<CommandSourceStack> ctx,
             SuggestionsBuilder b
     ) {
-        ConfigManager cfg = rt.getService(ConfigManager.class);
+        var cfg = rt.getService(ConfigManager.class);
         if (cfg == null) return b.buildFuture();
 
         String target;
@@ -455,4 +467,5 @@ public final class CiaCommand {
         }
         return String.valueOf(v);
     }
+
 }

@@ -82,6 +82,22 @@ public final class GameFlow {
         this.respawns.callback(this::onRespawnCountdownFinished);
     }
 
+    private void onRespawnCountdownFinished(Player p) {
+        if (p == null || !p.isOnline()) return;
+
+        var s = store.get(p);
+        if (s == null) return;
+        if (s.state() != PlayerState.RESPAWN) return;
+
+        var g = gameManager.active();
+        if (g == null) {
+            transitions.toHub(p);
+            return;
+        }
+
+        transitions.toBattle(p, g);
+    }
+
     /**
      * Called by PlayerJoinEvent.
      */
@@ -91,10 +107,10 @@ public final class GameFlow {
         cancelPendingLeave(p);
         respawns.cancel(p);
 
-        PlayerSession s = transitions.ensureSession(p);
+        var s = transitions.ensureSession(p);
 
-        GameSession g = gameManager.active();
-        IModeRules rules = gameManager.rules();
+        var g = gameManager.active();
+        var rules = gameManager.rules();
 
         if (g != null) {
             g.addPlayer(p.getUniqueId());
@@ -114,255 +130,10 @@ public final class GameFlow {
         transitions.toHub(p);
     }
 
-    public void onPlayerLeaveServer(Player p, LeaveReason reason) {
-        onPlayerQuitServer(p, reason);
-    }
-
-    /**
-     * Called by PlayerQuitEvent / PlayerKickEvent.
-     */
-    public void onPlayerQuitServer(Player p, LeaveReason reason) {
+    private void cancelPendingLeave(Player p) {
         if (p == null) return;
-
-        cancelPendingLeave(p);
-        respawns.cancel(p);
-
-        PlayerSession s = store.get(p);
-        detachFromActiveGame(p, s, reason);
-
-        transitions.removeSession(p);
-
-        log.debug("[Flow] player left, session removed: name={} reason={}", p.getName(), reason);
+        pendingLeaveToHub.remove(p.getUniqueId());
     }
-
-    /**
-     * Lobby UI action input. External callers should not call internal transitions directly.
-     */
-    public void onLobbyAction(Player p, LobbyAction action, Integer jobPage, String jobId) {
-        if (p == null || action == null) return;
-
-        PlayerSession s = store.get(p);
-        if (s == null) return;
-
-        if (!s.state().isLobbyState()) return;
-
-        log.debug("[Flow] lobbyAction: name={} state={} action={} page={} jobId={}",
-                p.getName(), s.state(), action, jobPage, jobId
-        );
-
-        switch (action) {
-            case JOB_PAGE_NEXT -> transitions.nextJobPage(p);
-            case TEAM_CYCLE -> transitions.cycleTeam(p);
-            case BACK_TO_HUB -> leaveToHubNow(p, LeaveReason.COMMAND);
-        }
-    }
-
-    /**
-     * Job selection from lobby UI.
-     */
-    public void onLobbySelectJob(Player p, String jobIdRaw) {
-        lobbySelectJob(p, jobIdRaw);
-    }
-
-    /**
-     * Commands: select a job in HUB/RESPAWN.
-     */
-    public boolean lobbySelectJob(Player p, String jobIdRaw) {
-        if (p == null) return false;
-        PlayerSession s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return false;
-
-        transitions.selectJob(p, jobIdRaw);
-        return true;
-    }
-
-    /**
-     * Commands: select a team in HUB.
-     */
-    public boolean lobbySelectTeam(Player p, Integer teamId) {
-        if (p == null) return false;
-        PlayerSession s = store.get(p);
-        if (s == null || s.state() != PlayerState.HUB) return false;
-
-        transitions.selectTeam(p, teamId);
-        return true;
-    }
-
-    /**
-     * Commands: open/refresh lobby kit in HUB/RESPAWN.
-     */
-    public boolean refreshLobbyKit(Player p) {
-        if (p == null) return false;
-        PlayerSession s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return false;
-
-        transitions.refreshLobbyKit(p);
-        return true;
-    }
-
-    /**
-     * /cia join or lobby entry trigger from HUB to battle.
-     */
-    public JoinFromHubPlan requestJoinFromHub(Player p) {
-        if (p == null) return new JoinFromHubPlan.NotPlayer();
-
-        PlayerSession s = store.get(p);
-        if (s == null) s = transitions.ensureSession(p);
-
-        if (s.state() != PlayerState.HUB) {
-            return new JoinFromHubPlan.NotInHub(s.state());
-        }
-
-        GameSession g = gameManager.active();
-        if (g == null) {
-            return new JoinFromHubPlan.NoActiveGame();
-        }
-
-        if (g.mode() != GameModeType.BATTLE) {
-            return new JoinFromHubPlan.ModeNotSupported(g.mode());
-        }
-
-        cancelPendingLeave(p);
-        respawns.cancel(p);
-
-        g.addPlayer(p.getUniqueId());
-        transitions.toBattle(p, g);
-
-        return new JoinFromHubPlan.Joined();
-    }
-
-    /**
-     * Legacy entry (called by LobbyEntryListener). Keep it for compatibility.
-     */
-    public void onHubEntryTriggered(Player p) {
-        requestJoinFromHub(p);
-    }
-
-    public void onPlayerDeath(Player p) {
-        if (p == null) return;
-        log.debug("[Flow] player death observed: name={}", p.getName());
-    }
-
-    public void onPlayerRespawnEvent(Player p, RespawnEventHandle handle) {
-        if (p == null || handle == null) return;
-
-        cancelPendingLeave(p);
-
-        PlayerSession s = store.get(p);
-        if (s == null) return;
-
-        GameSession g = gameManager.active();
-        IModeRules rules = gameManager.rules();
-
-        RespawnDecision decision = (rules == null || g == null)
-                ? new RespawnDecision.Hub()
-                : rules.onRespawn(new RespawnContext(gameManager.runtime(), g, p, s));
-
-        applyRespawnDecision(p, g, handle, decision);
-    }
-
-    /**
-     * /cia leave semantics:
-     * - IN_GAME -> delayed leave to HUB (seconds from config)
-     * - RESPAWN -> immediate leave to HUB
-     */
-    public LeavePlan requestLeaveToHub(Player p, LeaveReason reason) {
-        if (p == null) return new LeavePlan.NotPlayer();
-
-        PlayerSession s = store.get(p);
-        if (s == null) {
-            return new LeavePlan.NotInSession();
-        }
-
-        // If already in HUB, do nothing.
-        if (s.state() == PlayerState.HUB) {
-            cancelPendingLeave(p);
-            respawns.cancel(p);
-            return new LeavePlan.AlreadyInHub();
-        }
-
-        // RESPAWN/SPECTATE -> immediate back to hub.
-        if (s.state() == PlayerState.RESPAWN || s.state() == PlayerState.SPECTATE) {
-            leaveToHubNow(p, reason);
-            return new LeavePlan.Immediate();
-        }
-
-        // IN_GAME -> delayed.
-        if (s.state() == PlayerState.IN_GAME) {
-            int wait = Math.max(0, cfg.get().game().leaveDelaySeconds());
-            if (wait == 0) {
-                leaveToHubNow(p, reason);
-                return new LeavePlan.Immediate();
-            }
-
-            pendingLeaveToHub.put(p.getUniqueId(), new PendingLeave(wait, reason));
-            return new LeavePlan.Scheduled(wait);
-        }
-
-        // Fallback
-        leaveToHubNow(p, reason);
-        return new LeavePlan.Immediate();
-    }
-
-    /**
-     * Unified helper: end current active game session (if any) and send its players back to HUB.
-     *
-     * <p>This is the same behavior used by timelines (via {@link GameAction.EndGameAndBackToHub}).</p>
-     */
-    public void endGameAndBackToHub(String reason) {
-        applyGameAction(new GameAction.EndGameAndBackToHub(reason));
-    }
-
-    /**
-     * Called by the global 1-second ticker (see GameTickModule).
-     */
-    public void tick1s() {
-        // 1) Game timeline -> actions
-        List<GameAction> actions = gameManager.tick1s();
-        for (GameAction a : actions) {
-            applyGameAction(a);
-        }
-
-        // 2) Respawn countdowns
-        respawns.tick1s();
-
-        // 3) /cia leave countdowns
-        tickPendingLeaveToHub();
-    }
-
-    /**
-     * For plugin disable / module stop.
-     */
-    public void shutdown() {
-        pendingLeaveToHub.clear();
-        respawns.cancelAll();
-    }
-
-    /**
-     * Reload fix: ensure online players have sessions and correct kits.
-     */
-    public void onReloadFixOnlinePlayers() {
-        log.info("[Flow] reload fix online players: size={}", Bukkit.getOnlinePlayers().size());
-
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            PlayerSession s = transitions.ensureSession(p);
-
-            if (gameManager.active() == null) {
-                transitions.toHub(p);
-                continue;
-            }
-
-            if (s.state().isLobbyState()) {
-                transitions.refreshLobbyKit(p);
-            }
-        }
-
-        log.info("[Flow] reload fix done.");
-    }
-
-    // --------------------------
-    // Internal: actions & decisions
-    // --------------------------
 
     private void applyJoinDecision(Player p, GameSession g, JoinDecision decision) {
         if (p == null) return;
@@ -392,6 +163,194 @@ public final class GameFlow {
             }
         }
     }
+
+    public void onPlayerLeaveServer(Player p, LeaveReason reason) {
+        onPlayerQuitServer(p, reason);
+    }
+
+    /**
+     * Called by PlayerQuitEvent / PlayerKickEvent.
+     */
+    public void onPlayerQuitServer(Player p, LeaveReason reason) {
+        if (p == null) return;
+
+        cancelPendingLeave(p);
+        respawns.cancel(p);
+
+        PlayerSession s = store.get(p);
+        detachFromActiveGame(p, s, reason);
+
+        transitions.removeSession(p);
+
+        log.debug("[Flow] player left, session removed: name={} reason={}", p.getName(), reason);
+    }
+
+    private void detachFromActiveGame(Player p, PlayerSession s, LeaveReason reason) {
+        GameSession g = gameManager.active();
+        if (g != null) {
+            g.removePlayer(p.getUniqueId());
+
+            log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
+                    p.getName(), g.mode(), g.arena().id(), reason
+            );
+
+            var rules = gameManager.rules();
+            if (rules != null && s != null) {
+                try {
+                    rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
+                } catch (Throwable t) {
+                    log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
+                }
+            }
+        }
+
+        respawns.cancel(p);
+        cancelPendingLeave(p);
+    }
+
+    /**
+     * Lobby UI action input. External callers should not call internal transitions directly.
+     */
+    public void onLobbyAction(Player p, LobbyAction action, Integer jobPage, String jobId) {
+        if (p == null || action == null) return;
+
+        var s = store.get(p);
+        if (s == null) return;
+
+        if (!s.state().isLobbyState()) return;
+
+        log.debug("[Flow] lobbyAction: name={} state={} action={} page={} jobId={}",
+                p.getName(), s.state(), action, jobPage, jobId
+        );
+
+        switch (action) {
+            case JOB_PAGE_NEXT -> transitions.nextJobPage(p);
+            case TEAM_CYCLE -> transitions.cycleTeam(p);
+            case BACK_TO_HUB -> leaveToHubNow(p, LeaveReason.COMMAND);
+        }
+    }
+
+    private void leaveToHubNow(Player p, LeaveReason reason) {
+        if (p == null) return;
+
+        cancelPendingLeave(p);
+        respawns.cancel(p);
+
+        var s = store.get(p);
+        if (s == null) return;
+
+        detachFromActiveGame(p, s, reason);
+
+        transitions.toHub(p);
+    }
+
+    /**
+     * Job selection from lobby UI.
+     */
+    public void onLobbySelectJob(Player p, String jobIdRaw) {
+        lobbySelectJob(p, jobIdRaw);
+    }
+
+    /**
+     * Commands: select a job in HUB/RESPAWN.
+     */
+    public boolean lobbySelectJob(Player p, String jobIdRaw) {
+        if (p == null) return false;
+        var s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return false;
+
+        transitions.selectJob(p, jobIdRaw);
+        return true;
+    }
+
+    /**
+     * Commands: select a team in HUB.
+     */
+    public boolean lobbySelectTeam(Player p, Integer teamId) {
+        if (p == null) return false;
+        var s = store.get(p);
+        if (s == null || s.state() != PlayerState.HUB) return false;
+
+        transitions.selectTeam(p, teamId);
+        return true;
+    }
+
+    /**
+     * Commands: open/refresh lobby kit in HUB/RESPAWN.
+     */
+    public boolean refreshLobbyKit(Player p) {
+        if (p == null) return false;
+        PlayerSession s = store.get(p);
+        if (s == null || !s.state().isLobbyState()) return false;
+
+        transitions.refreshLobbyKit(p);
+        return true;
+    }
+
+    /**
+     * Legacy entry (called by LobbyEntryListener). Keep it for compatibility.
+     */
+    public void onHubEntryTriggered(Player p) {
+        requestJoinFromHub(p);
+    }
+
+    /**
+     * /cia join or lobby entry trigger from HUB to battle.
+     */
+    public JoinFromHubPlan requestJoinFromHub(Player p) {
+        if (p == null) return new JoinFromHubPlan.NotPlayer();
+
+        var s = store.get(p);
+        if (s == null) s = transitions.ensureSession(p);
+
+        if (s.state() != PlayerState.HUB) {
+            return new JoinFromHubPlan.NotInHub(s.state());
+        }
+
+        GameSession g = gameManager.active();
+        if (g == null) {
+            return new JoinFromHubPlan.NoActiveGame();
+        }
+
+        if (g.mode() != GameModeType.BATTLE) {
+            return new JoinFromHubPlan.ModeNotSupported(g.mode());
+        }
+
+        cancelPendingLeave(p);
+        respawns.cancel(p);
+
+        g.addPlayer(p.getUniqueId());
+        transitions.toBattle(p, g);
+
+        return new JoinFromHubPlan.Joined();
+    }
+
+    public void onPlayerDeath(Player p) {
+        if (p == null) return;
+        log.debug("[Flow] player death observed: name={}", p.getName());
+    }
+
+    public void onPlayerRespawnEvent(Player p, RespawnEventHandle handle) {
+        if (p == null || handle == null) return;
+
+        cancelPendingLeave(p);
+
+        var s = store.get(p);
+        if (s == null) return;
+
+        GameSession g = gameManager.active();
+        IModeRules rules = gameManager.rules();
+
+        var decision = (rules == null || g == null)
+                ? new RespawnDecision.Hub()
+                : rules.onRespawn(new RespawnContext(gameManager.runtime(), g, p, s));
+
+        applyRespawnDecision(p, g, handle, decision);
+    }
+
+    // --------------------------
+    // Internal: actions & decisions
+    // --------------------------
 
     private void applyRespawnDecision(Player p, GameSession g, RespawnEventHandle handle, RespawnDecision decision) {
         if (p == null || handle == null) return;
@@ -454,12 +413,63 @@ public final class GameFlow {
         }
     }
 
+    /**
+     * /cia leave semantics: - IN_GAME -> delayed leave to HUB (seconds from config) - RESPAWN -> immediate leave to
+     * HUB
+     */
+    public LeavePlan requestLeaveToHub(Player p, LeaveReason reason) {
+        if (p == null) return new LeavePlan.NotPlayer();
+
+        var s = store.get(p);
+        if (s == null) {
+            return new LeavePlan.NotInSession();
+        }
+
+        // If already in HUB, do nothing.
+        if (s.state() == PlayerState.HUB) {
+            cancelPendingLeave(p);
+            respawns.cancel(p);
+            return new LeavePlan.AlreadyInHub();
+        }
+
+        // RESPAWN/SPECTATE -> immediate back to hub.
+        if (s.state() == PlayerState.RESPAWN || s.state() == PlayerState.SPECTATE) {
+            leaveToHubNow(p, reason);
+            return new LeavePlan.Immediate();
+        }
+
+        // IN_GAME -> delayed.
+        if (s.state() == PlayerState.IN_GAME) {
+            int wait = Math.max(0, cfg.get().game().leaveDelaySeconds());
+            if (wait == 0) {
+                leaveToHubNow(p, reason);
+                return new LeavePlan.Immediate();
+            }
+
+            pendingLeaveToHub.put(p.getUniqueId(), new PendingLeave(wait, reason));
+            return new LeavePlan.Scheduled(wait);
+        }
+
+        // Fallback
+        leaveToHubNow(p, reason);
+        return new LeavePlan.Immediate();
+    }
+
+    /**
+     * Unified helper: end current active game session (if any) and send its players back to HUB.
+     *
+     * <p>This is the same behavior used by timelines (via {@link GameAction.EndGameAndBackToHub}).</p>
+     */
+    public void endGameAndBackToHub(String reason) {
+        applyGameAction(new GameAction.EndGameAndBackToHub(reason));
+    }
+
     private void applyGameAction(GameAction action) {
         if (action == null) return;
 
         switch (action) {
             case GameAction.Broadcast(Component message) -> {
-                GameSession g = gameManager.active();
+                var g = gameManager.active();
                 if (g == null || message == null) return;
 
                 for (UUID uuid : g.players()) {
@@ -477,7 +487,7 @@ public final class GameFlow {
             });
 
             case GameAction.ToBattle(Set<UUID> players) -> {
-                GameSession g = gameManager.active();
+                var g = gameManager.active();
                 if (g == null) {
                     forEachOnline(players, transitions::toHub);
                     return;
@@ -500,7 +510,7 @@ public final class GameFlow {
             }
 
             case GameAction.EndGameAndBackToHub(String reason) -> {
-                GameSession ended = gameManager.active();
+                var ended = gameManager.active();
                 Set<UUID> players = (ended == null) ? Set.of() : ended.players();
 
                 gameManager.endActive();
@@ -529,24 +539,21 @@ public final class GameFlow {
         }
     }
 
-    // --------------------------
-    // Internal: leave / detach / countdowns
-    // --------------------------
-
-    private void onRespawnCountdownFinished(Player p) {
-        if (p == null || !p.isOnline()) return;
-
-        PlayerSession s = store.get(p);
-        if (s == null) return;
-        if (s.state() != PlayerState.RESPAWN) return;
-
-        GameSession g = gameManager.active();
-        if (g == null) {
-            transitions.toHub(p);
-            return;
+    /**
+     * Called by the global 1-second ticker (see GameTickModule).
+     */
+    public void tick1s() {
+        // 1) Game timeline -> actions
+        List<GameAction> actions = gameManager.tick1s();
+        for (GameAction a : actions) {
+            applyGameAction(a);
         }
 
-        transitions.toBattle(p, g);
+        // 2) Respawn countdowns
+        respawns.tick1s();
+
+        // 3) /cia leave countdowns
+        tickPendingLeaveToHub();
     }
 
     private void tickPendingLeaveToHub() {
@@ -555,7 +562,7 @@ public final class GameFlow {
         UUID[] uuids = pendingLeaveToHub.keySet().toArray(UUID[]::new);
 
         for (UUID uuid : uuids) {
-            PendingLeave plan = pendingLeaveToHub.get(uuid);
+            var plan = pendingLeaveToHub.get(uuid);
             if (plan == null) continue;
 
             Player p = Bukkit.getPlayer(uuid);
@@ -564,7 +571,7 @@ public final class GameFlow {
                 continue;
             }
 
-            PlayerSession s = store.get(p);
+            var s = store.get(p);
             if (s == null || s.state() != PlayerState.IN_GAME) {
                 pendingLeaveToHub.remove(uuid);
                 continue;
@@ -582,95 +589,98 @@ public final class GameFlow {
         }
     }
 
-    private void cancelPendingLeave(Player p) {
-        if (p == null) return;
-        pendingLeaveToHub.remove(p.getUniqueId());
+    /**
+     * For plugin disable / module stop.
+     */
+    public void shutdown() {
+        pendingLeaveToHub.clear();
+        respawns.cancelAll();
     }
 
-    private void leaveToHubNow(Player p, LeaveReason reason) {
-        if (p == null) return;
+    /**
+     * Reload fix: ensure online players have sessions and correct kits.
+     */
+    public void onReloadFixOnlinePlayers() {
+        log.info("[Flow] reload fix online players: size={}", Bukkit.getOnlinePlayers().size());
 
-        cancelPendingLeave(p);
-        respawns.cancel(p);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            var s = transitions.ensureSession(p);
 
-        PlayerSession s = store.get(p);
-        if (s == null) return;
+            if (gameManager.active() == null) {
+                transitions.toHub(p);
+                continue;
+            }
 
-        detachFromActiveGame(p, s, reason);
-
-        transitions.toHub(p);
-    }
-
-    private void detachFromActiveGame(Player p, PlayerSession s, LeaveReason reason) {
-        GameSession g = gameManager.active();
-        if (g != null) {
-            g.removePlayer(p.getUniqueId());
-
-            log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
-                    p.getName(), g.mode(), g.arena().id(), reason
-            );
-
-            IModeRules rules = gameManager.rules();
-            if (rules != null && s != null) {
-                try {
-                    rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
-                } catch (Throwable t) {
-                    log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
-                }
+            if (s.state().isLobbyState()) {
+                transitions.refreshLobbyKit(p);
             }
         }
 
-        respawns.cancel(p);
-        cancelPendingLeave(p);
+        log.info("[Flow] reload fix done.");
     }
 
     public sealed interface LeavePlan permits LeavePlan.NotPlayer, LeavePlan.NotInSession, LeavePlan.AlreadyInHub, LeavePlan.Immediate, LeavePlan.Scheduled {
 
         record NotPlayer() implements LeavePlan {
+
         }
 
         record NotInSession() implements LeavePlan {
+
         }
 
         record AlreadyInHub() implements LeavePlan {
+
         }
 
         record Immediate() implements LeavePlan {
+
         }
 
         record Scheduled(int seconds) implements LeavePlan {
+
         }
+
     }
 
-    // --------------------------
-    // External result types
-    // --------------------------
-
-    public sealed interface JoinFromHubPlan permits JoinFromHubPlan.NotPlayer, JoinFromHubPlan.NotInHub, JoinFromHubPlan.NoActiveGame, JoinFromHubPlan.ModeNotSupported, JoinFromHubPlan.Joined {
+    public sealed interface JoinFromHubPlan permits
+            JoinFromHubPlan.NotPlayer,
+            JoinFromHubPlan.NotInHub,
+            JoinFromHubPlan.NoActiveGame,
+            JoinFromHubPlan.ModeNotSupported,
+            JoinFromHubPlan.Joined {
 
         record NotPlayer() implements JoinFromHubPlan {
+
         }
 
         record NotInHub(PlayerState state) implements JoinFromHubPlan {
+
         }
 
         record NoActiveGame() implements JoinFromHubPlan {
+
         }
 
         record ModeNotSupported(GameModeType mode) implements JoinFromHubPlan {
+
         }
 
         record Joined() implements JoinFromHubPlan {
+
         }
+
     }
 
     @FunctionalInterface
     public interface RespawnEventHandle {
 
         void setRespawnLocation(Location location);
+
     }
 
     private record PendingLeave(int secondsRemaining, LeaveReason reason) {
+
     }
 
 }

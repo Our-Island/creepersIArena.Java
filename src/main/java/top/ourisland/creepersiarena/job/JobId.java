@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.job;
 import java.util.Locale;
 
 public enum JobId {
+
     CREEPER("creeper"),
     MOISON("moison"),
     AVENGER("avenger"),
@@ -35,4 +36,5 @@ public enum JobId {
     public String id() {
         return this.id;
     }
+
 }

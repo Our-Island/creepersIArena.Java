@@ -7,9 +7,12 @@ public record EntryZone(
         double minX, double minY, double minZ,
         double maxX, double maxY, double maxZ
 ) {
-    public static EntryZone of(long timeMs,
-                               double x1, double y1, double z1,
-                               double x2, double y2, double z2) {
+
+    public static EntryZone of(
+            long timeMs,
+            double x1, double y1, double z1,
+            double x2, double y2, double z2
+    ) {
         double minX = Math.min(x1, x2);
         double minY = Math.min(y1, y2);
         double minZ = Math.min(z1, z2);
@@ -28,4 +31,5 @@ public record EntryZone(
                 && y >= minY && y <= maxY
                 && z >= minZ && z <= maxZ;
     }
+
 }

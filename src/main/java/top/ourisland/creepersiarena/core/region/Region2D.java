@@ -11,4 +11,5 @@ public record Region2D(World world, Bounds2D bounds) implements IRegion<Bounds2D
         this.world = world;
         this.bounds = bounds;
     }
+
 }

@@ -13,6 +13,7 @@ import top.ourisland.creepersiarena.job.skill.impl.moison.Skill4;
 import java.util.List;
 
 public class MoisonJob implements IJob {
+
     @Override
     public JobId id() {
         return JobId.MOISON;
@@ -29,6 +30,14 @@ public class MoisonJob implements IJob {
     }
 
     @Override
+    public ItemStack[] armorTemplate() {
+        return new ItemStack[]{
+                ItemStack.of(Material.FEATHER),
+                ItemStack.of(Material.NETHERITE_CHESTPLATE),
+        };
+    }
+
+    @Override
     public List<ISkillDefinition> skills() {
         return List.of(
                 new Skill1(),
@@ -38,11 +47,4 @@ public class MoisonJob implements IJob {
         );
     }
 
-    @Override
-    public ItemStack[] armorTemplate() {
-        return new ItemStack[]{
-                ItemStack.of(Material.FEATHER),
-                ItemStack.of(Material.NETHERITE_CHESTPLATE),
-        };
-    }
 }

@@ -32,7 +32,7 @@ public final class SkillRuntime {
     }
 
     public void handle(SkillContext ctx) {
-        Player p = ctx.player();
+        var p = ctx.player();
         List<ISkillDefinition> skills = registry.skillsOf(p);
         if (skills.isEmpty()) return;
 

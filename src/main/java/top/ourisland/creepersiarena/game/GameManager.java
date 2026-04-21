@@ -59,7 +59,7 @@ public final class GameManager {
             idx = (idx + 1) % n;
         }
 
-        ArenaInstance picked = list.get(idx);
+        var picked = list.get(idx);
         autoIndex.put(type, (idx + 1) % n);
         lastAutoArenaId.put(type, picked.id());
 
@@ -69,11 +69,11 @@ public final class GameManager {
     }
 
     private void startWithArena(GameModeType type, ArenaInstance arena) {
-        GameRuntime rt = runtime();
-        IGameMode mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
+        var rt = runtime();
+        var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
 
-        GameSession session = new GameSession(type, arena);
-        ModeLogic logic = mode.createLogic(session, rt);
+        var session = new GameSession(type, arena);
+        var logic = mode.createLogic(session, rt);
 
         this.active = session;
         this.rules = logic.rules();
@@ -88,7 +88,7 @@ public final class GameManager {
     }
 
     public void start(GameModeType type, String arenaId) {
-        ArenaInstance arena = arenaManager.getArena(arenaId);
+        var arena = arenaManager.getArena(arenaId);
         if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
         if (arena.type() != type) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
 
@@ -117,4 +117,5 @@ public final class GameManager {
             return List.of();
         }
     }
+
 }

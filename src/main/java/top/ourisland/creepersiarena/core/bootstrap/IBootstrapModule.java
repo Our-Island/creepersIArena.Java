@@ -23,6 +23,7 @@ package top.ourisland.creepersiarena.core.bootstrap;
  * </ul>
  */
 public interface IBootstrapModule {
+
     /**
      * The name of the module in lower case.
      *
@@ -86,4 +87,5 @@ public interface IBootstrapModule {
     default boolean registerListeners(ListenerBinder binder) {
         return false;
     }
+
 }

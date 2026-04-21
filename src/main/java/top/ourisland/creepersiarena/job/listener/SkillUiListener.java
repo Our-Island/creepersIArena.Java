@@ -44,11 +44,11 @@ public final class SkillUiListener implements Listener {
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (e.getAction() == Action.PHYSICAL) return;
 
-        Player p = e.getPlayer();
+        var p = e.getPlayer();
         var s = sessions.get(p);
         if (s == null || s.state() != PlayerState.IN_GAME) return;
 
-        ItemStack item = e.getItem();
+        var item = e.getItem();
         if (item == null) return;
 
         String skillId = codec.readSkillId(item);
@@ -74,8 +74,8 @@ public final class SkillUiListener implements Listener {
         var s = sessions.get(p);
         if (s == null || s.state() != PlayerState.IN_GAME) return;
 
-        ItemStack cur = e.getCurrentItem();
-        ItemStack cursor = e.getCursor();
+        var cur = e.getCurrentItem();
+        var cursor = e.getCursor();
 
         if ((cur != null && codec.isSkillItem(cur)) || codec.isSkillItem(cursor)) {
             e.setCancelled(true);

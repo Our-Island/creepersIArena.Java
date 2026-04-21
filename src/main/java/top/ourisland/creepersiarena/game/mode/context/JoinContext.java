@@ -11,4 +11,5 @@ public record JoinContext(
         Player player,
         PlayerSession session
 ) {
+
 }

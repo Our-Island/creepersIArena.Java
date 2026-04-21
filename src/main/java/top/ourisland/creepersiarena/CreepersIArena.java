@@ -42,4 +42,5 @@ public final class CreepersIArena extends JavaPlugin {
     public void onReload() {
         bootstrap.reload();
     }
+
 }

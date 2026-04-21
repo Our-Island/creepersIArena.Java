@@ -38,7 +38,7 @@ public final class PlayerCommandHandlers {
         if (playerOpt.isEmpty()) return;
         Player p = playerOpt.get();
 
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var flow = rt.requireService(GameFlow.class);
         GameFlow.JoinFromHubPlan plan = flow.requestJoinFromHub(p);
 
         switch (plan) {
@@ -57,7 +57,7 @@ public final class PlayerCommandHandlers {
         if (playerOpt.isEmpty()) return;
         Player p = playerOpt.get();
 
-        LeaveService leave = rt.requireService(LeaveService.class);
+        var leave = rt.requireService(LeaveService.class);
         leave.leave(p);
     }
 
@@ -71,13 +71,13 @@ public final class PlayerCommandHandlers {
         String raw = args[0];
         String jobId = normalizeCiaId(raw);
 
-        JobManager jm = rt.requireService(JobManager.class);
+        var jm = rt.requireService(JobManager.class);
         if (jm.getJob(jobId) == null) {
             Msg.send(sender, "Unknown job: " + raw);
             return;
         }
 
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectJob(p, jobId);
         if (!ok) {
             Msg.send(sender, "You can only choose job in hub/respawn.");
@@ -97,7 +97,7 @@ public final class PlayerCommandHandlers {
         String token = args[0].toLowerCase(Locale.ROOT);
         Integer id = parseTeamId(token);
 
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectTeam(p, id);
         if (!ok) {
             Msg.send(sender, "You can only choose team in HUB.");
@@ -115,7 +115,7 @@ public final class PlayerCommandHandlers {
         asHelp(sender, args, "Usage: /language <language_id|default>");
 
         String v = args[0].trim();
-        UserLanguageService ul = rt.requireService(UserLanguageService.class);
+        var ul = rt.requireService(UserLanguageService.class);
 
         if (v.equalsIgnoreCase("default")) {
             ul.set(p, null);
@@ -136,7 +136,7 @@ public final class PlayerCommandHandlers {
         if (playerOpt.isEmpty()) return;
         Player p = playerOpt.get();
 
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.refreshLobbyKit(p);
         if (!ok) {
             Msg.send(sender, "You can only choose job in hub/respawn.");
@@ -145,4 +145,5 @@ public final class PlayerCommandHandlers {
 
         Msg.send(sender, "Refreshed job selector.");
     }
+
 }

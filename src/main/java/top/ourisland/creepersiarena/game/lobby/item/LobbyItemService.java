@@ -10,6 +10,7 @@ import top.ourisland.creepersiarena.job.JobManager;
 import java.util.List;
 
 public final class LobbyItemService {
+
     private final LobbyItemFactory items;
     private final JobManager jobs;
 
@@ -101,4 +102,5 @@ public final class LobbyItemService {
         JobId jid = JobId.fromId(jobIdRaw);
         return jid != null && jobs.getJob(jid) != null;
     }
+
 }

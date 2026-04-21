@@ -24,4 +24,5 @@ public final class LobbyService {
     public @Nullable EntryZone entryZone(@NonNull String lobbyId) {
         return lobbyManager.entryZone(lobbyId);
     }
+
 }

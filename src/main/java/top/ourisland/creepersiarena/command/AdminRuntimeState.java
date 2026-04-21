@@ -20,4 +20,5 @@ public final class AdminRuntimeState {
         forcedNextMode = null;
         forcedNextArenaId = null;
     }
+
 }

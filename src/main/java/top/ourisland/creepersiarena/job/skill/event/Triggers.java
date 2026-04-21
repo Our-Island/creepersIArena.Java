@@ -4,6 +4,7 @@ import top.ourisland.creepersiarena.job.skill.event.impl.InteractEvent;
 import top.ourisland.creepersiarena.job.skill.event.impl.TickEvent;
 
 public final class Triggers {
+
     private Triggers() {
     }
 
@@ -21,4 +22,5 @@ public final class Triggers {
         return ctx -> (ctx.event() instanceof TickEvent(long nowTick))
                 && periodTicks > 0 && (nowTick % periodTicks == 0);
     }
+
 }

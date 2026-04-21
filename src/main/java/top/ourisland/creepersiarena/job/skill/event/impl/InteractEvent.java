@@ -8,8 +8,10 @@ public record InteractEvent(
         Action action,
         boolean mainHand
 ) implements ISkillEvent {
+
     @Override
     public SkillEventType type() {
         return SkillEventType.INTERACT;
     }
+
 }

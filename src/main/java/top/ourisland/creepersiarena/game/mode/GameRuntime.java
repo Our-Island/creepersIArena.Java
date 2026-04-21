@@ -33,4 +33,5 @@ public final class GameRuntime {
     public GlobalConfig cfg() {
         return cfg.get();
     }
+
 }

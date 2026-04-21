@@ -7,6 +7,7 @@ import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.game.mode.context.RespawnContext;
 
 public interface IModeRules {
+
     GameModeType type();
 
     JoinDecision onJoin(JoinContext ctx);
@@ -17,4 +18,5 @@ public interface IModeRules {
      * 玩家 PlayerRespawnEvent 时询问：本模式如何处理复活？ - BATTLE: 进 death + 倒计时 - STEAL: 直接旁观/回大厅
      */
     RespawnDecision onRespawn(RespawnContext ctx);
+
 }

@@ -11,4 +11,5 @@ public record RespawnContext(
         Player player,
         PlayerSession session
 ) {
+
 }

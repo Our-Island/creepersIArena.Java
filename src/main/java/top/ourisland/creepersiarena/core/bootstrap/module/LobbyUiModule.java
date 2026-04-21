@@ -28,11 +28,11 @@ public final class LobbyUiModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            JobManager jobManager = rt.requireService(JobManager.class);
+            var jobManager = rt.requireService(JobManager.class);
 
-            LobbyItemCodec lobbyItemCodec = new LobbyItemCodec(rt.plugin());
-            LobbyItemFactory lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec, jobManager);
-            LobbyItemService lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
+            var lobbyItemCodec = new LobbyItemCodec(rt.plugin());
+            var lobbyItemFactory = new LobbyItemFactory(lobbyItemCodec, jobManager);
+            var lobbyItemService = new LobbyItemService(lobbyItemFactory, jobManager);
 
             rt.putAllServices(Map.of(
                     LobbyItemCodec.class, lobbyItemCodec,

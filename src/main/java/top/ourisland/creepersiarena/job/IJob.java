@@ -6,6 +6,7 @@ import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import java.util.List;
 
 public interface IJob {
+
     JobId id();
 
     boolean enabled();
@@ -15,4 +16,5 @@ public interface IJob {
     ItemStack[] armorTemplate();
 
     List<ISkillDefinition> skills();
+
 }

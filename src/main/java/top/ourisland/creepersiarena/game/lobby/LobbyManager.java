@@ -87,17 +87,18 @@ public final class LobbyManager {
     }
 
     public Location anchorOrSpawn(String id) {
-        LobbyInstance l = lobbies.get(id);
+        var l = lobbies.get(id);
         return (l == null) ? world.getSpawnLocation() : l.anchor().clone();
     }
 
     public @Nullable Region2D region(String id) {
-        LobbyInstance l = lobbies.get(id);
+        var l = lobbies.get(id);
         return (l == null) ? null : l.region();
     }
 
     public @Nullable EntryZone entryZone(String id) {
-        LobbyInstance l = lobbies.get(id);
+        var l = lobbies.get(id);
         return (l == null) ? null : l.entryZone();
     }
+
 }

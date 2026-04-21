@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class ArenaManager {
+
     private final World world;
     private final Logger logger;
 
@@ -155,4 +156,5 @@ public final class ArenaManager {
     public Collection<String> allArenaIds() {
         return arenas.keySet();
     }
+
 }

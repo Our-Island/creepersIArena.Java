@@ -13,9 +13,8 @@ import top.ourisland.creepersiarena.job.JobId;
 import java.util.Optional;
 
 /**
- * Internal helper that owns:
- * - PlayerSession creation/lookup
- * - Selected job persistence (PDC + session) + default job fallback
+ * Internal helper that owns: - PlayerSession creation/lookup - Selected job persistence (PDC + session) + default job
+ * fallback
  *
  * <p>Package-private: only used inside {@link top.ourisland.creepersiarena.game.flow.GameFlow}.</p>
  */
@@ -53,14 +52,9 @@ final class PlayerSessionFacade {
     }
 
     PlayerSession ensureSession(Player p) {
-        PlayerSession s = store.getOrCreate(p);
+        var s = store.getOrCreate(p);
         ensureSelectedJob(p, s);
         return s;
-    }
-
-    void persistSelectedJob(Player p, JobId jobId) {
-        if (jobId == null) return;
-        p.getPersistentDataContainer().set(selectedJobKey, PersistentDataType.STRING, jobId.toString());
     }
 
     void ensureSelectedJob(Player p, PlayerSession s) {
@@ -85,4 +79,10 @@ final class PlayerSessionFacade {
                         () -> log.warn("[Lobby] No available job to select for {}", p.getName())
                 );
     }
+
+    void persistSelectedJob(Player p, JobId jobId) {
+        if (jobId == null) return;
+        p.getPersistentDataContainer().set(selectedJobKey, PersistentDataType.STRING, jobId.toString());
+    }
+
 }

@@ -3,13 +3,10 @@ package top.ourisland.creepersiarena.job.skill.impl.creeper;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -28,8 +25,8 @@ public class Skill2 implements ISkillDefinition {
     private static final String ID = "creeper.crossbow";
 
     private static ItemStack buildRocket() {
-        ItemStack rocket = new ItemStack(Material.FIREWORK_ROCKET);
-        ItemMeta im = rocket.getItemMeta();
+        var rocket = new ItemStack(Material.FIREWORK_ROCKET);
+        var im = rocket.getItemMeta();
         if (im instanceof FireworkMeta meta) {
             meta.clearEffects();
             meta.addEffect(buildEffect());
@@ -89,18 +86,18 @@ public class Skill2 implements ISkillDefinition {
 
     @Override
     public ISkillIcon icon() {
-        return player -> {
-            ItemStack crossbow = new ItemStack(Material.CROSSBOW);
+        return _ -> {
+            var crossbow = new ItemStack(Material.CROSSBOW);
 
-            ItemStack rocket = buildRocket();
+            var rocket = buildRocket();
 
-            ItemMeta im = crossbow.getItemMeta();
+            var im = crossbow.getItemMeta();
             if (im instanceof CrossbowMeta meta) {
                 meta.setUnbreakable(true);
                 meta.setChargedProjectiles(List.of(rocket));
 
                 String nameKey = LangKeyResolver.skillName(this);
-                Component name = I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id());
+                var name = I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id());
                 meta.displayName(name);
                 meta.lore(LangKeyResolver.resolveSkillLore(this));
 
@@ -113,14 +110,14 @@ public class Skill2 implements ISkillDefinition {
     @Override
     public ISkillExecutor executor() {
         return (ctx, store) -> {
-            Player p = ctx.player();
+            var p = ctx.player();
             if (p == null) return;
 
-            SkillConfig cfg = ctx.skillConfig();
+            var cfg = ctx.skillConfig();
             int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
             double speed = cfg.getDouble(id(), "speed", SPEED);
 
-            World w = p.getWorld();
+            var w = p.getWorld();
             Vector dir = p.getEyeLocation().getDirection().normalize();
 
             Location spawn = p.getEyeLocation().add(dir.clone().multiply(0.6));
@@ -128,7 +125,7 @@ public class Skill2 implements ISkillDefinition {
             w.spawn(spawn, Firework.class, f -> {
                 f.setShooter(p);
 
-                FireworkMeta meta = f.getFireworkMeta();
+                var meta = f.getFireworkMeta();
                 meta.clearEffects();
                 meta.addEffect(buildEffect());
                 meta.setPower(flight);

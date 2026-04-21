@@ -17,6 +17,26 @@ import java.util.Set;
  * @author Chiloven945
  */
 public final class JobModule implements IBootstrapModule {
+
+    @Override
+    public String name() {
+        return "job";
+    }
+
+    @Override
+    public StageTask install(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var cfg = rt.requireService(ConfigManager.class);
+
+            var jobManager = new JobManager();
+            Set<String> disabled = cfg.globalConfig().disabledJobs();
+            int regJobs = registerBuiltinJobs(jobManager, disabled, rt.log());
+            rt.log().info("[Job] Registered {} jobs with {} disabled.", regJobs, disabled);
+
+            rt.putService(JobManager.class, jobManager);
+        }, "Loading jobs...", "Finished loading jobs.");
+    }
+
     public static int registerBuiltinJobs(JobManager jobManager, Set<String> disabledJobs, Logger log) {
         int count = 0;
         count += registerIfEnabled(jobManager, new CreeperJob(), disabledJobs, log);
@@ -39,33 +59,15 @@ public final class JobModule implements IBootstrapModule {
     }
 
     @Override
-    public String name() {
-        return "job";
-    }
-
-    @Override
-    public StageTask install(BootstrapRuntime rt) {
-        return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
-
-            JobManager jobManager = new JobManager();
-            Set<String> disabled = cfg.globalConfig().disabledJobs();
-            int regJobs = registerBuiltinJobs(jobManager, disabled, rt.log());
-            rt.log().info("[Job] Registered {} jobs with {} disabled.", regJobs, disabled);
-
-            rt.putService(JobManager.class, jobManager);
-        }, "Loading jobs...", "Finished loading jobs.");
-    }
-
-    @Override
     public StageTask reload(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
-            JobManager jm = rt.requireService(JobManager.class);
+            var cfg = rt.requireService(ConfigManager.class);
+            var jm = rt.requireService(JobManager.class);
 
             jm.clear();
             int jobs = registerBuiltinJobs(jm, cfg.globalConfig().disabledJobs(), rt.log());
             rt.log().info("[Job] Reloaded jobs: {}", jobs);
         }, "Reloading jobs...", "Jobs reloaded.");
     }
+
 }

@@ -20,7 +20,7 @@ public final class PermissionModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            Logger log = rt.log();
+            var log = rt.log();
             CiaPermissions.registerAll(rt.plugin());
 
             // IMPORTANT: do not load LuckPerms API classes unless the plugin is present.
@@ -30,7 +30,7 @@ public final class PermissionModule implements IBootstrapModule {
                 return;
             }
 
-            LuckPermsService lp = LuckPermsService.tryLoad(rt.plugin(), log);
+            var lp = LuckPermsService.tryLoad(rt.plugin(), log);
             if (lp != null) {
                 rt.putService(LuckPermsService.class, lp);
                 log.info("[LuckPerms] Hooked LuckPerms API (server permissions will be handled by LuckPerms). ");
@@ -39,4 +39,5 @@ public final class PermissionModule implements IBootstrapModule {
             }
         }, "Registering permissions / hooks...", "done");
     }
+
 }

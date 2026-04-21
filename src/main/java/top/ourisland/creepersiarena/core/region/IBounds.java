@@ -87,4 +87,5 @@ public interface IBounds {
         if (!hasY()) throw new UnsupportedOperationException("This bounds has no Y dimension.");
         return (minY() + maxY()) / 2.0;
     }
+
 }

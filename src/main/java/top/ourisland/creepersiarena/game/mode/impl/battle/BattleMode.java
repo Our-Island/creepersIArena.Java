@@ -7,6 +7,7 @@ import top.ourisland.creepersiarena.game.mode.IGameMode;
 import top.ourisland.creepersiarena.game.mode.ModeLogic;
 
 public final class BattleMode implements IGameMode {
+
     @Override
     public GameModeType mode() {
         return GameModeType.BATTLE;
@@ -19,4 +20,5 @@ public final class BattleMode implements IGameMode {
                 new BattleTimeline(runtime, session)
         );
     }
+
 }

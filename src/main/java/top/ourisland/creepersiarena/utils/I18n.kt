@@ -289,4 +289,5 @@ object I18n {
         val p = pattern(key)
         return if (args.isEmpty()) p else MessageFormat.format(p, *args)
     }
+
 }

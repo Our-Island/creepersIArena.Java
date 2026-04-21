@@ -53,12 +53,12 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
+        var st = rt.requireService(AdminRuntimeState.class);
         st.forcedNextMode(type);
         st.forcedNextArenaId(null);
 
-        GameManager gm = rt.requireService(GameManager.class);
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var gm = rt.requireService(GameManager.class);
+        var flow = rt.requireService(GameFlow.class);
         if (gm.active() != null) {
             flow.endGameAndBackToHub("ADMIN_MODE_SWITCH");
         }
@@ -73,8 +73,8 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        GameManager gm = rt.requireService(GameManager.class);
-        ArenaManager am = rt.requireService(ArenaManager.class);
+        var gm = rt.requireService(GameManager.class);
+        var am = rt.requireService(ArenaManager.class);
 
         String arenaId = args[0];
         ArenaInstance inst = am.getArena(arenaId);
@@ -89,16 +89,16 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
+        var st = rt.requireService(AdminRuntimeState.class);
         st.forcedNextArenaId(arenaId);
 
         Msg.send(sender, "Next arena set to: " + arenaId);
     }
 
     public void skip(CommandSender sender, String[] args) {
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
-        GameManager gm = rt.requireService(GameManager.class);
-        GameFlow flow = rt.requireService(GameFlow.class);
+        var st = rt.requireService(AdminRuntimeState.class);
+        var gm = rt.requireService(GameManager.class);
+        var flow = rt.requireService(GameFlow.class);
 
         String overrideArena = (args.length >= 1) ? args[0] : null;
 
@@ -137,7 +137,7 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
+        var st = rt.requireService(AdminRuntimeState.class);
         st.cooldownFactor(v);
         Msg.send(sender, "Cooldown factor set to: " + v);
     }
@@ -162,7 +162,7 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
+        var st = rt.requireService(AdminRuntimeState.class);
         st.entranceAllowed(b);
         Msg.send(sender, "Entrance allowed: " + b);
     }
@@ -174,7 +174,7 @@ public final class AdminCommandHandlers {
         }
 
         String lang = args[0].trim();
-        ConfigManager cfg = rt.requireService(ConfigManager.class);
+        var cfg = rt.requireService(ConfigManager.class);
 
         boolean ok = cfg.setGlobalNode("lang", lang);
         if (!ok) {
@@ -189,7 +189,7 @@ public final class AdminCommandHandlers {
     }
 
     public void reload(CommandSender sender) {
-        AdminRuntimeState st = rt.requireService(AdminRuntimeState.class);
+        var st = rt.requireService(AdminRuntimeState.class);
         st.reset();
 
         if (rt.plugin() instanceof CreepersIArena pl) {
@@ -213,7 +213,7 @@ public final class AdminCommandHandlers {
         String valueRaw = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
         Object value = parseValue(valueRaw);
 
-        ConfigManager cfg = rt.requireService(ConfigManager.class);
+        var cfg = rt.requireService(ConfigManager.class);
 
         boolean ok;
         switch (file) {
@@ -243,4 +243,5 @@ public final class AdminCommandHandlers {
         Msg.send(sender, "Current value: " + currentValue);
         Msg.send(sender, "Run /ciaa reload to apply.");
     }
+
 }

@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
  */
 @Getter
 public final class StageTask {
+
     /**
      * Optional begin message printed before executing {@link #action}.
      */
@@ -59,4 +60,5 @@ public final class StageTask {
     ) {
         return new StageTask(action, beginMessage, endMessage);
     }
+
 }

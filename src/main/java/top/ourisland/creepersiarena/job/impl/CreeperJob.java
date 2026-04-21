@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill3;
 import java.util.List;
 
 public class CreeperJob implements IJob {
+
     @Override
     public JobId id() {
         return JobId.CREEPER;
@@ -28,15 +29,6 @@ public class CreeperJob implements IJob {
     }
 
     @Override
-    public List<ISkillDefinition> skills() {
-        return List.of(
-                new Skill1(),
-                new Skill2(),
-                new Skill3()
-        );
-    }
-
-    @Override
     public ItemStack[] armorTemplate() {
         return new ItemStack[]{
                 new ItemStack(Material.AIR),
@@ -45,4 +37,14 @@ public class CreeperJob implements IJob {
                 new ItemStack(Material.REDSTONE),
         };
     }
+
+    @Override
+    public List<ISkillDefinition> skills() {
+        return List.of(
+                new Skill1(),
+                new Skill2(),
+                new Skill3()
+        );
+    }
+
 }

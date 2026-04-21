@@ -25,16 +25,17 @@ public final class SkillRegistry {
     }
 
     public List<ISkillDefinition> skillsOf(Player p) {
-        PlayerSession s = sessions.get(p);
+        var s = sessions.get(p);
         if (s == null) return Collections.emptyList();
 
-        JobId jobId = s.selectedJob();
+        var jobId = s.selectedJob();
         if (jobId == null) return Collections.emptyList();
 
-        IJob job = jobs.getJob(jobId);
+        var job = jobs.getJob(jobId);
         if (job == null) return Collections.emptyList();
 
         List<ISkillDefinition> list = job.skills();
         return list == null ? Collections.emptyList() : list;
     }
+
 }

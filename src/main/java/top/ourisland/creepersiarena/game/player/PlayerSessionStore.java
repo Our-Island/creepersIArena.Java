@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class PlayerSessionStore {
+
     private final Map<UUID, PlayerSession> sessions = new HashMap<>();
 
     public PlayerSession getOrCreate(Player p) {
@@ -20,4 +21,5 @@ public final class PlayerSessionStore {
     public void remove(Player p) {
         sessions.remove(p.getUniqueId());
     }
+
 }

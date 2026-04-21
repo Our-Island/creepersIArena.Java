@@ -6,7 +6,9 @@ import top.ourisland.creepersiarena.game.mode.context.TickContext;
 import java.util.List;
 
 public interface IModeTimeline {
+
     GameModeType type();
 
     List<GameAction> tick(TickContext ctx);
+
 }

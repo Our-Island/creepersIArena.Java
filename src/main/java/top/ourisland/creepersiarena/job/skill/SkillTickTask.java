@@ -22,10 +22,12 @@ public final class SkillTickTask {
 
     private final AtomicLong tick = new AtomicLong(0);
 
-    public SkillTickTask(PlayerSessionStore sessions,
-                         SkillRegistry registry,
-                         SkillRuntime runtime,
-                         SkillHotbarRenderer renderer) {
+    public SkillTickTask(
+            PlayerSessionStore sessions,
+            SkillRegistry registry,
+            SkillRuntime runtime,
+            SkillHotbarRenderer renderer
+    ) {
         this.sessions = sessions;
         this.registry = registry;
         this.runtime = runtime;

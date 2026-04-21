@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Data
 public final class PlayerSession {
+
     private final UUID playerId;
 
     private PlayerState state = PlayerState.HUB;
@@ -29,4 +30,5 @@ public final class PlayerSession {
     public PlayerSession(Player player) {
         this.playerId = player.getUniqueId();
     }
+
 }

@@ -13,4 +13,5 @@ public record SkillContext(
         long nowTick,
         SkillConfig skillConfig
 ) {
+
 }

@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.utils.I18n;
  * @author Chiloven945
  */
 public final class ConfigModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "config";
@@ -20,7 +21,7 @@ public final class ConfigModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            ConfigManager configManager = new ConfigManager(rt.plugin(), rt.log());
+            var configManager = new ConfigManager(rt.plugin(), rt.log());
 
             configManager.reloadAll();
             I18n.init(configManager, rt.log());
@@ -32,10 +33,11 @@ public final class ConfigModule implements IBootstrapModule {
     @Override
     public StageTask reload(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            var cfg = rt.requireService(ConfigManager.class);
 
             cfg.reloadAll();
             I18n.init(cfg, rt.log());
         }, "Reloading configs...", "Configs reloaded.");
     }
+
 }

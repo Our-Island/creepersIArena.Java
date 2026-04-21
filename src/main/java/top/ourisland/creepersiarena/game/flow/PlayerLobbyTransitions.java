@@ -34,24 +34,12 @@ final class PlayerLobbyTransitions {
         this.cfg = cfg;
     }
 
-    void refreshLobbyKit(Player p) {
-        PlayerSession s = sessions.get(p);
-        if (s == null) return;
-
-        switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get());
-            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get());
-            case null, default -> {
-            }
-        }
-    }
-
     void selectJob(Player p, String jobIdRaw) {
-        PlayerSession s = sessions.ensureSession(p);
+        var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
 
         String normalized = normalizeCiaId(jobIdRaw);
-        JobId jobId = JobId.fromId(normalized);
+        var jobId = JobId.fromId(normalized);
         if (jobId == null) {
             log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
             return;
@@ -78,8 +66,20 @@ final class PlayerLobbyTransitions {
         return v.substring(colon + 1).trim();
     }
 
+    void refreshLobbyKit(Player p) {
+        var s = sessions.get(p);
+        if (s == null) return;
+
+        switch (s.state()) {
+            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get());
+            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get());
+            case null, default -> {
+            }
+        }
+    }
+
     void nextJobPage(Player p) {
-        PlayerSession s = sessions.ensureSession(p);
+        var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
 
         int per = Math.max(1, cfg.get().ui().lobby().jobsPerPage());
@@ -96,7 +96,7 @@ final class PlayerLobbyTransitions {
     }
 
     void cycleTeam(Player p) {
-        PlayerSession s = sessions.ensureSession(p);
+        var s = sessions.ensureSession(p);
         int max = cfg.get().game().battle().maxTeam();
         Integer cur = s.selectedTeam();
 
@@ -104,7 +104,7 @@ final class PlayerLobbyTransitions {
     }
 
     void selectTeam(Player p, Integer teamId) {
-        PlayerSession s = sessions.ensureSession(p);
+        var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB) return;
 
         Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, cfg.get().game().battle().maxTeam());
@@ -113,4 +113,5 @@ final class PlayerLobbyTransitions {
         refreshLobbyKit(p);
         log.info("[Lobby] {} team -> {}", p.getName(), next == null ? "RANDOM" : next);
     }
+
 }

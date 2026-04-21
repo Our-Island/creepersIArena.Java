@@ -49,7 +49,7 @@ public final class PluginBootstrap {
                 new ReloadOnlinePlayersModule()
         ));
 
-        Logger log = rt.log();
+        var log = rt.log();
         long t0 = System.nanoTime();
 
         int total = bootstrapModules.size();
@@ -59,7 +59,7 @@ public final class PluginBootstrap {
             runStage(StagePhase.LOAD, i + 1, total, bootstrapModules.get(i));
         }
 
-        ListenerBinder binder = new ListenerBinder(rt).verbose(false);
+        var binder = new ListenerBinder(rt).verbose(false);
         int usedModules = 0;
         for (IBootstrapModule m : bootstrapModules) {
             try {
@@ -111,6 +111,12 @@ public final class PluginBootstrap {
         }
     }
 
+    private void logIfPresent(String prefix, String message) {
+        if (message != null && !message.isBlank()) {
+            rt.log().info("{} {}", prefix, message);
+        }
+    }
+
     /**
      * Plugin hot-reload method. Call to hot-reload the plugin.
      */
@@ -129,12 +135,6 @@ public final class PluginBootstrap {
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Reloaded in {}ms.", ms);
-    }
-
-    private void logIfPresent(String prefix, String message) {
-        if (message != null && !message.isBlank()) {
-            rt.log().info("{} {}", prefix, message);
-        }
     }
 
     /**
@@ -164,4 +164,5 @@ public final class PluginBootstrap {
         log.info("creepersIArena is disabled!");
         rt = null;
     }
+
 }

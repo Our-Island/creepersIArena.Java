@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.game.player;
 
 public enum PlayerState {
+
     HUB,
     IN_GAME,
     RESPAWN,
@@ -25,5 +26,6 @@ public enum PlayerState {
     public boolean isRespawn() {
         return this == RESPAWN;
     }
+
 }
 

@@ -11,18 +11,17 @@ import org.jspecify.annotations.NonNull;
 /**
  * Paper Plugin loader entrypoint.
  * <p>
- * Currently, dynamic downloading/injection of runtime dependencies is not required;
- * the implementation can remain empty.
+ * Currently, dynamic downloading/injection of runtime dependencies is not required; the implementation can remain
+ * empty.
  * <p>
- * In the future, if libraries (JarLibrary / MavenLibraryResolver) need to be added at
- * runtime, this will be done here.
+ * In the future, if libraries (JarLibrary / MavenLibraryResolver) need to be added at runtime, this will be done here.
  */
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class CiaPaperLoader implements PluginLoader {
 
     @Override
     public void classloader(@NonNull PluginClasspathBuilder classpathBuilder) {
-        final MavenLibraryResolver resolver = new MavenLibraryResolver();
+        final var resolver = new MavenLibraryResolver();
 
         resolver.addRepository(new RemoteRepository.Builder(
                 "central", "default",

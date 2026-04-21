@@ -14,6 +14,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
  * @author Chiloven945
  */
 public final class PlayerModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "player";
@@ -22,7 +23,7 @@ public final class PlayerModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            PlayerSessionStore sessionStore = new PlayerSessionStore();
+            var sessionStore = new PlayerSessionStore();
             rt.putService(PlayerSessionStore.class, sessionStore);
         }, "Creating player session store...", "Finished creating player session store.");
     }

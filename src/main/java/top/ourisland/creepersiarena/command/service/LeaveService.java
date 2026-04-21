@@ -35,4 +35,5 @@ public final class LeaveService {
             case GameFlow.LeavePlan.Scheduled(int seconds) -> Msg.send(p, "Returning to HUB in " + seconds + "s...");
         }
     }
+
 }

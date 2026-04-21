@@ -15,7 +15,9 @@ data class ArenaConfig(
     @get:JvmName("arenas")
     val arenas: Map<String, ArenaDef>,
 ) {
+
     companion object {
+
         @JvmStatic
         fun fromYaml(yml: YamlConfiguration): ArenaConfig {
             val root = yml.getConfigurationSection("arena") ?: return empty()
@@ -30,6 +32,7 @@ data class ArenaConfig(
 
         @JvmStatic
         fun empty(): ArenaConfig = ArenaConfig(mapOf())
+
     }
 
     fun get(id: String): ArenaDef? = arenas[id]
@@ -44,7 +47,9 @@ data class ArenaConfig(
         @get:JvmName("teamSpawnpoints") val teamSpawnpoints: Map<String, Vec3>,
         @get:JvmName("redstoneBlocksRaw") val redstoneBlocksRaw: List<Any?>,
     ) {
+
         companion object {
+
             internal fun fromSection(id: String, sec: ConfigurationSection): ArenaDef {
                 val nameKey = sec.getString("name", "cia.arena.$id") ?: "cia.arena.$id"
                 val type = sec.getString("type", "battle") ?: "battle"
@@ -92,6 +97,9 @@ data class ArenaConfig(
                     Collections.unmodifiableList(redstoneRaw),
                 )
             }
+
         }
+
     }
+
 }

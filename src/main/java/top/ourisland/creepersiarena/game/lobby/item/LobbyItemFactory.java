@@ -14,6 +14,7 @@ import top.ourisland.creepersiarena.utils.LangKeyResolver;
 import java.util.List;
 
 public final class LobbyItemFactory {
+
     private final LobbyItemCodec codec;
     private final JobManager jobs;
 
@@ -28,16 +29,16 @@ public final class LobbyItemFactory {
     public @Nullable ItemStack jobSelectButton(@lombok.NonNull String jobId, @lombok.NonNull PlayerSession s) {
         boolean selected = s.selectedJob() != null && s.selectedJob().id().equals(jobId);
 
-        JobId jid = JobId.fromId(jobId);
-        IJob job = (jid == null) ? null : jobs.getJob(jid);
+        var jid = JobId.fromId(jobId);
+        var job = (jid == null) ? null : jobs.getJob(jid);
         if (job == null) return null;
 
-        ItemStack item = job.display().clone();
+        var item = job.display().clone();
         item.setAmount(1);
 
         var meta = item.getItemMeta();
         if (meta != null) {
-            Component baseName = I18n.langNP(LangKeyResolver.jobName(jid));
+            var baseName = I18n.langNP(LangKeyResolver.jobName(jid));
 
             meta.displayName(selected
                     ? Component.text("[选择中] ").append(baseName)
@@ -57,7 +58,7 @@ public final class LobbyItemFactory {
         ItemStack it = new ItemStack(Material.OAK_HANGING_SIGN);
         var meta = it.getItemMeta();
         meta.displayName(Component.text("下一页"));
-        meta.lore(List.of(Component.text("右键翻到第 " + nextPage + " 页")));
+        meta.lore(List.<net.kyori.adventure.text.@org.jetbrains.annotations.NotNull TextComponent>of(Component.text("右键翻到第 " + nextPage + " 页")));
         it.setItemMeta(meta);
         codec.markAction(it, LobbyAction.JOB_PAGE_NEXT);
         codec.markJobPage(it, nextPage);
@@ -65,12 +66,12 @@ public final class LobbyItemFactory {
     }
 
     public ItemStack teamCycleButton(@Nullable Integer team, int maxTeam) {
-        ItemStack it = new ItemStack(teamMaterial(team));
+        var it = new ItemStack(teamMaterial(team));
         var meta = it.getItemMeta();
 
         String label = (team == null) ? "随机分队" : ("队伍 " + team + "/" + maxTeam);
         meta.displayName(Component.text("切换队伍"));
-        meta.lore(List.of(Component.text("当前: " + label), Component.text("右键切换")));
+        meta.lore(List.<net.kyori.adventure.text.@org.jetbrains.annotations.NotNull TextComponent>of(Component.text("当前: " + label), Component.text("右键切换")));
         it.setItemMeta(meta);
 
         codec.markAction(it, LobbyAction.TEAM_CYCLE);
@@ -94,12 +95,13 @@ public final class LobbyItemFactory {
     }
 
     public ItemStack backToHubButton() {
-        ItemStack it = new ItemStack(Material.CAMPFIRE);
+        var it = new ItemStack(Material.CAMPFIRE);
         var meta = it.getItemMeta();
         meta.displayName(Component.text("返回大厅"));
-        meta.lore(List.of(Component.text("右键返回大厅")));
+        meta.lore(List.<net.kyori.adventure.text.@org.jetbrains.annotations.NotNull TextComponent>of(Component.text("右键返回大厅")));
         it.setItemMeta(meta);
         codec.markAction(it, LobbyAction.BACK_TO_HUB);
         return it;
     }
+
 }

@@ -2,16 +2,11 @@ package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -64,9 +59,9 @@ public class Skill1 implements ISkillDefinition {
 
     @Override
     public ISkillIcon icon() {
-        return player -> {
-            ItemStack it = new ItemStack(Material.CREEPER_SPAWN_EGG);
-            ItemMeta meta = it.getItemMeta();
+        return _ -> {
+            var it = new ItemStack(Material.CREEPER_SPAWN_EGG);
+            var meta = it.getItemMeta();
             if (meta != null) {
                 String nameKey = LangKeyResolver.skillName(this);
                 Component name = I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id());
@@ -80,14 +75,12 @@ public class Skill1 implements ISkillDefinition {
 
     @Override
     public ISkillExecutor executor() {
-        return (ctx, store) -> {
-            Player caster = ctx.player();
+        return (ctx, _) -> {
+            var caster = ctx.player();
             if (caster == null) return;
+            var world = caster.getWorld();
 
-            World world = caster.getWorld();
-
-
-            SkillConfig cfg = ctx.skillConfig();
+            var cfg = ctx.skillConfig();
             long fuseTicks = cfg.getLong(id(), "fuse-ticks", FUSE_TICKS);
             double speed = cfg.getDouble(id(), "speed", SPEED);
             float explosionPower = (float) cfg.getDouble(id(), "explosion-power", 2.0);
@@ -95,13 +88,13 @@ public class Skill1 implements ISkillDefinition {
             Vector dir = caster.getLocation().getDirection().normalize();
             var spawnLoc = caster.getLocation().add(dir.clone().multiply(1.2)).add(0, 0.2, 0);
 
-            Creeper creeper = (Creeper) world.spawnEntity(spawnLoc, EntityType.CREEPER);
+            var creeper = (Creeper) world.spawnEntity(spawnLoc, EntityType.CREEPER);
             creeper.addScoreboardTag(TAG);
             creeper.setInvulnerable(true);
             creeper.setCollidable(false);
             creeper.setVelocity(dir.multiply(speed));
 
-            Plugin plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
+            var plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
             creeper.getScheduler().runDelayed(plugin, task -> {
                 if (!creeper.isValid() || creeper.isDead()) return;
 

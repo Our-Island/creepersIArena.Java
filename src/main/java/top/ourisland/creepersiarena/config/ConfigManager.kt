@@ -186,4 +186,5 @@ class ConfigManager(
             SkillConfig.defaults()
         }
     }
+
 }

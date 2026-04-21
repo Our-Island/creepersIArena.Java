@@ -9,14 +9,20 @@ import org.jspecify.annotations.Nullable;
 public sealed interface JoinDecision {
 
     record ToHub() implements JoinDecision {
+
     }
 
-    record ToSpectate(@Nullable Location where) implements JoinDecision {
+    record ToSpectate(
+            @Nullable Location where
+    ) implements JoinDecision {
+
     }
 
     /**
      * 直接进战场（一般不推荐 join 就进，但留给未来扩展）
      */
     record ToBattle() implements JoinDecision {
+
     }
+
 }

@@ -10,4 +10,5 @@ public record LobbyInstance(
         Region2D region,
         @Nullable EntryZone entryZone
 ) {
+
 }

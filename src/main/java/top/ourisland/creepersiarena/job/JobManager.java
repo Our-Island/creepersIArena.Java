@@ -4,6 +4,7 @@ package top.ourisland.creepersiarena.job;
 import java.util.*;
 
 public final class JobManager {
+
     private final Map<JobId, IJob> jobs = new HashMap<>();
 
     public void clear() {
@@ -31,4 +32,5 @@ public final class JobManager {
     public Collection<IJob> getAllJobs() {
         return Collections.unmodifiableCollection(jobs.values());
     }
+
 }

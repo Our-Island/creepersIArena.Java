@@ -15,18 +15,19 @@ public final class UserLanguageService {
     }
 
     public String getOrNull(Player p) {
-        PersistentDataContainer pdc = p.getPersistentDataContainer();
+        var pdc = p.getPersistentDataContainer();
         String v = pdc.get(userLangKey, PersistentDataType.STRING);
         if (v == null || v.isBlank()) return null;
         return v.trim();
     }
 
     public void set(Player p, String langOrNull) {
-        PersistentDataContainer pdc = p.getPersistentDataContainer();
+        var pdc = p.getPersistentDataContainer();
         if (langOrNull == null || langOrNull.isBlank()) {
             pdc.remove(userLangKey);
             return;
         }
         pdc.set(userLangKey, PersistentDataType.STRING, langOrNull.trim());
     }
+
 }

@@ -16,4 +16,5 @@ public record Bounds2D(
 
         return new Bounds2D(minX, maxX, minZ, maxZ);
     }
+
 }

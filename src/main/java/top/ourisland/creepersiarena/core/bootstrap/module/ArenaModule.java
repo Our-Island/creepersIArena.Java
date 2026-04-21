@@ -18,6 +18,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
  * @author Chiloven945
  */
 public final class ArenaModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "arena";
@@ -26,16 +27,26 @@ public final class ArenaModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            Logger log = rt.log();
+            var log = rt.log();
 
-            World world = rt.requireService(World.class);
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            var world = rt.requireService(World.class);
+            var cfg = rt.requireService(ConfigManager.class);
 
-            ArenaManager arenaManager = new ArenaManager(world, log);
+            var arenaManager = new ArenaManager(world, log);
             arenaManager.reload(cfg.arenaConfig());
 
             rt.putService(ArenaManager.class, arenaManager);
         }, "Loading arenas...", "Finished loading arenas.");
+    }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var cfg = rt.requireService(ConfigManager.class);
+            var arenaManager = rt.requireService(ArenaManager.class);
+
+            arenaManager.reload(cfg.arenaConfig());
+        }, "Reloading arenas...", "Arenas reloaded.");
     }
 
     @Override
@@ -48,13 +59,4 @@ public final class ArenaModule implements IBootstrapModule {
         return true;
     }
 
-    @Override
-    public StageTask reload(BootstrapRuntime rt) {
-        return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
-            ArenaManager arenaManager = rt.requireService(ArenaManager.class);
-
-            arenaManager.reload(cfg.arenaConfig());
-        }, "Reloading arenas...", "Arenas reloaded.");
-    }
 }

@@ -39,4 +39,5 @@ public final class ArenaDeathListener implements Listener {
 
         flow.onPlayerRespawnEvent(p, e::setRespawnLocation);
     }
+
 }

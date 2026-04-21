@@ -27,15 +27,10 @@ public final class SkillHotbarRenderer {
         this.store = store;
     }
 
-    private static ItemStack safeClone(ItemStack it) {
-        if (it == null) return new ItemStack(Material.BARRIER);
-        return it.clone();
-    }
-
     public void render(Player p, List<ISkillDefinition> skills, long nowTick) {
         if (p == null || skills == null) return;
 
-        PlayerInventory inv = p.getInventory();
+        var inv = p.getInventory();
 
         ISkillDefinition[] desired = new ISkillDefinition[9];
         for (ISkillDefinition def : skills) {
@@ -50,7 +45,7 @@ public final class SkillHotbarRenderer {
 
         for (int slot = 0; slot <= 8; slot++) {
             ISkillDefinition def = desired[slot];
-            ItemStack cur = inv.getItem(slot);
+            var cur = inv.getItem(slot);
 
             if (def == null) {
                 if (cur != null && codec.isSkillItem(cur)) {
@@ -59,7 +54,7 @@ public final class SkillHotbarRenderer {
                 continue;
             }
 
-            ItemStack next = buildSkillItem(p, def, nowTick);
+            var next = buildSkillItem(p, def, nowTick);
 
             if (cur == null) {
                 inv.setItem(slot, next);
@@ -91,7 +86,7 @@ public final class SkillHotbarRenderer {
                 base.setAmount(Math.clamp(sec, 1, 64));
             }
 
-            ItemMeta meta = base.getItemMeta();
+            var meta = base.getItemMeta();
             if (meta != null) {
                 meta.displayName(Component.text("[冷却中] " + I18n.langStrNP(LangKeyResolver.skillName(def))));
                 base.setItemMeta(meta);
@@ -103,6 +98,11 @@ public final class SkillHotbarRenderer {
 
         codec.markSkill(base, def.id(), def.uiSlot());
         return base;
+    }
+
+    private static ItemStack safeClone(ItemStack it) {
+        if (it == null) return new ItemStack(Material.BARRIER);
+        return it.clone();
     }
 
 }

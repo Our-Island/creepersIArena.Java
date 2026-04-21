@@ -5,6 +5,7 @@ import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import java.util.List;
 
 public interface ISkillDefinition {
+
     String id();
 
     String jobId();

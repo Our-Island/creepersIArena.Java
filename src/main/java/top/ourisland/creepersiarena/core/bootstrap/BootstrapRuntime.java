@@ -26,6 +26,7 @@ import java.util.Map;
  */
 @Getter
 public final class BootstrapRuntime {
+
     private final JavaPlugin plugin;
     private final Logger log;
     private final ServiceRegistry services = new ServiceRegistry();
@@ -127,4 +128,5 @@ public final class BootstrapRuntime {
         }
         tasks.clear();
     }
+
 }

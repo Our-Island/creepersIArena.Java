@@ -19,6 +19,7 @@ import java.util.function.Supplier;
  * without throwing. This allows bootstrap to continue registering other listeners (if desired).</p>
  */
 public final class ListenerBinder {
+
     @Getter
     private final BootstrapRuntime rt;
     private final PluginManager pm;
@@ -91,4 +92,5 @@ public final class ListenerBinder {
             return false;
         }
     }
+
 }

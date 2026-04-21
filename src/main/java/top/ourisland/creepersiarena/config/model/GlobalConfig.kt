@@ -22,6 +22,7 @@ data class GlobalConfig(
 ) {
 
     companion object {
+
         fun defaults(): GlobalConfig = GlobalConfig(
             "en_us",
             setOf(),
@@ -69,6 +70,7 @@ data class GlobalConfig(
                 def
             }
         }
+
     }
 
     // ---------------- sub models ----------------
@@ -78,6 +80,7 @@ data class GlobalConfig(
         INVENTORY;
 
         companion object {
+
             fun fromConfig(s: String?): JobSelectMode {
                 if (s == null) return HOTBAR
                 return when (s.trim().lowercase(Locale.ROOT)) {
@@ -85,7 +88,9 @@ data class GlobalConfig(
                     else -> HOTBAR
                 }
             }
+
         }
+
     }
 
     data class Lobby(
@@ -98,7 +103,9 @@ data class GlobalConfig(
         @get:JvmName("toZ") val toZ: Double,
         @get:JvmName("entry") val entry: @Nullable Entry?,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection): Lobby {
                 val loc = sec.getList("location", listOf(0, 100, 0))
                 val from = sec.getList("range.from", listOf(100, 100))
@@ -116,6 +123,7 @@ data class GlobalConfig(
                 val entry = Entry.fromSection(sec.getConfigurationSection("entry"))
                 return Lobby(x, y, z, fromX, fromZ, toX, toZ, entry)
             }
+
         }
 
         data class Entry(
@@ -127,7 +135,9 @@ data class GlobalConfig(
             @get:JvmName("toY") val toY: Double,
             @get:JvmName("toZ") val toZ: Double,
         ) {
+
             companion object {
+
                 fun fromSection(sec: ConfigurationSection?): @Nullable Entry? {
                     if (sec == null) return null
                     val time = sec.getLong("time", 0L)
@@ -146,8 +156,11 @@ data class GlobalConfig(
 
                     return Entry(time, fromX, fromY, fromZ, toX, toY, toZ)
                 }
+
             }
+
         }
+
     }
 
     data class Game(
@@ -156,7 +169,9 @@ data class GlobalConfig(
         @get:JvmName("battle") val battle: Battle,
         @get:JvmName("steal") val steal: Steal,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection?): Game {
                 if (sec == null) return defaults()
 
@@ -175,6 +190,7 @@ data class GlobalConfig(
                 battle = Battle.defaults(),
                 steal = Steal.defaults()
             )
+
         }
 
         data class Battle(
@@ -184,7 +200,9 @@ data class GlobalConfig(
             @get:JvmName("teamAutoBalancing") val teamAutoBalancing: Boolean,
             @get:JvmName("forceBalancing") val forceBalancing: Boolean,
         ) {
+
             companion object {
+
                 fun fromSection(sec: ConfigurationSection?): Battle {
                     if (sec == null) return defaults()
                     return Battle(
@@ -203,7 +221,9 @@ data class GlobalConfig(
                     teamAutoBalancing = true,
                     forceBalancing = false
                 )
+
             }
+
         }
 
         data class Steal(
@@ -212,7 +232,9 @@ data class GlobalConfig(
             @get:JvmName("totalRound") val totalRound: Int,
             @get:JvmName("timePerRoundSeconds") val timePerRoundSeconds: Int,
         ) {
+
             companion object {
+
                 fun fromSection(sec: ConfigurationSection?): Steal {
                     if (sec == null) return defaults()
                     return Steal(
@@ -229,28 +251,37 @@ data class GlobalConfig(
                     totalRound = 10,
                     timePerRoundSeconds = 10
                 )
+
             }
+
         }
+
     }
 
     data class Ui(
         @get:JvmName("lobby") val lobby: LobbyUi,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection?): Ui {
                 if (sec == null) return defaults()
                 return Ui(LobbyUi.fromSection(sec.getConfigurationSection("lobby")))
             }
 
             fun defaults(): Ui = Ui(LobbyUi.defaults())
+
         }
+
     }
 
     data class LobbyUi(
         @get:JvmName("jobSelectMode") val jobSelectMode: JobSelectMode,
         @get:JvmName("jobsPerPage") val jobsPerPage: Int,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection?): LobbyUi {
                 if (sec == null) return defaults()
                 val mode = sec.getString("job-select-mode", "hotbar")
@@ -262,20 +293,26 @@ data class GlobalConfig(
                 jobSelectMode = JobSelectMode.HOTBAR,
                 jobsPerPage = 5
             )
+
         }
+
     }
 
     data class World(
         @get:JvmName("enablePortals") val enablePortals: Boolean,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection?): World {
                 if (sec == null) return defaults()
                 return World(sec.getBoolean("enable-portals", true))
             }
 
             fun defaults(): World = World(true)
+
         }
+
     }
 
     data class Vec3(
@@ -283,7 +320,9 @@ data class GlobalConfig(
         @get:JvmName("y") val y: Int,
         @get:JvmName("z") val z: Int,
     ) {
+
         companion object {
+
             fun fromList(list: List<*>?): Vec3 {
                 if (list == null || list.size < 3) return Vec3(0, 0, 0)
                 return Vec3(toInt(list[0]), toInt(list[1]), toInt(list[2]))
@@ -297,7 +336,9 @@ data class GlobalConfig(
                     0
                 }
             }
+
         }
+
     }
 
     data class Range2D(
@@ -306,7 +347,9 @@ data class GlobalConfig(
         @get:JvmName("minZ") val minZ: Int,
         @get:JvmName("maxZ") val maxZ: Int,
     ) {
+
         companion object {
+
             fun fromSection(sec: ConfigurationSection?): Range2D {
                 if (sec == null) return Range2D(0, 0, 0, 0)
                 val from = sec.getList("from")
@@ -331,9 +374,12 @@ data class GlobalConfig(
                     0
                 }
             }
+
         }
 
-        fun contains(x: Int, z: Int): Boolean = x in minX..maxX && z in minZ..maxZ
+        fun contains(x: Int, z: Int): Boolean =
+            x in minX..maxX && z in minZ..maxZ
+
     }
 
 }

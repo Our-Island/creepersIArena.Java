@@ -217,4 +217,5 @@ object LangKeyResolver {
     @JvmStatic
     fun jobLore(jobId: JobId, line: Int): String =
         "${jobBase(jobId)}.lore.$line"
+
 }

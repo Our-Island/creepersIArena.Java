@@ -36,27 +36,27 @@ public final class CiaPermissions {
     }
 
     public static void registerAll(Plugin plugin) {
-        Permission pChooseJob = ensure(CHOOSEJOB, PermissionDefault.TRUE);
+        var pChooseJob = ensure(CHOOSEJOB, PermissionDefault.TRUE);
 
-        Permission pCommandRoot = ensure(COMMAND, PermissionDefault.TRUE);
-        Permission pJoin = ensure(COMMAND_JOIN, PermissionDefault.TRUE);
-        Permission pLeave = ensure(COMMAND_LEAVE, PermissionDefault.TRUE);
-        Permission pJob = ensure(COMMAND_JOB, PermissionDefault.TRUE);
-        Permission pTeam = ensure(COMMAND_TEAM, PermissionDefault.TRUE);
-        Permission pLanguage = ensure(COMMAND_LANGUAGE, PermissionDefault.TRUE);
-        Permission pPreference = ensure(COMMAND_PREFERENCE, PermissionDefault.TRUE);
+        var pCommandRoot = ensure(COMMAND, PermissionDefault.TRUE);
+        var pJoin = ensure(COMMAND_JOIN, PermissionDefault.TRUE);
+        var pLeave = ensure(COMMAND_LEAVE, PermissionDefault.TRUE);
+        var pJob = ensure(COMMAND_JOB, PermissionDefault.TRUE);
+        var pTeam = ensure(COMMAND_TEAM, PermissionDefault.TRUE);
+        var pLanguage = ensure(COMMAND_LANGUAGE, PermissionDefault.TRUE);
+        var pPreference = ensure(COMMAND_PREFERENCE, PermissionDefault.TRUE);
 
-        Permission pAdminRoot = ensure(ADMIN, PermissionDefault.OP);
-        Permission pAdminMode = ensure(ADMIN_MODE, PermissionDefault.OP);
-        Permission pAdminArena = ensure(ADMIN_ARENA, PermissionDefault.OP);
-        Permission pAdminSkip = ensure(ADMIN_SKIP, PermissionDefault.OP);
-        Permission pAdminCooldown = ensure(ADMIN_COOLDOWN, PermissionDefault.OP);
-        Permission pAdminRegeneration = ensure(ADMIN_REGENERATION, PermissionDefault.OP);
-        Permission pAdminMutation = ensure(ADMIN_MUTATION, PermissionDefault.OP);
-        Permission pAdminEntrance = ensure(ADMIN_ENTRANCE, PermissionDefault.OP);
-        Permission pAdminLanguage = ensure(ADMIN_LANGUAGE, PermissionDefault.OP);
-        Permission pAdminReload = ensure(ADMIN_RELOAD, PermissionDefault.OP);
-        Permission pAdminConfig = ensure(ADMIN_CONFIG, PermissionDefault.OP);
+        var pAdminRoot = ensure(ADMIN, PermissionDefault.OP);
+        var pAdminMode = ensure(ADMIN_MODE, PermissionDefault.OP);
+        var pAdminArena = ensure(ADMIN_ARENA, PermissionDefault.OP);
+        var pAdminSkip = ensure(ADMIN_SKIP, PermissionDefault.OP);
+        var pAdminCooldown = ensure(ADMIN_COOLDOWN, PermissionDefault.OP);
+        var pAdminRegeneration = ensure(ADMIN_REGENERATION, PermissionDefault.OP);
+        var pAdminMutation = ensure(ADMIN_MUTATION, PermissionDefault.OP);
+        var pAdminEntrance = ensure(ADMIN_ENTRANCE, PermissionDefault.OP);
+        var pAdminLanguage = ensure(ADMIN_LANGUAGE, PermissionDefault.OP);
+        var pAdminReload = ensure(ADMIN_RELOAD, PermissionDefault.OP);
+        var pAdminConfig = ensure(ADMIN_CONFIG, PermissionDefault.OP);
 
         // command root -> sub commands
         addChild(pCommandRoot, pJoin);
@@ -83,12 +83,12 @@ public final class CiaPermissions {
     }
 
     private static Permission ensure(String node, PermissionDefault def) {
-        Permission existing = Bukkit.getPluginManager().getPermission(node);
+        var existing = Bukkit.getPluginManager().getPermission(node);
         if (existing != null) {
             existing.setDefault(def);
             return existing;
         }
-        Permission created = new Permission(node, def);
+        var created = new Permission(node, def);
         Bukkit.getPluginManager().addPermission(created);
         return created;
     }
@@ -99,4 +99,5 @@ public final class CiaPermissions {
         parent.getChildren().put(child.getName(), true);
         parent.recalculatePermissibles();
     }
+
 }

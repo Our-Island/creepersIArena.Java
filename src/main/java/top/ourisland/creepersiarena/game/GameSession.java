@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class GameSession {
+
     private final GameModeType mode;
     private final Set<UUID> players = new HashSet<>();
     private ArenaInstance arena;
@@ -41,4 +42,5 @@ public final class GameSession {
     public void removePlayer(UUID id) {
         players.remove(id);
     }
+
 }

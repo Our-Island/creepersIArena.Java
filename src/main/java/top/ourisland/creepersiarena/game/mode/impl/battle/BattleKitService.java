@@ -35,10 +35,10 @@ public final class BattleKitService {
 
         clear(p);
 
-        JobId jobId = s.selectedJob();
+        var jobId = s.selectedJob();
         if (jobId == null) return;
 
-        IJob job = jobs.getJob(jobId);
+        var job = jobs.getJob(jobId);
         if (job == null) return;
 
         ItemStack[] armor = job.armorTemplate();
@@ -59,4 +59,5 @@ public final class BattleKitService {
         inv.setArmorContents(null);
         inv.setItemInOffHand(null);
     }
+
 }

@@ -12,18 +12,35 @@ import java.util.UUID;
  */
 public sealed interface GameAction {
 
-    record Broadcast(Component message) implements GameAction {
+    record Broadcast(
+            Component message
+    ) implements GameAction {
+
     }
 
-    record ToHub(Set<UUID> players) implements GameAction {
+    record ToHub(
+            Set<UUID> players
+    ) implements GameAction {
+
     }
 
-    record ToBattle(Set<UUID> players) implements GameAction {
+    record ToBattle(
+            Set<UUID> players
+    ) implements GameAction {
+
     }
 
-    record ToSpectate(Set<UUID> players, @Nullable Location where) implements GameAction {
+    record ToSpectate(
+            Set<UUID> players,
+            @Nullable Location where
+    ) implements GameAction {
+
     }
 
-    record EndGameAndBackToHub(String reason) implements GameAction {
+    record EndGameAndBackToHub(
+            String reason
+    ) implements GameAction {
+
     }
+
 }

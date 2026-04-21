@@ -29,4 +29,5 @@ public final class CommandModule implements IBootstrapModule {
             );
         }, "Registering commands...", "Commands registered.");
     }
+
 }

@@ -50,4 +50,5 @@ public final class StealRules implements IModeRules {
         Location view = game.arena().anchor().clone().add(0, 8, 0);
         return new RespawnDecision.Spectate(view);
     }
+
 }

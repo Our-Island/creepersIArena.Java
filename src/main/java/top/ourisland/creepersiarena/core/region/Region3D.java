@@ -11,4 +11,5 @@ public record Region3D(World world, Bounds3D bounds) implements IRegion<Bounds3D
         this.world = world;
         this.bounds = bounds;
     }
+
 }

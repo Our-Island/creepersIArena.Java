@@ -29,6 +29,7 @@ public record ArenaInstance(
         List<Location> spawnpoints,
         Map<String, Location> teamSpawnpoints
 ) {
+
     public ArenaInstance(
             @lombok.NonNull String id,
             @lombok.NonNull String nameKey,
@@ -47,10 +48,14 @@ public record ArenaInstance(
         this.teamSpawnpoints = Map.copyOf(teamSpawnpoints);
     }
 
-    public static ArenaInstance fromConfig(@lombok.NonNull World world, @lombok.NonNull String id, @lombok.NonNull ArenaConfig.ArenaDef def) {
+    public static ArenaInstance fromConfig(
+            @lombok.NonNull World world,
+            @lombok.NonNull String id,
+            @lombok.NonNull ArenaConfig.ArenaDef def
+    ) {
         GameModeType type = parseMode(def.type());
 
-        Location anchor = new Location(
+        var anchor = new Location(
                 world,
                 def.location().x() + 0.5,
                 def.location().y(),
@@ -99,4 +104,5 @@ public record ArenaInstance(
     public Location anchor() {
         return anchor.clone();
     }
+
 }

@@ -41,4 +41,5 @@ public final class BattleRules implements IModeRules {
         int sec = runtime.cfg().game().battle().respawnTimeSeconds();
         return new RespawnDecision.DeathLobbyCountdown(sec);
     }
+
 }

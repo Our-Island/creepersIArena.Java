@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 
 public final class PlayerStateRulesListener implements Listener {
+
     private final PlayerSessionStore store;
     private final LobbyService lobbyService;
     private final ConfigManager configManager;
@@ -36,7 +37,7 @@ public final class PlayerStateRulesListener implements Listener {
         // Paper optimization: only run boundary checks when the player changed blocks.
         if (!e.hasChangedBlock()) return;
 
-        Player p = e.getPlayer();
+        var p = e.getPlayer();
         if (p.getGameMode() != GameMode.ADVENTURE) return;
 
         var s = store.get(p);

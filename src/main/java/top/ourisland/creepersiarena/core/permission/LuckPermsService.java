@@ -43,4 +43,5 @@ public final class LuckPermsService {
     public @NonNull LuckPerms api() {
         return api;
     }
+
 }

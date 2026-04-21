@@ -1,18 +1,16 @@
 package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.job.skill.ISkillIcon;
@@ -84,9 +82,9 @@ public class Skill3 implements ISkillDefinition {
 
     @Override
     public ISkillIcon icon() {
-        return player -> {
-            ItemStack it = new ItemStack(Material.COMPARATOR);
-            ItemMeta meta = it.getItemMeta();
+        return _ -> {
+            var it = new ItemStack(Material.COMPARATOR);
+            var meta = it.getItemMeta();
             if (meta != null) {
                 String nameKey = LangKeyResolver.skillName(this);
                 meta.displayName(I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id()));
@@ -99,11 +97,11 @@ public class Skill3 implements ISkillDefinition {
 
     @Override
     public ISkillExecutor executor() {
-        return (ctx, store) -> {
-            Player p = ctx.player();
+        return (ctx, _) -> {
+            var p = ctx.player();
             if (p == null) return;
 
-            SkillConfig cfg = ctx.skillConfig();
+            var cfg = ctx.skillConfig();
             int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
             int rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
             double forward = cfg.getDouble(id(), "forward", FORWARD);
@@ -114,12 +112,12 @@ public class Skill3 implements ISkillDefinition {
 
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, slowFallingTicks, 0, true, false, false));
 
-            World w = p.getWorld();
+            var w = p.getWorld();
             Vector dir = p.getLocation().getDirection().normalize();
             Location spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
 
-            Firework fw = w.spawn(spawn, Firework.class, f -> {
-                FireworkMeta m = f.getFireworkMeta();
+            var fw = w.spawn(spawn, Firework.class, f -> {
+                var m = f.getFireworkMeta();
                 m.clearEffects();
                 m.addEffect(buildEffect());
                 m.setPower(flight);
@@ -136,7 +134,7 @@ public class Skill3 implements ISkillDefinition {
 
             fw.addPassenger(p);
 
-            Plugin plugin = JavaPlugin.getProvidingPlugin(Skill3.class);
+            var plugin = JavaPlugin.getProvidingPlugin(Skill3.class);
 
             final int[] t = {0};
             fw.getScheduler().runAtFixedRate(plugin, task -> {

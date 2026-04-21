@@ -51,4 +51,5 @@ public final class PlayerConnectionListener implements Listener {
     public void onKick(PlayerKickEvent e) {
         flow.onPlayerLeaveServer(e.getPlayer(), LeaveReason.KICK);
     }
+
 }

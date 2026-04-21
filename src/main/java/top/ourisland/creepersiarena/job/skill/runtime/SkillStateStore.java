@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.job.skill.runtime;
 import java.util.UUID;
 
 public interface SkillStateStore {
+
     void cooldownEndsAtTick(UUID playerId, String skillId, long endTick);
 
     default boolean isCoolingDown(UUID playerId, String skillId, long nowTick) {
@@ -15,4 +16,5 @@ public interface SkillStateStore {
     }
 
     long cooldownEndsAtTick(UUID playerId, String skillId);
+
 }

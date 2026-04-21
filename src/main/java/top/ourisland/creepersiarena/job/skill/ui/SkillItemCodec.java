@@ -19,7 +19,7 @@ public final class SkillItemCodec {
 
     public void markSkill(ItemStack it, String skillId, int uiSlot) {
         if (it == null) return;
-        ItemMeta meta = it.getItemMeta();
+        var meta = it.getItemMeta();
         if (meta == null) return;
 
         meta.getPersistentDataContainer().set(skillIdKey, PersistentDataType.STRING, skillId);
@@ -30,7 +30,7 @@ public final class SkillItemCodec {
 
     public int readUiSlot(ItemStack it) {
         if (it == null) return -1;
-        ItemMeta meta = it.getItemMeta();
+        var meta = it.getItemMeta();
         if (meta == null) return -1;
         Integer v = meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
         return v == null ? -1 : v;
@@ -42,8 +42,9 @@ public final class SkillItemCodec {
 
     public @Nullable String readSkillId(ItemStack it) {
         if (it == null) return null;
-        ItemMeta meta = it.getItemMeta();
+        var meta = it.getItemMeta();
         if (meta == null) return null;
         return meta.getPersistentDataContainer().get(skillIdKey, PersistentDataType.STRING);
     }
+
 }

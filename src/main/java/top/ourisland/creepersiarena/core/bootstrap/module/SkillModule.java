@@ -28,6 +28,7 @@ import java.util.Map;
  * @author Chiloven945
  */
 public final class SkillModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "skill";
@@ -36,31 +37,28 @@ public final class SkillModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            PlayerSessionStore sessionStore = rt.requireService(PlayerSessionStore.class);
-            JobManager jobManager = rt.requireService(JobManager.class);
+            var sessionStore = rt.requireService(PlayerSessionStore.class);
+            var jobManager = rt.requireService(JobManager.class);
 
-            SkillItemCodec skillCodec = new SkillItemCodec(rt.plugin());
-
+            var skillCodec = new SkillItemCodec(rt.plugin());
             var skillStore = new InMemorySkillStateStore();
+            var skillRegistry = new SkillRegistry(sessionStore, jobManager);
 
-            SkillRegistry skillRegistry = new SkillRegistry(sessionStore, jobManager);
-
-            SkillRuntime skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
+            var skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
                 var runtimeState = rt.getService(AdminRuntimeState.class);
                 if (runtimeState == null) return 1.0;
                 return runtimeState.cooldownFactor();
             }, () -> rt.requireService(ConfigManager.class).skillConfig());
 
-            SkillHotbarRenderer skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
-
-            SkillTickTask tickTask = new SkillTickTask(
+            var skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
+            var tickTask = new SkillTickTask(
                     sessionStore,
                     skillRegistry,
                     skillRuntime,
                     skillRenderer
             );
 
-            BattleKitService battleKitService = new BattleKitService(
+            var battleKitService = new BattleKitService(
                     jobManager,
                     skillRegistry,
                     skillRenderer,
@@ -81,10 +79,13 @@ public final class SkillModule implements IBootstrapModule {
     @Override
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            SkillTickTask tickTask = rt.requireService(SkillTickTask.class);
+            var tickTask = rt.requireService(SkillTickTask.class);
 
-            ScheduledTask skillTick = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
-                    rt.plugin(), task -> tickTask.tick(), 1L, 1L
+            var skillTick = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
+                    rt.plugin(),
+                    _ -> tickTask.tick(),
+                    1L,
+                    1L
             );
             rt.trackTask(skillTick);
 
@@ -95,7 +96,7 @@ public final class SkillModule implements IBootstrapModule {
     @Override
     public StageTask stop(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            SkillTickHandle h = rt.getService(SkillTickHandle.class);
+            var h = rt.getService(SkillTickHandle.class);
             try {
                 h.task().cancel();
             } catch (Throwable _) {
@@ -109,7 +110,7 @@ public final class SkillModule implements IBootstrapModule {
 
         binder.register("SkillImplementationListener", SkillImplementationListener::new);
 
-        SkillTickTask tickTask = rt.requireService(SkillTickTask.class);
+        var tickTask = rt.requireService(SkillTickTask.class);
 
         binder.register("SkillUiListener", () -> new SkillUiListener(
                 rt.requireService(PlayerSessionStore.class),
@@ -122,6 +123,7 @@ public final class SkillModule implements IBootstrapModule {
     }
 
     public record SkillTickHandle(ScheduledTask task) {
+
     }
 
 }

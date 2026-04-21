@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.core.bootstrap.StageTask;
  * @author Chiloven945
  */
 public final class WorldModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "world";
@@ -20,11 +21,12 @@ public final class WorldModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().getFirst();
+            var world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().getFirst();
             if (world == null) throw new IllegalStateException("No world has been loaded, cannot start the plugin.");
 
             rt.log().info("[World] Using world {} as main world.", world.getName());
             rt.putService(World.class, world);
         }, "Resolving world...", "Main using world resolved.");
     }
+
 }

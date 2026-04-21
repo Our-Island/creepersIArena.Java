@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.bukkit.World;
-import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
@@ -22,6 +21,7 @@ import java.util.Map;
  * @author Chiloven945
  */
 public final class LobbyModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "lobby";
@@ -30,21 +30,31 @@ public final class LobbyModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            Logger log = rt.log();
+            var log = rt.log();
 
-            World world = rt.requireService(World.class);
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
+            var world = rt.requireService(World.class);
+            var cfg = rt.requireService(ConfigManager.class);
 
-            LobbyManager lobbyManager = new LobbyManager(world, log);
+            var lobbyManager = new LobbyManager(world, log);
             lobbyManager.reload(cfg.globalConfig());
 
-            LobbyService lobbyService = new LobbyService(lobbyManager);
+            var lobbyService = new LobbyService(lobbyManager);
 
             rt.putAllServices(Map.of(
                     LobbyManager.class, lobbyManager,
                     LobbyService.class, lobbyService
             ));
         }, "Loading lobbies...", "Finished loading lobbies.");
+    }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var cfg = rt.requireService(ConfigManager.class);
+            var lobbyManager = rt.requireService(LobbyManager.class);
+
+            lobbyManager.reload(cfg.globalConfig());
+        }, "Reloading lobbies...", "Lobbies reloaded.");
     }
 
     @Override
@@ -66,16 +76,6 @@ public final class LobbyModule implements IBootstrapModule {
         ));
 
         return true;
-    }
-
-    @Override
-    public StageTask reload(BootstrapRuntime rt) {
-        return StageTask.of(() -> {
-            ConfigManager cfg = rt.requireService(ConfigManager.class);
-            LobbyManager lobbyManager = rt.requireService(LobbyManager.class);
-
-            lobbyManager.reload(cfg.globalConfig());
-        }, "Reloading lobbies...", "Lobbies reloaded.");
     }
 
 }

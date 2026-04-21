@@ -52,20 +52,12 @@ final class PlayerStageTransitions {
         this.cfg = cfg;
     }
 
-    Location hubAnchor() {
-        return lobbyService.lobbyAnchor("hub");
-    }
-
-    Location deathAnchor() {
-        return lobbyService.lobbyAnchor("death");
-    }
-
     int battleRespawnSecondsConfigured() {
         return cfg.get().game().battle().respawnTimeSeconds();
     }
 
     void toHub(Player p) {
-        PlayerSession session = sessions.ensureSession(p);
+        var session = sessions.ensureSession(p);
 
         session.state(PlayerState.HUB);
         session.respawnSecondsRemaining(0);
@@ -85,8 +77,26 @@ final class PlayerStageTransitions {
         );
     }
 
+    Location hubAnchor() {
+        return lobbyService.lobbyAnchor("hub");
+    }
+
+    private void teleportAsync(Player p, Location to, String reason) {
+        if (p == null || to == null) return;
+
+        CompletableFuture<Boolean> f = p.teleportAsync(to);
+        f.thenAccept(success -> {
+            if (!success) {
+                log.warn("[Transitions] teleportAsync failed: player={} reason={} to={}", p.getName(), reason, to);
+            }
+        }).exceptionally(t -> {
+            log.warn("[Transitions] teleportAsync error: player={} reason={} to={}", p.getName(), reason, to, t);
+            return null;
+        });
+    }
+
     void toRespawnLobby(Player p, int seconds) {
-        PlayerSession session = sessions.ensureSession(p);
+        var session = sessions.ensureSession(p);
 
         session.state(PlayerState.RESPAWN);
         session.respawnSecondsRemaining(Math.max(0, seconds));
@@ -101,6 +111,10 @@ final class PlayerStageTransitions {
         log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
     }
 
+    Location deathAnchor() {
+        return lobbyService.lobbyAnchor("death");
+    }
+
     void toSpectate(Player p, Location where) {
         if (where != null) {
             teleportAsync(p, where, "SPECTATE(where)");
@@ -109,7 +123,7 @@ final class PlayerStageTransitions {
     }
 
     void toSpectate(Player p) {
-        PlayerSession session = sessions.ensureSession(p);
+        var session = sessions.ensureSession(p);
         session.state(PlayerState.SPECTATE);
         session.respawnSecondsRemaining(0);
 
@@ -120,7 +134,7 @@ final class PlayerStageTransitions {
     }
 
     void toBattle(Player p) {
-        PlayerSession session = sessions.ensureSession(p);
+        var session = sessions.ensureSession(p);
         session.state(PlayerState.IN_GAME);
         session.respawnSecondsRemaining(0);
 
@@ -136,7 +150,7 @@ final class PlayerStageTransitions {
     }
 
     void toBattle(Player p, GameSession g) {
-        PlayerSession session = sessions.ensureSession(p);
+        var session = sessions.ensureSession(p);
         session.state(PlayerState.IN_GAME);
         session.respawnSecondsRemaining(0);
 
@@ -156,17 +170,4 @@ final class PlayerStageTransitions {
         return arenaManager.battleSpawn(g.arena());
     }
 
-    private void teleportAsync(Player p, Location to, String reason) {
-        if (p == null || to == null) return;
-
-        CompletableFuture<Boolean> f = p.teleportAsync(to);
-        f.thenAccept(success -> {
-            if (!success) {
-                log.warn("[Transitions] teleportAsync failed: player={} reason={} to={}", p.getName(), reason, to);
-            }
-        }).exceptionally(t -> {
-            log.warn("[Transitions] teleportAsync error: player={} reason={} to={}", p.getName(), reason, to, t);
-            return null;
-        });
-    }
 }

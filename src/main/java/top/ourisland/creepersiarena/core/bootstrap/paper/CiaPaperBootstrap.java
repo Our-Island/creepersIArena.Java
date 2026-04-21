@@ -24,4 +24,5 @@ public final class CiaPaperBootstrap implements PluginBootstrap {
     public @NonNull JavaPlugin createPlugin(@NonNull PluginProviderContext context) {
         return new CreepersIArena();
     }
+
 }

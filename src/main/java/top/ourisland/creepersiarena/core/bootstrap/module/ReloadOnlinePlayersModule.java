@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.game.flow.GameFlow;
  * @author Chiloven945
  */
 public final class ReloadOnlinePlayersModule implements IBootstrapModule {
+
     @Override
     public String name() {
         return "reload-online-players";
@@ -20,7 +21,7 @@ public final class ReloadOnlinePlayersModule implements IBootstrapModule {
     @Override
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            GameFlow flow = rt.requireService(GameFlow.class);
+            var flow = rt.requireService(GameFlow.class);
 
             int online = Bukkit.getOnlinePlayers().size();
             if (online == 0) return;
@@ -36,4 +37,5 @@ public final class ReloadOnlinePlayersModule implements IBootstrapModule {
                     }));
         }, null, null);
     }
+
 }

@@ -205,4 +205,5 @@ public final class StealTimeline implements IModeTimeline {
             s.stealAlive(true);
         }
     }
+
 }

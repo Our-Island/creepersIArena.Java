@@ -5,6 +5,7 @@ public record Bounds3D(
         double minY, double maxY,
         double minZ, double maxZ
 ) implements IBounds {
+
     public static Bounds3D of(
             double x1, double y1, double z1,
             double x2, double y2, double z2
@@ -23,4 +24,5 @@ public record Bounds3D(
     public boolean hasY() {
         return true;
     }
+
 }

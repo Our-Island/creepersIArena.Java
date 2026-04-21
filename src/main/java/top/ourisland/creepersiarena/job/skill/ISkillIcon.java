@@ -5,5 +5,7 @@ import org.bukkit.inventory.ItemStack;
 
 @FunctionalInterface
 public interface ISkillIcon {
+
     ItemStack buildIcon(Player player);
+
 }

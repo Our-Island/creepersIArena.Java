@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.config.model
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.MemorySection
 import org.bukkit.configuration.file.YamlConfiguration
-import org.jspecify.annotations.Nullable
 import java.util.*
 
 /**
@@ -24,12 +23,14 @@ import java.util.*
 class SkillConfig private constructor(
     private val byId: Map<String, ConfigurationSection>,
 ) {
+
     companion object {
+
         @JvmStatic
         fun defaults(): SkillConfig = SkillConfig(Collections.emptyMap())
 
         @JvmStatic
-        fun fromYaml(yml: @Nullable YamlConfiguration?): SkillConfig {
+        fun fromYaml(yml: YamlConfiguration?): SkillConfig {
             if (yml == null) return defaults()
 
             val root = yml.getConfigurationSection("cia") ?: return defaults()
@@ -64,6 +65,7 @@ class SkillConfig private constructor(
                 collectSections(child, id, out)
             }
         }
+
     }
 
     private fun sectionOf(skillId: String?): ConfigurationSection? {
