@@ -67,3 +67,16 @@ cia:
 
     rift_fangs:
       cooldown-seconds: 20
+
+  wolong:
+    fan_dash:
+      cooldown-seconds: 5
+
+    sky_lantern:
+      cooldown-seconds: 14
+
+    repeating_crossbow:
+      cooldown-seconds: 20
+
+    empty_fort:
+      cooldown-seconds: 20
