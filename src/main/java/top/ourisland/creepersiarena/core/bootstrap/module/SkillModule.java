@@ -21,6 +21,7 @@ import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
 
 import java.util.Map;
 
@@ -41,6 +42,7 @@ public final class SkillModule implements IBootstrapModule {
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var sessionStore = rt.requireService(PlayerSessionStore.class);
+            BuiltinCombatUtils.installSessions(sessionStore);
             var jobManager = rt.requireService(JobManager.class);
             var catalog = rt.requireService(ComponentCatalog.class);
 
@@ -122,10 +124,13 @@ public final class SkillModule implements IBootstrapModule {
     @Override
     public boolean registerListeners(ListenerBinder binder) {
         var rt = binder.rt();
-
-        binder.register("SkillImplementationListener", SkillImplementationListener::new);
-
         var tickTask = rt.requireService(SkillTickTask.class);
+
+        binder.register("SkillImplementationListener", () -> new SkillImplementationListener(
+                rt.requireService(PlayerSessionStore.class),
+                rt.requireService(SkillRuntime.class),
+                tickTask
+        ));
 
         binder.register("SkillUiListener", () -> new SkillUiListener(
                 rt.requireService(PlayerSessionStore.class),
