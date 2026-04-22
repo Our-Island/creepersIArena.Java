@@ -47,3 +47,10 @@ cia:
 
     sprint:
       cooldown-seconds: 4
+
+  golem:
+    stoneform:
+      cooldown-seconds: 10
+
+    rift_fangs:
+      cooldown-seconds: 20
