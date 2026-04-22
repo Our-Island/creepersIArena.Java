@@ -30,3 +30,10 @@ cia:
       slow-falling-ticks: 20
       spawn-forward: 0.8
       spawn-up: 0.2
+
+  avenger:
+    blood_blink:
+      cooldown-seconds: 8
+
+    revenge_grasp:
+      cooldown-seconds: 0
