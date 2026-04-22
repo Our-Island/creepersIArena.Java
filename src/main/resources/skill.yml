@@ -80,3 +80,13 @@ cia:
 
     empty_fort:
       cooldown-seconds: 20
+
+  ysahan:
+    pumpkin_trick:
+      cooldown-seconds: 7
+
+    whale:
+      cooldown-seconds: 26
+
+    it_was_me:
+      cooldown-seconds: 0
