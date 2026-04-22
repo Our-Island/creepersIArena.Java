@@ -1,12 +1,10 @@
 package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Firework;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -18,12 +16,17 @@ import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import top.ourisland.creepersiarena.job.skill.event.Triggers;
-import top.ourisland.creepersiarena.utils.I18n;
-import top.ourisland.creepersiarena.utils.LangKeyResolver;
+import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
 
-@CiaSkillDef(id = "creeper.fireworks", job = "creeper", type = SkillType.ACTIVE, slot = 2, defaultCooldown = 20)
+@CiaSkillDef(
+        id = "cia:creeper.fireworks",
+        job = "cia:creeper",
+        type = SkillType.ACTIVE,
+        slot = 2,
+        defaultCooldown = 20
+)
 public class Skill3 implements ISkillDefinition {
 
     public static final String TAG_SKILL3_FW = "cia_skill3_fw";
@@ -41,25 +44,21 @@ public class Skill3 implements ISkillDefinition {
 
     @Override
     public ISkillIcon icon() {
-        return _ -> {
-            var it = new ItemStack(Material.COMPARATOR);
-            var meta = it.getItemMeta();
-            if (meta != null) {
-                String nameKey = LangKeyResolver.skillName(this);
-                meta.displayName(I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id()));
-                meta.lore(LangKeyResolver.resolveSkillLore(this));
-                it.setItemMeta(meta);
-            }
-            return it;
-        };
+        return _ -> BuiltinItemFactory.skillItem(
+                Material.COMPARATOR,
+                "烟花坐骑",
+                BuiltinItemFactory.lore(
+                        "✎ 骑乘烟花进行机动位移",
+                        "❃ 右键使用",
+                        "❃ 20 秒冷却"
+                )
+        );
     }
 
     @Override
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            if (p == null) return;
-
             var cfg = ctx.skillConfig();
             int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
             int rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
@@ -69,58 +68,55 @@ public class Skill3 implements ISkillDefinition {
             double spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
             double spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
 
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, slowFallingTicks, 0, true, false, false));
-
+            p.addPotionEffect(new PotionEffect(
+                    PotionEffectType.SLOW_FALLING,
+                    slowFallingTicks,
+                    0,
+                    true,
+                    false,
+                    false
+            ));
             var w = p.getWorld();
             Vector dir = p.getLocation().getDirection().normalize();
             Location spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
-
             var fw = w.spawn(spawn, Firework.class, f -> {
                 var m = f.getFireworkMeta();
                 m.clearEffects();
                 m.addEffect(buildEffect());
                 m.setPower(flight);
                 f.setFireworkMeta(m);
-
                 f.addScoreboardTag(TAG_SKILL3_FW);
                 f.addScoreboardTag(TAG_SKILL3_OWNER + p.getUniqueId());
-
                 try {
                     f.setShotAtAngle(true);
                 } catch (Throwable _) {
                 }
             });
-
             fw.addPassenger(p);
-
             var plugin = JavaPlugin.getProvidingPlugin(Skill3.class);
-
             final int[] t = {0};
-            fw.getScheduler().runAtFixedRate(plugin, task -> {
-                if (!fw.isValid() || fw.isDead()) {
-                    task.cancel();
-                    return;
-                }
-
-                Vector vel = dir.clone().multiply(forward);
-                vel.setY(up);
-                fw.setVelocity(vel);
-
-                t[0]++;
-                if (t[0] >= rideTicks) {
-                    task.cancel();
-
-                    if (p.isInsideVehicle()) {
-                        p.leaveVehicle();
-                    }
-
-                    if (fw.isValid() && !fw.isDead()) {
-                        fw.detonate();
-                    }
-
-                    fw.remove();
-                }
-            }, null, 1L, 1L);
+            fw.getScheduler().runAtFixedRate(
+                    plugin,
+                    task -> {
+                        if (!fw.isValid() || fw.isDead()) {
+                            task.cancel();
+                            return;
+                        }
+                        Vector vel = dir.clone().multiply(forward);
+                        vel.setY(up);
+                        fw.setVelocity(vel);
+                        t[0]++;
+                        if (t[0] >= rideTicks) {
+                            task.cancel();
+                            if (p.isInsideVehicle()) p.leaveVehicle();
+                            if (fw.isValid() && !fw.isDead()) fw.detonate();
+                            fw.remove();
+                        }
+                    },
+                    null,
+                    1L,
+                    1L
+            );
         };
     }
 

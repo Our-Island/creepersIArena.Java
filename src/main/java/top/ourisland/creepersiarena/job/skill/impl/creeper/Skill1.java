@@ -1,10 +1,8 @@
 package top.ourisland.creepersiarena.job.skill.impl.creeper;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
@@ -14,14 +12,13 @@ import top.ourisland.creepersiarena.job.skill.ISkillIcon;
 import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.event.ITrigger;
 import top.ourisland.creepersiarena.job.skill.event.Triggers;
-import top.ourisland.creepersiarena.utils.I18n;
-import top.ourisland.creepersiarena.utils.LangKeyResolver;
+import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
 
 @CiaSkillDef(
-        id = "creeper.creeper",
-        job = "creeper",
+        id = "cia:creeper.creeper",
+        job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 0,
         defaultCooldown = 7
@@ -34,33 +31,26 @@ public class Skill1 implements ISkillDefinition {
 
     @Override
     public List<ITrigger> triggers() {
-        return List.of(
-                Triggers.interactRightClick(),
-                Triggers.interactRightClick()
-        );
+        return List.of(Triggers.interactRightClick());
     }
 
     @Override
     public ISkillIcon icon() {
-        return _ -> {
-            var it = new ItemStack(Material.CREEPER_SPAWN_EGG);
-            var meta = it.getItemMeta();
-            if (meta != null) {
-                String nameKey = LangKeyResolver.skillName(this);
-                Component name = I18n.has(nameKey) ? I18n.langNP(nameKey) : Component.text(id());
-                meta.displayName(name);
-                meta.lore(LangKeyResolver.resolveSkillLore(this));
-                it.setItemMeta(meta);
-            }
-            return it;
-        };
+        return _ -> BuiltinItemFactory.skillItem(
+                Material.REDSTONE_TORCH,
+                "苦力怕召唤",
+                BuiltinItemFactory.lore(
+                        "✎ 投掷一只苦力怕",
+                        "✎ 立即爆炸，造成爆炸伤害",
+                        "❃ 右键使用", "❃ 7 秒冷却"
+                )
+        );
     }
 
     @Override
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var caster = ctx.player();
-            if (caster == null) return;
             var world = caster.getWorld();
 
             var cfg = ctx.skillConfig();
@@ -78,19 +68,22 @@ public class Skill1 implements ISkillDefinition {
             creeper.setVelocity(dir.multiply(speed));
 
             var plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
-            creeper.getScheduler().runDelayed(plugin, task -> {
-                if (!creeper.isValid() || creeper.isDead()) return;
-
-                world.createExplosion(
-                        creeper.getLocation(),
-                        explosionPower,
-                        false,
-                        false,
-                        creeper
-                );
-
-                creeper.remove();
-            }, null, Math.max(1L, fuseTicks));
+            creeper.getScheduler().runDelayed(
+                    plugin,
+                    _ -> {
+                        if (!creeper.isValid() || creeper.isDead()) return;
+                        world.createExplosion(
+                                creeper.getLocation(),
+                                explosionPower,
+                                false,
+                                false,
+                                creeper
+                        );
+                        creeper.remove();
+                    },
+                    null,
+                    Math.max(1L, fuseTicks)
+            );
         };
     }
 
