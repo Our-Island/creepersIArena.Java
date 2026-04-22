@@ -135,7 +135,7 @@ public class Skill2 implements ISkillDefinition {
                     BuiltinAttributeUtils.setBaseValue(p, 1.3, "generic.scale");
                 },
                 null,
-                0L,
+                1L,
                 5L);
     }
 

@@ -96,7 +96,7 @@ public class Skill1 implements ISkillDefinition {
                         waves[0]++;
                     },
                     null,
-                    0L,
+                    1L,
                     7L
             );
         };

@@ -103,7 +103,7 @@ public class Skill2 implements ISkillDefinition {
                         life[0] += 2;
                     },
                     null,
-                    0L,
+                    1L,
                     2L
             );
         };

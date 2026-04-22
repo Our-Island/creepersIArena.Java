@@ -67,7 +67,7 @@ public class Skill2 implements ISkillDefinition {
                         wave[0]++;
                     },
                     null,
-                    0L,
+                    1L,
                     4L
             );
         };

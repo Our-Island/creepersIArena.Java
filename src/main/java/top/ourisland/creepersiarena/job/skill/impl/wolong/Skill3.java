@@ -93,7 +93,7 @@ public class Skill3 implements ISkillDefinition {
                         shot[0]++;
                     },
                     null,
-                    0L,
+                    1L,
                     4L
             );
         };
