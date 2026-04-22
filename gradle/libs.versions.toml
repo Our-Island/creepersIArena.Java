@@ -9,7 +9,7 @@ paper-api = "26.1.2.build.18-alpha"
 
 luckperms = "5.5"
 
-lombok = "1.18.44"
+lombok = "1.18.46"
 jspecify = "1.0.0"
 
 [libraries]
