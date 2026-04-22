@@ -4,7 +4,6 @@ import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.JobId;
 
@@ -38,8 +37,10 @@ final class PlayerLobbyTransitions {
         var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
 
-        String normalized = normalizeCiaId(jobIdRaw);
-        var jobId = JobId.fromId(normalized);
+        var jobId = JobId.fromId(jobIdRaw);
+        if (jobId == null && jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
+            jobId = JobId.fromId("cia:" + jobIdRaw);
+        }
         if (jobId == null) {
             log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
             return;
@@ -56,14 +57,6 @@ final class PlayerLobbyTransitions {
         refreshLobbyKit(p);
 
         log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
-    }
-
-    private String normalizeCiaId(String raw) {
-        if (raw == null) return "";
-        String v = raw.trim();
-        int colon = v.indexOf(':');
-        if (colon <= 0) return v;
-        return v.substring(colon + 1).trim();
     }
 
     void refreshLobbyKit(Player p) {

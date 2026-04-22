@@ -9,25 +9,15 @@ public final class JobId {
 
     private static final Map<String, JobId> CACHE = new ConcurrentHashMap<>();
 
-    public static final JobId CREEPER = of("creeper");
-    public static final JobId MOISON = of("moison");
-    public static final JobId AVENGER = of("avenger");
-    public static final JobId BLOODLINE = of("bloodline");
-    public static final JobId GOLEM = of("golem");
-    public static final JobId WOLONG = of("wolong");
-    public static final JobId YSAHAN = of("ysahan");
+    public static final JobId CREEPER = of("cia:creeper");
+    public static final JobId MOISON = of("cia:moison");
+    public static final JobId AVENGER = of("cia:avenger");
+    public static final JobId BLOODLINE = of("cia:bloodline");
+    public static final JobId GOLEM = of("cia:golem");
+    public static final JobId WOLONG = of("cia:wolong");
+    public static final JobId YSAHAN = of("cia:ysahan");
 
     private final String id;
-
-    private JobId(String id) {
-        this.id = id;
-    }
-
-    public static JobId of(String raw) {
-        String normalized = normalize(raw);
-        if (normalized.isBlank()) throw new IllegalArgumentException("job id is blank");
-        return CACHE.computeIfAbsent(normalized, JobId::new);
-    }
 
     public static JobId fromId(String raw) {
         if (raw == null) return null;
@@ -40,13 +30,28 @@ public final class JobId {
         return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
     }
 
+    public static JobId of(String raw) {
+        String normalized = normalize(raw);
+        if (normalized.isBlank()) throw new IllegalArgumentException("job id is blank");
+        return CACHE.computeIfAbsent(normalized, JobId::new);
+    }
+
+    private JobId(String id) {
+        this.id = id;
+    }
+
     public String id() {
         return id;
     }
 
+    public String path() {
+        int colon = id.indexOf(':');
+        return colon >= 0 ? id.substring(colon + 1) : id;
+    }
+
     @Override
-    public String toString() {
-        return id;
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override
@@ -57,8 +62,8 @@ public final class JobId {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public String toString() {
+        return id;
     }
 
 }

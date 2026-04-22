@@ -63,11 +63,7 @@ public final class CommandParsers {
     }
 
     public static String normalizeCiaId(String raw) {
-        if (raw == null) return "";
-        String v = raw.trim();
-        int colon = v.indexOf(':');
-        if (colon <= 0) return v;
-        return v.substring(colon + 1).trim();
+        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
     }
 
     public static Integer parseTeamId(String token) {

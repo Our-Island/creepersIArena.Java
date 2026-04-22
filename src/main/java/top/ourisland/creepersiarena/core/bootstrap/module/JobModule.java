@@ -51,8 +51,9 @@ public final class JobModule implements IBootstrapModule {
 
     private static int registerIfEnabled(JobManager jobManager, IJob job, Set<String> disabledJobs, Logger log) {
         String id = job.id().toString();
+        String path = job.id().path();
         boolean disabledByConfig = disabledJobs != null && disabledJobs.stream()
-                .anyMatch(s -> s != null && s.trim().equalsIgnoreCase(id));
+                .anyMatch(s -> s != null && (s.trim().equalsIgnoreCase(id) || s.trim().equalsIgnoreCase(path)));
 
         if (!job.enabled()) {
             log.info("[Job] Job disabled by annotation: {}", id);

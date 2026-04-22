@@ -1,25 +1,9 @@
 package top.ourisland.creepersiarena.config.model
 
 import org.bukkit.configuration.ConfigurationSection
-import org.bukkit.configuration.MemorySection
 import org.bukkit.configuration.file.YamlConfiguration
 import java.util.*
 
-/**
- * Skill-specific configuration loaded from skill.yml.
- *
- * Expected structure (recommended):
- *
- * ```yml
- * cia:
- *   creeper:
- *     fireworks:
- *       cooldown-seconds: 20
- *       forward: 1.0
- * ```
- *
- * Skill id is the `ISkillDefinition#id()` value (e.g. "creeper.fireworks").
- */
 class SkillConfig private constructor(
     private val byId: Map<String, ConfigurationSection>,
 ) {
@@ -33,36 +17,28 @@ class SkillConfig private constructor(
         fun fromYaml(yml: YamlConfiguration?): SkillConfig {
             if (yml == null) return defaults()
 
-            val root = yml.getConfigurationSection("cia") ?: return defaults()
             val map = HashMap<String, ConfigurationSection>()
-
-            collectSections(root, "", map)
-
-            try {
-                for ((k, v) in root.getValues(false)) {
-                    if (k != null && k.contains('.')) {
-                        when (v) {
-                            is ConfigurationSection -> map.putIfAbsent(k, v)
-                            is MemorySection -> map.putIfAbsent(k, v)
-                        }
-                    }
-                }
-            } catch (_: Throwable) {
+            for (rootKey in yml.getKeys(false)) {
+                val root = yml.getConfigurationSection(rootKey) ?: continue
+                collectSections(rootKey.lowercase(), root, "", map)
             }
-
             return SkillConfig(map)
         }
 
         private fun collectSections(
+            namespace: String,
             sec: ConfigurationSection,
-            prefix: String,
+            path: String,
             out: MutableMap<String, ConfigurationSection>
         ) {
             for (key in sec.getKeys(false)) {
                 val child = sec.getConfigurationSection(key) ?: continue
-                val id = if (prefix.isEmpty()) key else "$prefix.$key"
-                out.putIfAbsent(id, child)
-                collectSections(child, id, out)
+                val nextPath = if (path.isEmpty()) key.lowercase() else "$path.${key.lowercase()}"
+                out.putIfAbsent("$namespace:$nextPath", child)
+                if (namespace == "cia") {
+                    out.putIfAbsent(nextPath, child)
+                }
+                collectSections(namespace, child, nextPath, out)
             }
         }
 
@@ -70,7 +46,9 @@ class SkillConfig private constructor(
 
     private fun sectionOf(skillId: String?): ConfigurationSection? {
         if (skillId.isNullOrEmpty()) return null
-        return byId[skillId]
+        val normalized = skillId.trim().lowercase()
+        return byId[normalized]
+            ?: byId[normalized.substringAfter(':', normalized)]
     }
 
     fun cooldownSeconds(skillId: String, def: Int): Int = getInt(skillId, "cooldown-seconds", def)

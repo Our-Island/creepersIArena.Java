@@ -3,9 +3,9 @@ package top.ourisland.creepersiarena.game.lobby.item;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
-import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.utils.I18n;
@@ -38,7 +38,7 @@ public final class LobbyItemFactory {
 
         var meta = item.getItemMeta();
         if (meta != null) {
-            var baseName = I18n.langNP(LangKeyResolver.jobName(jid));
+            var baseName = resolveJobName(meta, jid, jobId);
 
             meta.displayName(selected
                     ? Component.text("[选择中] ").append(baseName)
@@ -52,6 +52,13 @@ public final class LobbyItemFactory {
 
         codec.markJobId(item, jobId);
         return item;
+    }
+
+    private Component resolveJobName(ItemMeta meta, JobId jid, String fallback) {
+        String key = LangKeyResolver.jobName(jid);
+        if (I18n.has(key)) return I18n.langNP(key);
+        var itemName = meta.displayName();
+        return itemName != null ? itemName : Component.text(fallback);
     }
 
     public ItemStack jobPageNextButton(int nextPage) {

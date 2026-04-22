@@ -99,8 +99,13 @@ public final class LobbyItemService {
     }
 
     public boolean hasJobId(String jobIdRaw) {
-        JobId jid = JobId.fromId(jobIdRaw);
-        return jid != null && jobs.getJob(jid) != null;
+        var jid = JobId.fromId(jobIdRaw);
+        if (jid != null && jobs.getJob(jid) != null) return true;
+        if (jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
+            jid = JobId.fromId("cia:" + jobIdRaw);
+            return jid != null && jobs.getJob(jid) != null;
+        }
+        return false;
     }
 
 }

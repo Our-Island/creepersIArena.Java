@@ -15,11 +15,23 @@ public final class JobManager {
     }
 
     public IJob getJob(String id) {
-        return getJob(JobId.fromId(id));
+        if (id == null || id.isBlank()) return null;
+        IJob job = getJob(JobId.fromId(id));
+        if (job != null) return job;
+        if (id.indexOf(':') < 0) {
+            return getJob(JobId.fromId("cia:" + id));
+        }
+        return null;
     }
 
     public IJob getJob(JobId id) {
-        return jobs.get(id);
+        if (id == null) return null;
+        IJob job = jobs.get(id);
+        if (job != null) return job;
+        if (id.id().indexOf(':') < 0) {
+            return jobs.get(JobId.fromId("cia:" + id.id()));
+        }
+        return null;
     }
 
     public List<String> getAllJobIds() {
