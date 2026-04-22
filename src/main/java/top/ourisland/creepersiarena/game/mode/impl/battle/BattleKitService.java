@@ -3,8 +3,6 @@ package top.ourisland.creepersiarena.game.mode.impl.battle;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.game.player.PlayerSession;
-import top.ourisland.creepersiarena.job.IJob;
-import top.ourisland.creepersiarena.job.JobId;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
@@ -41,7 +39,15 @@ public final class BattleKitService {
         var job = jobs.getJob(jobId);
         if (job == null) return;
 
-        ItemStack[] armor = job.armorTemplate();
+        ItemStack[] hotbar = job.hotbarTemplate(s);
+        if (hotbar != null && hotbar.length >= 9) {
+            for (int i = 0; i < 9; i++) {
+                var item = hotbar[i];
+                p.getInventory().setItem(i, item == null ? null : item.clone());
+            }
+        }
+
+        ItemStack[] armor = job.armorTemplate(s);
         if (armor != null && armor.length == 4) {
             ItemStack[] cloned = new ItemStack[4];
             for (int i = 0; i < 4; i++) {

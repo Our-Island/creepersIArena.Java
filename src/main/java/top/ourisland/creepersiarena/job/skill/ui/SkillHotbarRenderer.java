@@ -4,10 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.ItemMeta;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.job.skill.SkillType;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillStateStore;
 import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.LangKeyResolver;
@@ -35,7 +32,6 @@ public final class SkillHotbarRenderer {
         ISkillDefinition[] desired = new ISkillDefinition[9];
         for (ISkillDefinition def : skills) {
             if (def == null) continue;
-            if (def.type() != SkillType.ACTIVE) continue;
 
             int slot = def.uiSlot();
             if (slot < 0 || slot > 8) continue;
@@ -79,16 +75,29 @@ public final class SkillHotbarRenderer {
         if (remain > 0) {
             if (remain <= 20) {
                 base = new ItemStack(Material.BIRCH_BUTTON);
-                base.setAmount(Math.clamp(remain, 1, 64));
+                base.setAmount(Math.clamp((int) remain, 1, 64));
             } else {
-                long sec = (remain + 19) / 20; // ceil
+                long sec = (remain + 19) / 20;
                 base = new ItemStack(Material.STONE_BUTTON);
-                base.setAmount(Math.clamp(sec, 1, 64));
+                base.setAmount(Math.clamp((int) sec, 1, 64));
             }
 
             var meta = base.getItemMeta();
             if (meta != null) {
-                meta.displayName(Component.text("[冷却中] " + I18n.langStrNP(LangKeyResolver.skillName(def))));
+                String nameKey = LangKeyResolver.skillName(def);
+                String label;
+                if (I18n.has(nameKey)) {
+                    label = I18n.langStrNP(nameKey);
+                } else {
+                    var baseIcon = def.icon().buildIcon(p);
+                    var baseMeta = baseIcon == null ? null : baseIcon.getItemMeta();
+                    var display = baseMeta == null ? null : baseMeta.displayName();
+                    label = display == null
+                            ? def.id()
+                            : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                              .serialize(display);
+                }
+                meta.displayName(Component.text("[冷却中] " + label));
                 base.setItemMeta(meta);
             }
         } else {
