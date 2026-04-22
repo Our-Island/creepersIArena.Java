@@ -31,6 +31,19 @@ cia:
       spawn-forward: 0.8
       spawn-up: 0.2
 
+  moison:
+    blowgun:
+      cooldown-seconds: 2
+
+    volley:
+      cooldown-seconds: 20
+
+    shadowstep:
+      cooldown-seconds: 20
+
+    spectral_reserve:
+      cooldown-seconds: 0
+
   avenger:
     blood_blink:
       cooldown-seconds: 8
