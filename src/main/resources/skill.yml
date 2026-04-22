@@ -37,3 +37,13 @@ cia:
 
     revenge_grasp:
       cooldown-seconds: 0
+
+  bloodline:
+    blood_orb:
+      cooldown-seconds: 13
+
+    leap:
+      cooldown-seconds: 9
+
+    sprint:
+      cooldown-seconds: 4
