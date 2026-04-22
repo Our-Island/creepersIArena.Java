@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.job.skill.event.Triggers;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillActivationRejectedException;
 
 @CiaSkillDef(
         id = "cia:wolong.empty_fort",
@@ -54,7 +55,7 @@ public class Skill4 implements ISkillDefinition {
             boolean allCooling = TARGETS.stream()
                     .allMatch(id -> store.isCoolingDown(p.getUniqueId(), id, now));
 
-            if (!allCooling) return;
+            if (!allCooling) throw SkillActivationRejectedException.reject();
             for (String id : TARGETS) {
                 long end = store.cooldownEndsAtTick(p.getUniqueId(), id);
                 store.cooldownEndsAtTick(p.getUniqueId(), id, Math.max(now, end - 80L));

@@ -20,6 +20,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillActivationRejectedException;
 
 @CiaSkillDef(
         id = "cia:moison.shadowstep",
@@ -71,7 +72,7 @@ public class Skill3 implements ISkillDefinition {
                     .orElse(null);
             if (target == null) {
                 p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 1f, 0.8f);
-                return;
+                throw SkillActivationRejectedException.reject();
             }
 
             var loc = target.getLocation().clone().add(0, 0.15, 0);

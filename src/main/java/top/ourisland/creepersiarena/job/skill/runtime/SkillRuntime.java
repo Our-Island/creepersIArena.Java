@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.config.model.SkillConfig;
 import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.SkillType;
@@ -61,7 +60,11 @@ public final class SkillRuntime {
                 continue;
             }
 
-            def.executor().execute(ctx, store);
+            try {
+                def.executor().execute(ctx, store);
+            } catch (SkillActivationRejectedException _) {
+                continue;
+            }
 
             if (scaledCdSec > 0) {
                 long endTick = now + (long) scaledCdSec * 20L;

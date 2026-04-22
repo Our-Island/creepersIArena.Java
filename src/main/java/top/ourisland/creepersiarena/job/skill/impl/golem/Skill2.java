@@ -21,6 +21,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 
 import java.util.List;
 import java.util.UUID;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillActivationRejectedException;
 
 @CiaSkillDef(
         id = "cia:golem.rift_fangs",
@@ -58,7 +59,7 @@ public class Skill2 implements ISkillDefinition {
                     .get(BuiltinKeys.key("golem_last_target"), PersistentDataType.STRING);
             if (raw == null) {
                 p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 1f, 0.75f);
-                return;
+                throw SkillActivationRejectedException.reject();
             }
 
             Player target;
@@ -70,7 +71,7 @@ public class Skill2 implements ISkillDefinition {
             if (target == null || !target.isOnline() || target.getWorld() != p.getWorld() || target.getLocation()
                     .distanceSquared(p.getLocation()) > 225) {
                 p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 1f, 0.75f);
-                return;
+                throw SkillActivationRejectedException.reject();
             }
 
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 6, true, false, false));
