@@ -14,13 +14,21 @@ how a change should be tested on a Paper server.
 
 This repository is a Minecraft Paper plugin. Treat changes as plugin changes first, not as generic library changes.
 
-The main source package is:
+The repository is a Gradle multi-module project. The current modules are:
+
+| Module             | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| `cia-api`          | reserved for the stable CreepersIArena Extension API                        |
+| `cia-core`         | current runtime, bootstrap, game, command, config, job, skill, and utility code |
+| `cia-paper-plugin` | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly |
+
+The main source package remains:
 
 ```text
 top.ourisland.creepersiarena
 ```
 
-Current top-level source areas include:
+Current top-level source areas inside `cia-core/src/main/java/top/ourisland/creepersiarena` include:
 
 | Package   | Description                                                   |
 |-----------|---------------------------------------------------------------|
@@ -31,8 +39,13 @@ Current top-level source areas include:
 | `job`     | player job or profession mechanics                            |
 | `utils`   | shared helpers that are not tied to a single feature          |
 
-Resource files under `src/main/resources` are part of the plugin contract. Changes to `paper-plugin.yml`, `config.yml`,
-`arena.yml`, `skill.yml`, or `lang/` should be reviewed as user-facing changes.
+Paper-only bootstrap classes live in `cia-paper-plugin/src/main/java`. Shared gameplay/runtime code should stay in
+`cia-core` unless it is being intentionally promoted to the public extension API in `cia-api`.
+
+Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src/main/resources/paper-plugin.yml`,
+`cia-core/src/main/resources/config.yml`, `cia-core/src/main/resources/arena.yml`,
+`cia-core/src/main/resources/skill.yml`, or `cia-core/src/main/resources/lang/` should be reviewed as user-facing
+changes.
 
 ## Development Setup
 
@@ -42,10 +55,10 @@ Use the Gradle wrapper from the repository:
 ./gradlew build
 ```
 
-For local Paper testing, use the run-paper task when appropriate:
+For local Paper testing, use the run-paper task from the Paper plugin module when appropriate:
 
 ```bash
-./gradlew runServer
+./gradlew :cia-paper-plugin:runServer
 ```
 
 Do not commit generated server files, build outputs, local IDE metadata, logs, or temporary configuration files created

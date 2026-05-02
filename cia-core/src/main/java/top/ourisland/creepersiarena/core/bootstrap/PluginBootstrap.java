@@ -31,7 +31,7 @@ public final class PluginBootstrap {
      * @param plugin the {@link JavaPlugin} instance.
      */
     public void enable(JavaPlugin plugin) {
-        this.rt = new BootstrapRuntime(plugin);
+        this.rt = new BootstrapRuntime(plugin, this::reload);
 
         var catalog = new ComponentCatalog();
         new AnnotationComponentScanner().scanInto(plugin, plugin.getClass().getPackageName(), catalog);
@@ -73,43 +73,6 @@ public final class PluginBootstrap {
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Enabled in {}ms.", ms);
         log.info("creepersIArena is enabled!");
-    }
-
-    /**
-     * Universal stage running method.
-     *
-     * @param phase the phase to be run
-     * @param idx   the number of the module
-     * @param total the total number of modules
-     * @param m     the module to be executed
-     */
-    private void runStage(StagePhase phase, int idx, int total, IBootstrapModule m) {
-        String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
-
-        try {
-            StageTask task = switch (phase) {
-                case LOAD -> m.install(rt);
-                case START -> m.start(rt);
-                case STOP -> m.stop(rt);
-                case RELOAD -> m.reload(rt);
-            };
-
-            if (task == null) return;
-
-            logIfPresent(logPrefix, task.beginMessage());
-            task.action().run();
-            logIfPresent(logPrefix, task.endMessage());
-
-        } catch (Throwable t) {
-            rt.log().error("{} failed: {}", logPrefix, t.getMessage(), t);
-            throw t;
-        }
-    }
-
-    private void logIfPresent(String prefix, String message) {
-        if (message != null && !message.isBlank()) {
-            rt.log().info("{} {}", prefix, message);
-        }
     }
 
     /**
@@ -164,6 +127,43 @@ public final class PluginBootstrap {
         log.info("[Bootstrap] Disabled in {}ms.", ms);
         log.info("creepersIArena is disabled!");
         rt = null;
+    }
+
+    /**
+     * Universal stage running method.
+     *
+     * @param phase the phase to be run
+     * @param idx   the number of the module
+     * @param total the total number of modules
+     * @param m     the module to be executed
+     */
+    private void runStage(StagePhase phase, int idx, int total, IBootstrapModule m) {
+        String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
+
+        try {
+            StageTask task = switch (phase) {
+                case LOAD -> m.install(rt);
+                case START -> m.start(rt);
+                case STOP -> m.stop(rt);
+                case RELOAD -> m.reload(rt);
+            };
+
+            if (task == null) return;
+
+            logIfPresent(logPrefix, task.beginMessage());
+            task.action().run();
+            logIfPresent(logPrefix, task.endMessage());
+
+        } catch (Throwable t) {
+            rt.log().error("{} failed: {}", logPrefix, t.getMessage(), t);
+            throw t;
+        }
+    }
+
+    private void logIfPresent(String prefix, String message) {
+        if (message != null && !message.isBlank()) {
+            rt.log().info("{} {}", prefix, message);
+        }
     }
 
 }
