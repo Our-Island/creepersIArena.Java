@@ -29,6 +29,7 @@ public final class BootstrapRuntime {
 
     private final JavaPlugin plugin;
     private final Logger log;
+    private final Runnable reloadAction;
     private final ServiceRegistry services = new ServiceRegistry();
 
     /**
@@ -45,14 +46,34 @@ public final class BootstrapRuntime {
      * @param plugin the plugin instance (must not be null)
      */
     public BootstrapRuntime(JavaPlugin plugin) {
+        this(plugin, null);
+    }
+
+    /**
+     * Creates a runtime bound to the given plugin.
+     *
+     * @param plugin       the plugin instance (must not be null)
+     * @param reloadAction action used by core code to request a plugin reload; may be null
+     */
+    public BootstrapRuntime(JavaPlugin plugin, Runnable reloadAction) {
         this.plugin = plugin;
         this.log = plugin.getSLF4JLogger();
+        this.reloadAction = reloadAction == null ? () -> {
+        } : reloadAction;
+    }
+
+    /**
+     * Requests a plugin reload without depending on the concrete Paper plugin entrypoint class.
+     */
+    public void reloadPlugin() {
+        reloadAction.run();
     }
 
     /**
      * Retrieves a required service from the registry.
      *
      * @param type service class key
+     *
      * @return the registered instance
      */
     public <T> T requireService(Class<T> type) {
@@ -63,6 +84,7 @@ public final class BootstrapRuntime {
      * Retrieves an optional service from the registry.
      *
      * @param type service class key
+     *
      * @return the registered instance, or {@code null} if not present
      */
     public <T> T getService(Class<T> type) {

@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.command.handler;
 
 import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.CreepersIArena;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -192,13 +191,8 @@ public final class AdminCommandHandlers {
         var st = rt.requireService(AdminRuntimeState.class);
         st.reset();
 
-        if (rt.plugin() instanceof CreepersIArena pl) {
-            pl.onReload();
-            Msg.send(sender, "Reloaded.");
-            return;
-        }
-
-        Msg.send(sender, "Reload unsupported.");
+        rt.reloadPlugin();
+        Msg.send(sender, "Reloaded.");
     }
 
     // TODO: modify a field with object will break the config
