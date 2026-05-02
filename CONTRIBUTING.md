@@ -16,11 +16,12 @@ This repository is a Minecraft Paper plugin. Treat changes as plugin changes fir
 
 The repository is a Gradle multi-module project. The current modules are:
 
-| Module             | Description                                                                                                                                                                    |
-|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `cia-api`          | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and typed config models |
-| `cia-core`         | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, default content, registries, and utility code                           |
-| `cia-paper-plugin` | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                            |
+| Module                  | Description                                                                                                                                                                    |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cia-api`               | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and typed config models |
+| `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, default content, registries, and utility code                           |
+| `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                            |
+| `cia-example-extension` | minimal non-Paper CIA extension jar used to verify extension packaging and loader behavior                                                                                     |
 
 The public extension package is:
 
@@ -60,6 +61,11 @@ CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The pub
 `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in
 `cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/metadata`. Descriptor reading must not load classes
 or run extension lifecycle code.
+
+CIA extension runtime loading lives in `cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/loading`.
+The loader may scan `extensions/*.cia.jar`, create one class loader per extension jar, discover
+`CiaExtension` through `ServiceLoader`, and call `onLoad`, `onEnable`, and `onDisable`. Keep loading behavior separate
+from descriptor parsing so metadata-only tools can inspect jars without executing extension code.
 
 ## Development Setup
 

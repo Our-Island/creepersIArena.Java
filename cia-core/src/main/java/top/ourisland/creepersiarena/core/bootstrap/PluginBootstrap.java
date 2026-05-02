@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponent
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.component.discovery.ModuleOrderResolver;
 import top.ourisland.creepersiarena.core.component.extension.CiaApiImpl;
+import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,10 @@ public final class PluginBootstrap {
         rt.putService(CiaApi.class, api);
         Bukkit.getServicesManager().register(CiaApi.class, api, plugin, ServicePriority.Normal);
 
+        var extensionManager = new CiaExtensionManager(rt, catalog);
+        rt.putService(CiaExtensionManager.class, extensionManager);
+        extensionManager.loadAll();
+
         bootstrapModules.clear();
         bootstrapModules.addAll(new ModuleOrderResolver().sort(catalog.modules()));
 
@@ -69,6 +74,8 @@ public final class PluginBootstrap {
         for (int i = 0; i < total; i++) {
             runStage(StagePhase.START, i + 1, total, bootstrapModules.get(i));
         }
+
+        extensionManager.enableAll();
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Enabled in {}ms.", ms);
@@ -103,6 +110,11 @@ public final class PluginBootstrap {
 
         Logger log = rt.log();
         long t0 = System.nanoTime();
+
+        var extensionManager = rt.getService(CiaExtensionManager.class);
+        if (extensionManager != null) {
+            extensionManager.disableAll();
+        }
 
         try {
             HandlerList.unregisterAll(rt.plugin());
