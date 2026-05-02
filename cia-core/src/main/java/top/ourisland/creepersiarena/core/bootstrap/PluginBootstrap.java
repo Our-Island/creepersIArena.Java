@@ -1,16 +1,12 @@
 package top.ourisland.creepersiarena.core.bootstrap;
 
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.CiaApi;
 import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponentScanner;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.component.discovery.ModuleOrderResolver;
-import top.ourisland.creepersiarena.core.component.extension.CiaApiImpl;
 import top.ourisland.creepersiarena.core.extension.loading.BundledExtensionExtractor;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
 
@@ -38,10 +34,6 @@ public final class PluginBootstrap {
         var catalog = new ComponentCatalog();
         new AnnotationComponentScanner().scanInto(plugin, plugin.getClass().getPackageName(), catalog);
         rt.putService(ComponentCatalog.class, catalog);
-
-        var api = new CiaApiImpl(rt, catalog);
-        rt.putService(CiaApi.class, api);
-        Bukkit.getServicesManager().register(CiaApi.class, api, plugin, ServicePriority.Normal);
 
         new BundledExtensionExtractor(plugin, rt.log()).extractAll();
 
@@ -123,12 +115,6 @@ public final class PluginBootstrap {
             HandlerList.unregisterAll(rt.plugin());
         } catch (Throwable t) {
             log.warn("[Bootstrap] Unregister listeners failed: {}", t.getMessage(), t);
-        }
-
-        try {
-            Bukkit.getServicesManager().unregisterAll(rt.plugin());
-        } catch (Throwable t) {
-            log.warn("[Bootstrap] Unregister services failed: {}", t.getMessage(), t);
         }
 
         int total = bootstrapModules.size();

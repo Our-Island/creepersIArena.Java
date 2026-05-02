@@ -25,6 +25,7 @@ val defaultContentExtensionJar = project(":cia-default-content").tasks.named<Jar
 val bundledExtensionsDir = layout.buildDirectory.dir("generated/bundled-extensions")
 
 val copyBundledExtensions by tasks.registering(Copy::class) {
+    description = "Copy the cia-default-content.cia.jar into the plugin JAR."
     dependsOn(defaultContentExtensionJar)
 
     from(defaultContentExtensionJar.flatMap { it.archiveFile }) {

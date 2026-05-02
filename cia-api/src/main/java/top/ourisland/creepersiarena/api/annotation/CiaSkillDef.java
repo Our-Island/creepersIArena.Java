@@ -21,12 +21,12 @@ import java.lang.annotation.*;
  * </ul>
  * This annotation keeps those immutable facts colocated with the skill class.
  *
- * <h2>Id conventions</h2>
+ * <h2>ID conventions</h2>
  * The current built-in convention is a namespaced job id followed by a dot and a skill-local path, for example
  * {@code cia:creeper.crossbow}. The runtime stores and compares the raw id as-is; language helpers later normalize it
  * into translation-safe segments.
  *
- * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(org.bukkit.plugin.Plugin, String)
+ * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(String)
  * @see top.ourisland.creepersiarena.api.metadata.SkillMetadata
  * @see top.ourisland.creepersiarena.api.skill.ISkillDefinition
  */
@@ -38,8 +38,8 @@ public @interface CiaSkillDef {
     /**
      * Returns the stable namespaced registry id of the skill.
      * <p>
-     * The value must uniquely identify the skill across built-in content and addons. Built-in ids typically follow the
-     * pattern {@code <namespace>:<job>.<skill>}.
+     * The value must uniquely identify the skill across built-in content and extensions. Built-in ids typically follow
+     * the pattern {@code <namespace>:<job>.<skill>}.
      *
      * @return globally unique skill id
      */

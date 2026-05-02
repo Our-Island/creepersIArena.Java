@@ -90,7 +90,7 @@ object BuiltinAttributeUtils {
     /**
      * Creates a modern key-based [AttributeModifier] for the supplied equipment slot.
      *
-     * Modifier keys are namespaced through [BuiltinKeys] so built-in items do not collide with addon-defined modifiers.
+     * Modifier keys are namespaced through [BuiltinKeys] so built-in items do not collide with extension-defined modifiers.
      * The modifier is bound to the slot's group, matching current Paper expectations.
      *
      * @param path plugin-local path used to build the modifier key

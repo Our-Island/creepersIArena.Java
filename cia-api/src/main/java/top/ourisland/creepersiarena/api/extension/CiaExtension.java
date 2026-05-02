@@ -5,8 +5,8 @@ import top.ourisland.creepersiarena.api.CiaExtensionContext;
 /**
  * Runtime entry point implemented by a jar-based CIA extension.
  * <p>
- * This is the extension equivalent of {@code CiaAddon}, but it is meant for jars loaded by CreepersIArena itself from
- * its {@code extensions/} directory rather than for separate Paper plugins registering through Bukkit services.
+ * This is the primary runtime entry point for jars loaded by CreepersIArena itself from its {@code extensions/}
+ * directory. CIA extensions are not Paper plugins and are not registered through Bukkit services.
  * <p>
  * Extension jars must expose their implementation through Java {@link java.util.ServiceLoader} using this service
  * file:

@@ -18,7 +18,7 @@ The repository is a Gradle multi-module project. The current modules are:
 
 | Module                  | Description                                                                                                                                                                     |
 |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `cia-api`               | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and generic config views |
+| `cia-api`               | stable CreepersIArena Extension API: extension entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and generic config views |
 | `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, registries, extension loading, and utility code                          |
 | `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                             |
 | `cia-default-content`   | built-in CreepersIArena jobs, skills, and game modes packaged as a CIA extension jar                                                                                            |
@@ -95,8 +95,8 @@ The loader may scan `extensions/*.cia.jar`, create one class loader per extensio
 from descriptor parsing so metadata-only tools can inspect jars without executing extension code.
 
 Runtime registries must preserve component ownership. Jobs, skills, modes, listeners, and extension-installed resources
-should be traceable back to `core`, a Paper addon id, or a CIA extension id. When adding a new registry, expose enough
-diagnostic data for `/cia extensions list`, `/cia extensions info <id>`, and `/cia extensions dump` to show who
+should be traceable back to `core`, a CIA extension id. When adding a new registry, expose enough
+diagnostic data for `/ciaa extension list`, `/ciaa extension info <id>`, and `/ciaa extension dump` to show who
 registered what without forcing developers to inspect logs or decompile extension jars.
 
 ## Development Setup

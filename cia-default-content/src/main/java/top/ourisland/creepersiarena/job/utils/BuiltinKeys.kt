@@ -9,7 +9,7 @@ import org.bukkit.NamespacedKey
  * under the stable CreepersIArena namespace. Centralising key creation here avoids scattering ad-hoc string literals throughout
  * the migrated job code and makes the namespace policy explicit.
  *
- * Addon content is expected to use its own plugin namespace; this object is therefore intentionally scoped to the main
+ * Extension content is expected to use its own plugin namespace; this object is therefore intentionally scoped to the main
  * CreepersIArena plugin only.
  */
 object BuiltinKeys {

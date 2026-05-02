@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.core.component.discovery;
 import java.util.Objects;
 
 /**
- * Registry entry with the extension/addon/core owner that contributed it.
+ * Registry entry with the extension/extension/core owner that contributed it.
  *
  * @param ownerId stable owner id, for example {@code core} or a CIA extension id
  * @param key     stable registry key

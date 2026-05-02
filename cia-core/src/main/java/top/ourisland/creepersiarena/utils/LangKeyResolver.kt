@@ -14,7 +14,7 @@ import java.util.stream.IntStream
  * those keys via [I18n].
  *
  * This object centralizes translation-key naming rules so job/skill UI code does not have to hand-roll string
- * concatenation. It also defines how runtime registry ids such as `cia:creeper` or `addon:mage.fireball` are mapped to
+ * concatenation. It also defines how runtime registry ids such as `cia:creeper` or `extension:mage.fireball` are mapped to
  * stable translation segments.
  *
  * ## Key conventions
@@ -29,16 +29,16 @@ import java.util.stream.IntStream
  * Runtime ids are not inserted into translation keys verbatim.
  * [normalizeLangSegment] converts namespaced ids into dot-safe segments:
  * - built-in ids in the `cia` namespace drop the leading namespace to avoid redundant `cia.job.cia.*` keys
- * - third-party namespaces are preserved, so addon content remains distinct
+ * - third-party namespaces are preserved, so extension content remains distinct
  *
  * Examples:
  * - `cia:creeper` -> `creeper`
  * - `cia:creeper.crossbow` -> `creeper.crossbow` when used as a raw segment
- * - `addon:mage` -> `addon.mage`
+ * - `extension:mage` -> `extension.mage`
  *
  * ## Skill id parsing
  * Skill ids are currently expected to follow the convention `<jobId>.<skillPath>`, where `<jobId>` itself may be
- * namespaced (for example `cia:creeper.crossbow` or `addon:mage.fireball`). [skillBase] splits on the **last** dot so
+ * namespaced (for example `cia:creeper.crossbow` or `extension:mage.fireball`). [skillBase] splits on the **last** dot so
  * the left-hand side becomes the runtime job id and the right-hand side becomes the skill-local segment.
  *
  * ## Lore resolving
@@ -85,7 +85,7 @@ object LangKeyResolver {
      * Expected input format is `<jobId>.<skillPath>`, where `<jobId>` may itself be namespaced. Examples:
      * - `cia:creeper.crossbow`
      * - `cia:moison.shadowstep`
-     * - `addon:mage.fireball`
+     * - `extension:mage.fireball`
      *
      * Parsing uses the **last** dot in the string. Everything before that dot is treated as the runtime job id and
      * normalized via [normalizeLangSegment]; everything after the dot becomes the skill-local segment.
@@ -181,7 +181,7 @@ object LangKeyResolver {
     /**
      * Builds the base translation prefix for a job id.
      *
-     * Built-in ids in the `cia` namespace collapse to `cia.job.<path>`, while addon namespaces are preserved as
+     * Built-in ids in the `cia` namespace collapse to `cia.job.<path>`, while extension namespaces are preserved as
      * `cia.job.<namespace>.<path>`.
      *
      * @param jobId runtime job id
@@ -217,12 +217,12 @@ object LangKeyResolver {
      * Converts a runtime id segment into a translation-safe segment.
      *
      * Built-in `cia:` ids drop their namespace so built-in keys stay concise, while third-party namespaces are preserved
-     * to avoid collisions between addon content.
+     * to avoid collisions between extension content.
      *
      * Examples:
      * - `cia:creeper` -> `creeper`
      * - `cia:creeper.crossbow` -> `creeper.crossbow`
-     * - `addon:mage` -> `addon.mage`
+     * - `extension:mage` -> `extension.mage`
      *
      * @param raw raw runtime id or segment
      * @return normalized segment ready to be embedded in a translation key

@@ -1,7 +1,7 @@
 id: cia-default-content
 name: CreepersIArena Default Content
 version: ${version}
-main: top.ourisland.creepersiarena.defaultcontent.DefaultContentAddon
+main: top.ourisland.creepersiarena.defaultcontent.DefaultContentExtension
 api-version: 1
 cia-version: "${version}"
 authors:

@@ -218,17 +218,6 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
         for (var mode : discovered.modes()) registerMode(mode);
     }
 
-    @Override
-    public void registerAnnotated(Plugin owner, String basePackage) {
-        Objects.requireNonNull(owner, "owner");
-        Objects.requireNonNull(basePackage, "basePackage");
-        var discovered = new ComponentCatalog();
-        scanner.scanInto(owner, basePackage, discovered);
-        for (var job : discovered.jobs()) registerJob(job);
-        for (var skill : discovered.skills()) registerSkill(skill);
-        for (var mode : discovered.modes()) registerMode(mode);
-    }
-
     private Properties loadTargetProperties(Path target, String targetPath) throws Exception {
         var props = new Properties();
         if (Files.exists(target)) {

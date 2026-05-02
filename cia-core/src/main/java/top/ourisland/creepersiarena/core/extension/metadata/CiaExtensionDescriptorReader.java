@@ -156,40 +156,39 @@ public final class CiaExtensionDescriptorReader {
                     continue;
                 }
 
-                if ("dependencies".equals(section)) {
-                    if (indent < 2) {
-                        throw invalid(source, lineNumber, "dependencies children must be indented");
+                switch (section) {
+                    case "dependencies" -> {
+                        if (indent < 2) {
+                            throw invalid(source, lineNumber, "dependencies children must be indented");
+                        }
+
+                        if (!"required".equals(key) && !"optional".equals(key)) {
+                            throw invalid(source, lineNumber, "Unsupported dependency key: " + key);
+                        }
+
+                        dependencySection = key;
+                        var ids = parseInlineList(value, source, lineNumber, key);
+                        if ("required".equals(key)) {
+                            raw.requiredDependencies.addAll(ids);
+                        } else {
+                            raw.optionalDependencies.addAll(ids);
+                        }
+                        continue;
                     }
+                    case "load" -> {
+                        if (indent < 2) {
+                            throw invalid(source, lineNumber, "load children must be indented");
+                        }
 
-                    if (!"required".equals(key) && !"optional".equals(key)) {
-                        throw invalid(source, lineNumber, "Unsupported dependency key: " + key);
+                        if (!"order".equals(key)) {
+                            throw invalid(source, lineNumber, "Unsupported load key: " + key);
+                        }
+
+                        raw.scalars.put("load.order", requiredInlineValue(value, source, lineNumber, key));
+                        continue;
                     }
-
-                    dependencySection = key;
-                    var ids = parseInlineList(value, source, lineNumber, key);
-                    if ("required".equals(key)) {
-                        raw.requiredDependencies.addAll(ids);
-                    } else {
-                        raw.optionalDependencies.addAll(ids);
-                    }
-                    continue;
-                }
-
-                if ("load".equals(section)) {
-                    if (indent < 2) {
-                        throw invalid(source, lineNumber, "load children must be indented");
-                    }
-
-                    if (!"order".equals(key)) {
-                        throw invalid(source, lineNumber, "Unsupported load key: " + key);
-                    }
-
-                    raw.scalars.put("load.order", requiredInlineValue(value, source, lineNumber, key));
-                    continue;
-                }
-
-                if ("authors".equals(section)) {
-                    throw invalid(source, lineNumber, "authors must use list items or an inline list");
+                    case "authors" ->
+                            throw invalid(source, lineNumber, "authors must use list items or an inline list");
                 }
 
                 throw invalid(source, lineNumber, "Unexpected nested key under " + section);

@@ -17,9 +17,9 @@ import java.lang.annotation.*;
  *     <li>the default enabled state before config filtering</li>
  * </ul>
  *
- * <h2>Id stability</h2>
+ * <h2>ID stability</h2>
  * The id is part of the plugin's public runtime surface. It may be stored in config, selection UI, serialized session
- * data and addon integrations, so changing it should be treated as a breaking change.
+ * data and extension integrations, so changing it should be treated as a breaking change.
  *
  * @see top.ourisland.creepersiarena.api.game.mode.IGameMode
  * @see top.ourisland.creepersiarena.api.metadata.ModeMetadata
@@ -32,7 +32,8 @@ public @interface CiaModeDef {
     /**
      * Returns the stable namespaced registry id of the mode.
      * <p>
-     * Built-in content uses the {@code cia} namespace. Addons should provide their own namespace to avoid collisions.
+     * Built-in content uses the {@code cia} namespace. Extensions should provide their own namespace to avoid
+     * collisions.
      *
      * @return globally unique mode id
      */

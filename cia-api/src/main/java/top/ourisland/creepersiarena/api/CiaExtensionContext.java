@@ -9,32 +9,27 @@ import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import java.nio.file.Path;
 
 /**
- * Mutable registration context handed to addon and extension callbacks.
+ * Mutable registration context handed to CIA extension callbacks.
  * <p>
  * This is the public publication surface for CIA extensions. It intentionally exposes only content-level extension
  * points: jobs, skills, modes, annotation discovery and resource installation. Bootstrap modules remain a core-internal
  * mechanism so external extensions do not need to depend on CreepersIArena implementation classes.
- *
- * @see CiaApi
- * @see CiaAddon
  */
 public interface CiaExtensionContext {
 
     /**
      * Returns the stable owner id for the current extension context.
      * <p>
-     * For jar-based CIA extensions this is the descriptor id. For Paper plugin addons this is a normalized plugin
-     * name.
+     * For jar-based CIA extensions this is the descriptor id.
      *
-     * @return extension or addon owner id
+     * @return extension owner id
      */
     String extensionId();
 
     /**
      * Returns the data directory reserved for this extension context.
      * <p>
-     * Jar-based CIA extensions receive {@code plugins/CreepersIArena/extension-data/<extension-id>}. Paper plugin
-     * addons receive their owning plugin data folder.
+     * Jar-based CIA extensions receive {@code plugins/CreepersIArena/extension-data/<extension-id>}.
      *
      * @return extension-specific data directory
      */
@@ -151,15 +146,5 @@ public interface CiaExtensionContext {
      * @param basePackage root package to scan for annotated components
      */
     void registerAnnotated(String basePackage);
-
-    /**
-     * Scans the supplied package in the owning plugin for supported public component annotations and registers any
-     * discovered jobs, skills and modes. Core-internal bootstrap modules discovered from this path are ignored for
-     * public addons.
-     *
-     * @param owner       plugin whose class loader/package should be scanned
-     * @param basePackage root package to scan for annotated components
-     */
-    void registerAnnotated(Plugin owner, String basePackage);
 
 }

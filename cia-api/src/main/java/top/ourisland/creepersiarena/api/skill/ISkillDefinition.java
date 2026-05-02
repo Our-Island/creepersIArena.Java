@@ -48,7 +48,7 @@ import java.util.List;
  * Implementations should remain stateless descriptors. Per-player counters, temporary flags, cooldown bookkeeping and
  * similar mutable values should be stored in runtime systems such as the skill state store, player/entity persistent
  * data containers, or other dedicated services. This keeps definitions safe to register once and reuse across the
- * whole plugin, including future addon-provided skills.
+ * whole plugin, including future extension-provided skills.
  *
  * @see top.ourisland.creepersiarena.api.annotation.CiaSkillDef
  *
@@ -60,8 +60,8 @@ public interface ISkillDefinition {
      * Returns the stable runtime id of this skill.
      * <p>
      * The value comes from the attached {@code @CiaSkillDef} metadata and must be globally unique inside the runtime
-     * catalog. Built-in skills use ids such as {@code cia:creeper.crossbow}; addon skills are expected to use their own
-     * namespace to avoid collisions.
+     * catalog. Built-in skills use ids such as {@code cia:creeper.crossbow}; extension skills are expected to use their
+     * own namespace to avoid collisions.
      *
      * @return namespaced skill id resolved from {@link SkillMetadata}
      */

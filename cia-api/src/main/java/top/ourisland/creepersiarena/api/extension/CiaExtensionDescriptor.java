@@ -6,8 +6,8 @@ import java.util.Objects;
 /**
  * Parsed metadata from a CIA extension jar's {@code cia-extension.yml} file.
  * <p>
- * The descriptor is intentionally part of {@code cia-api}: build tools, diagnostics, future extension loaders and addon
- * authors can all refer to the same stable metadata model without depending on {@code cia-core} internals.
+ * The descriptor is intentionally part of {@code cia-api}: build tools, diagnostics, future extension loaders and
+ * extension authors can all refer to the same stable metadata model without depending on {@code cia-core} internals.
  *
  * @param id           stable machine-readable extension id
  * @param name         human-readable extension name

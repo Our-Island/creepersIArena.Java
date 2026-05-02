@@ -5,9 +5,9 @@ import java.lang.annotation.*;
 /**
  * Marks a class as a discoverable job definition and declares its immutable registration metadata.
  * <p>
- * The component discovery layer scans built-in classes (and potentially addon-provided classes through the extension
- * API) for {@code @CiaJobDef}. The annotation exists so jobs can be registered from code-first metadata instead of a
- * hard-coded enum list.
+ * The component discovery layer scans built-in classes (and potentially extension-provided classes through the
+ * extension API) for {@code @CiaJobDef}. The annotation exists so jobs can be registered from code-first metadata
+ * instead of a hard-coded enum list.
  *
  * <h2>What belongs here</h2>
  * This annotation contains only <em>static</em> information needed to register the job in the catalog:
@@ -20,9 +20,9 @@ import java.lang.annotation.*;
  * <h2>ID stability</h2>
  * The id returned by {@link #id()} is the public registry identity of the job. It is used by config, player session
  * state, language-key generation and skill ownership metadata, so changing it is effectively a breaking change for any
- * existing data or addon integration.
+ * existing data or extension integration.
  *
- * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(org.bukkit.plugin.Plugin, String)
+ * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(String)
  * @see top.ourisland.creepersiarena.api.metadata.JobMetadata
  * @see top.ourisland.creepersiarena.api.job.IJob
  */
@@ -34,7 +34,7 @@ public @interface CiaJobDef {
     /**
      * Returns the stable namespaced registry id of the job.
      * <p>
-     * Built-in content uses the {@code cia} namespace, for example {@code cia:creeper}. Addons should use their own
+     * Built-in content uses the {@code cia} namespace, for example {@code cia:creeper}. Extensions should use their own
      * namespace to avoid collisions. The id is later normalized by the i18n helpers when language keys are built, but
      * the original value remains the runtime identity.
      *
@@ -46,7 +46,7 @@ public @interface CiaJobDef {
      * Returns whether the job should be considered enabled before configuration overrides are applied.
      * <p>
      * This value acts as a catalog default only. The final enabled/disabled state may still be overridden by plugin
-     * configuration, feature flags or addon-specific registration rules.
+     * configuration, feature flags or extension-specific registration rules.
      *
      * @return {@code true} if the job is opt-in by default at discovery time
      */

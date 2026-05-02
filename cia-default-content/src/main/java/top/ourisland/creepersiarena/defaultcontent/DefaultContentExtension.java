@@ -14,7 +14,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
  * The default content is intentionally loaded through the same annotation path as external CIA extension jars. This
  * keeps built-in jobs, skills and modes on the same registration surface that third-party content uses.
  */
-public final class DefaultContentAddon implements CiaExtension {
+public final class DefaultContentExtension implements CiaExtension {
 
     private static final String ROOT_PACKAGE = "top.ourisland.creepersiarena";
 

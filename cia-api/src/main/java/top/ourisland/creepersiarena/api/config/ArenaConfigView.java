@@ -14,12 +14,7 @@ import java.util.List;
  */
 public interface ArenaConfigView {
 
-    ArenaConfigView EMPTY = new ArenaConfigView() {
-        @Override
-        public @Nullable ConfigurationSection section() {
-            return null;
-        }
-    };
+    ArenaConfigView EMPTY = () -> null;
 
     default int getInt(String key, int defaultValue) {
         var section = section();

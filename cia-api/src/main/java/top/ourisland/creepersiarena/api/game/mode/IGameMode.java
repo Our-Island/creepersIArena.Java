@@ -24,8 +24,8 @@ import top.ourisland.creepersiarena.api.metadata.ModeMetadata;
  * belongs in the object returned by {@link #createLogic(GameSession, GameRuntime)}, not on the shared mode definition
  * instance.
  *
- * <h2>Addon compatibility</h2>
- * Built-in modes use the {@code cia} namespace (for example {@code cia:battle}). Addons are expected to use their own
+ * <h2>Extension compatibility</h2>
+ * Built-in modes use the {@code cia} namespace (for example {@code cia:battle}). Extensions are expected to use their own
  * namespace so they can coexist in the same registry without collisions.
  *
  * @see top.ourisland.creepersiarena.api.annotation.CiaModeDef
@@ -37,7 +37,8 @@ public interface IGameMode {
      * Returns the stable namespaced id of this mode.
      * <p>
      * The value is resolved from the attached {@code @CiaModeDef} annotation and acts as the public registry identity
-     * of the mode. It is used by config, mode selection, rule/timeline binding and any addon-facing extension code.
+     * of the mode. It is used by config, mode selection, rule/timeline binding and any extension-facing extension
+     * code.
      *
      * @return namespaced runtime mode id
      */

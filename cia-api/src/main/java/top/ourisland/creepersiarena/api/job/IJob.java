@@ -35,8 +35,8 @@ import top.ourisland.creepersiarena.api.metadata.JobMetadata;
  * This means jobs should return the base combat kit, while activatable skill items are usually supplied separately by
  * the skill system.
  *
- * <h2>Addon compatibility</h2>
- * Built-in jobs use the {@code cia} namespace. Addon jobs should use their own namespace so ids remain globally unique.
+ * <h2>Extension compatibility</h2>
+ * Built-in jobs use the {@code cia} namespace. Extension jobs should use their own namespace so ids remain globally unique.
  *
  * @see top.ourisland.creepersiarena.api.annotation.CiaJobDef
  * @see top.ourisland.creepersiarena.api.skill.ISkillDefinition
