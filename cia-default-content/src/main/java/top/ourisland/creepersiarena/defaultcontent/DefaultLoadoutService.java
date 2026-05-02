@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mode;
+package top.ourisland.creepersiarena.defaultcontent;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -9,14 +9,20 @@ import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 
 import java.util.function.LongSupplier;
 
-public final class BattleKitService {
+/**
+ * Default-content loadout service for bundled job/skill gameplay.
+ * <p>
+ * This is intentionally not a core service. Custom modes may provide completely different loadout logic through their
+ * own {@code IModePlayerFlow} implementation.
+ */
+public final class DefaultLoadoutService {
 
     private final JobManager jobs;
     private final SkillRegistry skillRegistry;
     private final SkillHotbarRenderer skillRenderer;
     private final LongSupplier nowTick;
 
-    public BattleKitService(
+    public DefaultLoadoutService(
             @lombok.NonNull JobManager jobs,
             @lombok.NonNull SkillRegistry skillRegistry,
             @lombok.NonNull SkillHotbarRenderer skillRenderer,

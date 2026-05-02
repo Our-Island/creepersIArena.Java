@@ -14,7 +14,8 @@ public final class StealMode implements IGameMode {
         var state = new StealState();
         return new ModeLogic(
                 new StealRules(runtime, session, state),
-                new StealTimeline(runtime, session, state)
+                new StealTimeline(runtime, session, state),
+                new StealPlayerFlow(runtime)
         );
     }
 

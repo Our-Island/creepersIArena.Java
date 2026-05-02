@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.game.arena;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -99,7 +98,7 @@ public final class ArenaManager {
     }
 
     private GameModeType parseType(String s) {
-        return s == null ? GameModeType.BATTLE : GameModeType.of(s);
+        return s == null ? GameModeType.of("battle") : GameModeType.of(s);
     }
 
     private Location toLocation(ArenaConfig.Vec3 v) {
@@ -114,26 +113,17 @@ public final class ArenaManager {
         return Collections.unmodifiableCollection(arenas.values());
     }
 
-    public @NonNull Location anyBattleSpawnOrFallback(@lombok.NonNull Location fallback) {
-        List<ArenaInstance> battles = arenasOf(GameModeType.BATTLE);
-        if (battles.isEmpty()) {
+    public @NonNull Location anySpawnForModeOrFallback(
+            @lombok.NonNull GameModeType type,
+            @lombok.NonNull Location fallback
+    ) {
+        List<ArenaInstance> candidates = arenasOf(type);
+        if (candidates.isEmpty()) {
             return fallback.clone();
         }
 
-        ArenaInstance arena = battles.get(ThreadLocalRandom.current().nextInt(battles.size()));
-
-        if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
-            return arena.anchor().clone();
-        }
-
-        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
-        int radius = 10;
-
-        Location pick = spawnpointSelector.pickBattleLeastCrowded(arena, online, radius);
-        if (pick == null) {
-            return arena.spawnpoints().getFirst().clone();
-        }
-        return pick;
+        ArenaInstance arena = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+        return gameSpawn(arena);
     }
 
     public List<ArenaInstance> arenasOf(GameModeType type) {
@@ -144,12 +134,14 @@ public final class ArenaManager {
         return out;
     }
 
-    public @NonNull Location battleSpawn(@lombok.NonNull ArenaInstance arena) {
-        if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
+    public @NonNull Location gameSpawn(@lombok.NonNull ArenaInstance arena) {
+        var spawns = arena.spawnGroup("default");
+        if (spawns.isEmpty()) {
             return arena.anchor().clone();
         }
 
-        return spawnpointSelector.pickBattleLeastCrowded(arena, Bukkit.getOnlinePlayers(), 10);
+        Location picked = spawnpointSelector.pickLeastCrowded(spawns, Bukkit.getOnlinePlayers(), 10);
+        return picked == null ? arena.anchor().clone() : picked;
     }
 
     public Collection<String> allArenaIds() {

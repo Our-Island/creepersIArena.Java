@@ -27,7 +27,7 @@ public final class BattleTimeline implements IModeTimeline {
 
     @Override
     public GameModeType type() {
-        return GameModeType.BATTLE;
+        return GameModeType.of("battle");
     }
 
     @Override

@@ -13,10 +13,7 @@ import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public final class StealTimeline implements IModeTimeline {
 
@@ -37,7 +34,7 @@ public final class StealTimeline implements IModeTimeline {
 
     @Override
     public GameModeType type() {
-        return GameModeType.STEAL;
+        return GameModeType.of("steal");
     }
 
     @Override
@@ -109,7 +106,10 @@ public final class StealTimeline implements IModeTimeline {
         st.phase = StealPhase.ROUND_PLAYING;
         st.remaining = Math.max(1, cfg.timePerRoundSeconds());
 
-        return List.of(new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)));
+        return List.of(
+                new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)),
+                new GameAction.EnterGame(participantIds())
+        );
     }
 
     private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
@@ -194,6 +194,17 @@ public final class StealTimeline implements IModeTimeline {
         for (int i = 0; i < ps.size(); i++) {
             runtime.sessionStore().get(ps.get(i)).selectedTeamKey((i % 2 == 0) ? "red" : "blue");
         }
+    }
+
+    private Set<UUID> participantIds() {
+        Set<UUID> out = new LinkedHashSet<>();
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            var s = runtime.sessionStore().get(p);
+            if (StealPlayerState.participant(s)) out.add(id);
+        }
+        return out;
     }
 
     private void reviveParticipantsForNextRound() {

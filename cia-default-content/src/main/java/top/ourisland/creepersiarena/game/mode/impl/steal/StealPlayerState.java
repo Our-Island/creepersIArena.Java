@@ -16,7 +16,7 @@ final class StealPlayerState {
     }
 
     static void ready(PlayerSession session, boolean value) {
-        if (session != null) session.modeBoolean(READY, value);
+        if (session != null) session.setModeBoolean(READY, value);
     }
 
     static boolean participant(PlayerSession session) {
@@ -24,7 +24,7 @@ final class StealPlayerState {
     }
 
     static void participant(PlayerSession session, boolean value) {
-        if (session != null) session.modeBoolean(PARTICIPANT, value);
+        if (session != null) session.setModeBoolean(PARTICIPANT, value);
     }
 
     static boolean alive(PlayerSession session) {
@@ -32,7 +32,7 @@ final class StealPlayerState {
     }
 
     static void alive(PlayerSession session, boolean value) {
-        if (session != null) session.modeBoolean(ALIVE, value);
+        if (session != null) session.setModeBoolean(ALIVE, value);
     }
 
 }

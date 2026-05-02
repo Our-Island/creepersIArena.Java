@@ -28,7 +28,7 @@ public final class AdminCommandHandlers {
 
     public void help(CommandSender sender) {
         Msg.send(sender, """
-                /ciaa mode <battle|steal>
+                /ciaa mode <mode_id>
                 /ciaa arena <arena_id>
                 /ciaa skip [arena_id]
                 /ciaa cooldown <factor>
@@ -104,7 +104,9 @@ public final class AdminCommandHandlers {
         GameModeType targetMode = st.forcedNextMode();
         if (targetMode == null) {
             GameSession g = gm.active();
-            targetMode = (g == null) ? GameModeType.BATTLE : g.mode();
+            targetMode = (g == null)
+                    ? GameModeType.of(rt.requireService(ConfigManager.class).globalConfig().game().defaultMode())
+                    : g.mode();
         }
 
         flow.endGameAndBackToHub("ADMIN_SKIP");

@@ -23,12 +23,12 @@ public final class BattleRules implements IModeRules {
 
     @Override
     public GameModeType type() {
-        return GameModeType.BATTLE;
+        return GameModeType.of("battle");
     }
 
     @Override
     public JoinDecision onJoin(JoinContext ctx) {
-        return new JoinDecision.ToHub();
+        return ctx.fromHubRequest() ? new JoinDecision.EnterGame() : new JoinDecision.ToHub();
     }
 
     @Override
@@ -38,7 +38,7 @@ public final class BattleRules implements IModeRules {
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
         var config = BattleModeConfig.from(runtime.cfg());
-        return new RespawnDecision.DeathLobbyCountdown(config.respawnTimeSeconds());
+        return new RespawnDecision.RespawnLobbyCountdown(config.respawnTimeSeconds());
     }
 
 }

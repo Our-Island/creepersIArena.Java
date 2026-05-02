@@ -25,7 +25,7 @@ public final class StealRules implements IModeRules {
 
     @Override
     public GameModeType type() {
-        return GameModeType.STEAL;
+        return GameModeType.of("steal");
     }
 
     @Override

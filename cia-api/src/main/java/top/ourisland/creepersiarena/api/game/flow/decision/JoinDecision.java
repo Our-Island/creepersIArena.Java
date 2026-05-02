@@ -3,9 +3,6 @@ package top.ourisland.creepersiarena.api.game.flow.decision;
 import org.bukkit.Location;
 import org.jspecify.annotations.Nullable;
 
-/**
- * 模式只做决策，不做动作；GameFlow 负责执行。
- */
 public sealed interface JoinDecision {
 
     record ToHub() implements JoinDecision {
@@ -19,9 +16,9 @@ public sealed interface JoinDecision {
     }
 
     /**
-     * 直接进战场（一般不推荐 join 就进，但留给未来扩展）
+     * Directly move the player into the active game through the active mode's player-flow hooks.
      */
-    record ToBattle() implements JoinDecision {
+    record EnterGame() implements JoinDecision {
 
     }
 

@@ -6,21 +6,24 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
+import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
+import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
-import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.BattleKitService;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
- * Internal component: only "stage/state transitions" (teleport + gamemode + kit + session state).
+ * Internal component: only generic player stage transitions.
  * <p>
- * Package-private: only used inside {@link top.ourisland.creepersiarena.game.flow.GameFlow}.
+ * This class must not know built-in modes such as battle or steal. Mode-specific spawn/loadout/UI behaviour is
+ * delegated to {@link IModePlayerFlow}.
  */
 final class PlayerStageTransitions {
 
@@ -29,30 +32,26 @@ final class PlayerStageTransitions {
 
     private final LobbyItemService lobbyItemService;
     private final LobbyService lobbyService;
-    private final ArenaManager arenaManager;
-    private final BattleKitService battleKit;
     private final Supplier<GlobalConfig> cfg;
+    private final Supplier<GameRuntime> runtime;
+    private final Supplier<IModePlayerFlow> playerFlow;
 
     PlayerStageTransitions(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionFacade sessions,
             @lombok.NonNull LobbyItemService lobbyItemService,
             @lombok.NonNull LobbyService lobbyService,
-            @lombok.NonNull ArenaManager arenaManager,
-            @lombok.NonNull BattleKitService battleKit,
-            @lombok.NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull Supplier<GameRuntime> runtime,
+            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
     ) {
         this.log = log;
         this.sessions = sessions;
         this.lobbyItemService = lobbyItemService;
         this.lobbyService = lobbyService;
-        this.arenaManager = arenaManager;
-        this.battleKit = battleKit;
         this.cfg = cfg;
-    }
-
-    int battleRespawnSecondsConfigured() {
-        return cfg.get().modeInt("battle", "respawn-time", 10);
+        this.runtime = runtime;
+        this.playerFlow = playerFlow;
     }
 
     void toHub(Player p) {
@@ -66,7 +65,7 @@ final class PlayerStageTransitions {
         Location to = hubAnchor();
         teleportAsync(p, to, "HUB");
 
-        lobbyItemService.applyHubKit(p, session, cfg.get());
+        lobbyItemService.applyHubKit(p, session, cfg.get(), selectableTeamCount(p, session));
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
@@ -92,6 +91,18 @@ final class PlayerStageTransitions {
             log.warn("[Transitions] teleportAsync error: player={} reason={} to={}", p.getName(), reason, to, t);
             return null;
         });
+    }
+
+    private int selectableTeamCount(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return 0;
+        try {
+            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, p, session)));
+        } catch (Throwable t) {
+            log.warn("[Transitions] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return 0;
+        }
     }
 
     void toRespawnLobby(Player p, int seconds) {
@@ -132,41 +143,44 @@ final class PlayerStageTransitions {
         log.debug("[Transitions] {} -> SPECTATE", p.getName());
     }
 
-    void toBattle(Player p) {
+    void enterGame(Player p, GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow) {
         var session = sessions.ensureSession(p);
         session.state(PlayerState.IN_GAME);
         session.respawnSecondsRemaining(0);
 
-        p.setGameMode(GameMode.ADVENTURE);
+        IModePlayerFlow flow = playerFlow == null ? IModePlayerFlow.DEFAULT : playerFlow;
+        Location fallback = hubAnchor();
+        var ctx = new ModePlayerContext(runtime, g, p, session, fallback);
 
-        Location loc = arenaManager.anyBattleSpawnOrFallback(hubAnchor());
-        teleportAsync(p, loc, "BATTLE(any)");
+        Location loc = flow.spawnLocation(ctx);
+        if (loc == null) loc = fallback;
+        teleportAsync(p, loc, "ENTER_GAME(mode=" + (g == null ? "null" : g.mode()) + ")");
 
-        battleKit.apply(p, session);
+        try {
+            flow.onEnterGame(ctx);
+        } catch (Throwable t) {
+            log.warn("[Transitions] mode player-flow failed: player={} mode={} err={}",
+                    p.getName(),
+                    g == null ? "null" : g.mode(),
+                    t.getMessage(),
+                    t
+            );
+        }
 
-        Msg.actionBar(p, Component.text("进入战场"));
-        log.debug("[Transitions] {} -> IN_GAME (battle spawn)", p.getName());
+        log.debug("[Transitions] {} -> IN_GAME (mode={} arena={})",
+                p.getName(),
+                g == null ? "null" : g.mode(),
+                g == null || g.arena() == null ? "null" : g.arena().id()
+        );
     }
 
-    void toBattle(Player p, GameSession g) {
+    Location gameSpawn(GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow, Player p) {
+        if (g == null || p == null) return hubAnchor();
         var session = sessions.ensureSession(p);
-        session.state(PlayerState.IN_GAME);
-        session.respawnSecondsRemaining(0);
-
-        p.setGameMode(GameMode.ADVENTURE);
-
-        Location loc = arenaManager.battleSpawn(g.arena());
-        teleportAsync(p, loc, "BATTLE(arena=" + g.arena().id() + ")");
-
-        battleKit.apply(p, session);
-
-        Msg.actionBar(p, Component.text("进入战场"));
-        log.debug("[Transitions] {} -> IN_GAME (battle spawn in arena={})", p.getName(), g.arena().id());
-    }
-
-    Location battleSpawn(GameSession g) {
-        if (g == null) return hubAnchor();
-        return arenaManager.battleSpawn(g.arena());
+        var flow = playerFlow == null ? IModePlayerFlow.DEFAULT : playerFlow;
+        var ctx = new ModePlayerContext(runtime, g, p, session, hubAnchor());
+        Location loc = flow.spawnLocation(ctx);
+        return loc == null ? hubAnchor() : loc;
     }
 
 }

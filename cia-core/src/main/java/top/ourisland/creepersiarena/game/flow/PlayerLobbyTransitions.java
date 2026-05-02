@@ -2,6 +2,9 @@ package top.ourisland.creepersiarena.game.flow;
 
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
+import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -20,17 +23,23 @@ final class PlayerLobbyTransitions {
     private final PlayerSessionFacade sessions;
     private final LobbyItemService lobbyItemService;
     private final Supplier<GlobalConfig> cfg;
+    private final Supplier<GameRuntime> runtime;
+    private final Supplier<IModePlayerFlow> playerFlow;
 
     PlayerLobbyTransitions(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionFacade sessions,
             @lombok.NonNull LobbyItemService lobbyItemService,
-            @lombok.NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull Supplier<GameRuntime> runtime,
+            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
     ) {
         this.log = log;
         this.sessions = sessions;
         this.lobbyItemService = lobbyItemService;
         this.cfg = cfg;
+        this.runtime = runtime;
+        this.playerFlow = playerFlow;
     }
 
     void selectJob(Player p, String jobIdRaw) {
@@ -64,10 +73,22 @@ final class PlayerLobbyTransitions {
         if (s == null) return;
 
         switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get());
+            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get(), selectableTeamCount(p, s));
             case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get());
             case null, default -> {
             }
+        }
+    }
+
+    private int selectableTeamCount(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return 0;
+        try {
+            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, p, session)));
+        } catch (Throwable t) {
+            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return 0;
         }
     }
 
@@ -90,21 +111,26 @@ final class PlayerLobbyTransitions {
 
     void cycleTeam(Player p) {
         var s = sessions.ensureSession(p);
-        int max = cfg.get().ui().lobby().teamCount();
-        Integer cur = s.selectedTeam();
+        int max = selectableTeamCount(p, s);
+        if (max <= 0) return;
 
+        Integer cur = s.selectedTeam();
         selectTeam(p, (cur == null) ? Integer.valueOf(1) : (cur >= max) ? null : cur + 1);
     }
 
-    void selectTeam(Player p, Integer teamId) {
+    boolean selectTeam(Player p, Integer teamId) {
         var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB) return;
+        if (s.state() != PlayerState.HUB) return false;
 
-        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, cfg.get().ui().lobby().teamCount());
+        int max = selectableTeamCount(p, s);
+        if (max <= 0) return false;
+
+        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, max);
 
         s.selectedTeam(next);
         refreshLobbyKit(p);
         log.info("[Lobby] {} team -> {}", p.getName(), next == null ? "RANDOM" : next);
+        return true;
     }
 
 }

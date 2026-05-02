@@ -25,6 +25,7 @@ game:
     - example_mode
 
   # Shared game-level settings owned by core.
+  default-mode: battle
   leave-delay-seconds: 5
 
   # Mode-owned settings. Core only exposes these sections through GameConfigView.
@@ -47,7 +48,6 @@ ui:
   lobby:
     job-select-mode: hotbar
     jobs-per-page: 5
-    team-count: 4
 
 world:
   disable-portals: true

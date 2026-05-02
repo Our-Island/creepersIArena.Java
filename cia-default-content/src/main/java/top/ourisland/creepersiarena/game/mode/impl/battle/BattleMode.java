@@ -13,7 +13,8 @@ public final class BattleMode implements IGameMode {
     public ModeLogic createLogic(GameSession session, GameRuntime runtime) {
         return new ModeLogic(
                 new BattleRules(runtime, session),
-                new BattleTimeline(runtime, session)
+                new BattleTimeline(runtime, session),
+                new BattlePlayerFlow(runtime)
         );
     }
 

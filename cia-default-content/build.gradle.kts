@@ -16,7 +16,12 @@ dependencies {
     compileOnly(project(":cia-core"))
 
     compileOnly(libs.paper.api)
+
     compileOnly(libs.jspecify)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 }
 
 tasks.jar {

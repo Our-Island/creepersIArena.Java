@@ -238,6 +238,7 @@ data class GlobalConfig(
     data class Game(
         @get:JvmName("disabledModes") val disabledModes: Set<String>,
         @get:JvmName("leaveDelaySeconds") val leaveDelaySeconds: Int,
+        @get:JvmName("defaultMode") val defaultMode: String,
     ) {
 
         companion object {
@@ -247,10 +248,11 @@ data class GlobalConfig(
                 return Game(
                     disabledModes = Collections.unmodifiableSet(HashSet(sec.getStringList("disabled-modes"))),
                     leaveDelaySeconds = sec.getInt("leave-delay-seconds", 5).coerceAtLeast(0),
+                    defaultMode = sec.getString("default-mode", "battle") ?: "battle",
                 )
             }
 
-            fun defaults(): Game = Game(disabledModes = setOf(), leaveDelaySeconds = 5)
+            fun defaults(): Game = Game(disabledModes = setOf(), leaveDelaySeconds = 5, defaultMode = "battle")
 
         }
 
@@ -276,7 +278,6 @@ data class GlobalConfig(
     data class LobbyUi(
         @get:JvmName("jobSelectMode") val jobSelectMode: JobSelectMode,
         @get:JvmName("jobsPerPage") val jobsPerPage: Int,
-        @get:JvmName("teamCount") val teamCount: Int,
     ) {
 
         companion object {
@@ -285,14 +286,12 @@ data class GlobalConfig(
                 if (sec == null) return defaults()
                 val mode = sec.getString("job-select-mode", "hotbar")
                 val perPage = sec.getInt("jobs-per-page", 5)
-                val teamCount = sec.getInt("team-count", 4)
-                return LobbyUi(JobSelectMode.fromConfig(mode), perPage, teamCount.coerceAtLeast(1))
+                return LobbyUi(JobSelectMode.fromConfig(mode), perPage)
             }
 
             fun defaults(): LobbyUi = LobbyUi(
                 jobSelectMode = JobSelectMode.HOTBAR,
                 jobsPerPage = 5,
-                teamCount = 4,
             )
 
         }

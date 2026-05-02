@@ -6,16 +6,16 @@ import org.jspecify.annotations.Nullable;
 public sealed interface RespawnDecision {
 
     /**
-     * BATTLE：进 death lobby 并启动倒计时，倒计时结束后回战场。
+     * Move to the generic respawn lobby and return to the active game after the countdown.
      */
-    record DeathLobbyCountdown(
+    record RespawnLobbyCountdown(
             int seconds
     ) implements RespawnDecision {
 
     }
 
     /**
-     * STEAL：直接旁观（可选指定旁观点）
+     * Move to spectator mode, optionally at a supplied location.
      */
     record Spectate(
             @Nullable Location where
@@ -24,7 +24,7 @@ public sealed interface RespawnDecision {
     }
 
     /**
-     * 直接回大厅
+     * Directly return to the hub.
      */
     record Hub() implements RespawnDecision {
 

@@ -70,6 +70,10 @@ types should be generic views only; mode-specific, arena-specific, or job-specif
 implementation that owns it. Core arena config should only describe generic arena identity, mode id, anchor/range, named
 spawn groups, and a raw settings view for mode-owned fields.
 
+Player entry, respawn return, mode-specific loadouts, and mode-specific lobby controls must be mode-owned. Core may
+manage generic stages such as HUB, RESPAWN, SPECTATE, and IN_GAME, but it must delegate mode details through
+`IModePlayerFlow`/mode decisions instead of hard-coding battle, steal, team, or kit behavior in `cia-core`.
+
 CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
 `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in
 `cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/metadata`. Descriptor reading must not load classes
