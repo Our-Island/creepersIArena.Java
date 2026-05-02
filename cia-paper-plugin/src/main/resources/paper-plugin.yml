@@ -1,7 +1,7 @@
 name: creepersIArena
 version: '${version}'
 main: top.ourisland.creepersiarena.CreepersIArena
-api-version: '1.21.11'
+api-version: '${minecraft-version}'
 load: POSTWORLD
 prefix: "CIA"
 authors: [ "Our-Island", "Chiloven945", "xqysp" ]
