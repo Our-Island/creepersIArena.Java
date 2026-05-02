@@ -162,25 +162,25 @@ public final class CiaApiImpl implements CiaApi {
 
         @Override
         public void registerJob(IJob job) {
-            catalog.registerJob(job);
+            catalog.registerJob(extensionId(), job);
             var jm = rt.getService(JobManager.class);
-            if (jm != null) jm.register(job);
+            if (jm != null) jm.register(extensionId(), job);
             log.info("[Extension] {} registered job {}", owner.getName(), job.id());
         }
 
         @Override
         public void registerSkill(ISkillDefinition skill) {
-            catalog.registerSkill(skill);
+            catalog.registerSkill(extensionId(), skill);
             var sr = rt.getService(SkillRegistry.class);
-            if (sr != null) sr.register(skill);
+            if (sr != null) sr.register(extensionId(), skill);
             log.info("[Extension] {} registered skill {}", owner.getName(), skill.id());
         }
 
         @Override
         public void registerMode(IGameMode mode) {
-            catalog.registerMode(mode);
+            catalog.registerMode(extensionId(), mode);
             var gm = rt.getService(GameManager.class);
-            if (gm != null) gm.registerMode(mode);
+            if (gm != null) gm.registerMode(extensionId(), mode);
             log.info("[Extension] {} registered mode {}", owner.getName(), mode.mode());
         }
 
@@ -196,7 +196,7 @@ public final class CiaApiImpl implements CiaApi {
         }
 
         private void registerModule(IBootstrapModule module) {
-            catalog.registerModule(module);
+            catalog.registerModule(extensionId(), module);
             log.info("[Extension] {} registered bootstrap module {} (effective on next restart/re-enable).", owner.getName(), module.name());
         }
 

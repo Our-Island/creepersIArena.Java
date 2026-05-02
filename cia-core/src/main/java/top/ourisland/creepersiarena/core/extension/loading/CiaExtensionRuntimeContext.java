@@ -23,6 +23,8 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -36,6 +38,13 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
     private final Path dataFolder;
     private final Path pluginDataFolder;
     private final AnnotationComponentScanner scanner = new AnnotationComponentScanner();
+    private final List<String> registeredJobs = new ArrayList<>();
+    private final List<String> registeredSkills = new ArrayList<>();
+    private final List<String> registeredModes = new ArrayList<>();
+    private final List<String> registeredListeners = new ArrayList<>();
+    private final List<String> installedResources = new ArrayList<>();
+    private final List<String> mergedYamlResources = new ArrayList<>();
+    private final List<String> mergedPropertiesResources = new ArrayList<>();
 
     CiaExtensionRuntimeContext(
             BootstrapRuntime rt,
@@ -77,6 +86,7 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
 
     @Override
     public void installResource(String resourcePath, String targetPath) {
+        remember(installedResources, targetPath);
         var target = resolvePluginDataTarget(targetPath);
         if (Files.exists(target)) return;
 
@@ -95,6 +105,7 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
 
     @Override
     public void mergeYamlResource(String resourcePath, String targetPath) {
+        remember(mergedYamlResources, targetPath);
         var target = resolvePluginDataTarget(targetPath);
         try {
             Files.createDirectories(target.getParent());
@@ -123,6 +134,7 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
 
     @Override
     public void mergePropertiesResource(String resourcePath, String targetPath) {
+        remember(mergedPropertiesResources, targetPath);
         var target = resolvePluginDataTarget(targetPath);
         try {
             Files.createDirectories(target.getParent());
@@ -161,27 +173,30 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
     @Override
     public void registerJob(IJob job) {
         Objects.requireNonNull(job, "job");
-        catalog.registerJob(job);
+        catalog.registerJob(descriptor.id(), job);
+        registeredJobs.add(job.id().id());
         var jm = rt == null ? null : rt.getService(JobManager.class);
-        if (jm != null) jm.register(job);
+        if (jm != null) jm.register(descriptor.id(), job);
         logInfo("[Extension] {} registered job {}", descriptor.id(), job.id());
     }
 
     @Override
     public void registerSkill(ISkillDefinition skill) {
         Objects.requireNonNull(skill, "skill");
-        catalog.registerSkill(skill);
+        catalog.registerSkill(descriptor.id(), skill);
+        registeredSkills.add(skill.id());
         var sr = rt == null ? null : rt.getService(SkillRegistry.class);
-        if (sr != null) sr.register(skill);
+        if (sr != null) sr.register(descriptor.id(), skill);
         logInfo("[Extension] {} registered skill {}", descriptor.id(), skill.id());
     }
 
     @Override
     public void registerMode(IGameMode mode) {
         Objects.requireNonNull(mode, "mode");
-        catalog.registerMode(mode);
+        catalog.registerMode(descriptor.id(), mode);
+        registeredModes.add(mode.mode().id());
         var gm = rt == null ? null : rt.getService(GameManager.class);
-        if (gm != null) gm.registerMode(mode);
+        if (gm != null) gm.registerMode(descriptor.id(), mode);
         logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode());
     }
 
@@ -189,6 +204,7 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
     public void registerListener(Listener listener) {
         Objects.requireNonNull(listener, "listener");
         Bukkit.getPluginManager().registerEvents(listener, rt.plugin());
+        registeredListeners.add(listener.getClass().getName());
         logInfo("[Extension] {} registered listener {}", descriptor.id(), listener.getClass().getName());
     }
 
@@ -231,6 +247,10 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
             }
         }
         return props;
+    }
+
+    private void remember(List<String> values, String value) {
+        if (!values.contains(value)) values.add(value);
     }
 
     private Path resolvePluginDataTarget(String targetPath) {
@@ -297,6 +317,19 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
             }
         }
         return changed;
+    }
+
+
+    ExtensionRegistrationSnapshot snapshot() {
+        return new ExtensionRegistrationSnapshot(
+                registeredJobs,
+                registeredSkills,
+                registeredModes,
+                registeredListeners,
+                installedResources,
+                mergedYamlResources,
+                mergedPropertiesResources
+        );
     }
 
     void createDataFolder() {

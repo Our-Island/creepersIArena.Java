@@ -94,6 +94,11 @@ The loader may scan `extensions/*.cia.jar`, create one class loader per extensio
 `CiaExtension` through `ServiceLoader`, and call `onLoad`, `onEnable`, and `onDisable`. Keep loading behavior separate
 from descriptor parsing so metadata-only tools can inspect jars without executing extension code.
 
+Runtime registries must preserve component ownership. Jobs, skills, modes, listeners, and extension-installed resources
+should be traceable back to `core`, a Paper addon id, or a CIA extension id. When adding a new registry, expose enough
+diagnostic data for `/cia extensions list`, `/cia extensions info <id>`, and `/cia extensions dump` to show who
+registered what without forcing developers to inspect logs or decompile extension jars.
+
 ## Development Setup
 
 Use the Gradle wrapper from the repository:

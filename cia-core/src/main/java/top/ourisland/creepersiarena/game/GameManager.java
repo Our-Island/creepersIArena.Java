@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.mode.*;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ public final class GameManager {
     private final ArenaManager arenaManager;
     private final Logger logger;
 
-    private final Map<GameModeType, IGameMode> modes = new LinkedHashMap<>();
+    private final Map<GameModeType, RegisteredComponent<IGameMode>> modes = new LinkedHashMap<>();
     private final Map<GameModeType, Integer> autoIndex = new LinkedHashMap<>();
     private final Map<GameModeType, String> lastAutoArenaId = new LinkedHashMap<>();
 
@@ -55,8 +56,13 @@ public final class GameManager {
     }
 
     public void registerMode(IGameMode mode) {
-        modes.put(mode.mode(), mode);
-        logger.info("[Game] Mode {} registered: {}", mode.mode(), mode.getClass().getSimpleName());
+        registerMode(RegisteredComponent.CORE_OWNER, mode);
+    }
+
+    public void registerMode(String ownerId, IGameMode mode) {
+        modes.put(mode.mode(), new RegisteredComponent<>(ownerId, mode.mode().id(), mode));
+        logger.info("[Game] Mode {} registered by {}: {}", mode.mode(), RegisteredComponent.normalizeOwnerId(ownerId), mode.getClass()
+                .getSimpleName());
     }
 
     public void startAuto(GameModeType type) {
@@ -82,7 +88,7 @@ public final class GameManager {
 
     private void startWithArena(GameModeType type, ArenaInstance arena) {
         var rt = runtime();
-        var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type);
+        var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type).value();
 
         var session = new GameSession(type, arena);
         var logic = mode.createLogic(session, rt);
@@ -127,6 +133,23 @@ public final class GameManager {
             logger.warn("[Game] tick1s failed.", t);
             return List.of();
         }
+    }
+
+    public Map<GameModeType, IGameMode> modes() {
+        var out = new LinkedHashMap<GameModeType, IGameMode>();
+        for (var entry : modes.entrySet()) {
+            out.put(entry.getKey(), entry.getValue().value());
+        }
+        return Map.copyOf(out);
+    }
+
+    public List<RegisteredComponent<IGameMode>> registeredModes() {
+        return List.copyOf(modes.values());
+    }
+
+    public String ownerOf(GameModeType type) {
+        var registered = modes.get(type);
+        return registered == null ? null : registered.ownerId();
     }
 
 }

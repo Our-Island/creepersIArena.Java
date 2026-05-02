@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.job.JobManager;
 
 import java.util.Set;
@@ -41,15 +42,25 @@ public final class JobModule implements IBootstrapModule {
     }
 
     private static int registerCatalogJobs(
-            JobManager jobManager, ComponentCatalog catalog, Set<String> disabledJobs, Logger log) {
+            JobManager jobManager,
+            ComponentCatalog catalog,
+            Set<String> disabledJobs,
+            Logger log
+    ) {
         int count = 0;
-        for (IJob job : catalog.jobs()) {
-            count += registerIfEnabled(jobManager, job, disabledJobs, log);
+        for (var registered : catalog.registeredJobs()) {
+            count += registerIfEnabled(jobManager, registered, disabledJobs, log);
         }
         return count;
     }
 
-    private static int registerIfEnabled(JobManager jobManager, IJob job, Set<String> disabledJobs, Logger log) {
+    private static int registerIfEnabled(
+            JobManager jobManager,
+            RegisteredComponent<IJob> registered,
+            Set<String> disabledJobs,
+            Logger log
+    ) {
+        IJob job = registered.value();
         String id = job.id().toString();
         String path = job.id().path();
         boolean disabledByConfig = disabledJobs != null && disabledJobs.stream()
@@ -65,8 +76,8 @@ public final class JobModule implements IBootstrapModule {
             return 0;
         }
 
-        jobManager.register(job);
-        log.info("[Job] Job registered: {}", id);
+        jobManager.register(registered.ownerId(), job);
+        log.info("[Job] Job registered: {} owner={}", id, registered.ownerId());
         return 1;
     }
 
