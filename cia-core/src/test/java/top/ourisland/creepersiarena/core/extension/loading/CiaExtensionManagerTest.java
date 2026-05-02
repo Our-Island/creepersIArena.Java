@@ -200,37 +200,23 @@ class CiaExtensionManagerTest {
                 
                 }
                 """);
-        var badJar = compileExtensionJarWithoutService("bad-extension", "com.example.BadExtension", """
-                package com.example;
-                
-                import top.ourisland.creepersiarena.api.extension.ICiaExtension;
-                
-                public final class BadExtension implements ICiaExtension {
-                }
+        var badJar = createDescriptorOnlyJar("bad-extension", "com.example.BadExtension", """
+                dependencies:
+                  required: []
+                  optional: []
                 """);
 
         var manager = managerWithCopiedJars(goodJar, badJar);
 
-        manager.loadAll();
+        try {
+            manager.loadAll();
 
-        assertNotNull(manager.loadedExtension("good-extension"));
-        assertNotNull(manager.loadFailure("bad-extension"));
-        assertTrue(Files.exists(tempDir.resolve("extension-data/good-extension/loaded.txt")));
-    }
-
-    @Test
-    void loadAllRejectsMissingRequiredDependencyBeforeClassLoading() throws Exception {
-        var jar = createDescriptorOnlyJar("needs-base", "com.example.NeedsBase", """
-                dependencies:
-                  required:
-                    - base-extension
-                  optional: []
-                """);
-        var manager = managerWithCopiedJars(jar);
-
-        var ex = assertThrows(CiaExtensionLoadException.class, manager::loadAll);
-
-        assertTrue(ex.getMessage().contains("requires missing extension base-extension"));
+            assertNotNull(manager.loadedExtension("good-extension"));
+            assertNotNull(manager.loadFailure("bad-extension"));
+            assertTrue(Files.exists(tempDir.resolve("extension-data/good-extension/loaded.txt")));
+        } finally {
+            manager.disableAll();
+        }
     }
 
     private Path createDescriptorOnlyJar(
@@ -266,6 +252,21 @@ class CiaExtensionManagerTest {
             Files.copy(jar, manager.extensionsDirectory().resolve(jar.getFileName()));
         }
         return manager;
+    }
+
+    @Test
+    void loadAllRejectsMissingRequiredDependencyBeforeClassLoading() throws Exception {
+        var jar = createDescriptorOnlyJar("needs-base", "com.example.NeedsBase", """
+                dependencies:
+                  required:
+                    - base-extension
+                  optional: []
+                """);
+        var manager = managerWithCopiedJars(jar);
+
+        var ex = assertThrows(CiaExtensionLoadException.class, manager::loadAll);
+
+        assertTrue(ex.getMessage().contains("requires missing extension base-extension"));
     }
 
     @Test

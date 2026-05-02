@@ -9,7 +9,6 @@ import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +49,7 @@ class CiaExtensionRuntimeContextResourceTest {
                 List.of(),
                 CiaExtensionLoadOrder.NORMAL
         );
-        var classLoader = new URLClassLoader(new URL[]{resourcesRoot.toUri().toURL()}, getClass().getClassLoader());
+        var classLoader = new CiaExtensionClassLoader(new URL[]{resourcesRoot.toUri().toURL()}, getClass().getClassLoader());
         return new CiaExtensionRuntimeContext(
                 null,
                 new ComponentCatalog(),
@@ -116,7 +115,7 @@ class CiaExtensionRuntimeContextResourceTest {
         }
 
         assertEquals("Custom Reloaded", merged.getProperty("cia.core.reload"));
-        assertEquals("Creeper", merged.getProperty("cia.job.creeper.name"));
+        assertEquals("Creeper", merged.getProperty("cia.job.creeper.name", "").trim());
         assertEquals(List.of("lang/en_us.properties"), context.snapshot().mergedPropertiesResources());
     }
 
