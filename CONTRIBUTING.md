@@ -57,8 +57,13 @@ belongs in `cia-default-content` and should register jobs, skills, modes, and co
 
 Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src/main/resources/paper-plugin.yml`,
 `cia-core/src/main/resources/config.yml`, `cia-core/src/main/resources/arena.yml`,
-`cia-core/src/main/resources/skill.yml`, `cia-core/src/main/resources/lang/`, or
-`cia-default-content/src/main/resources/cia-extension.yml` should be reviewed as user-facing changes.
+`cia-core/src/main/resources/lang/`, `cia-default-content/src/main/resources/default-content/`,
+`cia-default-content/src/main/resources/lang/`, or `cia-default-content/src/main/resources/cia-extension.yml` should be
+reviewed as user-facing changes.
+
+Core resources must stay platform-owned. Default jobs, default skill parameters, default mode settings, and default
+job/skill language keys belong in `cia-default-content` and should be installed or merged by the owning extension through
+`CiaExtensionContext` resource methods. Do not reintroduce default-content resource defaults into `cia-core`.
 
 `arena.yml` must stay mode-extensible. The core arena model may define generic fields such as `mode`, `location`,
 `range`, named `spawns`, and `settings`, but fields only understood by one mode must be read by that mode extension
@@ -73,6 +78,11 @@ spawn groups, and a raw settings view for mode-owned fields.
 Player entry, respawn return, mode-specific loadouts, and mode-specific lobby controls must be mode-owned. Core may
 manage generic stages such as HUB, RESPAWN, SPECTATE, and IN_GAME, but it must delegate mode details through
 `IModePlayerFlow`/mode decisions instead of hard-coding battle, steal, team, or kit behavior in `cia-core`.
+
+Bundled default content is packaged as a real CIA extension. `cia-paper-plugin` embeds the built
+`cia-default-content.cia.jar` under `META-INF/cia/bundled-extensions/`, and core extracts the managed jar into
+`plugins/CreepersIArena/extensions/` before scanning extension jars. Do not add direct runtime dependencies from
+`cia-core` to default job, skill, or mode implementation packages to make this work.
 
 CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
 `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in

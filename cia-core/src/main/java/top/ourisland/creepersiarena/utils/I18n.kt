@@ -6,6 +6,8 @@ import top.ourisland.creepersiarena.config.ConfigManager
 import top.ourisland.creepersiarena.utils.I18n.has
 import top.ourisland.creepersiarena.utils.I18n.init
 import top.ourisland.creepersiarena.utils.I18n.reload
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.text.MessageFormat
 import java.util.*
 
@@ -13,9 +15,9 @@ import java.util.*
  * Plugin i18n helper backed by Java [ResourceBundle].
  *
  * ## Resource layout
- * Bundles are loaded from plugin resources using the base name `lang/<lang>`. For example, if global
- * config returns `en_us`, it loads `lang/en_us`, which typically corresponds to
- * `src/main/resources/lang/en_us.properties`.
+ * Bundles are loaded from `plugins/CreepersIArena/lang/<lang>.properties` when present, then fall back to plugin
+ * classpath resources using the base name `lang/<lang>`. Extension-owned language defaults are merged into the data
+ * directory before this helper is initialized.
  *
  * ## Loading and fallback
  * - [init] loads the bundle immediately according to `globalConfig().lang()`.
@@ -84,7 +86,8 @@ object I18n {
     /**
      * Reloads the active language bundle based on `globalConfig().lang()`.
      *
-     * It tries `lang/<configuredLang>` and falls back to `lang/en_us`.
+     * It tries `plugins/CreepersIArena/lang/<configuredLang>.properties`, then `lang/<configuredLang>` on the
+     * classpath, and falls back to `en_us`.
      *
      * @throws IllegalStateException if called before [init]
      */
@@ -95,10 +98,19 @@ object I18n {
 
     private fun loadBundle(lang: String) {
         bundle = try {
-            ResourceBundle.getBundle("lang/$lang")
+            loadBundleFromDataDir(lang) ?: ResourceBundle.getBundle("lang/$lang")
         } catch (_: Exception) {
             logger?.warn("[I18n] Failed to load language '{}', fallback to en_us", lang)
-            ResourceBundle.getBundle("lang/en_us")
+            loadBundleFromDataDir("en_us") ?: ResourceBundle.getBundle("lang/en_us")
+        }
+    }
+
+    private fun loadBundleFromDataDir(lang: String): ResourceBundle? {
+        val cfg = configManager ?: return null
+        val file = cfg.dataDir.resolve("lang").resolve("$lang.properties")
+        if (!Files.isRegularFile(file)) return null
+        return Files.newBufferedReader(file, StandardCharsets.UTF_8).use { reader ->
+            PropertyResourceBundle(reader)
         }
     }
 

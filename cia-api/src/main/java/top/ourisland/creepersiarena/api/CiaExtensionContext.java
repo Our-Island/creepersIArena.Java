@@ -12,8 +12,8 @@ import java.nio.file.Path;
  * Mutable registration context handed to addon and extension callbacks.
  * <p>
  * This is the public publication surface for CIA extensions. It intentionally exposes only content-level extension
- * points: jobs, skills, modes and annotation discovery. Bootstrap modules remain a core-internal mechanism so external
- * extensions do not need to depend on CreepersIArena implementation classes.
+ * points: jobs, skills, modes, annotation discovery and resource installation. Bootstrap modules remain a core-internal
+ * mechanism so external extensions do not need to depend on CreepersIArena implementation classes.
  *
  * @see CiaApi
  * @see CiaAddon
@@ -39,7 +39,6 @@ public interface CiaExtensionContext {
      * @return extension-specific data directory
      */
     Path dataFolder();
-
 
     /**
      * Returns the owning Paper plugin instance used for scheduler and listener registration.
@@ -81,6 +80,40 @@ public interface CiaExtensionContext {
     <T> T getService(Class<T> type);
 
     /**
+     * Installs a resource from the extension jar into the main CreepersIArena data directory when the target file does
+     * not already exist.
+     * <p>
+     * This is intended for extension-owned config files such as {@code skill.yml}. Existing user files are never
+     * overwritten.
+     *
+     * @param resourcePath path inside the extension jar
+     * @param targetPath   path relative to {@code plugins/CreepersIArena}
+     */
+    void installResource(String resourcePath, String targetPath);
+
+    /**
+     * Merges a YAML resource from the extension jar into a target YAML file in the main data directory.
+     * <p>
+     * Only missing keys are written; existing user values are preserved. This allows mode extensions to publish default
+     * {@code game.modes.<id>} or {@code arena.<id>.settings} sections without making core aware of their typed schema.
+     *
+     * @param resourcePath path inside the extension jar
+     * @param targetPath   path relative to {@code plugins/CreepersIArena}
+     */
+    void mergeYamlResource(String resourcePath, String targetPath);
+
+    /**
+     * Merges a Java properties resource from the extension jar into a target properties file in the main data
+     * directory.
+     * <p>
+     * Only missing keys are written; existing user translations are preserved.
+     *
+     * @param resourcePath path inside the extension jar
+     * @param targetPath   path relative to {@code plugins/CreepersIArena}
+     */
+    void mergePropertiesResource(String resourcePath, String targetPath);
+
+    /**
      * Registers a job definition instance.
      *
      * @param job job definition to publish
@@ -100,7 +133,6 @@ public interface CiaExtensionContext {
      * @param mode mode definition to publish
      */
     void registerMode(IGameMode mode);
-
 
     /**
      * Registers a Bukkit listener owned by this extension.

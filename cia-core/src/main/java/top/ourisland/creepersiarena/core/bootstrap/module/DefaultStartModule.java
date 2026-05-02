@@ -26,7 +26,12 @@ public final class DefaultStartModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var gameManager = rt.requireService(GameManager.class);
             var cfg = rt.requireService(ConfigManager.class).globalConfig();
-            gameManager.startAuto(GameModeType.of(cfg.game().defaultMode()));
+            var defaultMode = cfg.game().defaultMode();
+            if (defaultMode.isBlank()) {
+                rt.log().info("[Game] No default mode configured; skipping automatic game start.");
+                return;
+            }
+            gameManager.startAuto(GameModeType.of(defaultMode));
         }, "Starting configured default mode if possible...", "Default mode started or queued.");
     }
 

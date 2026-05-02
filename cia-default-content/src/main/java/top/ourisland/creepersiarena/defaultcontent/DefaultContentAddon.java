@@ -20,6 +20,11 @@ public final class DefaultContentAddon implements CiaExtension {
 
     @Override
     public void onLoad(CiaExtensionContext context) {
+        context.mergeYamlResource("default-content/config.yml", "config.yml");
+        context.mergeYamlResource("default-content/arena.yml", "arena.yml");
+        context.installResource("default-content/skill.yml", "skill.yml");
+        context.mergePropertiesResource("lang/en_us.properties", "lang/en_us.properties");
+        context.mergePropertiesResource("lang/zh_cn.properties", "lang/zh_cn.properties");
         context.registerAnnotated(ROOT_PACKAGE);
     }
 

@@ -83,6 +83,7 @@ data class GlobalConfig(
             // Compatibility with the old schema: game.battle / game.steal / game.<custom-mode>
             val reserved = setOf(
                 "disabled-modes",
+                "default-mode",
                 "leave-delay-seconds",
                 "modes",
                 "cooldown",
@@ -248,11 +249,11 @@ data class GlobalConfig(
                 return Game(
                     disabledModes = Collections.unmodifiableSet(HashSet(sec.getStringList("disabled-modes"))),
                     leaveDelaySeconds = sec.getInt("leave-delay-seconds", 5).coerceAtLeast(0),
-                    defaultMode = sec.getString("default-mode", "battle") ?: "battle",
+                    defaultMode = sec.getString("default-mode", "") ?: "",
                 )
             }
 
-            fun defaults(): Game = Game(disabledModes = setOf(), leaveDelaySeconds = 5, defaultMode = "battle")
+            fun defaults(): Game = Game(disabledModes = setOf(), leaveDelaySeconds = 5, defaultMode = "")
 
         }
 
