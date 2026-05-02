@@ -16,13 +16,13 @@ This repository is a Minecraft Paper plugin. Treat changes as plugin changes fir
 
 The repository is a Gradle multi-module project. The current modules are:
 
-| Module                  | Description                                                                                                                                                                     |
-|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Module                  | Description                                                                                                                                                                         |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cia-api`               | stable CreepersIArena Extension API: extension entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and generic config views |
-| `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, registries, extension loading, and utility code                          |
-| `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                             |
-| `cia-default-content`   | built-in CreepersIArena jobs, skills, and game modes packaged as a CIA extension jar                                                                                            |
-| `cia-example-extension` | minimal non-Paper CIA extension jar used to verify extension packaging and loader behavior                                                                                      |
+| `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, registries, extension loading, and utility code                              |
+| `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                                 |
+| `cia-default-content`   | built-in CreepersIArena jobs, skills, and game modes packaged as a CIA extension jar                                                                                                |
+| `cia-example-extension` | minimal non-Paper CIA extension jar used to verify extension packaging and loader behavior                                                                                          |
 
 The public extension package is:
 
@@ -57,9 +57,8 @@ belongs in `cia-default-content` and should register jobs, skills, modes, and co
 
 Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src/main/resources/paper-plugin.yml`,
 `cia-core/src/main/resources/config.yml`, `cia-core/src/main/resources/arena.yml`,
-`cia-core/src/main/resources/lang/`, `cia-default-content/src/main/resources/default-content/`,
-`cia-default-content/src/main/resources/lang/`, or `cia-default-content/src/main/resources/cia-extension.yml` should be
-reviewed as user-facing changes.
+`cia-core/src/main/resources/lang/`, `cia-default-content/src/main/resources/default-content/`, or
+`cia-default-content/src/main/resources/lang/` should be reviewed as user-facing changes.
 
 Core resources must stay platform-owned. Default jobs, default skill parameters, default mode settings, and default
 job/skill language keys belong in `cia-default-content` and should be installed or merged by the owning extension through
@@ -84,15 +83,23 @@ Bundled default content is packaged as a real CIA extension. `cia-paper-plugin` 
 `plugins/CreepersIArena/extensions/` before scanning extension jars. Do not add direct runtime dependencies from
 `cia-core` to default job, skill, or mode implementation packages to make this work.
 
-CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
-`cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in
-`cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/metadata`. Descriptor reading must not load classes
-or run extension lifecycle code.
+CIA extension jars use a `cia-extension.yml` descriptor at the jar root. Extension modules should generate that
+descriptor and the `ServiceLoader` provider file by annotating exactly one `ICiaExtension` implementation with
+`@CiaExtensionInfo`; handwritten descriptors should be avoided unless a test fixture intentionally needs one. The
+annotation and descriptor model live in `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while
+descriptor reading and validation live in `cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/metadata`.
+Descriptor reading must not load classes or run extension lifecycle code.
 
 CIA extension runtime loading lives in `cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/loading`.
 The loader may scan `extensions/*.cia.jar`, create one class loader per extension jar, discover
-`CiaExtension` through `ServiceLoader`, and call `onLoad`, `onEnable`, and `onDisable`. Keep loading behavior separate
+`ICiaExtension` through `ServiceLoader`, and call `onLoad`, `onEnable`, and `onDisable`. Keep loading behavior separate
 from descriptor parsing so metadata-only tools can inspect jars without executing extension code.
+
+
+`cia-api` intentionally contains the `@CiaExtensionInfo` annotation processor. Extension projects should use the same
+artifact as both `compileOnly` API and `annotationProcessor` metadata generator, then pass the project version with
+`-Acia.extension.version=<version>`. Do not introduce a Gradle plugin for extension metadata generation until the
+annotation processor is insufficient.
 
 Runtime registries must preserve component ownership. Jobs, skills, modes, listeners, and extension-installed resources
 should be traceable back to `core`, a CIA extension id. When adding a new registry, expose enough

@@ -8,12 +8,14 @@ import top.ourisland.creepersiarena.api.ICiaExtensionContext;
  * This is the primary runtime entry point for jars loaded by CreepersIArena itself from its {@code extensions/}
  * directory. CIA extensions are not Paper plugins and are not registered through Bukkit services.
  * <p>
- * Extension jars must expose their implementation through Java {@link java.util.ServiceLoader} using this service
- * file:
+ * Extension jars expose their implementation through Java {@link java.util.ServiceLoader} using this service file:
  *
  * <pre>
- * META-INF/services/top.ourisland.creepersiarena.api.extension.CiaExtension
+ * META-INF/services/top.ourisland.creepersiarena.api.extension.ICiaExtension
  * </pre>
+ * <p>
+ * Extension modules should normally generate the service file and {@code cia-extension.yml} by annotating the entry
+ * point with {@link top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo}.
  */
 public interface ICiaExtension {
 

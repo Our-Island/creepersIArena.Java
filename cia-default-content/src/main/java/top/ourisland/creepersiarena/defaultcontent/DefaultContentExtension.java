@@ -1,7 +1,9 @@
 package top.ourisland.creepersiarena.defaultcontent;
 
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
+import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
@@ -14,6 +16,13 @@ import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
  * The default content is intentionally loaded through the same annotation path as external CIA extension jars. This
  * keeps built-in jobs, skills and modes on the same registration surface that third-party content uses.
  */
+@CiaExtensionInfo(
+        id = "cia-default-content",
+        name = "CreepersIArena Default Content",
+        apiVersion = 1,
+        authors = {"Our Island", "Chiloven945", "xqysp"},
+        loadOrder = CiaExtensionLoadOrder.EARLY
+)
 public final class DefaultContentExtension implements ICiaExtension {
 
     private static final String ROOT_PACKAGE = "top.ourisland.creepersiarena";
