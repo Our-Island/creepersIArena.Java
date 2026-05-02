@@ -6,7 +6,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
@@ -14,17 +13,17 @@ import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
+import top.ourisland.creepersiarena.api.game.mode.context.JoinSource;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyAction;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 import top.ourisland.creepersiarena.game.player.RespawnService;
 import top.ourisland.creepersiarena.utils.Msg;
 
@@ -34,7 +33,7 @@ import java.util.function.Supplier;
 /**
  * Application Layer: all external inputs MUST enter here.
  *
- * <p>Rules/decisions are produced by ModeRules/Timeline, and executed via internal transitions.</p>
+ * <p>Rules/decisions are produced by mode hooks, and executed via internal generic transitions.</p>
  */
 public final class GameFlow {
 
@@ -57,9 +56,7 @@ public final class GameFlow {
             @lombok.NonNull PlayerSessionStore store,
             @lombok.NonNull GameManager gameManager,
             @lombok.NonNull LobbyItemService lobbyItemService,
-            @lombok.NonNull LobbyService lobbyService,
-            @lombok.NonNull ArenaManager arenaManager,
-            @lombok.NonNull BattleKitService battleKit
+            @lombok.NonNull LobbyService lobbyService
     ) {
         this.plugin = plugin;
         this.log = log;
@@ -73,9 +70,9 @@ public final class GameFlow {
                 store,
                 lobbyItemService,
                 lobbyService,
-                arenaManager,
-                battleKit,
-                cfg
+                cfg,
+                gameManager::runtime,
+                gameManager::playerFlow
         );
 
         this.respawns = new RespawnService(log, store);
@@ -95,7 +92,7 @@ public final class GameFlow {
             return;
         }
 
-        transitions.toBattle(p, g);
+        transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
     }
 
     /**
@@ -148,11 +145,11 @@ public final class GameFlow {
 
         switch (decision) {
             case JoinDecision.ToHub _ -> transitions.toHub(p);
-            case JoinDecision.ToBattle _ -> {
+            case JoinDecision.EnterGame _ -> {
                 if (g == null) {
                     transitions.toHub(p);
                 } else {
-                    transitions.toBattle(p, g);
+                    transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
                 }
             }
             case JoinDecision.ToSpectate(Location where) -> {
@@ -271,8 +268,7 @@ public final class GameFlow {
         var s = store.get(p);
         if (s == null || s.state() != PlayerState.HUB) return false;
 
-        transitions.selectTeam(p, teamId);
-        return true;
+        return transitions.selectTeam(p, teamId);
     }
 
     /**
@@ -295,7 +291,7 @@ public final class GameFlow {
     }
 
     /**
-     * /cia join or lobby entry trigger from HUB to battle.
+     * /cia join or lobby entry trigger from HUB into the active game.
      */
     public JoinFromHubPlan requestJoinFromHub(Player p) {
         if (p == null) return new JoinFromHubPlan.NotPlayer();
@@ -312,15 +308,16 @@ public final class GameFlow {
             return new JoinFromHubPlan.NoActiveGame();
         }
 
-        if (!g.mode().equals(GameModeType.BATTLE)) {
-            return new JoinFromHubPlan.ModeNotSupported(g.mode());
-        }
-
         cancelPendingLeave(p);
         respawns.cancel(p);
 
         g.addPlayer(p.getUniqueId());
-        transitions.toBattle(p, g);
+
+        var rules = gameManager.rules();
+        var decision = rules == null
+                ? new JoinDecision.EnterGame()
+                : rules.onJoin(new JoinContext(gameManager.runtime(), g, p, s, JoinSource.HUB_REQUEST));
+        applyJoinDecision(p, g, decision);
 
         return new JoinFromHubPlan.Joined();
     }
@@ -371,18 +368,15 @@ public final class GameFlow {
                 handle.setRespawnLocation(transitions.hubAnchor());
             }
 
-            case RespawnDecision.DeathLobbyCountdown(int sec) -> {
+            case RespawnDecision.RespawnLobbyCountdown(int sec) -> {
                 int wait = Math.max(0, sec);
 
-                // If no delay, respawn directly to battle.
                 if (wait == 0) {
                     respawns.cancel(p);
 
-                    Location battleSpawn = transitions.battleSpawn(g);
-                    handle.setRespawnLocation(battleSpawn);
+                    Location spawn = transitions.gameSpawn(g, gameManager.runtime(), gameManager.playerFlow(), p);
+                    handle.setRespawnLocation(spawn);
 
-                    // Apply kit/state next tick (after respawn is completed).
-                    // Use player's scheduler so it remains safe on Folia.
                     p.getScheduler().run(plugin, task -> {
                         if (!p.isOnline()) return;
 
@@ -392,7 +386,7 @@ public final class GameFlow {
                             return;
                         }
 
-                        transitions.toBattle(p, active);
+                        transitions.enterGame(p, active, gameManager.runtime(), gameManager.playerFlow());
                     }, null);
 
                     return;
@@ -425,20 +419,17 @@ public final class GameFlow {
             return new LeavePlan.NotInSession();
         }
 
-        // If already in HUB, do nothing.
         if (s.state() == PlayerState.HUB) {
             cancelPendingLeave(p);
             respawns.cancel(p);
             return new LeavePlan.AlreadyInHub();
         }
 
-        // RESPAWN/SPECTATE -> immediate back to hub.
         if (s.state() == PlayerState.RESPAWN || s.state() == PlayerState.SPECTATE) {
             leaveToHubNow(p, reason);
             return new LeavePlan.Immediate();
         }
 
-        // IN_GAME -> delayed.
         if (s.state() == PlayerState.IN_GAME) {
             int wait = Math.max(0, cfg.get().game().leaveDelaySeconds());
             if (wait == 0) {
@@ -450,7 +441,6 @@ public final class GameFlow {
             return new LeavePlan.Scheduled(wait);
         }
 
-        // Fallback
         leaveToHubNow(p, reason);
         return new LeavePlan.Immediate();
     }
@@ -486,7 +476,7 @@ public final class GameFlow {
                 transitions.toHub(p);
             });
 
-            case GameAction.ToBattle(Set<UUID> players) -> {
+            case GameAction.EnterGame(Set<UUID> players) -> {
                 var g = gameManager.active();
                 if (g == null) {
                     forEachOnline(players, transitions::toHub);
@@ -496,7 +486,7 @@ public final class GameFlow {
                 forEachOnline(players, p -> {
                     cancelPendingLeave(p);
                     respawns.cancel(p);
-                    transitions.toBattle(p, g);
+                    transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
                 });
             }
 
@@ -543,16 +533,12 @@ public final class GameFlow {
      * Called by the global 1-second ticker (see GameTickModule).
      */
     public void tick1s() {
-        // 1) Game timeline -> actions
         List<GameAction> actions = gameManager.tick1s();
         for (GameAction a : actions) {
             applyGameAction(a);
         }
 
-        // 2) Respawn countdowns
         respawns.tick1s();
-
-        // 3) /cia leave countdowns
         tickPendingLeaveToHub();
     }
 
@@ -666,6 +652,10 @@ public final class GameFlow {
 
         }
 
+        /**
+         * Kept for binary/source compatibility with older command handling. The generic flow no longer rejects
+         * non-default modes here; modes should reject joins through {@link JoinDecision} when needed.
+         */
         record ModeNotSupported(GameModeType mode) implements JoinFromHubPlan {
 
         }

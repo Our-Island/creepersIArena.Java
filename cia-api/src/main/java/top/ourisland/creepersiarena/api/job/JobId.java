@@ -9,14 +9,6 @@ public final class JobId {
 
     private static final Map<String, JobId> CACHE = new ConcurrentHashMap<>();
 
-    public static final JobId CREEPER = of("cia:creeper");
-    public static final JobId MOISON = of("cia:moison");
-    public static final JobId AVENGER = of("cia:avenger");
-    public static final JobId BLOODLINE = of("cia:bloodline");
-    public static final JobId GOLEM = of("cia:golem");
-    public static final JobId WOLONG = of("cia:wolong");
-    public static final JobId YSAHAN = of("cia:ysahan");
-
     private final String id;
 
     public static JobId fromId(String raw) {

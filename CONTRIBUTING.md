@@ -16,12 +16,13 @@ This repository is a Minecraft Paper plugin. Treat changes as plugin changes fir
 
 The repository is a Gradle multi-module project. The current modules are:
 
-| Module                  | Description                                                                                                                                                                    |
-|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `cia-api`               | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and typed config models |
-| `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, default content, registries, and utility code                           |
-| `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                            |
-| `cia-example-extension` | minimal non-Paper CIA extension jar used to verify extension packaging and loader behavior                                                                                     |
+| Module                  | Description                                                                                                                                                                     |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cia-api`               | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and generic config views |
+| `cia-core`              | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, registries, extension loading, and utility code                          |
+| `cia-paper-plugin`      | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                             |
+| `cia-default-content`   | built-in CreepersIArena jobs, skills, and game modes packaged as a CIA extension jar                                                                                            |
+| `cia-example-extension` | minimal non-Paper CIA extension jar used to verify extension packaging and loader behavior                                                                                      |
 
 The public extension package is:
 
@@ -40,22 +41,48 @@ top.ourisland.creepersiarena
 
 Current top-level source areas inside `cia-core/src/main/java/top/ourisland/creepersiarena` include:
 
-| Package   | Description                                                                         |
-|-----------|-------------------------------------------------------------------------------------|
-| `command` | command handling and admin/runtime command behavior                                 |
-| `config`  | configuration loading and file orchestration; typed config models live in `cia-api` |
-| `core`    | plugin bootstrap, internal components, permissions, and services                    |
-| `game`    | game flow, arena managers, lobby/player/protection/listener behavior                |
-| `job`     | built-in job, skill runtime, UI, listener, and default content mechanics            |
-| `utils`   | shared helpers that are not tied to a single feature                                |
+| Package   | Description                                                                                             |
+|-----------|---------------------------------------------------------------------------------------------------------|
+| `command` | command handling and admin/runtime command behavior                                                     |
+| `config`  | configuration loading, file orchestration, core-owned config models, and generic arena config envelopes |
+| `core`    | plugin bootstrap, internal components, permissions, extension loading, and services                     |
+| `game`    | game flow, arena managers, lobby/player/protection/listener behavior                                    |
+| `job`     | job and skill runtime, UI, and core-owned listeners                                                     |
+| `utils`   | shared helpers that are not tied to a single feature                                                    |
 
 Paper-only bootstrap classes live in `cia-paper-plugin/src/main/java`. Shared gameplay/runtime code should stay in
-`cia-core` unless it is being intentionally promoted to the public extension API in `cia-api`.
+`cia-core` unless it is being intentionally promoted to the public extension API in `cia-api`. Built-in gameplay content
+belongs in `cia-default-content` and should register jobs, skills, modes, and content-specific listeners through
+`CiaExtensionContext` rather than being wired straight into core managers.
 
 Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src/main/resources/paper-plugin.yml`,
 `cia-core/src/main/resources/config.yml`, `cia-core/src/main/resources/arena.yml`,
-`cia-core/src/main/resources/skill.yml`, or `cia-core/src/main/resources/lang/` should be reviewed as user-facing
-changes.
+`cia-core/src/main/resources/lang/`, `cia-default-content/src/main/resources/default-content/`,
+`cia-default-content/src/main/resources/lang/`, or `cia-default-content/src/main/resources/cia-extension.yml` should be
+reviewed as user-facing changes.
+
+Core resources must stay platform-owned. Default jobs, default skill parameters, default mode settings, and default
+job/skill language keys belong in `cia-default-content` and should be installed or merged by the owning extension through
+`CiaExtensionContext` resource methods. Do not reintroduce default-content resource defaults into `cia-core`.
+
+`arena.yml` must stay mode-extensible. The core arena model may define generic fields such as `mode`, `location`,
+`range`, named `spawns`, and `settings`, but fields only understood by one mode must be read by that mode extension
+through `ArenaConfigView`. Do not add `battle`, `steal`, or other default-content-specific fields to core config models.
+
+Default-content helpers such as built-in item factories, built-in persistent-data keys, built-in combat helpers, and
+content-specific listeners should live in `cia-default-content`, not `cia-core` or `cia-api`. Public API configuration
+types should be generic views only; mode-specific, arena-specific, or job-specific typed configuration belongs with the
+implementation that owns it. Core arena config should only describe generic arena identity, mode id, anchor/range, named
+spawn groups, and a raw settings view for mode-owned fields.
+
+Player entry, respawn return, mode-specific loadouts, and mode-specific lobby controls must be mode-owned. Core may
+manage generic stages such as HUB, RESPAWN, SPECTATE, and IN_GAME, but it must delegate mode details through
+`IModePlayerFlow`/mode decisions instead of hard-coding battle, steal, team, or kit behavior in `cia-core`.
+
+Bundled default content is packaged as a real CIA extension. `cia-paper-plugin` embeds the built
+`cia-default-content.cia.jar` under `META-INF/cia/bundled-extensions/`, and core extracts the managed jar into
+`plugins/CreepersIArena/extensions/` before scanning extension jars. Do not add direct runtime dependencies from
+`cia-core` to default job, skill, or mode implementation packages to make this work.
 
 CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
 `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in

@@ -15,7 +15,6 @@ import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -45,12 +44,11 @@ public final class GameModule implements IBootstrapModule {
             var arenaManager = rt.requireService(ArenaManager.class);
             var lobbyItems = rt.requireService(LobbyItemService.class);
             var lobbyService = rt.requireService(LobbyService.class);
-            var battleKit = rt.requireService(BattleKitService.class);
 
             var gameManager = new GameManager(arenaManager, rt.log());
             registerModes(gameManager, catalog, gcfg.game().disabledModes(), rt.log());
 
-            var runtime = new GameRuntime(cfg::globalConfig, store);
+            var runtime = new GameRuntime(cfg::globalConfig, store, rt::getService);
             gameManager.bindRuntime(runtime);
 
             var flow = new GameFlow(
@@ -60,9 +58,7 @@ public final class GameModule implements IBootstrapModule {
                     store,
                     gameManager,
                     lobbyItems,
-                    lobbyService,
-                    arenaManager,
-                    battleKit
+                    lobbyService
             );
 
             rt.putAllServices(Map.of(

@@ -48,7 +48,7 @@ public final class PlayerCommandHandlers {
                     Msg.send(p, "Current mode does not support /join: " + mode);
             case GameFlow.JoinFromHubPlan.NotInHub(var state) ->
                     Msg.send(p, "You can only /join from HUB (current=" + state + ").");
-            case GameFlow.JoinFromHubPlan.Joined _ -> Msg.send(p, "Joined battle.");
+            case GameFlow.JoinFromHubPlan.Joined _ -> Msg.send(p, "Joined game.");
         }
     }
 
@@ -100,7 +100,7 @@ public final class PlayerCommandHandlers {
         var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectTeam(p, id);
         if (!ok) {
-            Msg.send(sender, "You can only choose team in HUB.");
+            Msg.send(sender, "The active mode does not allow team selection here.");
             return;
         }
 

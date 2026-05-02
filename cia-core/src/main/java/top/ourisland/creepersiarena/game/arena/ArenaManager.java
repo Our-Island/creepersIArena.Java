@@ -3,16 +3,15 @@ package top.ourisland.creepersiarena.game.arena;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.ArenaConfig;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
+import top.ourisland.creepersiarena.config.model.ArenaConfig;
+import top.ourisland.creepersiarena.config.model.BukkitArenaConfigView;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -46,15 +45,14 @@ public final class ArenaManager {
             arenas.put(id, inst);
             counts.merge(inst.type().id(), 1, Integer::sum);
 
-            logger.info("[Arena] Arena loaded: id={} type={} nameKey={} anchor=({}, {}, {}) spawnpoints={} teamSpawns={}",
+            logger.info("[Arena] Arena loaded: id={} type={} nameKey={} anchor=({}, {}, {}) spawnGroups={}",
                     inst.id(),
                     inst.type(),
                     inst.nameKey(),
                     (int) inst.anchor().getX(),
                     (int) inst.anchor().getY(),
                     (int) inst.anchor().getZ(),
-                    inst.spawnpoints().size(),
-                    inst.teamSpawnpoints().keySet()
+                    inst.spawnGroups().keySet()
             );
         }
 
@@ -64,19 +62,26 @@ public final class ArenaManager {
     private ArenaInstance toInstance(ArenaConfig.ArenaDef def) {
         GameModeType type = parseType(def.type());
 
-        Location anchor = toLocation(def.location());
+        var anchor = toLocation(def.location());
 
-        Bounds2D b = Bounds2D.of(def.range().minX(), def.range().minZ(), def.range().maxX(), def.range().maxZ());
-        Region2D region = new Region2D(world, b);
+        var b = Bounds2D.of(def.range().minX(), def.range().minZ(), def.range().maxX(), def.range().maxZ());
+        var region = new Region2D(world, b);
 
-        List<Location> spList = new ArrayList<>();
-        for (GlobalConfig.Vec3 v : def.spawnpoints()) {
-            spList.add(toLocation(v));
+        Map<String, List<Location>> spawnGroups = new LinkedHashMap<>();
+        for (var e : def.spawnGroups().entrySet()) {
+            List<Location> group = new ArrayList<>();
+            for (ArenaConfig.Vec3 v : e.getValue()) {
+                group.add(toLocation(v));
+            }
+            spawnGroups.put(e.getKey(), group);
         }
 
+        List<Location> spList = new ArrayList<>(spawnGroups.getOrDefault("default", List.of()));
+
         Map<String, Location> teamSp = new LinkedHashMap<>();
-        for (var e : def.teamSpawnpoints().entrySet()) {
-            teamSp.put(e.getKey(), toLocation(e.getValue()));
+        for (var e : spawnGroups.entrySet()) {
+            if ("default".equals(e.getKey()) || e.getValue().isEmpty()) continue;
+            teamSp.put(e.getKey(), e.getValue().getFirst());
         }
 
         return new ArenaInstance(
@@ -86,15 +91,17 @@ public final class ArenaManager {
                 anchor,
                 region,
                 spList,
-                teamSp
+                teamSp,
+                spawnGroups,
+                new BukkitArenaConfigView(def.settings())
         );
     }
 
     private GameModeType parseType(String s) {
-        return s == null ? GameModeType.BATTLE : GameModeType.of(s);
+        return s == null ? GameModeType.of("battle") : GameModeType.of(s);
     }
 
-    private Location toLocation(GlobalConfig.Vec3 v) {
+    private Location toLocation(ArenaConfig.Vec3 v) {
         return new Location(world, v.x() + 0.5, v.y(), v.z() + 0.5);
     }
 
@@ -106,26 +113,17 @@ public final class ArenaManager {
         return Collections.unmodifiableCollection(arenas.values());
     }
 
-    public @NonNull Location anyBattleSpawnOrFallback(@lombok.NonNull Location fallback) {
-        List<ArenaInstance> battles = arenasOf(GameModeType.BATTLE);
-        if (battles.isEmpty()) {
+    public @NonNull Location anySpawnForModeOrFallback(
+            @lombok.NonNull GameModeType type,
+            @lombok.NonNull Location fallback
+    ) {
+        List<ArenaInstance> candidates = arenasOf(type);
+        if (candidates.isEmpty()) {
             return fallback.clone();
         }
 
-        ArenaInstance arena = battles.get(ThreadLocalRandom.current().nextInt(battles.size()));
-
-        if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
-            return arena.anchor().clone();
-        }
-
-        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
-        int radius = 10;
-
-        Location pick = spawnpointSelector.pickBattleLeastCrowded(arena, online, radius);
-        if (pick == null) {
-            return arena.spawnpoints().getFirst().clone();
-        }
-        return pick;
+        ArenaInstance arena = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+        return gameSpawn(arena);
     }
 
     public List<ArenaInstance> arenasOf(GameModeType type) {
@@ -136,12 +134,14 @@ public final class ArenaManager {
         return out;
     }
 
-    public @NonNull Location battleSpawn(@lombok.NonNull ArenaInstance arena) {
-        if (arena.spawnpoints() == null || arena.spawnpoints().isEmpty()) {
+    public @NonNull Location gameSpawn(@lombok.NonNull ArenaInstance arena) {
+        var spawns = arena.spawnGroup("default");
+        if (spawns.isEmpty()) {
             return arena.anchor().clone();
         }
 
-        return spawnpointSelector.pickBattleLeastCrowded(arena, Bukkit.getOnlinePlayers(), 10);
+        Location picked = spawnpointSelector.pickLeastCrowded(spawns, Bukkit.getOnlinePlayers(), 10);
+        return picked == null ? arena.anchor().clone() : picked;
     }
 
     public Collection<String> allArenaIds() {

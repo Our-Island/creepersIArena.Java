@@ -4,14 +4,14 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.game.arena.ArenaManager;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
 
 import java.util.function.Supplier;
 
@@ -32,13 +32,13 @@ final class PlayerTransitions {
             @lombok.NonNull PlayerSessionStore store,
             @lombok.NonNull LobbyItemService lobbyItemService,
             @lombok.NonNull LobbyService lobbyService,
-            @lombok.NonNull ArenaManager arenaManager,
-            @lombok.NonNull BattleKitService battleKit,
-            @lombok.NonNull Supplier<GlobalConfig> cfg
+            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull Supplier<GameRuntime> runtime,
+            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
     ) {
         this.sessions = new PlayerSessionFacade(plugin, log, store, lobbyItemService);
-        this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, arenaManager, battleKit, cfg);
-        this.lobby = new PlayerLobbyTransitions(log, sessions, lobbyItemService, cfg);
+        this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, cfg, runtime, playerFlow);
+        this.lobby = new PlayerLobbyTransitions(log, sessions, lobbyItemService, cfg, runtime, playerFlow);
     }
 
     PlayerSession getSession(Player p) {
@@ -57,12 +57,8 @@ final class PlayerTransitions {
         return stage.deathAnchor();
     }
 
-    Location battleSpawn(GameSession g) {
-        return stage.battleSpawn(g);
-    }
-
-    int battleRespawnSecondsConfigured() {
-        return stage.battleRespawnSecondsConfigured();
+    Location gameSpawn(GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow, Player p) {
+        return stage.gameSpawn(g, runtime, playerFlow, p);
     }
 
     void toHub(Player p) {
@@ -81,12 +77,8 @@ final class PlayerTransitions {
         stage.toSpectate(p);
     }
 
-    void toBattle(Player p) {
-        stage.toBattle(p);
-    }
-
-    void toBattle(Player p, GameSession g) {
-        stage.toBattle(p, g);
+    void enterGame(Player p, GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow) {
+        stage.enterGame(p, g, runtime, playerFlow);
     }
 
     void refreshLobbyKit(Player p) {
@@ -105,8 +97,8 @@ final class PlayerTransitions {
         lobby.cycleTeam(p);
     }
 
-    void selectTeam(Player p, Integer teamId) {
-        lobby.selectTeam(p, teamId);
+    boolean selectTeam(Player p, Integer teamId) {
+        return lobby.selectTeam(p, teamId);
     }
 
     void removeSession(Player p) {

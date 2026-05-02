@@ -72,7 +72,7 @@ public interface ISkillDefinition {
     /**
      * Returns the runtime id of the job that owns this skill.
      * <p>
-     * This id is used by the skill catalog to group definitions per job, by lobby / battle UI code to decide which
+     * This id is used by the skill catalog to group definitions per job, by lobby / in-game UI code to decide which
      * skills to render for a player, and by language-key helpers to derive translation prefixes.
      *
      * @return namespaced owning job id resolved from {@link SkillMetadata}

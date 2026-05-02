@@ -1,7 +1,6 @@
 lang: "zh_cn"
 
-disabled-jobs:
-  - test
+disabled-jobs: [ ]
 
 lobbies:
   hub:
@@ -10,7 +9,7 @@ lobbies:
       from: [ 100, 100 ]
       to: [ -100, -100 ]
     entry:
-      time: 3000 #ms
+      time: 3000 # ms
       from: [ 9, 103, 1 ]
       to: [ 11, 100, -1 ]
 
@@ -21,40 +20,10 @@ lobbies:
       to: [ -400, -400 ]
 
 game:
-  disabled-modes:
-    - example_mode
+  disabled-modes: [ ]
 
-  cooldown:
-    enable: true
-    factor: 1
-
-  regeneration:
-    enable: true
-    health-per-regen: 1
-    per-regen-time: 1
-
-  mutation:
-    enable: true
-    time: # support static number / random range (inclusive)
-      - 900       # gap
-      - [ 60, 180 ] # mutation time
-    tps: [ 10, 40 ]
-
-  battle:
-    single-game-time: 600
-    respawn-time: 10
-    leave-in-game-time: 5
-
-    max-team: 4
-    team-auto-balancing: true
-    force-balancing: false
-
-  steal:
-    min-player-to-start: 2
-    prepare-time: 30
-
-    total-round: 10
-    time-per-round: 10
+  # Shared game-level settings owned by core.
+  leave-delay-seconds: 5
 
 ui:
   lobby:

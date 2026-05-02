@@ -11,9 +11,6 @@ import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
-import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.listener.SkillUiListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.InMemorySkillStateStore;
@@ -21,7 +18,6 @@ import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
-import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
 
 import java.util.Map;
 
@@ -42,8 +38,6 @@ public final class SkillModule implements IBootstrapModule {
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var sessionStore = rt.requireService(PlayerSessionStore.class);
-            BuiltinCombatUtils.installSessions(sessionStore);
-            var jobManager = rt.requireService(JobManager.class);
             var catalog = rt.requireService(ComponentCatalog.class);
 
             var skillCodec = new SkillItemCodec(rt.plugin());
@@ -62,23 +56,17 @@ public final class SkillModule implements IBootstrapModule {
                     sessionStore,
                     skillRegistry,
                     skillRuntime,
+                    rt.plugin(),
                     skillRenderer
             );
 
-            var battleKitService = new BattleKitService(
-                    jobManager,
-                    skillRegistry,
-                    skillRenderer,
-                    tickTask::nowTick
-            );
 
             rt.putAllServices(Map.of(
                     SkillItemCodec.class, skillCodec,
                     SkillRegistry.class, skillRegistry,
                     SkillRuntime.class, skillRuntime,
                     SkillHotbarRenderer.class, skillRenderer,
-                    SkillTickTask.class, tickTask,
-                    BattleKitService.class, battleKitService
+                    SkillTickTask.class, tickTask
             ));
         }, "Loading skills...", "Finished loading skills.");
     }
@@ -126,16 +114,12 @@ public final class SkillModule implements IBootstrapModule {
         var rt = binder.rt();
         var tickTask = rt.requireService(SkillTickTask.class);
 
-        binder.register("SkillImplementationListener", () -> new SkillImplementationListener(
-                rt.requireService(PlayerSessionStore.class),
-                rt.requireService(SkillRuntime.class),
-                tickTask
-        ));
 
         binder.register("SkillUiListener", () -> new SkillUiListener(
                 rt.requireService(PlayerSessionStore.class),
                 rt.requireService(SkillItemCodec.class),
                 rt.requireService(SkillRuntime.class),
+                rt.plugin(),
                 tickTask::nowTick
         ));
 

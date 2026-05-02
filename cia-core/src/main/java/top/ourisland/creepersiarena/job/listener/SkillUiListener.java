@@ -24,17 +24,20 @@ public final class SkillUiListener implements Listener {
     private final PlayerSessionStore sessions;
     private final SkillItemCodec codec;
     private final SkillRuntime runtime;
+    private final org.bukkit.plugin.Plugin plugin;
     private final LongSupplier nowTick;
 
     public SkillUiListener(
             @lombok.NonNull PlayerSessionStore sessions,
             @lombok.NonNull SkillItemCodec codec,
             @lombok.NonNull SkillRuntime runtime,
+            @lombok.NonNull org.bukkit.plugin.Plugin plugin,
             @lombok.NonNull LongSupplier nowTick
     ) {
         this.sessions = sessions;
         this.codec = codec;
         this.runtime = runtime;
+        this.plugin = plugin;
         this.nowTick = nowTick;
     }
 
@@ -58,6 +61,7 @@ public final class SkillUiListener implements Listener {
         long tick = nowTick.getAsLong();
         runtime.handle(new SkillContext(
                 p,
+                plugin,
                 new InteractEvent(e.getAction(), true),
                 item,
                 skillId,

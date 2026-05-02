@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponent
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.component.discovery.ModuleOrderResolver;
 import top.ourisland.creepersiarena.core.component.extension.CiaApiImpl;
+import top.ourisland.creepersiarena.core.extension.loading.BundledExtensionExtractor;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
 
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public final class PluginBootstrap {
         var api = new CiaApiImpl(rt, catalog);
         rt.putService(CiaApi.class, api);
         Bukkit.getServicesManager().register(CiaApi.class, api, plugin, ServicePriority.Normal);
+
+        new BundledExtensionExtractor(plugin, rt.log()).extractAll();
 
         var extensionManager = new CiaExtensionManager(rt, catalog);
         rt.putService(CiaExtensionManager.class, extensionManager);

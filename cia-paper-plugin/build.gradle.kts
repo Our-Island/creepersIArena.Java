@@ -1,4 +1,4 @@
-import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     java
@@ -21,7 +21,24 @@ val bundledModulePaths = listOf(
     ":cia-core"
 )
 
+val defaultContentExtensionJar = project(":cia-default-content").tasks.named<Jar>("jar")
+val bundledExtensionsDir = layout.buildDirectory.dir("generated/bundled-extensions")
+
+val copyBundledExtensions by tasks.registering(Copy::class) {
+    dependsOn(defaultContentExtensionJar)
+
+    from(defaultContentExtensionJar.flatMap { it.archiveFile }) {
+        rename { "cia-default-content.cia.jar" }
+    }
+
+    into(bundledExtensionsDir.map {
+        it.dir("META-INF/cia/bundled-extensions")
+    })
+}
+
 tasks.jar {
+    dependsOn(copyBundledExtensions)
+
     for (modulePath in bundledModulePaths) {
         val module = project(modulePath)
         dependsOn(module.tasks.named("classes"))
@@ -34,8 +51,13 @@ tasks.jar {
 }
 
 tasks.processResources {
+    dependsOn(copyBundledExtensions)
+
+    from(bundledExtensionsDir)
+
     val props = mapOf(
-        "version" to project.version
+        "version" to project.version,
+        "minecraft" to libs.versions.minecraft.get()
     )
 
     inputs.properties(props)

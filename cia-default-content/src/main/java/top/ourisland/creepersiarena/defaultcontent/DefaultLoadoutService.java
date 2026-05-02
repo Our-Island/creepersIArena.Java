@@ -1,0 +1,75 @@
+package top.ourisland.creepersiarena.defaultcontent;
+
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.job.JobManager;
+import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
+
+import java.util.function.LongSupplier;
+
+/**
+ * Default-content loadout service for bundled job/skill gameplay.
+ * <p>
+ * This is intentionally not a core service. Custom modes may provide completely different loadout logic through their
+ * own {@code IModePlayerFlow} implementation.
+ */
+public final class DefaultLoadoutService {
+
+    private final JobManager jobs;
+    private final SkillRegistry skillRegistry;
+    private final SkillHotbarRenderer skillRenderer;
+    private final LongSupplier nowTick;
+
+    public DefaultLoadoutService(
+            @lombok.NonNull JobManager jobs,
+            @lombok.NonNull SkillRegistry skillRegistry,
+            @lombok.NonNull SkillHotbarRenderer skillRenderer,
+            @lombok.NonNull LongSupplier nowTick
+    ) {
+        this.jobs = jobs;
+        this.skillRegistry = skillRegistry;
+        this.skillRenderer = skillRenderer;
+        this.nowTick = nowTick;
+    }
+
+    public void apply(Player p, PlayerSession s) {
+        if (p == null || s == null) return;
+
+        clear(p);
+
+        var jobId = s.selectedJob();
+        if (jobId == null) return;
+
+        var job = jobs.getJob(jobId);
+        if (job == null) return;
+
+        ItemStack[] hotbar = job.hotbarTemplate(s);
+        if (hotbar != null && hotbar.length >= 9) {
+            for (int i = 0; i < 9; i++) {
+                var item = hotbar[i];
+                p.getInventory().setItem(i, item == null ? null : item.clone());
+            }
+        }
+
+        ItemStack[] armor = job.armorTemplate(s);
+        if (armor != null && armor.length == 4) {
+            ItemStack[] cloned = new ItemStack[4];
+            for (int i = 0; i < 4; i++) {
+                cloned[i] = (armor[i] == null ? null : armor[i].clone());
+            }
+            p.getInventory().setArmorContents(cloned);
+        }
+
+        skillRenderer.render(p, skillRegistry.skillsOf(p), nowTick.getAsLong());
+    }
+
+    private void clear(Player p) {
+        var inv = p.getInventory();
+        inv.clear();
+        inv.setArmorContents(null);
+        inv.setItemInOffHand(null);
+    }
+
+}

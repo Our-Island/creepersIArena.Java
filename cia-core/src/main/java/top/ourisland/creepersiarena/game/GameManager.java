@@ -29,6 +29,7 @@ public final class GameManager {
     private @Nullable GameSession active;
     private @Nullable IModeRules rules;
     private @Nullable IModeTimeline timeline;
+    private @Nullable IModePlayerFlow playerFlow;
 
     public GameManager(
             @lombok.NonNull ArenaManager arenaManager,
@@ -89,6 +90,7 @@ public final class GameManager {
         this.active = session;
         this.rules = logic.rules();
         this.timeline = logic.timeline();
+        this.playerFlow = logic.playerFlow();
 
         logger.info("[Game] Started: mode={} arena={} rules={} timeline={}",
                 type,
@@ -114,11 +116,9 @@ public final class GameManager {
         active = null;
         rules = null;
         timeline = null;
+        playerFlow = null;
     }
 
-    /**
-     * 每秒调用一次：返回“需要执行的动作列表”（由 GameFlow 统一执行）
-     */
     public List<GameAction> tick1s() {
         if (active == null || timeline == null) return List.of();
         try {

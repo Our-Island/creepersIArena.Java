@@ -2,9 +2,9 @@ package top.ourisland.creepersiarena.game.lobby.item;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.job.JobManager;
 
 import java.util.List;
@@ -19,7 +19,12 @@ public final class LobbyItemService {
         this.jobs = jobs;
     }
 
-    public void applyHubKit(Player p, PlayerSession s, GlobalConfig cfg) {
+    public void applyHubKit(
+            Player p,
+            PlayerSession s,
+            GlobalConfig cfg,
+            int selectableTeamCount
+    ) {
         clear(p);
 
         var inv = p.getInventory();
@@ -29,7 +34,11 @@ public final class LobbyItemService {
             case INVENTORY -> fillJobsInventory(inv, s, cfg);
         }
 
-        inv.setItem(8, items.teamCycleButton(s.selectedTeam(), cfg.game().battle().maxTeam()));
+        if (selectableTeamCount > 0) {
+            inv.setItem(8, items.teamCycleButton(s.selectedTeam(), selectableTeamCount));
+        } else {
+            inv.setItem(8, null);
+        }
     }
 
     private void clear(Player p) {
@@ -39,7 +48,11 @@ public final class LobbyItemService {
         inv.setItemInOffHand(null);
     }
 
-    private void fillJobHotbar(PlayerInventory inv, PlayerSession s, GlobalConfig cfg) {
+    private void fillJobHotbar(
+            PlayerInventory inv,
+            PlayerSession s,
+            GlobalConfig cfg
+    ) {
         inv.setItem(0, null);
         inv.setItem(7, null);
 
@@ -60,7 +73,11 @@ public final class LobbyItemService {
         inv.setItem(6, items.jobPageNextButton(page + 1));
     }
 
-    private void fillJobsInventory(PlayerInventory inv, PlayerSession s, GlobalConfig cfg) {
+    private void fillJobsInventory(
+            PlayerInventory inv,
+            PlayerSession s,
+            GlobalConfig cfg
+    ) {
         List<String> jobIds = jobs.getAllJobIds();
         int base = 9;
         int max = Math.min(jobIds.size(), 27);
@@ -76,7 +93,11 @@ public final class LobbyItemService {
         inv.setItem(6, items.jobPageNextButton(1));
     }
 
-    public void applyDeathKit(Player p, PlayerSession s, GlobalConfig cfg) {
+    public void applyDeathKit(
+            Player p,
+            PlayerSession s,
+            GlobalConfig cfg
+    ) {
         clear(p);
 
         var inv = p.getInventory();

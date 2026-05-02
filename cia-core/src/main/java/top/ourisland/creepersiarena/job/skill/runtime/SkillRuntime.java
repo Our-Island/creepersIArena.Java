@@ -1,12 +1,13 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import top.ourisland.creepersiarena.api.config.model.SkillConfig;
+import top.ourisland.creepersiarena.api.config.SkillConfigView;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.config.model.SkillConfig;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,13 +19,13 @@ public final class SkillRuntime {
     private final SkillRegistry registry;
     private final SkillStateStore store;
     private final DoubleSupplier cooldownFactor;
-    private final Supplier<SkillConfig> skillConfig;
+    private final Supplier<? extends SkillConfigView> skillConfig;
 
     public SkillRuntime(
             @lombok.NonNull SkillRegistry registry,
             @lombok.NonNull SkillStateStore store,
             @lombok.NonNull DoubleSupplier cooldownFactor,
-            @lombok.NonNull Supplier<SkillConfig> skillConfig
+            @lombok.NonNull Supplier<? extends SkillConfigView> skillConfig
     ) {
         this.registry = registry;
         this.store = store;
@@ -88,9 +89,9 @@ public final class SkillRuntime {
     }
 
 
-    public SkillConfig skillConfig() {
+    public SkillConfigView skillConfig() {
         try {
-            SkillConfig c = skillConfig.get();
+            SkillConfigView c = skillConfig.get();
             return c == null ? SkillConfig.defaults() : c;
         } catch (Throwable _) {
             return SkillConfig.defaults();

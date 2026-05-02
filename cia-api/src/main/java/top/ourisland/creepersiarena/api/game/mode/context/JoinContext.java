@@ -9,7 +9,21 @@ public record JoinContext(
         GameRuntime runtime,
         GameSession game,
         Player player,
-        PlayerSession session
+        PlayerSession session,
+        JoinSource source
 ) {
+
+    public JoinContext(
+            GameRuntime runtime,
+            GameSession game,
+            Player player,
+            PlayerSession session
+    ) {
+        this(runtime, game, player, session, JoinSource.SERVER_JOIN);
+    }
+
+    public boolean fromHubRequest() {
+        return source == JoinSource.HUB_REQUEST;
+    }
 
 }

@@ -9,9 +9,6 @@ public final class GameModeType {
 
     private static final Map<String, GameModeType> CACHE = new ConcurrentHashMap<>();
 
-    public static final GameModeType BATTLE = of("battle");
-    public static final GameModeType STEAL = of("steal");
-
     private final String id;
 
     public static GameModeType fromId(String raw) {
@@ -37,14 +34,6 @@ public final class GameModeType {
 
     public String id() {
         return id;
-    }
-
-    public boolean isBattle() {
-        return equals(BATTLE);
-    }
-
-    public boolean isSteal() {
-        return equals(STEAL);
     }
 
     @Override

@@ -1,0 +1,13 @@
+id: cia-default-content
+name: CreepersIArena Default Content
+version: ${version}
+main: top.ourisland.creepersiarena.defaultcontent.DefaultContentAddon
+api-version: 1
+cia-version: "${version}"
+authors:
+  - Our Island
+dependencies:
+  required: [ ]
+  optional: [ ]
+load:
+  order: EARLY

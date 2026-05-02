@@ -1,0 +1,220 @@
+package top.ourisland.creepersiarena.game.mode.impl.steal;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
+import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
+
+import java.util.*;
+
+public final class StealTimeline implements IModeTimeline {
+
+    private static final int PRE_SPECTATE_SECONDS = 5;
+    private static final int PICK_BASE_SECONDS = 10;
+    private static final int ROUND_END_SECONDS = 5;
+    private static final int GAME_END_SECONDS = 8;
+
+    private final GameRuntime runtime;
+    private final GameSession session;
+    private final StealState st;
+
+    public StealTimeline(GameRuntime runtime, GameSession session, StealState state) {
+        this.runtime = runtime;
+        this.session = session;
+        this.st = state;
+    }
+
+    @Override
+    public GameModeType type() {
+        return GameModeType.of("steal");
+    }
+
+    @Override
+    public List<GameAction> tick(TickContext ctx) {
+        StealModeConfig cfg = StealModeConfig.from(runtime.cfg());
+        StealArenaConfig arenaCfg = StealArenaConfig.from(session.arena().config());
+
+        return switch (st.phase) {
+            case LOBBY -> tickLobby(cfg);
+            case COUNTDOWN -> tickCountdown(cfg);
+            case PRE_SPECTATE -> tickPreSpectate(arenaCfg);
+            case PICK_BASE -> tickPickBase(cfg);
+            case ROUND_PLAYING -> tickRoundPlaying(cfg);
+            case ROUND_END -> tickRoundEnd(cfg);
+            case GAME_END -> tickGameEnd();
+        };
+    }
+
+    private List<GameAction> tickLobby(StealModeConfig cfg) {
+        int ready = countReadyOnline();
+        if (ready < cfg.minPlayerToStart()) return List.of();
+
+        st.phase = StealPhase.COUNTDOWN;
+        st.remaining = Math.max(1, cfg.prepareTimeSeconds());
+
+        return List.of(new GameAction.Broadcast(Component.text("STEAL：人数达标，倒计时 " + st.remaining + "s", NamedTextColor.GOLD)));
+    }
+
+    private List<GameAction> tickCountdown(StealModeConfig cfg) {
+        int ready = countReadyOnline();
+        if (ready < cfg.minPlayerToStart()) {
+            st.phase = StealPhase.LOBBY;
+            st.remaining = 0;
+            return List.of(new GameAction.Broadcast(Component.text("STEAL：人数不足，倒计时取消", NamedTextColor.RED)));
+        }
+
+        st.remaining--;
+        if (st.remaining > 0) {
+            if (st.remaining == 10 || st.remaining == 5 || st.remaining <= 3) {
+                return List.of(new GameAction.Broadcast(Component.text("STEAL：倒计时 " + st.remaining + "s", NamedTextColor.YELLOW)));
+            }
+            return List.of();
+        }
+
+        lockParticipants();
+        assignTeamsBalanced();
+
+        st.phase = StealPhase.PRE_SPECTATE;
+        st.remaining = PRE_SPECTATE_SECONDS;
+
+        return List.of(
+                new GameAction.Broadcast(Component.text("§7STEAL：地图展示…", NamedTextColor.DARK_AQUA)),
+                new GameAction.ToSpectate(session.players(), session.arena().anchor().clone().add(0, 8, 0))
+        );
+    }
+
+    private List<GameAction> tickPreSpectate(StealArenaConfig arenaCfg) {
+        if (--st.remaining > 0) return List.of();
+
+        st.phase = StealPhase.PICK_BASE;
+        st.remaining = PICK_BASE_SECONDS;
+
+        return List.of(new GameAction.Broadcast(Component.text("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）", NamedTextColor.AQUA)));
+    }
+
+    private List<GameAction> tickPickBase(StealModeConfig cfg) {
+        if (--st.remaining > 0) return List.of();
+
+        st.phase = StealPhase.ROUND_PLAYING;
+        st.remaining = Math.max(1, cfg.timePerRoundSeconds());
+
+        return List.of(
+                new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)),
+                new GameAction.EnterGame(participantIds())
+        );
+    }
+
+    private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
+        if (--st.remaining > 0) return List.of();
+
+        st.phase = StealPhase.ROUND_END;
+        st.remaining = ROUND_END_SECONDS;
+
+        return List.of(new GameAction.Broadcast(Component.text("§fSTEAL：回合结束，结算中…", NamedTextColor.WHITE)));
+    }
+
+    private List<GameAction> tickRoundEnd(StealModeConfig cfg) {
+        if (--st.remaining > 0) return List.of();
+
+        st.roundIndex++;
+        int total = Math.max(1, cfg.totalRound());
+
+        if (st.roundIndex >= total) {
+            st.phase = StealPhase.GAME_END;
+            st.remaining = GAME_END_SECONDS;
+            return List.of(new GameAction.Broadcast(Component.text("STEAL：整局结束！", NamedTextColor.GOLD)));
+        }
+
+        reviveParticipantsForNextRound();
+
+        st.phase = StealPhase.PRE_SPECTATE;
+        st.remaining = PRE_SPECTATE_SECONDS;
+
+        return List.of(
+                new GameAction.Broadcast(Component.text("STEAL：准备下一回合（" + (st.roundIndex + 1) + "/" + total + "）…", NamedTextColor.GRAY)),
+                new GameAction.ToSpectate(session.players(), session.arena().anchor().clone().add(0, 8, 0))
+        );
+    }
+
+    private List<GameAction> tickGameEnd() {
+        if (--st.remaining > 0) return List.of();
+
+        st.roundIndex = 0;
+        st.phase = StealPhase.LOBBY;
+        st.remaining = 0;
+
+        return List.of(
+                new GameAction.Broadcast(Component.text("STEAL：已回到大厅，可再次准备", NamedTextColor.GREEN)),
+                new GameAction.ToHub(session.players())
+        );
+    }
+
+    private int countReadyOnline() {
+        int c = 0;
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            var s = runtime.sessionStore().get(p);
+            if (StealPlayerState.ready(s)) c++;
+        }
+        return c;
+    }
+
+    private void lockParticipants() {
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+
+            var s = runtime.sessionStore().getOrCreate(p);
+            boolean participant = StealPlayerState.ready(s);
+
+            StealPlayerState.participant(s, participant);
+            StealPlayerState.alive(s, true);
+        }
+    }
+
+    private void assignTeamsBalanced() {
+        List<Player> ps = new ArrayList<>();
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            var s = runtime.sessionStore().get(p);
+            if (StealPlayerState.participant(s)) ps.add(p);
+        }
+
+        ps.sort(Comparator.comparing(Player::getUniqueId));
+        for (int i = 0; i < ps.size(); i++) {
+            runtime.sessionStore().get(ps.get(i)).selectedTeamKey((i % 2 == 0) ? "red" : "blue");
+        }
+    }
+
+    private Set<UUID> participantIds() {
+        Set<UUID> out = new LinkedHashSet<>();
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            var s = runtime.sessionStore().get(p);
+            if (StealPlayerState.participant(s)) out.add(id);
+        }
+        return out;
+    }
+
+    private void reviveParticipantsForNextRound() {
+        for (UUID id : session.players()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            var s = runtime.sessionStore().get(p);
+            if (!StealPlayerState.participant(s)) continue;
+            StealPlayerState.alive(s, true);
+        }
+    }
+
+}

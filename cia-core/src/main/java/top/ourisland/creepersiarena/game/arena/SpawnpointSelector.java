@@ -11,24 +11,22 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class SpawnpointSelector {
 
-    public Location pickBattleLeastCrowded(
-            ArenaInstance arena,
+    public Location pickLeastCrowded(
+            List<Location> spawnpoints,
             Collection<? extends Player> candidates,
             double radius
     ) {
-        List<Location> sp = arena.spawnpoints();
-        if (sp.isEmpty()) return arena.anchor();
+        if (spawnpoints == null || spawnpoints.isEmpty()) return null;
 
         int best = Integer.MAX_VALUE;
         List<Location> bestList = new ArrayList<>();
 
         double r2 = radius * radius;
 
-        for (Location base : sp) {
+        for (Location base : spawnpoints) {
             int count = 0;
             for (Player p : candidates) {
                 if (p == null || !p.isOnline()) continue;
-                p.getWorld();
                 if (base.getWorld() == null) continue;
                 if (!p.getWorld().getUID().equals(base.getWorld().getUID())) continue;
 
@@ -48,19 +46,16 @@ public final class SpawnpointSelector {
         return picked.clone();
     }
 
-    public Location pickBattle(ArenaInstance arena) {
-        List<Location> sp = arena.spawnpoints();
-        if (sp.isEmpty()) return arena.anchor();
-        return sp.get(ThreadLocalRandom.current().nextInt(sp.size())).clone();
+    public Location pickRandom(List<Location> spawnpoints) {
+        if (spawnpoints == null || spawnpoints.isEmpty()) return null;
+        return spawnpoints.get(ThreadLocalRandom.current().nextInt(spawnpoints.size())).clone();
     }
 
-    /**
-     * steal 用：arena.yml 的 spawnpoint.red / spawnpoint.blue 是“单点”
-     */
-    public Location pickTeam(ArenaInstance arena, String teamKey) {
-        if (teamKey == null) return arena.anchor();
-        Location loc = arena.teamSpawnpoints().get(teamKey);
-        return loc == null ? arena.anchor() : loc.clone();
+    public Location pickGroupFirst(ArenaInstance arena, String group) {
+        if (arena == null || group == null) return null;
+        var spawns = arena.spawnGroup(group);
+        if (spawns.isEmpty()) return null;
+        return spawns.getFirst().clone();
     }
 
 }

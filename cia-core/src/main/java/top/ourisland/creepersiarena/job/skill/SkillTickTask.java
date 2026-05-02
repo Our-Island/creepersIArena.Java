@@ -18,6 +18,7 @@ public final class SkillTickTask {
     private final PlayerSessionStore sessions;
     private final SkillRegistry registry;
     private final SkillRuntime runtime;
+    private final org.bukkit.plugin.Plugin plugin;
     private final SkillHotbarRenderer renderer;
 
     private final AtomicLong tick = new AtomicLong(0);
@@ -26,11 +27,13 @@ public final class SkillTickTask {
             PlayerSessionStore sessions,
             SkillRegistry registry,
             SkillRuntime runtime,
+            org.bukkit.plugin.Plugin plugin,
             SkillHotbarRenderer renderer
     ) {
         this.sessions = sessions;
         this.registry = registry;
         this.runtime = runtime;
+        this.plugin = plugin;
         this.renderer = renderer;
     }
 
@@ -52,6 +55,7 @@ public final class SkillTickTask {
 
             runtime.handle(new SkillContext(
                     p,
+                    plugin,
                     new TickEvent(now),
                     null,
                     null,

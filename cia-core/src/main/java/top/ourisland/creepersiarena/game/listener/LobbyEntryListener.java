@@ -83,7 +83,7 @@ public final class LobbyEntryListener implements Listener {
             EntryZone z2 = lobbyService.entryZone("hub");
             if (z2 == null || !z2.contains(now.getLocation())) return;
 
-            log.info("[LobbyEntry] join battle triggered: name={} stayedMs={}", now.getName(), zone.timeMs());
+            log.info("[LobbyEntry] join game triggered: name={} stayedMs={}", now.getName(), zone.timeMs());
             flow.onHubEntryTriggered(now);
         }, () -> pending.remove(id), ticks);
 
@@ -103,9 +103,6 @@ public final class LobbyEntryListener implements Listener {
         cancel(e.getPlayer().getUniqueId());
     }
 
-    /**
-     * 可选：reload 时调用，清理所有 pending（如果你愿意在 reloadConfigs 后做一次）
-     */
     public void cancelAll() {
         for (var e : pending.entrySet()) {
             try {

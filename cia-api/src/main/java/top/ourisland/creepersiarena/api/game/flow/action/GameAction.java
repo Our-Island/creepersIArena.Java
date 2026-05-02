@@ -7,9 +7,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Timeline 每秒产出动作列表；GameFlow 执行它们。
- */
 public sealed interface GameAction {
 
     record Broadcast(
@@ -24,7 +21,7 @@ public sealed interface GameAction {
 
     }
 
-    record ToBattle(
+    record EnterGame(
             Set<UUID> players
     ) implements GameAction {
 
