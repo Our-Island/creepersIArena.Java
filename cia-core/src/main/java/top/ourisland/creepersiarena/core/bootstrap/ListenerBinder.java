@@ -31,6 +31,7 @@ public final class ListenerBinder {
      * Creates a binder bound to the given runtime.
      *
      * @param rt bootstrap runtime (must not be null)
+     *
      * @throws NullPointerException if rt is null
      */
     public ListenerBinder(@lombok.NonNull BootstrapRuntime rt) {
@@ -42,6 +43,7 @@ public final class ListenerBinder {
      * Enables or disables verbose per-listener logging.
      *
      * @param v whether to log each successful registration
+     *
      * @return this binder for chaining
      */
     public ListenerBinder verbose(boolean v) {
@@ -60,7 +62,9 @@ public final class ListenerBinder {
      * Registers the given listener instance.
      *
      * @param listener listener instance; if null this method returns false
+     *
      * @return true if registered successfully; false otherwise
+     *
      * @deprecated suggesting to use {@link #register(String, Supplier)} instead
      */
     @Deprecated
@@ -76,6 +80,7 @@ public final class ListenerBinder {
      *
      * @param name    human-readable name for logs; if blank, "&lt;unnamed&gt;" will be used
      * @param factory listener supplier; must not return null
+     *
      * @return true if registered successfully; false otherwise
      */
     public boolean register(String name, Supplier<? extends Listener> factory) {

@@ -1,10 +1,10 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal;
 
-import top.ourisland.creepersiarena.core.component.annotation.CiaModeDef;
-import top.ourisland.creepersiarena.game.GameSession;
-import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.IGameMode;
-import top.ourisland.creepersiarena.game.mode.ModeLogic;
+import top.ourisland.creepersiarena.api.annotation.CiaModeDef;
+import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.game.mode.ModeLogic;
 
 @CiaModeDef(id = "steal")
 public final class StealMode implements IGameMode {

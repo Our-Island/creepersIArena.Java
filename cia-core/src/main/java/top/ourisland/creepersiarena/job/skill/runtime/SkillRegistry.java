@@ -1,9 +1,9 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.job.JobId;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 
 import java.util.*;
 
@@ -14,6 +14,13 @@ public final class SkillRegistry {
 
     public SkillRegistry(@lombok.NonNull PlayerSessionStore sessions) {
         this.sessions = sessions;
+    }
+
+    public synchronized void replaceAll(@lombok.NonNull Collection<ISkillDefinition> skills) {
+        clear();
+        for (ISkillDefinition skill : skills) {
+            register(skill);
+        }
     }
 
     public synchronized void clear() {
@@ -29,22 +36,15 @@ public final class SkillRegistry {
         skillsByJob.put(jobId, List.copyOf(current));
     }
 
-    public synchronized void replaceAll(@lombok.NonNull Collection<ISkillDefinition> skills) {
-        clear();
-        for (ISkillDefinition skill : skills) {
-            register(skill);
-        }
+    public List<ISkillDefinition> skillsOf(Player p) {
+        var s = sessions.get(p);
+        if (s == null) return Collections.emptyList();
+        return skillsOf(s.selectedJob());
     }
 
     public synchronized List<ISkillDefinition> skillsOf(JobId jobId) {
         if (jobId == null) return List.of();
         return skillsByJob.getOrDefault(jobId, List.of());
-    }
-
-    public List<ISkillDefinition> skillsOf(Player p) {
-        var s = sessions.get(p);
-        if (s == null) return Collections.emptyList();
-        return skillsOf(s.selectedJob());
     }
 
 }

@@ -4,8 +4,12 @@ import org.bukkit.Location;
 
 public record EntryZone(
         long timeMs,
-        double minX, double minY, double minZ,
-        double maxX, double maxY, double maxZ
+        double minX,
+        double minY,
+        double minZ,
+        double maxX,
+        double maxY,
+        double maxZ
 ) {
 
     public static EntryZone of(

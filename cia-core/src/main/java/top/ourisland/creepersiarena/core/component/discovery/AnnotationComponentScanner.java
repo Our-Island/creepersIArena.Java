@@ -1,14 +1,14 @@
 package top.ourisland.creepersiarena.core.component.discovery;
 
 import org.bukkit.plugin.Plugin;
+import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
+import top.ourisland.creepersiarena.api.annotation.CiaModeDef;
+import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.annotation.CiaJobDef;
-import top.ourisland.creepersiarena.core.component.annotation.CiaModeDef;
-import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.game.mode.IGameMode;
-import top.ourisland.creepersiarena.job.IJob;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

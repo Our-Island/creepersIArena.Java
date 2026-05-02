@@ -16,13 +16,22 @@ This repository is a Minecraft Paper plugin. Treat changes as plugin changes fir
 
 The repository is a Gradle multi-module project. The current modules are:
 
-| Module             | Description                                                                 |
-|--------------------|-----------------------------------------------------------------------------|
-| `cia-api`          | reserved for the stable CreepersIArena Extension API                        |
-| `cia-core`         | current runtime, bootstrap, game, command, config, job, skill, and utility code |
-| `cia-paper-plugin` | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly |
+| Module             | Description                                                                                                                                                                    |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cia-api`          | stable CreepersIArena Extension API: addon entrypoints, public annotations, content contracts, ids, sessions, mode/skill/job contracts, runtime views, and typed config models |
+| `cia-core`         | plugin runtime implementation: bootstrap, discovery, command handling, game flow, managers, listeners, default content, registries, and utility code                           |
+| `cia-paper-plugin` | Paper-specific entrypoints, `paper-plugin.yml`, local Paper run task, and final plugin jar assembly                                                                            |
 
-The main source package remains:
+The public extension package is:
+
+```text
+top.ourisland.creepersiarena.api
+```
+
+API types must not depend on `cia-core`. If an extension-facing type needs to expose runtime state, prefer moving a
+small stable view or value type into `cia-api` instead of importing a core manager into the API module.
+
+The runtime implementation package remains:
 
 ```text
 top.ourisland.creepersiarena
@@ -30,14 +39,14 @@ top.ourisland.creepersiarena
 
 Current top-level source areas inside `cia-core/src/main/java/top/ourisland/creepersiarena` include:
 
-| Package   | Description                                                   |
-|-----------|---------------------------------------------------------------|
-| `command` | command handling and admin/runtime command behavior           |
-| `config`  | configuration loading and typed configuration models          |
-| `core`    | plugin bootstrap, components, permissions, and region support |
-| `game`    | arena/session/lobby/mode/player/protection/listener behavior  |
-| `job`     | player job or profession mechanics                            |
-| `utils`   | shared helpers that are not tied to a single feature          |
+| Package   | Description                                                                         |
+|-----------|-------------------------------------------------------------------------------------|
+| `command` | command handling and admin/runtime command behavior                                 |
+| `config`  | configuration loading and file orchestration; typed config models live in `cia-api` |
+| `core`    | plugin bootstrap, internal components, permissions, and services                    |
+| `game`    | game flow, arena managers, lobby/player/protection/listener behavior                |
+| `job`     | built-in job, skill runtime, UI, listener, and default content mechanics            |
+| `utils`   | shared helpers that are not tied to a single feature                                |
 
 Paper-only bootstrap classes live in `cia-paper-plugin/src/main/java`. Shared gameplay/runtime code should stay in
 `cia-core` unless it is being intentionally promoted to the public extension API in `cia-api`.

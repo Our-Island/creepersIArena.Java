@@ -2,8 +2,8 @@ package top.ourisland.creepersiarena.game.protection;
 
 import org.bukkit.Location;
 import org.jspecify.annotations.Nullable;
-import top.ourisland.creepersiarena.core.region.Region2D;
-import top.ourisland.creepersiarena.game.arena.ArenaInstance;
+import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
+import top.ourisland.creepersiarena.api.region.Region2D;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 

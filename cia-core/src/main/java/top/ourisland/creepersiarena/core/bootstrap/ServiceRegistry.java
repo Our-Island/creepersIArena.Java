@@ -31,7 +31,9 @@ public final class ServiceRegistry {
      * Returns a required service.
      *
      * @param type class key
+     *
      * @return the service instance
+     *
      * @throws NullPointerException if the service is missing
      */
     <T> T require(@lombok.NonNull Class<T> type) {
@@ -42,6 +44,7 @@ public final class ServiceRegistry {
      * Returns an optional service.
      *
      * @param type class key
+     *
      * @return the service instance or null if absent
      */
     <T> T get(Class<T> type) {

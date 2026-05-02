@@ -5,14 +5,13 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.config.model.GlobalConfig;
-import top.ourisland.creepersiarena.game.GameSession;
+import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
-import top.ourisland.creepersiarena.game.player.PlayerSession;
-import top.ourisland.creepersiarena.game.player.PlayerState;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.concurrent.CompletableFuture;

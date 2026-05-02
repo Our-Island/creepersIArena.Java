@@ -51,6 +51,7 @@ public final class StageTask {
      * @param action       the action to execute (required)
      * @param beginMessage optional begin message (nullable/blank allowed)
      * @param endMessage   optional end message (nullable/blank allowed)
+     *
      * @return a new {@link StageTask}
      */
     public static StageTask of(

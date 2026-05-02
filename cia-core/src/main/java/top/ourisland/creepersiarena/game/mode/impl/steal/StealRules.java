@@ -1,15 +1,15 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal;
 
 import org.bukkit.Location;
-import top.ourisland.creepersiarena.game.GameSession;
-import top.ourisland.creepersiarena.game.flow.decision.JoinDecision;
-import top.ourisland.creepersiarena.game.flow.decision.RespawnDecision;
-import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.IModeRules;
-import top.ourisland.creepersiarena.game.mode.context.JoinContext;
-import top.ourisland.creepersiarena.game.mode.context.LeaveContext;
-import top.ourisland.creepersiarena.game.mode.context.RespawnContext;
+import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
+import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModeRules;
+import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
+import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
+import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
 
 public final class StealRules implements IModeRules {
 

@@ -1,11 +1,11 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.mode.GameModeType;
 
 /**
  * Module that starts a default mode when loading.

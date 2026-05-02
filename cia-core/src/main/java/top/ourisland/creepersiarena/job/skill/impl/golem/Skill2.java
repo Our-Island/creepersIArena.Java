@@ -9,19 +9,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.job.skill.ISkillIcon;
-import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.ITrigger;
-import top.ourisland.creepersiarena.job.skill.event.Triggers;
+import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
+import top.ourisland.creepersiarena.api.skill.ISkillIcon;
+import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.event.ITrigger;
+import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 
 import java.util.List;
 import java.util.UUID;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillActivationRejectedException;
 
 @CiaSkillDef(
         id = "cia:golem.rift_fangs",

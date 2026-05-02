@@ -6,10 +6,10 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.CiaApi;
 import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponentScanner;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.component.discovery.ModuleOrderResolver;
-import top.ourisland.creepersiarena.core.component.extension.CiaApi;
 import top.ourisland.creepersiarena.core.component.extension.CiaApiImpl;
 
 import java.util.ArrayList;

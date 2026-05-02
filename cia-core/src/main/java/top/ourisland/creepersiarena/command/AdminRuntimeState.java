@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.command;
 
 import lombok.Getter;
 import lombok.Setter;
-import top.ourisland.creepersiarena.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 
 @Getter
 @Setter

@@ -6,6 +6,10 @@ import org.bukkit.attribute.Attributable
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.EquipmentSlot
+import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.attribute
+import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.attributeOrNull
+import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.baseValue
+import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.setBaseValue
 import java.util.*
 
 /**
@@ -66,7 +70,7 @@ object BuiltinAttributeUtils {
     @JvmStatic
     fun attribute(vararg names: String): Attribute =
         attributeOrNull(*names)
-            ?: throw IllegalStateException("Missing attribute for aliases: "+ names.toList())
+            ?: throw IllegalStateException("Missing attribute for aliases: " + names.toList())
 
     /**
      * Resolves the first matching attribute from the supplied aliases.

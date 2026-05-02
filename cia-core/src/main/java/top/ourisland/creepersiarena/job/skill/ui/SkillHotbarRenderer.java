@@ -4,8 +4,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
 import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.LangKeyResolver;
 

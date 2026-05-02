@@ -5,9 +5,9 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.trim.TrimPattern;
-import top.ourisland.creepersiarena.core.component.annotation.CiaJobDef;
-import top.ourisland.creepersiarena.game.player.PlayerSession;
-import top.ourisland.creepersiarena.job.IJob;
+import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
+import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
