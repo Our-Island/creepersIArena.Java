@@ -57,7 +57,7 @@ tasks.processResources {
 
     val props = mapOf(
         "version" to project.version,
-        "minecraft-version" to libs.versions.minecraft.get()
+        "minecraft" to libs.versions.minecraft.get()
     )
 
     inputs.properties(props)
