@@ -1,28 +1,37 @@
-# User-specific stuff
+### IDE & Editor Files ###
+# IntelliJ
 .idea/
-
 *.iml
 *.ipr
 *.iws
-
-# IntelliJ
 out/
-# mpeltonen/sbt-idea plugin
 .idea_modules/
-
-# JIRA plugin
 atlassian-ide-plugin.xml
 
-# Compiled class file
-*.class
-
-# Log file
-*.log
-
-# BlueJ files
+# BlueJ
 *.ctxt
 
-# Package Files #
+# General Editors
+*~
+
+### Build & Dependency Tools ###
+# Gradle
+.gradle/
+build/
+**/build/
+gradle-app.setting
+.gradletasknamecache
+!gradle-wrapper.jar
+
+# Compiled Java files
+*.class
+
+# Common working directories
+run/
+runs/
+/tmp/
+
+### Package & Archive Files ###
 *.jar
 *.war
 *.nar
@@ -31,35 +40,19 @@ atlassian-ide-plugin.xml
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+### Logs & Crash Reports ###
+*.log
+*.stackdump
+# JVM crash logs: http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-*~
-
-# temporary files which can be created if a process still has a handle open of a deleted file
-.fuse_hidden*
-
-# KDE directory preferences
-.directory
-
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
-
-# .nfs files are created when an open file is removed but is still being accessed
-.nfs*
-
-# General
+### System-Specific Files ###
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Icon must end with two \r
 Icon
-
-# Thumbnails
 ._*
-
-# Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
 .Spotlight-V100
@@ -67,53 +60,28 @@ Icon
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
 .AppleDB
 .AppleDesktop
 Network Trash Folder
 Temporary Items
 .apdisk
 
-# Windows thumbnail cache files
+# Windows
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
-
-# Dump file
-*.stackdump
-
-# Folder config file
 [Dd]esktop.ini
-
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
-
-# Windows Installer files
 *.cab
 *.msi
 *.msix
 *.msm
 *.msp
-
-# Windows shortcuts
 *.lnk
 
-.gradle
-build/
-
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Cache of project
-.gradletasknamecache
-
-**/build/
-
-# Common working directory
-run/
-runs/
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
+# Linux/Unix
+.directory
+.Trash-*
+.fuse_hidden*
+.nfs*

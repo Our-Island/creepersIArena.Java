@@ -9,6 +9,7 @@ base {
 }
 
 dependencies {
+    api(project(":cia-api"))
     compileOnly(libs.paper.api)
     compileOnly(libs.luckperms.api)
 

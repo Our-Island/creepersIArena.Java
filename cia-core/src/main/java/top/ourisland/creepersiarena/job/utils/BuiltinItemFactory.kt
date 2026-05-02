@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta
 import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.inventory.meta.trim.TrimMaterial
 import org.bukkit.inventory.meta.trim.TrimPattern
+import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory.armor
 
 /**
  * Central factory for the built-in jobs' display items, weapons and armor pieces.

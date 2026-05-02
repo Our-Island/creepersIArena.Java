@@ -1,6 +1,9 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
@@ -12,10 +15,7 @@ import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.IGameMode;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
-import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -50,7 +50,7 @@ public final class GameModule implements IBootstrapModule {
             var gameManager = new GameManager(arenaManager, rt.log());
             registerModes(gameManager, catalog, gcfg.game().disabledModes(), rt.log());
 
-            var runtime = new GameRuntime(cfg::globalConfig, arenaManager, store);
+            var runtime = new GameRuntime(cfg::globalConfig, store);
             gameManager.bindRuntime(runtime);
 
             var flow = new GameFlow(

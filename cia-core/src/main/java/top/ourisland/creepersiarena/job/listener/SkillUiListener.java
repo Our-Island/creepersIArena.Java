@@ -10,10 +10,10 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.game.player.PlayerState;
-import top.ourisland.creepersiarena.job.skill.event.SkillContext;
-import top.ourisland.creepersiarena.job.skill.event.impl.InteractEvent;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.skill.event.SkillContext;
+import top.ourisland.creepersiarena.api.skill.event.impl.InteractEvent;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 

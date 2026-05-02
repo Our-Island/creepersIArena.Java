@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.game.arena;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 
 import java.util.ArrayList;
 import java.util.Collection;

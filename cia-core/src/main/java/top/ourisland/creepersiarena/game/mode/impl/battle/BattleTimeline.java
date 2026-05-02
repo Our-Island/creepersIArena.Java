@@ -2,12 +2,12 @@ package top.ourisland.creepersiarena.game.mode.impl.battle;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import top.ourisland.creepersiarena.game.GameSession;
-import top.ourisland.creepersiarena.game.flow.action.GameAction;
-import top.ourisland.creepersiarena.game.mode.GameModeType;
-import top.ourisland.creepersiarena.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.game.mode.IModeTimeline;
-import top.ourisland.creepersiarena.game.mode.context.TickContext;
+import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
+import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
 
 import java.util.List;
 

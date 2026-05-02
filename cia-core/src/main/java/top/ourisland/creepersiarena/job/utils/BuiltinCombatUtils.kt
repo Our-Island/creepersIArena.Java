@@ -5,8 +5,13 @@ import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
-import top.ourisland.creepersiarena.game.player.PlayerSessionStore
-import top.ourisland.creepersiarena.game.player.PlayerState
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore
+import top.ourisland.creepersiarena.api.game.player.PlayerState
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.damage
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.installSessions
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.isEnemy
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.nearbyOtherPlayers
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.rayOtherPlayer
 
 /**
  * Shared combat-oriented helpers used by the built-in jobs.

@@ -1,17 +1,17 @@
 package top.ourisland.creepersiarena.job.skill.impl.wolong;
 
 import org.bukkit.Material;
-import top.ourisland.creepersiarena.core.component.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.job.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.job.skill.ISkillIcon;
-import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.ITrigger;
-import top.ourisland.creepersiarena.job.skill.event.Triggers;
+import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
+import top.ourisland.creepersiarena.api.skill.ISkillIcon;
+import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.event.ITrigger;
+import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillActivationRejectedException;
 
 @CiaSkillDef(
         id = "cia:wolong.empty_fort",

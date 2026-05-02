@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena.utils
 
 import net.kyori.adventure.text.Component
-import top.ourisland.creepersiarena.job.JobId
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition
+import top.ourisland.creepersiarena.api.job.JobId
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition
 import top.ourisland.creepersiarena.utils.LangKeyResolver.normalizeLangSegment
 import top.ourisland.creepersiarena.utils.LangKeyResolver.skillBase
 import java.util.function.IntFunction

@@ -1,10 +1,12 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import top.ourisland.creepersiarena.config.model.SkillConfig;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.job.skill.SkillType;
-import top.ourisland.creepersiarena.job.skill.event.ITrigger;
-import top.ourisland.creepersiarena.job.skill.event.SkillContext;
+import top.ourisland.creepersiarena.api.config.model.SkillConfig;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.event.ITrigger;
+import top.ourisland.creepersiarena.api.skill.event.SkillContext;
+import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
+import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
 
 import java.util.List;
 import java.util.UUID;

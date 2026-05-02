@@ -1,5 +1,8 @@
 package top.ourisland.creepersiarena.job;
 
+import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.job.JobId;
+
 import java.util.*;
 
 public final class JobManager {

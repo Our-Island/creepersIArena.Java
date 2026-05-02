@@ -6,6 +6,7 @@ import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils.applyHiddenEffect
 
 /**
  * Helpers for short-lived built-in skill state.

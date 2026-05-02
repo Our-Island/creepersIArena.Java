@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.bukkit.World;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
@@ -12,7 +13,6 @@ import top.ourisland.creepersiarena.game.listener.LobbyEntryListener;
 import top.ourisland.creepersiarena.game.listener.PlayerStateRulesListener;
 import top.ourisland.creepersiarena.game.lobby.LobbyManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
-import top.ourisland.creepersiarena.game.player.PlayerSessionStore;
 
 import java.util.Map;
 

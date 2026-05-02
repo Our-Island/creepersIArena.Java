@@ -2,15 +2,18 @@ package top.ourisland.creepersiarena.core.component.extension;
 
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.CiaAddon;
+import top.ourisland.creepersiarena.api.CiaApi;
+import top.ourisland.creepersiarena.api.CiaExtensionContext;
+import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponentScanner;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.mode.IGameMode;
-import top.ourisland.creepersiarena.job.IJob;
 import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 
 public final class CiaApiImpl implements CiaApi {
@@ -47,8 +50,7 @@ public final class CiaApiImpl implements CiaApi {
             this.log = rt.log();
         }
 
-        @Override
-        public void registerModule(IBootstrapModule module) {
+        private void registerModule(IBootstrapModule module) {
             catalog.registerModule(module);
             log.info("[Extension] {} registered bootstrap module {} (effective on next restart/re-enable).", owner.getName(), module.name());
         }
