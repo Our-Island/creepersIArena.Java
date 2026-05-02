@@ -1,11 +1,10 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal.config;
 
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
-import top.ourisland.creepersiarena.api.config.IGameConfigView;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static top.ourisland.creepersiarena.api.testsupport.TestGameConfigViews.fromYaml;
 
 class StealModeConfigTest {
 
@@ -17,7 +16,7 @@ class StealModeConfigTest {
         yaml.set("game.modes.steal.total-round", 7);
         yaml.set("game.modes.steal.time-per-round", 30);
 
-        var config = StealModeConfig.from(view(yaml));
+        var config = StealModeConfig.from(fromYaml(yaml));
 
         assertEquals(4, config.minPlayerToStart());
         assertEquals(45, config.prepareTimeSeconds());
@@ -25,25 +24,6 @@ class StealModeConfigTest {
         assertEquals(30, config.timePerRoundSeconds());
     }
 
-    private IGameConfigView view(YamlConfiguration yaml) {
-        return new IGameConfigView() {
-            @Override
-            public boolean isModeDisabled(String modeId) {
-                return false;
-            }
-
-            @Override
-            public int leaveDelaySeconds() {
-                return 0;
-            }
-
-            @Override
-            public ConfigurationSection modeSection(String modeId) {
-                String normalized = modeId.substring(modeId.indexOf(':') + 1);
-                return yaml.getConfigurationSection("game.modes." + normalized);
-            }
-        };
-    }
 
     @Test
     void clampsNumericValuesToAtLeastOne() {
@@ -53,7 +33,7 @@ class StealModeConfigTest {
         yaml.set("game.modes.steal.total-round", 0);
         yaml.set("game.modes.steal.time-per-round", -5);
 
-        var config = StealModeConfig.from(view(yaml));
+        var config = StealModeConfig.from(fromYaml(yaml));
 
         assertEquals(1, config.minPlayerToStart());
         assertEquals(1, config.prepareTimeSeconds());

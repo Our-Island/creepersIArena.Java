@@ -6,6 +6,7 @@ import top.ourisland.creepersiarena.api.config.IArenaConfigView;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
+import top.ourisland.creepersiarena.api.testsupport.TestBukkit;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ class ArenaInstanceTest {
                 "cia.arena.one",
                 GameModeType.of("battle"),
                 anchor,
-                new Region2D(worldProxy(), Bounds2D.of(0, 0, 10, 10)),
+                new Region2D(TestBukkit.world(), Bounds2D.of(0, 0, 10, 10)),
                 List.of(),
                 Map.of(),
                 groups,
@@ -44,26 +45,6 @@ class ArenaInstanceTest {
         Location fallback = arena.firstSpawnOrAnchor("missing");
         assertNotSame(anchor, fallback);
         assertEquals(anchor, fallback);
-    }
-
-    private org.bukkit.World worldProxy() {
-        return (org.bukkit.World) java.lang.reflect.Proxy.newProxyInstance(
-                getClass().getClassLoader(),
-                new Class[]{org.bukkit.World.class},
-                (proxy, method, args) -> switch (method.getName()) {
-                    case "getUID" -> java.util.UUID.randomUUID();
-                    case "getName" -> "world";
-                    default -> {
-                        Class<?> returnType = method.getReturnType();
-                        if (returnType.equals(boolean.class)) yield false;
-                        if (returnType.equals(int.class)) yield 0;
-                        if (returnType.equals(long.class)) yield 0L;
-                        if (returnType.equals(double.class)) yield 0.0D;
-                        if (returnType.equals(float.class)) yield 0.0F;
-                        yield null;
-                    }
-                }
-        );
     }
 
 }

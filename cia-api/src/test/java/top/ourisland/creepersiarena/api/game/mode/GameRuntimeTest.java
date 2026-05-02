@@ -1,16 +1,16 @@
 package top.ourisland.creepersiarena.api.game.mode;
 
 import org.junit.jupiter.api.Test;
-import top.ourisland.creepersiarena.api.config.IGameConfigView;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static top.ourisland.creepersiarena.api.testsupport.TestGameConfigViews.empty;
 
 class GameRuntimeTest {
 
     @Test
     void resolvesOptionalAndRequiredServicesByType() {
-        var config = configView();
+        var config = empty();
         var sessions = new PlayerSessionStore();
         var expectedService = "service-value";
         var runtime = new GameRuntime(
@@ -27,28 +27,10 @@ class GameRuntimeTest {
         assertNull(runtime.getService(null));
     }
 
-    private IGameConfigView configView() {
-        return new IGameConfigView() {
-            @Override
-            public boolean isModeDisabled(String modeId) {
-                return false;
-            }
-
-            @Override
-            public int leaveDelaySeconds() {
-                return 0;
-            }
-
-            @Override
-            public org.bukkit.configuration.ConfigurationSection modeSection(String modeId) {
-                return null;
-            }
-        };
-    }
 
     @Test
     void requiredServiceThrowsWhenMissing() {
-        var runtime = new GameRuntime(this::configView, new PlayerSessionStore());
+        var runtime = new GameRuntime(() -> empty(), new PlayerSessionStore());
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,

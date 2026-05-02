@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `java-test-fixtures`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.lombok)
 }
@@ -13,6 +14,8 @@ dependencies {
     compileOnly(libs.jspecify)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
+
+    testFixturesImplementation(libs.paper.api)
 
     testImplementation(libs.paper.api)
     testImplementation(libs.junit.jupiter)

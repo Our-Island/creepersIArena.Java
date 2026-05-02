@@ -26,6 +26,7 @@ dependencies {
 
     testImplementation(project(":cia-api"))
     testImplementation(project(":cia-core"))
+    testImplementation(testFixtures(project(":cia-api")))
     testImplementation(libs.paper.api)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
