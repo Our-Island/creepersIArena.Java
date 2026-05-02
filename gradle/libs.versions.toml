@@ -11,6 +11,8 @@ luckperms = "5.5"
 
 lombok = "1.18.46"
 jspecify = "1.0.0"
+junit-jupiter = "5.10.3"
+junit-platform = "1.10.3"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -22,6 +24,8 @@ luckperms-api = { module = "net.luckperms:api", version.ref = "luckperms" }
 
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
