@@ -4,9 +4,9 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.api;
 
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
@@ -39,6 +40,46 @@ public interface CiaExtensionContext {
      */
     Path dataFolder();
 
+
+    /**
+     * Returns the owning Paper plugin instance used for scheduler and listener registration.
+     * <p>
+     * Jar-based CIA extensions are not Paper plugins themselves, so scheduled work must use this owner instead of
+     * {@code JavaPlugin.getProvidingPlugin(extensionClass)}.
+     *
+     * @return owning Paper plugin
+     */
+    Plugin plugin();
+
+    /**
+     * Returns a runtime service by type or throws when missing.
+     *
+     * @param type service class
+     * @param <T>  service type
+     *
+     * @return service instance
+     */
+    default <T> T requireService(Class<T> type) {
+        T service = getService(type);
+        if (service == null) {
+            throw new IllegalStateException("Missing CIA runtime service: " + type.getName());
+        }
+        return service;
+    }
+
+    /**
+     * Returns a runtime service by type, or {@code null} when that service is unavailable.
+     * <p>
+     * This is primarily intended for bundled/default content while the public service API is still stabilizing.
+     * External extensions should prefer the dedicated registration and context methods where possible.
+     *
+     * @param type service class
+     * @param <T>  service type
+     *
+     * @return service instance, or null
+     */
+    <T> T getService(Class<T> type);
+
     /**
      * Registers a job definition instance.
      *
@@ -59,6 +100,17 @@ public interface CiaExtensionContext {
      * @param mode mode definition to publish
      */
     void registerMode(IGameMode mode);
+
+
+    /**
+     * Registers a Bukkit listener owned by this extension.
+     * <p>
+     * The listener is registered against the main CreepersIArena Paper plugin because CIA extension jars are not Paper
+     * plugins and therefore cannot be passed to Bukkit/Paper as plugin providers.
+     *
+     * @param listener listener instance
+     */
+    void registerListener(Listener listener);
 
     /**
      * Scans the supplied package owned by this context for supported public component annotations and registers any

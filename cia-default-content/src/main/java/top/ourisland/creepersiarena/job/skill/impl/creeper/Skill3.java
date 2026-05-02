@@ -5,7 +5,6 @@ import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Firework;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -93,7 +92,7 @@ public class Skill3 implements ISkillDefinition {
                 }
             });
             fw.addPassenger(p);
-            var plugin = JavaPlugin.getProvidingPlugin(Skill3.class);
+            var plugin = ctx.plugin();
             final int[] t = {0};
             fw.getScheduler().runAtFixedRate(
                     plugin,

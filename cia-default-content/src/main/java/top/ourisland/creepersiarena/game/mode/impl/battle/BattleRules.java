@@ -36,7 +36,7 @@ public final class BattleRules implements IModeRules {
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        int sec = runtime.cfg().game().battle().respawnTimeSeconds();
+        int sec = runtime.cfg().modeInt("battle", "respawn-time", 10);
         return new RespawnDecision.DeathLobbyCountdown(sec);
     }
 

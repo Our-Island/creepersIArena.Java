@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
+import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.CiaExtensionContext;
@@ -55,6 +57,17 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
     }
 
     @Override
+    public Plugin plugin() {
+        return rt.plugin();
+    }
+
+    @Override
+    public <T> T getService(Class<T> type) {
+        Objects.requireNonNull(type, "type");
+        return rt == null ? null : rt.getService(type);
+    }
+
+    @Override
     public void registerJob(IJob job) {
         Objects.requireNonNull(job, "job");
         catalog.registerJob(job);
@@ -79,6 +92,13 @@ final class CiaExtensionRuntimeContext implements CiaExtensionContext {
         var gm = rt == null ? null : rt.getService(GameManager.class);
         if (gm != null) gm.registerMode(mode);
         logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode());
+    }
+
+    @Override
+    public void registerListener(Listener listener) {
+        Objects.requireNonNull(listener, "listener");
+        Bukkit.getPluginManager().registerEvents(listener, rt.plugin());
+        logInfo("[Extension] {} registered listener {}", descriptor.id(), listener.getClass().getName());
     }
 
     @Override

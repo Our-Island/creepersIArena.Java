@@ -1,8 +1,9 @@
-package top.ourisland.creepersiarena.api.config.model
+package top.ourisland.creepersiarena.config.model
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
+import top.ourisland.creepersiarena.api.config.GameConfigView
 import java.util.*
 
 /**
@@ -19,7 +20,8 @@ data class GlobalConfig(
     @get:JvmName("game") val game: Game,
     @get:JvmName("ui") val ui: Ui,
     @get:JvmName("world") val world: World,
-) {
+    private val modeSections: Map<String, ConfigurationSection>,
+) : GameConfigView {
 
     companion object {
 
@@ -30,6 +32,7 @@ data class GlobalConfig(
             Game.defaults(),
             Ui.defaults(),
             World.defaults(),
+            mapOf(),
         )
 
         @JvmStatic
@@ -49,7 +52,17 @@ data class GlobalConfig(
             }
 
             // game
-            val game = Game.fromSection(yml.getConfigurationSection("game"))
+            val gameSec = yml.getConfigurationSection("game")
+            val game = Game.fromSection(gameSec)
+            val modeSections = HashMap<String, ConfigurationSection>()
+            if (gameSec != null) {
+                for (key in gameSec.getKeys(false)) {
+                    val sec = gameSec.getConfigurationSection(key)
+                    if (sec != null) {
+                        modeSections[key.lowercase(Locale.ROOT)] = sec
+                    }
+                }
+            }
 
             // ui
             val ui = Ui.fromSection(yml.getConfigurationSection("ui"))
@@ -57,7 +70,7 @@ data class GlobalConfig(
             // world
             val world = World.fromSection(yml.getConfigurationSection("world"))
 
-            return GlobalConfig(lang, disabledJobs, lobbies, game, ui, world)
+            return GlobalConfig(lang, disabledJobs, lobbies, game, ui, world, Collections.unmodifiableMap(modeSections))
         }
 
         private fun asDouble(list: List<*>?, idx: Int, def: Double): Double {
@@ -71,6 +84,23 @@ data class GlobalConfig(
             }
         }
 
+    }
+
+
+    override fun isModeDisabled(modeId: String): Boolean {
+        val normalized = modeId.trim().lowercase(Locale.ROOT)
+        val plain = normalized.substringAfter(':', normalized)
+        return game.disabledModes.any { disabled ->
+            val d = disabled.trim().lowercase(Locale.ROOT)
+            d == normalized || d == plain || d.substringAfter(':', d) == plain
+        }
+    }
+
+    override fun leaveDelaySeconds(): Int = game.leaveDelaySeconds
+
+    override fun modeSection(modeId: String): ConfigurationSection? {
+        val normalized = modeId.trim().lowercase(Locale.ROOT)
+        return modeSections[normalized] ?: modeSections[normalized.substringAfter(':', normalized)]
     }
 
     // ---------------- sub models ----------------

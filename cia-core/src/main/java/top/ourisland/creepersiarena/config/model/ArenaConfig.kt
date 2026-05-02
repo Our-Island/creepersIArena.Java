@@ -1,9 +1,9 @@
-package top.ourisland.creepersiarena.api.config.model
+package top.ourisland.creepersiarena.config.model
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig.Range2D
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig.Vec3
+import top.ourisland.creepersiarena.config.model.GlobalConfig.Range2D
+import top.ourisland.creepersiarena.config.model.GlobalConfig.Vec3
 import java.util.*
 
 /**

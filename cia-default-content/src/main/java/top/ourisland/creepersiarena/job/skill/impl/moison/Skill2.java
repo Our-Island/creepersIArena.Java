@@ -4,7 +4,6 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -50,7 +49,7 @@ public class Skill2 implements ISkillDefinition {
         return (ctx, store) -> {
             var p = ctx.player();
             boolean spectral = MoisonProjectileSupport.consumeSpectralReserve(store, p, ctx.nowTick());
-            var plugin = JavaPlugin.getProvidingPlugin(Skill2.class);
+            var plugin = ctx.plugin();
             final int[] wave = {0};
 
             p.getScheduler().runAtFixedRate(

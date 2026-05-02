@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.impl.golem;
 
 import org.bukkit.Material;
-import org.bukkit.plugin.java.JavaPlugin;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -54,7 +53,7 @@ public class Skill1 implements ISkillDefinition {
 
             BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 60, 4);
 
-            var plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
+            var plugin = ctx.plugin();
             p.getScheduler().runDelayed(
                     plugin,
                     _ -> {

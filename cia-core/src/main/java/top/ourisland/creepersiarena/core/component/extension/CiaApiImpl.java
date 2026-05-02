@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.core.component.extension;
 
+import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.CiaAddon;
@@ -64,6 +66,16 @@ public final class CiaApiImpl implements CiaApi {
         }
 
         @Override
+        public Plugin plugin() {
+            return owner;
+        }
+
+        @Override
+        public <T> T getService(Class<T> type) {
+            return rt.getService(type);
+        }
+
+        @Override
         public void registerJob(IJob job) {
             catalog.registerJob(job);
             var jm = rt.getService(JobManager.class);
@@ -85,6 +97,12 @@ public final class CiaApiImpl implements CiaApi {
             var gm = rt.getService(GameManager.class);
             if (gm != null) gm.registerMode(mode);
             log.info("[Extension] {} registered mode {}", owner.getName(), mode.mode());
+        }
+
+        @Override
+        public void registerListener(Listener listener) {
+            Bukkit.getPluginManager().registerEvents(listener, rt.plugin());
+            log.info("[Extension] {} registered listener {}", owner.getName(), listener.getClass().getName());
         }
 
         @Override

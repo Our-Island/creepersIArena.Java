@@ -1,5 +1,7 @@
 plugins {
     `java-library`
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.lombok)
 }
 
 base {
@@ -32,4 +34,15 @@ tasks.processResources {
     filesMatching("cia-extension.yml") {
         expand(props)
     }
+}
+
+
+val javaVersionInt = libs.versions.java.get().toInt()
+
+kotlin {
+    jvmToolchain(javaVersionInt)
+}
+
+kotlinLombok {
+    lombokConfigurationFile(rootProject.file("lombok.config"))
 }

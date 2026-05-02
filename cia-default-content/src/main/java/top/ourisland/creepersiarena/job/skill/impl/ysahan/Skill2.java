@@ -4,7 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -55,7 +55,7 @@ public class Skill2 implements ISkillDefinition {
                     BuiltinKeys.key("ysahan_whale_until"),
                     8000L
             );
-            startLoop(p);
+            startLoop(p, ctx.plugin());
 
             for (int i = 0; i < 10; i++) {
                 double angle = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
@@ -64,7 +64,7 @@ public class Skill2 implements ISkillDefinition {
                 Vector offset = new Vector(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
 
                 p.getScheduler().runDelayed(
-                        JavaPlugin.getProvidingPlugin(Skill2.class),
+                        ctx.plugin(),
                         _ -> {
                             if (!p.isOnline()) return;
                             var center = p.getLocation().add(offset);
@@ -90,7 +90,7 @@ public class Skill2 implements ISkillDefinition {
         };
     }
 
-    public static void startLoop(Player p) {
+    public static void startLoop(Player p, Plugin plugin) {
         if (p.getPersistentDataContainer().has(
                 BuiltinKeys.key("ysahan_whale_task"),
                 PersistentDataType.BYTE
@@ -101,7 +101,6 @@ public class Skill2 implements ISkillDefinition {
                 (byte) 1
         );
 
-        var plugin = JavaPlugin.getProvidingPlugin(Skill2.class);
         p.getScheduler().runAtFixedRate(
                 plugin,
                 task -> {

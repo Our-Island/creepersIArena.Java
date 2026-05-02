@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.job.skill.impl.wolong;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
@@ -61,7 +60,7 @@ public class Skill2 implements ISkillDefinition {
                     }
             );
 
-            var plugin = JavaPlugin.getProvidingPlugin(Skill2.class);
+            var plugin = ctx.plugin();
             final int[] life = {0};
             stand.getScheduler().runAtFixedRate(
                     plugin,

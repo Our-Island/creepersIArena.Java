@@ -2,7 +2,6 @@ package top.ourisland.creepersiarena.job.skill.impl.bloodline;
 
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
@@ -49,7 +48,7 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            var plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
+            var plugin = ctx.plugin();
 
             final int[] waves = {0};
             final int[] hits = {0};

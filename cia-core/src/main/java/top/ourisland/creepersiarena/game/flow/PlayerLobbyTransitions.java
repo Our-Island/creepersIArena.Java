@@ -2,9 +2,9 @@ package top.ourisland.creepersiarena.game.flow;
 
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 
 import java.util.function.Supplier;

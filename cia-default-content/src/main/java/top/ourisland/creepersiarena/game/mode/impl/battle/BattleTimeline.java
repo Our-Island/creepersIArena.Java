@@ -21,7 +21,7 @@ public final class BattleTimeline implements IModeTimeline {
     public BattleTimeline(GameRuntime runtime, GameSession session) {
         this.runtime = runtime;
         this.session = session;
-        this.remaining = runtime.cfg().game().battle().singleGameTimeSeconds();
+        this.remaining = runtime.cfg().modeInt("battle", "single-game-time", 600);
     }
 
     @Override

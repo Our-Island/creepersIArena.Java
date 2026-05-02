@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.impl.ysahan;
 
 import org.bukkit.Material;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
@@ -82,7 +81,7 @@ public class Skill1 implements ISkillDefinition {
             p.getInventory().setHelmet(null);
             p.getInventory().setChestplate(null);
             p.getScheduler().runDelayed(
-                    JavaPlugin.getProvidingPlugin(Skill1.class),
+                    ctx.plugin(),
                     _ -> {
                         if (!p.isOnline()) return;
                         var armor = p.getInventory().getArmorContents();

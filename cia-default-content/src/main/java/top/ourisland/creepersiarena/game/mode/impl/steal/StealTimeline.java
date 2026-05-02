@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.api.config.GameConfigView;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
@@ -41,7 +41,7 @@ public final class StealTimeline implements IModeTimeline {
 
     @Override
     public List<GameAction> tick(TickContext ctx) {
-        GlobalConfig cfg = runtime.cfg();
+        GameConfigView cfg = runtime.cfg();
 
         return switch (st.phase) {
             case LOBBY -> tickLobby(cfg);
@@ -54,19 +54,19 @@ public final class StealTimeline implements IModeTimeline {
         };
     }
 
-    private List<GameAction> tickLobby(GlobalConfig cfg) {
+    private List<GameAction> tickLobby(GameConfigView cfg) {
         int ready = countReadyOnline();
-        if (ready < cfg.game().steal().minPlayerToStart()) return List.of();
+        if (ready < cfg.modeInt("steal", "min-player-to-start", 2)) return List.of();
 
         st.phase = StealPhase.COUNTDOWN;
-        st.remaining = Math.max(1, cfg.game().steal().prepareTimeSeconds());
+        st.remaining = Math.max(1, cfg.modeInt("steal", "prepare-time", 30));
 
         return List.of(new GameAction.Broadcast(Component.text("STEAL：人数达标，倒计时 " + st.remaining + "s", NamedTextColor.GOLD)));
     }
 
-    private List<GameAction> tickCountdown(GlobalConfig cfg) {
+    private List<GameAction> tickCountdown(GameConfigView cfg) {
         int ready = countReadyOnline();
-        if (ready < cfg.game().steal().minPlayerToStart()) {
+        if (ready < cfg.modeInt("steal", "min-player-to-start", 2)) {
             st.phase = StealPhase.LOBBY;
             st.remaining = 0;
             return List.of(new GameAction.Broadcast(Component.text("STEAL：人数不足，倒计时取消", NamedTextColor.RED)));
@@ -101,16 +101,16 @@ public final class StealTimeline implements IModeTimeline {
         return List.of(new GameAction.Broadcast(Component.text("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）", NamedTextColor.AQUA)));
     }
 
-    private List<GameAction> tickPickBase(GlobalConfig cfg) {
+    private List<GameAction> tickPickBase(GameConfigView cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.phase = StealPhase.ROUND_PLAYING;
-        st.remaining = Math.max(1, cfg.game().steal().timePerRoundSeconds());
+        st.remaining = Math.max(1, cfg.modeInt("steal", "time-per-round", 10));
 
         return List.of(new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)));
     }
 
-    private List<GameAction> tickRoundPlaying(GlobalConfig cfg) {
+    private List<GameAction> tickRoundPlaying(GameConfigView cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.phase = StealPhase.ROUND_END;
@@ -119,11 +119,11 @@ public final class StealTimeline implements IModeTimeline {
         return List.of(new GameAction.Broadcast(Component.text("§fSTEAL：回合结束，结算中…", NamedTextColor.WHITE)));
     }
 
-    private List<GameAction> tickRoundEnd(GlobalConfig cfg) {
+    private List<GameAction> tickRoundEnd(GameConfigView cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.roundIndex++;
-        int total = Math.max(1, cfg.game().steal().totalRound());
+        int total = Math.max(1, cfg.modeInt("steal", "total-round", 10));
 
         if (st.roundIndex >= total) {
             st.phase = StealPhase.GAME_END;

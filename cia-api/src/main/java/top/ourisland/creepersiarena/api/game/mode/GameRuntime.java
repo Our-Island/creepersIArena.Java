@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.api.game.mode;
 
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.api.config.GameConfigView;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 
 import java.util.function.Supplier;
@@ -13,18 +13,18 @@ import java.util.function.Supplier;
  */
 public final class GameRuntime {
 
-    private final Supplier<GlobalConfig> cfg;
+    private final Supplier<? extends GameConfigView> cfg;
     private final PlayerSessionStore sessionStore;
 
     public GameRuntime(
-            @lombok.NonNull Supplier<GlobalConfig> cfg,
+            @lombok.NonNull Supplier<? extends GameConfigView> cfg,
             @lombok.NonNull PlayerSessionStore sessionStore
     ) {
         this.cfg = cfg;
         this.sessionStore = sessionStore;
     }
 
-    public GlobalConfig cfg() {
+    public GameConfigView cfg() {
         return cfg.get();
     }
 

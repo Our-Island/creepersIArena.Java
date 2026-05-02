@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.job.skill.impl.creeper;
 import org.bukkit.Material;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -67,7 +66,7 @@ public class Skill1 implements ISkillDefinition {
             creeper.setCollidable(false);
             creeper.setVelocity(dir.multiply(speed));
 
-            var plugin = JavaPlugin.getProvidingPlugin(Skill1.class);
+            var plugin = ctx.plugin();
             creeper.getScheduler().runDelayed(
                     plugin,
                     _ -> {

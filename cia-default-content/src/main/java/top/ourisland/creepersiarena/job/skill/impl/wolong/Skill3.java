@@ -7,7 +7,6 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.SpectralArrow;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
-import org.bukkit.plugin.java.JavaPlugin;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -61,7 +60,7 @@ public class Skill3 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            var plugin = JavaPlugin.getProvidingPlugin(Skill3.class);
+            var plugin = ctx.plugin();
             final int[] shot = {0};
             p.getScheduler().runAtFixedRate(
                     plugin,

@@ -4,9 +4,9 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.java.JavaPlugin
 import org.slf4j.Logger
-import top.ourisland.creepersiarena.api.config.model.ArenaConfig
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig
-import top.ourisland.creepersiarena.api.config.model.SkillConfig
+import top.ourisland.creepersiarena.config.model.ArenaConfig
+import top.ourisland.creepersiarena.config.model.GlobalConfig
+import top.ourisland.creepersiarena.config.model.SkillConfig
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files

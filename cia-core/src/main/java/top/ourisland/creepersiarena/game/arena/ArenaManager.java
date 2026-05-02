@@ -7,12 +7,12 @@ import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.config.model.ArenaConfig;
-import top.ourisland.creepersiarena.api.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
+import top.ourisland.creepersiarena.config.model.ArenaConfig;
+import top.ourisland.creepersiarena.config.model.GlobalConfig;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;

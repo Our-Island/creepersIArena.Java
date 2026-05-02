@@ -1,12 +1,13 @@
-package top.ourisland.creepersiarena.api.config.model
+package top.ourisland.creepersiarena.config.model
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
+import top.ourisland.creepersiarena.api.config.SkillConfigView
 import java.util.*
 
 class SkillConfig private constructor(
     private val byId: Map<String, ConfigurationSection>,
-) {
+) : SkillConfigView {
 
     companion object {
 
@@ -51,9 +52,9 @@ class SkillConfig private constructor(
             ?: byId[normalized.substringAfter(':', normalized)]
     }
 
-    fun cooldownSeconds(skillId: String, def: Int): Int = getInt(skillId, "cooldown-seconds", def)
+    override fun cooldownSeconds(skillId: String, def: Int): Int = getInt(skillId, "cooldown-seconds", def)
 
-    fun getInt(skillId: String?, key: String?, def: Int): Int {
+    override fun getInt(skillId: String?, key: String?, def: Int): Int {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -63,7 +64,7 @@ class SkillConfig private constructor(
         }
     }
 
-    fun getLong(skillId: String?, key: String?, def: Long): Long {
+    override fun getLong(skillId: String?, key: String?, def: Long): Long {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -73,7 +74,7 @@ class SkillConfig private constructor(
         }
     }
 
-    fun getDouble(skillId: String?, key: String?, def: Double): Double {
+    override fun getDouble(skillId: String?, key: String?, def: Double): Double {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -83,7 +84,7 @@ class SkillConfig private constructor(
         }
     }
 
-    fun getBoolean(skillId: String?, key: String?, def: Boolean): Boolean {
+    override fun getBoolean(skillId: String?, key: String?, def: Boolean): Boolean {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
