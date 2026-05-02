@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
+import top.ourisland.creepersiarena.game.mode.BattleKitService;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.listener.SkillUiListener;

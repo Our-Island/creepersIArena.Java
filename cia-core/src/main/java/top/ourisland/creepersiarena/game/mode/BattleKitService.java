@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mode.impl.battle;
+package top.ourisland.creepersiarena.game.mode;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

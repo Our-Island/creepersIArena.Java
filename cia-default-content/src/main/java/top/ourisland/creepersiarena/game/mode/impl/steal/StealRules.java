@@ -30,8 +30,6 @@ public final class StealRules implements IModeRules {
 
     @Override
     public JoinDecision onJoin(JoinContext ctx) {
-        // 统一先回 hub
-        // 如果已经不是 LOBBY/COUNTDOWN，新加入直接旁观
         if (state.phase != StealPhase.LOBBY && state.phase != StealPhase.COUNTDOWN) {
             Location view = game.arena().anchor().clone().add(0, 8, 0);
             return new JoinDecision.ToSpectate(view);
@@ -41,12 +39,10 @@ public final class StealRules implements IModeRules {
 
     @Override
     public void onLeave(LeaveContext ctx) {
-        // leave 只做清理：Flow 会 remove game.players
     }
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        // STEAL：死亡后成为旁观者（不走 death lobby）
         Location view = game.arena().anchor().clone().add(0, 8, 0);
         return new RespawnDecision.Spectate(view);
     }

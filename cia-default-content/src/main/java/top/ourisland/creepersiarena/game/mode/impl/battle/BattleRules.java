@@ -27,13 +27,11 @@ public final class BattleRules implements IModeRules {
 
     @Override
     public JoinDecision onJoin(JoinContext ctx) {
-        // 你描述的 BATTLE：加入后统一先回 hub 选职业
         return new JoinDecision.ToHub();
     }
 
     @Override
     public void onLeave(LeaveContext ctx) {
-        // BATTLE 离开只需要从 session 移除，其他由 Flow 负责
     }
 
     @Override

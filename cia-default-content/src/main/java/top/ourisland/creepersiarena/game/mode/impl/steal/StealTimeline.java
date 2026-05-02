@@ -98,8 +98,6 @@ public final class StealTimeline implements IModeTimeline {
         st.phase = StealPhase.PICK_BASE;
         st.remaining = PICK_BASE_SECONDS;
 
-        // 这里不直接 ToBattle：因为 STEAL 的“基地/选职业”阶段你可能需要不同 kit；
-        // 当前最小实现：仍回 hub，让玩家选职业（后续你再加“基地 kit”）
         return List.of(new GameAction.Broadcast(Component.text("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）", NamedTextColor.AQUA)));
     }
 

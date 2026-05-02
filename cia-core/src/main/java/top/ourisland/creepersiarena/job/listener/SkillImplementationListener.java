@@ -13,7 +13,6 @@ import org.bukkit.persistence.PersistentDataType;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
-import top.ourisland.creepersiarena.job.skill.impl.creeper.Skill3;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
@@ -21,6 +20,9 @@ import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
 import java.util.UUID;
 
 public final class SkillImplementationListener implements Listener {
+
+    private static final String TAG_CREEPER_FIREWORK = "cia_skill3_fw";
+    private static final String TAG_CREEPER_FIREWORK_OWNER = "cia_skill3_owner:";
 
     private final PlayerSessionStore sessions;
     private final SkillRuntime runtime;
@@ -51,12 +53,12 @@ public final class SkillImplementationListener implements Listener {
         if (!(e.getDamager() instanceof Firework fw)) return;
         if (!(e.getEntity() instanceof Player victim)) return;
 
-        if (!fw.getScoreboardTags().contains(Skill3.TAG_SKILL3_FW)) return;
+        if (!fw.getScoreboardTags().contains(TAG_CREEPER_FIREWORK)) return;
 
         UUID owner = null;
         for (String tag : fw.getScoreboardTags()) {
-            if (tag.startsWith(Skill3.TAG_SKILL3_OWNER)) {
-                String s = tag.substring(Skill3.TAG_SKILL3_OWNER.length());
+            if (tag.startsWith(TAG_CREEPER_FIREWORK_OWNER)) {
+                String s = tag.substring(TAG_CREEPER_FIREWORK_OWNER.length());
                 try {
                     owner = UUID.fromString(s);
                 } catch (IllegalArgumentException _) {

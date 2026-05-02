@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.BattleKitService;
+import top.ourisland.creepersiarena.game.mode.BattleKitService;
 
 import java.util.function.Supplier;
 

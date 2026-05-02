@@ -4,5 +4,6 @@ include(
     "cia-api",
     "cia-core",
     "cia-paper-plugin",
+    "cia-default-content",
     "cia-example-extension"
 )
