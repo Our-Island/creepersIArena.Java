@@ -56,6 +56,11 @@ Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src
 `cia-core/src/main/resources/skill.yml`, or `cia-core/src/main/resources/lang/` should be reviewed as user-facing
 changes.
 
+CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
+`cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in
+`cia-core/src/main/java/top/ourisland/creepersiarena/core/extension/metadata`. Descriptor reading must not load classes
+or run extension lifecycle code.
+
 ## Development Setup
 
 Use the Gradle wrapper from the repository:
