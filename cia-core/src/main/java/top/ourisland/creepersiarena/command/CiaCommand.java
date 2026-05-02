@@ -325,6 +325,8 @@ public final class CiaCommand {
                     return 1;
                 }));
 
+        adm.then(buildExtensionSubtree(rt, admin, "extensions"));
+
         adm.then(Commands.literal("config")
                         .requires(src -> hasPerm(src, P_ADMIN + ".config"))
                         .then(argWord("target")
@@ -347,6 +349,40 @@ public final class CiaCommand {
                 });
 
         return adm;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildExtensionSubtree(
+            BootstrapRuntime rt,
+            AdminCommandHandlers admin,
+            String literalName
+    ) {
+        return Commands.literal(literalName)
+                .requires(src -> hasPerm(src, P_ADMIN + ".extensions"))
+                .executes(ctx -> {
+                    admin.extensionsList(sender(ctx));
+                    return 1;
+                })
+                .then(Commands.literal("list")
+                        .executes(ctx -> {
+                            admin.extensionsList(sender(ctx));
+                            return 1;
+                        }))
+                .then(Commands.literal("info")
+                        .then(argWord("extension_id")
+                                .suggests((_, b) -> suggestExtensionIds(rt, b))
+                                .executes(ctx -> {
+                                    admin.extensionInfo(sender(ctx), StringArgumentType.getString(ctx, "extension_id"));
+                                    return 1;
+                                }))
+                        .executes(ctx -> {
+                            admin.extensionInfo(sender(ctx), "");
+                            return 1;
+                        }))
+                .then(Commands.literal("dump")
+                        .executes(ctx -> {
+                            admin.extensionsDump(sender(ctx));
+                            return 1;
+                        }));
     }
 
     private static CompletableFuture<Suggestions> suggestWithPrefix(
@@ -378,6 +414,23 @@ public final class CiaCommand {
     ) {
         var am = rt.requireService(ArenaManager.class);
         List<String> ids = am.arenas().stream().map(ArenaInstance::id).toList();
+        return suggestWithPrefix(b, ids);
+    }
+
+    private static CompletableFuture<Suggestions> suggestExtensionIds(
+            BootstrapRuntime rt,
+            SuggestionsBuilder b
+    ) {
+        var manager = rt.getService(top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager.class);
+        if (manager == null) return b.buildFuture();
+        var ids = new ArrayList<String>();
+        for (var loaded : manager.loadedExtensions()) {
+            ids.add(loaded.descriptor().id());
+        }
+        for (var failure : manager.loadFailures()) {
+            ids.add(failure.id());
+        }
+        ids.sort(String::compareToIgnoreCase);
         return suggestWithPrefix(b, ids);
     }
 

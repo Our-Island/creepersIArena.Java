@@ -10,6 +10,7 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
@@ -82,7 +83,8 @@ public final class GameModule implements IBootstrapModule {
             }
         }
 
-        for (IGameMode mode : catalog.modes()) {
+        for (RegisteredComponent<IGameMode> registered : catalog.registeredModes()) {
+            IGameMode mode = registered.value();
             String id = mode.mode().id();
             if (!mode.enabled()) {
                 log.info("[Game] Mode disabled by annotation: {}", id);
@@ -92,7 +94,7 @@ public final class GameModule implements IBootstrapModule {
                 log.info("[Game] Mode disabled by config: {}", id);
                 continue;
             }
-            gameManager.registerMode(mode);
+            gameManager.registerMode(registered.ownerId(), mode);
         }
     }
 

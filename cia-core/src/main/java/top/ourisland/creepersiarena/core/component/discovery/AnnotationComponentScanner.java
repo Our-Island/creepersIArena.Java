@@ -28,9 +28,18 @@ public final class AnnotationComponentScanner {
             @lombok.NonNull String basePackage,
             @lombok.NonNull ComponentCatalog catalog
     ) {
+        scanInto(plugin, basePackage, catalog, RegisteredComponent.CORE_OWNER);
+    }
+
+    public void scanInto(
+            @lombok.NonNull Plugin plugin,
+            @lombok.NonNull String basePackage,
+            @lombok.NonNull ComponentCatalog catalog,
+            @lombok.NonNull String ownerId
+    ) {
         try {
             Path root = Path.of(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-            scanInto(plugin.getClass().getClassLoader(), root, basePackage, catalog, true);
+            scanInto(plugin.getClass().getClassLoader(), root, basePackage, catalog, true, ownerId);
         } catch (URISyntaxException _) {
         }
     }
@@ -40,7 +49,8 @@ public final class AnnotationComponentScanner {
             Path codeSource,
             String basePackage,
             ComponentCatalog catalog,
-            boolean includeBootstrapModules
+            boolean includeBootstrapModules,
+            String ownerId
     ) {
         var classNames = discoverClassNames(codeSource, basePackage);
         classNames.sort(Comparator.naturalOrder());
@@ -48,7 +58,7 @@ public final class AnnotationComponentScanner {
         for (String className : classNames) {
             try {
                 Class<?> type = Class.forName(className, false, classLoader);
-                tryRegister(type, catalog, includeBootstrapModules);
+                tryRegister(type, catalog, includeBootstrapModules, ownerId);
             } catch (Throwable _) {
             }
         }
@@ -87,7 +97,8 @@ public final class AnnotationComponentScanner {
     private void tryRegister(
             Class<?> type,
             ComponentCatalog catalog,
-            boolean includeBootstrapModules
+            boolean includeBootstrapModules,
+            String ownerId
     ) throws ReflectiveOperationException {
         if (type.isInterface() || java.lang.reflect.Modifier.isAbstract(type.getModifiers()) || type.isAnonymousClass()) {
             return;
@@ -96,16 +107,16 @@ public final class AnnotationComponentScanner {
         if (includeBootstrapModules
                 && type.isAnnotationPresent(CiaBootstrapModule.class)
                 && IBootstrapModule.class.isAssignableFrom(type)) {
-            catalog.registerModule((IBootstrapModule) instantiate(type));
+            catalog.registerModule(ownerId, (IBootstrapModule) instantiate(type));
         }
         if (type.isAnnotationPresent(CiaJobDef.class) && IJob.class.isAssignableFrom(type)) {
-            catalog.registerJob((IJob) instantiate(type));
+            catalog.registerJob(ownerId, (IJob) instantiate(type));
         }
         if (type.isAnnotationPresent(CiaSkillDef.class) && ISkillDefinition.class.isAssignableFrom(type)) {
-            catalog.registerSkill((ISkillDefinition) instantiate(type));
+            catalog.registerSkill(ownerId, (ISkillDefinition) instantiate(type));
         }
         if (type.isAnnotationPresent(CiaModeDef.class) && IGameMode.class.isAssignableFrom(type)) {
-            catalog.registerMode((IGameMode) instantiate(type));
+            catalog.registerMode(ownerId, (IGameMode) instantiate(type));
         }
     }
 
@@ -126,7 +137,17 @@ public final class AnnotationComponentScanner {
             @lombok.NonNull String basePackage,
             @lombok.NonNull ComponentCatalog catalog
     ) {
-        scanInto(classLoader, codeSource, basePackage, catalog, false);
+        scanInto(classLoader, codeSource, basePackage, catalog, false, RegisteredComponent.CORE_OWNER);
+    }
+
+    public void scanInto(
+            @lombok.NonNull ClassLoader classLoader,
+            @lombok.NonNull Path codeSource,
+            @lombok.NonNull String basePackage,
+            @lombok.NonNull ComponentCatalog catalog,
+            @lombok.NonNull String ownerId
+    ) {
+        scanInto(classLoader, codeSource, basePackage, catalog, false, ownerId);
     }
 
 }

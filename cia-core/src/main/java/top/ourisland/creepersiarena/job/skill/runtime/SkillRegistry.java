@@ -4,13 +4,14 @@ import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 
 import java.util.*;
 
 public final class SkillRegistry {
 
     private final PlayerSessionStore sessions;
-    private final Map<JobId, List<ISkillDefinition>> skillsByJob = new LinkedHashMap<>();
+    private final Map<JobId, List<RegisteredComponent<ISkillDefinition>>> skillsByJob = new LinkedHashMap<>();
 
     public SkillRegistry(@lombok.NonNull PlayerSessionStore sessions) {
         this.sessions = sessions;
@@ -28,12 +29,27 @@ public final class SkillRegistry {
     }
 
     public synchronized void register(@lombok.NonNull ISkillDefinition skill) {
-        JobId jobId = JobId.of(skill.jobId());
-        List<ISkillDefinition> current = new ArrayList<>(skillsByJob.getOrDefault(jobId, List.of()));
-        current.removeIf(existing -> existing.id().equalsIgnoreCase(skill.id()));
-        current.add(skill);
-        current.sort(Comparator.comparingInt(ISkillDefinition::uiSlot).thenComparing(ISkillDefinition::id));
+        register(RegisteredComponent.CORE_OWNER, skill);
+    }
+
+    public synchronized void register(String ownerId, @lombok.NonNull ISkillDefinition skill) {
+        var jobId = JobId.of(skill.jobId());
+        List<RegisteredComponent<ISkillDefinition>> current = new ArrayList<>(skillsByJob.getOrDefault(jobId, List.of()));
+        current.removeIf(existing -> existing.value().id().equalsIgnoreCase(skill.id()));
+        current.add(new RegisteredComponent<>(ownerId, skill.id(), skill));
+        current.sort(Comparator
+                .comparingInt((RegisteredComponent<ISkillDefinition> registered) -> registered.value().uiSlot())
+                .thenComparing(registered -> registered.value().id()));
         skillsByJob.put(jobId, List.copyOf(current));
+    }
+
+    public synchronized void replaceAllRegistered(
+            @lombok.NonNull Collection<RegisteredComponent<ISkillDefinition>> skills
+    ) {
+        clear();
+        for (var skill : skills) {
+            register(skill.ownerId(), skill.value());
+        }
     }
 
     public List<ISkillDefinition> skillsOf(Player p) {
@@ -44,7 +60,24 @@ public final class SkillRegistry {
 
     public synchronized List<ISkillDefinition> skillsOf(JobId jobId) {
         if (jobId == null) return List.of();
-        return skillsByJob.getOrDefault(jobId, List.of());
+        return skillsByJob.getOrDefault(jobId, List.of()).stream()
+                .map(RegisteredComponent::value)
+                .toList();
+    }
+
+    public synchronized String ownerOf(String skillId) {
+        if (skillId == null) return null;
+        return registeredSkills().stream()
+                .filter(registered -> registered.key().equalsIgnoreCase(skillId))
+                .map(RegisteredComponent::ownerId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public synchronized List<RegisteredComponent<ISkillDefinition>> registeredSkills() {
+        return skillsByJob.values().stream()
+                .flatMap(Collection::stream)
+                .toList();
     }
 
 }

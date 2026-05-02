@@ -43,7 +43,7 @@ public final class SkillModule implements IBootstrapModule {
             var skillCodec = new SkillItemCodec(rt.plugin());
             var skillStore = new InMemorySkillStateStore();
             var skillRegistry = new SkillRegistry(sessionStore);
-            skillRegistry.replaceAll(catalog.skills());
+            skillRegistry.replaceAllRegistered(catalog.registeredSkills());
 
             var skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
                 var runtimeState = rt.getService(AdminRuntimeState.class);
@@ -104,7 +104,7 @@ public final class SkillModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var catalog = rt.requireService(ComponentCatalog.class);
             var registry = rt.requireService(SkillRegistry.class);
-            registry.replaceAll(catalog.skills());
+            registry.replaceAllRegistered(catalog.registeredSkills());
             rt.log().info("[Skill] Reloaded skills: {}", catalog.skills().size());
         }, "Reloading skills...", "Skills reloaded.");
     }

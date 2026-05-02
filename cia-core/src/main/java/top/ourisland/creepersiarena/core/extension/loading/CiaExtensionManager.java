@@ -28,6 +28,7 @@ public final class CiaExtensionManager {
     private final ClassLoader parentClassLoader;
     private final Logger log;
     private final List<LoadedCiaExtension> loadedExtensions = new ArrayList<>();
+    private final List<CiaExtensionLoadFailure> loadFailures = new ArrayList<>();
 
     public CiaExtensionManager(
             @lombok.NonNull BootstrapRuntime rt,
@@ -95,6 +96,26 @@ public final class CiaExtensionManager {
         return List.copyOf(loadedExtensions);
     }
 
+    public List<CiaExtensionLoadFailure> loadFailures() {
+        return List.copyOf(loadFailures);
+    }
+
+    public LoadedCiaExtension loadedExtension(String id) {
+        if (id == null || id.isBlank()) return null;
+        for (var loaded : loadedExtensions) {
+            if (loaded.descriptor().id().equalsIgnoreCase(id.trim())) return loaded;
+        }
+        return null;
+    }
+
+    public CiaExtensionLoadFailure loadFailure(String id) {
+        if (id == null || id.isBlank()) return null;
+        for (var failure : loadFailures) {
+            if (failure.id().equalsIgnoreCase(id.trim())) return failure;
+        }
+        return null;
+    }
+
     public void loadAll() {
         createDirectory(extensionsDirectory, "extensions directory");
         createDirectory(extensionDataDirectory, "extension data directory");
@@ -105,6 +126,8 @@ public final class CiaExtensionManager {
         } catch (IOException ex) {
             throw new CiaExtensionLoadException("Failed to scan CIA extension directory: " + extensionsDirectory, ex);
         }
+
+        loadFailures.clear();
 
         if (candidates.isEmpty()) {
             info("[Extension] No CIA extension jars found in {}", extensionsDirectory);
@@ -118,6 +141,11 @@ public final class CiaExtensionManager {
             try {
                 loadedExtensions.add(load(candidate));
             } catch (RuntimeException ex) {
+                loadFailures.add(new CiaExtensionLoadFailure(
+                        candidate.descriptor().id(),
+                        candidate.jarPath(),
+                        ex.getMessage()
+                ));
                 warn("[Extension] Failed to load {}: {}", candidate.jarPath(), ex.getMessage(), ex);
             }
         }
@@ -221,6 +249,7 @@ public final class CiaExtensionManager {
         for (var loaded : loadedExtensions) {
             try {
                 loaded.extension().onEnable(loaded.context());
+                loaded.markEnabled();
                 info("[Extension] Enabled {} {}", loaded.descriptor().id(), loaded.descriptor().version());
             } catch (Exception ex) {
                 throw new CiaExtensionLoadException("Failed to enable extension " + loaded.descriptor().id(), ex);
@@ -233,6 +262,7 @@ public final class CiaExtensionManager {
             var loaded = loadedExtensions.get(i);
             try {
                 loaded.extension().onDisable(loaded.context());
+                loaded.markDisabled();
                 info("[Extension] Disabled {}", loaded.descriptor().id());
             } catch (Exception ex) {
                 warn("[Extension] Failed to disable {}: {}", loaded.descriptor().id(), ex.getMessage(), ex);

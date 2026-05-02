@@ -7,6 +7,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.extension.debug.ExtensionDiagnostics;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
@@ -14,6 +15,7 @@ import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import static top.ourisland.creepersiarena.command.CommandParsers.*;
@@ -37,6 +39,9 @@ public final class AdminCommandHandlers {
                 /ciaa entrance <bool>
                 /ciaa language <id>
                 /ciaa reload
+                /ciaa extensions list
+                /ciaa extensions info <id>
+                /ciaa extensions dump
                 /ciaa config <config|arena|skill> <node> <value>""");
     }
 
@@ -195,6 +200,34 @@ public final class AdminCommandHandlers {
 
         rt.reloadPlugin();
         Msg.send(sender, "Reloaded.");
+    }
+
+
+    public void extensionsList(CommandSender sender) {
+        sendLines(sender, ExtensionDiagnostics.listLines(rt));
+    }
+
+    private void sendLines(CommandSender sender, List<String> lines) {
+        for (var line : lines) {
+            Msg.send(sender, line);
+        }
+    }
+
+    public void extensionInfo(CommandSender sender, String id) {
+        if (id == null || id.isBlank()) {
+            Msg.send(sender, "Usage: /ciaa extensions info <extension_id>");
+            return;
+        }
+        sendLines(sender, ExtensionDiagnostics.infoLines(rt, id));
+    }
+
+    public void extensionsDump(CommandSender sender) {
+        try {
+            var target = ExtensionDiagnostics.writeDump(rt);
+            Msg.send(sender, "Extension dump written to: " + target);
+        } catch (Throwable t) {
+            Msg.send(sender, "Failed to write extension dump: " + t.getMessage());
+        }
     }
 
     // TODO: modify a field with object will break the config
