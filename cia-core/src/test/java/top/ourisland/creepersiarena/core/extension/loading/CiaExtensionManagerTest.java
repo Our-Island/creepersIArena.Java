@@ -30,26 +30,26 @@ class CiaExtensionManagerTest {
                 
                 import java.nio.file.Files;
                 import java.nio.file.StandardOpenOption;
-                import top.ourisland.creepersiarena.api.CiaExtensionContext;
-                import top.ourisland.creepersiarena.api.extension.CiaExtension;
+                import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+                import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 
-                public final class MinimalExtension implements CiaExtension {
+                public final class MinimalExtension implements ICiaExtension {
                     @Override
-                    public void onLoad(CiaExtensionContext context) throws Exception {
+                    public void onLoad(ICiaExtensionContext context) throws Exception {
                         write(context, "load:" + context.extensionId());
                     }
                 
                     @Override
-                    public void onEnable(CiaExtensionContext context) throws Exception {
+                    public void onEnable(ICiaExtensionContext context) throws Exception {
                         write(context, "enable:" + context.extensionId());
                     }
                 
                     @Override
-                    public void onDisable(CiaExtensionContext context) throws Exception {
+                    public void onDisable(ICiaExtensionContext context) throws Exception {
                         write(context, "disable:" + context.extensionId());
                     }
                 
-                    private void write(CiaExtensionContext context, String line) throws Exception {
+                    private void write(ICiaExtensionContext context, String line) throws Exception {
                         Files.createDirectories(context.dataFolder());
                         Files.writeString(
                                 context.dataFolder().resolve("calls.txt"),
@@ -130,7 +130,7 @@ class CiaExtensionManagerTest {
             if (includeService) {
                 writeEntry(
                         output,
-                        "META-INF/services/top.ourisland.creepersiarena.api.extension.CiaExtension",
+                        "META-INF/services/top.ourisland.creepersiarena.api.extension.ICiaExtension",
                         mainClass + System.lineSeparator()
                 );
             }
@@ -184,9 +184,9 @@ class CiaExtensionManagerTest {
         var jar = compileExtensionJarWithoutService("no-provider", "com.example.NoProvider", """
                 package com.example;
                 
-                import top.ourisland.creepersiarena.api.extension.CiaExtension;
+                import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 
-                public final class NoProvider implements CiaExtension {
+                public final class NoProvider implements ICiaExtension {
                 }
                 """);
 
