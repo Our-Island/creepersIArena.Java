@@ -16,6 +16,9 @@ import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 
+import java.nio.file.Path;
+import java.util.Locale;
+
 public final class CiaApiImpl implements CiaApi {
 
     private final BootstrapRuntime rt;
@@ -50,9 +53,14 @@ public final class CiaApiImpl implements CiaApi {
             this.log = rt.log();
         }
 
-        private void registerModule(IBootstrapModule module) {
-            catalog.registerModule(module);
-            log.info("[Extension] {} registered bootstrap module {} (effective on next restart/re-enable).", owner.getName(), module.name());
+        @Override
+        public String extensionId() {
+            return owner.getName().trim().toLowerCase(Locale.ROOT).replace(' ', '-');
+        }
+
+        @Override
+        public Path dataFolder() {
+            return owner.getDataFolder().toPath();
         }
 
         @Override
@@ -77,6 +85,16 @@ public final class CiaApiImpl implements CiaApi {
             var gm = rt.getService(GameManager.class);
             if (gm != null) gm.registerMode(mode);
             log.info("[Extension] {} registered mode {}", owner.getName(), mode.mode());
+        }
+
+        @Override
+        public void registerAnnotated(String basePackage) {
+            registerAnnotated(owner, basePackage);
+        }
+
+        private void registerModule(IBootstrapModule module) {
+            catalog.registerModule(module);
+            log.info("[Extension] {} registered bootstrap module {} (effective on next restart/re-enable).", owner.getName(), module.name());
         }
 
         @Override

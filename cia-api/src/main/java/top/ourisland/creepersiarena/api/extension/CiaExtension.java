@@ -7,6 +7,13 @@ import top.ourisland.creepersiarena.api.CiaExtensionContext;
  * <p>
  * This is the extension equivalent of {@code CiaAddon}, but it is meant for jars loaded by CreepersIArena itself from
  * its {@code extensions/} directory rather than for separate Paper plugins registering through Bukkit services.
+ * <p>
+ * Extension jars must expose their implementation through Java {@link java.util.ServiceLoader} using this service
+ * file:
+ *
+ * <pre>
+ * META-INF/services/top.ourisland.creepersiarena.api.extension.CiaExtension
+ * </pre>
  */
 public interface CiaExtension {
 

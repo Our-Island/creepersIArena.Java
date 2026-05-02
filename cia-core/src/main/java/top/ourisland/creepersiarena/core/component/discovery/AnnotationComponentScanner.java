@@ -28,25 +28,37 @@ public final class AnnotationComponentScanner {
             @lombok.NonNull String basePackage,
             @lombok.NonNull ComponentCatalog catalog
     ) {
-        var classNames = discoverClassNames(plugin, basePackage);
+        try {
+            Path root = Path.of(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            scanInto(plugin.getClass().getClassLoader(), root, basePackage, catalog, true);
+        } catch (URISyntaxException _) {
+        }
+    }
+
+    private void scanInto(
+            ClassLoader classLoader,
+            Path codeSource,
+            String basePackage,
+            ComponentCatalog catalog,
+            boolean includeBootstrapModules
+    ) {
+        var classNames = discoverClassNames(codeSource, basePackage);
         classNames.sort(Comparator.naturalOrder());
 
-        var cl = plugin.getClass().getClassLoader();
         for (String className : classNames) {
             try {
-                Class<?> type = Class.forName(className, false, cl);
-                tryRegister(type, catalog);
+                Class<?> type = Class.forName(className, false, classLoader);
+                tryRegister(type, catalog, includeBootstrapModules);
             } catch (Throwable _) {
             }
         }
     }
 
-    private List<String> discoverClassNames(Plugin plugin, String basePackage) {
+    private List<String> discoverClassNames(Path root, String basePackage) {
         String pkgPath = basePackage.replace('.', '/');
         List<String> out = new ArrayList<>();
 
         try {
-            Path root = Path.of(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
             if (Files.isDirectory(root)) {
                 Path start = root.resolve(pkgPath);
                 if (!Files.exists(start)) return out;
@@ -66,7 +78,7 @@ public final class AnnotationComponentScanner {
                     }
                 }
             }
-        } catch (IOException | URISyntaxException _) {
+        } catch (IOException _) {
         }
 
         return out;
@@ -74,13 +86,16 @@ public final class AnnotationComponentScanner {
 
     private void tryRegister(
             Class<?> type,
-            ComponentCatalog catalog
+            ComponentCatalog catalog,
+            boolean includeBootstrapModules
     ) throws ReflectiveOperationException {
         if (type.isInterface() || java.lang.reflect.Modifier.isAbstract(type.getModifiers()) || type.isAnonymousClass()) {
             return;
         }
 
-        if (type.isAnnotationPresent(CiaBootstrapModule.class) && IBootstrapModule.class.isAssignableFrom(type)) {
+        if (includeBootstrapModules
+                && type.isAnnotationPresent(CiaBootstrapModule.class)
+                && IBootstrapModule.class.isAssignableFrom(type)) {
             catalog.registerModule((IBootstrapModule) instantiate(type));
         }
         if (type.isAnnotationPresent(CiaJobDef.class) && IJob.class.isAssignableFrom(type)) {
@@ -103,6 +118,15 @@ public final class AnnotationComponentScanner {
         var ctor = type.getDeclaredConstructor();
         ctor.setAccessible(true);
         return ctor.newInstance();
+    }
+
+    public void scanInto(
+            @lombok.NonNull ClassLoader classLoader,
+            @lombok.NonNull Path codeSource,
+            @lombok.NonNull String basePackage,
+            @lombok.NonNull ComponentCatalog catalog
+    ) {
+        scanInto(classLoader, codeSource, basePackage, catalog, false);
     }
 
 }

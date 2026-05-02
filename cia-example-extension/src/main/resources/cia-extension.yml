@@ -1,0 +1,13 @@
+id: example-extension
+name: Example CIA Extension
+version: '${version}'
+main: top.ourisland.creepersiarena.example.ExampleCiaExtension
+api-version: 1
+cia-version: '${version}'
+authors:
+  - Our Island
+dependencies:
+  required: [ ]
+  optional: [ ]
+load:
+  order: NORMAL
