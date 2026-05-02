@@ -13,6 +13,10 @@ dependencies {
     compileOnly(libs.jspecify)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
+
+    testImplementation(libs.paper.api)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 val javaVersionInt = libs.versions.java.get().toInt()
