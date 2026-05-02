@@ -14,6 +14,9 @@ dependencies {
 
     compileOnly(libs.paper.api)
     compileOnly(libs.jspecify)
+
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 val bundledModulePaths = listOf(
