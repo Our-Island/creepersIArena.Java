@@ -41,14 +41,14 @@ top.ourisland.creepersiarena
 
 Current top-level source areas inside `cia-core/src/main/java/top/ourisland/creepersiarena` include:
 
-| Package   | Description                                                                         |
-|-----------|-------------------------------------------------------------------------------------|
-| `command` | command handling and admin/runtime command behavior                                 |
-| `config`  | configuration loading, file orchestration, and core-owned typed config models       |
-| `core`    | plugin bootstrap, internal components, permissions, extension loading, and services |
-| `game`    | game flow, arena managers, lobby/player/protection/listener behavior                |
-| `job`     | job and skill runtime, UI, and core-owned listeners                                 |
-| `utils`   | shared helpers that are not tied to a single feature                                |
+| Package   | Description                                                                                             |
+|-----------|---------------------------------------------------------------------------------------------------------|
+| `command` | command handling and admin/runtime command behavior                                                     |
+| `config`  | configuration loading, file orchestration, core-owned config models, and generic arena config envelopes |
+| `core`    | plugin bootstrap, internal components, permissions, extension loading, and services                     |
+| `game`    | game flow, arena managers, lobby/player/protection/listener behavior                                    |
+| `job`     | job and skill runtime, UI, and core-owned listeners                                                     |
+| `utils`   | shared helpers that are not tied to a single feature                                                    |
 
 Paper-only bootstrap classes live in `cia-paper-plugin/src/main/java`. Shared gameplay/runtime code should stay in
 `cia-core` unless it is being intentionally promoted to the public extension API in `cia-api`. Built-in gameplay content
@@ -60,10 +60,15 @@ Resource files are part of the plugin contract. Changes to `cia-paper-plugin/src
 `cia-core/src/main/resources/skill.yml`, `cia-core/src/main/resources/lang/`, or
 `cia-default-content/src/main/resources/cia-extension.yml` should be reviewed as user-facing changes.
 
+`arena.yml` must stay mode-extensible. The core arena model may define generic fields such as `mode`, `location`,
+`range`, named `spawns`, and `settings`, but fields only understood by one mode must be read by that mode extension
+through `ArenaConfigView`. Do not add `battle`, `steal`, or other default-content-specific fields to core config models.
+
 Default-content helpers such as built-in item factories, built-in persistent-data keys, built-in combat helpers, and
 content-specific listeners should live in `cia-default-content`, not `cia-core` or `cia-api`. Public API configuration
-types should be generic views only; mode-specific or job-specific typed configuration belongs with the implementation
-that owns it.
+types should be generic views only; mode-specific, arena-specific, or job-specific typed configuration belongs with the
+implementation that owns it. Core arena config should only describe generic arena identity, mode id, anchor/range, named
+spawn groups, and a raw settings view for mode-owned fields.
 
 CIA extension jars use a `cia-extension.yml` descriptor at the jar root. The public descriptor model lives in
 `cia-api/src/main/java/top/ourisland/creepersiarena/api/extension`, while descriptor reading and validation live in

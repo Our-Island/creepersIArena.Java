@@ -90,7 +90,7 @@ final class PlayerLobbyTransitions {
 
     void cycleTeam(Player p) {
         var s = sessions.ensureSession(p);
-        int max = cfg.get().game().battle().maxTeam();
+        int max = cfg.get().ui().lobby().teamCount();
         Integer cur = s.selectedTeam();
 
         selectTeam(p, (cur == null) ? Integer.valueOf(1) : (cur >= max) ? null : cur + 1);
@@ -100,7 +100,7 @@ final class PlayerLobbyTransitions {
         var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB) return;
 
-        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, cfg.get().game().battle().maxTeam());
+        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, cfg.get().ui().lobby().teamCount());
 
         s.selectedTeam(next);
         refreshLobbyKit(p);

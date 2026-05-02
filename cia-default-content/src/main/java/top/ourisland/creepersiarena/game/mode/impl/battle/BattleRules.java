@@ -9,6 +9,7 @@ import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
+import top.ourisland.creepersiarena.game.mode.impl.battle.config.BattleModeConfig;
 
 public final class BattleRules implements IModeRules {
 
@@ -36,8 +37,8 @@ public final class BattleRules implements IModeRules {
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        int sec = runtime.cfg().modeInt("battle", "respawn-time", 10);
-        return new RespawnDecision.DeathLobbyCountdown(sec);
+        var config = BattleModeConfig.from(runtime.cfg());
+        return new RespawnDecision.DeathLobbyCountdown(config.respawnTimeSeconds());
     }
 
 }

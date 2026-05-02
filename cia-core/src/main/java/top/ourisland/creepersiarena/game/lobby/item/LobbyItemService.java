@@ -29,7 +29,7 @@ public final class LobbyItemService {
             case INVENTORY -> fillJobsInventory(inv, s, cfg);
         }
 
-        inv.setItem(8, items.teamCycleButton(s.selectedTeam(), cfg.game().battle().maxTeam()));
+        inv.setItem(8, items.teamCycleButton(s.selectedTeam(), cfg.ui().lobby().teamCount()));
     }
 
     private void clear(Player p) {

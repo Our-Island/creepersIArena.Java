@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
+import top.ourisland.creepersiarena.game.mode.impl.battle.config.BattleModeConfig;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public final class BattleTimeline implements IModeTimeline {
     public BattleTimeline(GameRuntime runtime, GameSession session) {
         this.runtime = runtime;
         this.session = session;
-        this.remaining = runtime.cfg().modeInt("battle", "single-game-time", 600);
+        this.remaining = BattleModeConfig.from(runtime.cfg()).singleGameTimeSeconds();
     }
 
     @Override

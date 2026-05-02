@@ -52,7 +52,7 @@ final class PlayerStageTransitions {
     }
 
     int battleRespawnSecondsConfigured() {
-        return cfg.get().game().battle().respawnTimeSeconds();
+        return cfg.get().modeInt("battle", "respawn-time", 10);
     }
 
     void toHub(Player p) {

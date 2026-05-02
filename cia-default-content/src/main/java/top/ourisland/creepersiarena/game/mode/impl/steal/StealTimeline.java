@@ -4,13 +4,14 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.api.config.GameConfigView;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,12 +42,13 @@ public final class StealTimeline implements IModeTimeline {
 
     @Override
     public List<GameAction> tick(TickContext ctx) {
-        GameConfigView cfg = runtime.cfg();
+        StealModeConfig cfg = StealModeConfig.from(runtime.cfg());
+        StealArenaConfig arenaCfg = StealArenaConfig.from(session.arena().config());
 
         return switch (st.phase) {
             case LOBBY -> tickLobby(cfg);
             case COUNTDOWN -> tickCountdown(cfg);
-            case PRE_SPECTATE -> tickPreSpectate();
+            case PRE_SPECTATE -> tickPreSpectate(arenaCfg);
             case PICK_BASE -> tickPickBase(cfg);
             case ROUND_PLAYING -> tickRoundPlaying(cfg);
             case ROUND_END -> tickRoundEnd(cfg);
@@ -54,19 +56,19 @@ public final class StealTimeline implements IModeTimeline {
         };
     }
 
-    private List<GameAction> tickLobby(GameConfigView cfg) {
+    private List<GameAction> tickLobby(StealModeConfig cfg) {
         int ready = countReadyOnline();
-        if (ready < cfg.modeInt("steal", "min-player-to-start", 2)) return List.of();
+        if (ready < cfg.minPlayerToStart()) return List.of();
 
         st.phase = StealPhase.COUNTDOWN;
-        st.remaining = Math.max(1, cfg.modeInt("steal", "prepare-time", 30));
+        st.remaining = Math.max(1, cfg.prepareTimeSeconds());
 
         return List.of(new GameAction.Broadcast(Component.text("STEAL：人数达标，倒计时 " + st.remaining + "s", NamedTextColor.GOLD)));
     }
 
-    private List<GameAction> tickCountdown(GameConfigView cfg) {
+    private List<GameAction> tickCountdown(StealModeConfig cfg) {
         int ready = countReadyOnline();
-        if (ready < cfg.modeInt("steal", "min-player-to-start", 2)) {
+        if (ready < cfg.minPlayerToStart()) {
             st.phase = StealPhase.LOBBY;
             st.remaining = 0;
             return List.of(new GameAction.Broadcast(Component.text("STEAL：人数不足，倒计时取消", NamedTextColor.RED)));
@@ -92,7 +94,7 @@ public final class StealTimeline implements IModeTimeline {
         );
     }
 
-    private List<GameAction> tickPreSpectate() {
+    private List<GameAction> tickPreSpectate(StealArenaConfig arenaCfg) {
         if (--st.remaining > 0) return List.of();
 
         st.phase = StealPhase.PICK_BASE;
@@ -101,16 +103,16 @@ public final class StealTimeline implements IModeTimeline {
         return List.of(new GameAction.Broadcast(Component.text("§bSTEAL：基地准备阶段 " + st.remaining + "s（可选职业）", NamedTextColor.AQUA)));
     }
 
-    private List<GameAction> tickPickBase(GameConfigView cfg) {
+    private List<GameAction> tickPickBase(StealModeConfig cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.phase = StealPhase.ROUND_PLAYING;
-        st.remaining = Math.max(1, cfg.modeInt("steal", "time-per-round", 10));
+        st.remaining = Math.max(1, cfg.timePerRoundSeconds());
 
         return List.of(new GameAction.Broadcast(Component.text("§cSTEAL：开局！回合时长 " + st.remaining + "s", NamedTextColor.RED)));
     }
 
-    private List<GameAction> tickRoundPlaying(GameConfigView cfg) {
+    private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.phase = StealPhase.ROUND_END;
@@ -119,11 +121,11 @@ public final class StealTimeline implements IModeTimeline {
         return List.of(new GameAction.Broadcast(Component.text("§fSTEAL：回合结束，结算中…", NamedTextColor.WHITE)));
     }
 
-    private List<GameAction> tickRoundEnd(GameConfigView cfg) {
+    private List<GameAction> tickRoundEnd(StealModeConfig cfg) {
         if (--st.remaining > 0) return List.of();
 
         st.roundIndex++;
-        int total = Math.max(1, cfg.modeInt("steal", "total-round", 10));
+        int total = Math.max(1, cfg.totalRound());
 
         if (st.roundIndex >= total) {
             st.phase = StealPhase.GAME_END;
@@ -161,7 +163,7 @@ public final class StealTimeline implements IModeTimeline {
             Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
             var s = runtime.sessionStore().get(p);
-            if (s != null && s.stealReady()) c++;
+            if (StealPlayerState.ready(s)) c++;
         }
         return c;
     }
@@ -172,10 +174,10 @@ public final class StealTimeline implements IModeTimeline {
             if (p == null || !p.isOnline()) continue;
 
             var s = runtime.sessionStore().getOrCreate(p);
-            boolean participant = s.stealReady();
+            boolean participant = StealPlayerState.ready(s);
 
-            s.stealParticipant(participant);
-            s.stealAlive(true);
+            StealPlayerState.participant(s, participant);
+            StealPlayerState.alive(s, true);
         }
     }
 
@@ -185,7 +187,7 @@ public final class StealTimeline implements IModeTimeline {
             Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
             var s = runtime.sessionStore().get(p);
-            if (s != null && s.stealParticipant()) ps.add(p);
+            if (StealPlayerState.participant(s)) ps.add(p);
         }
 
         ps.sort(Comparator.comparing(Player::getUniqueId));
@@ -199,8 +201,8 @@ public final class StealTimeline implements IModeTimeline {
             Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
             var s = runtime.sessionStore().get(p);
-            if (s == null || !s.stealParticipant()) continue;
-            s.stealAlive(true);
+            if (!StealPlayerState.participant(s)) continue;
+            StealPlayerState.alive(s, true);
         }
     }
 

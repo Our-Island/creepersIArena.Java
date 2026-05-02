@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
 import top.ourisland.creepersiarena.config.model.ArenaConfig;
-import top.ourisland.creepersiarena.config.model.GlobalConfig;
+import top.ourisland.creepersiarena.config.model.BukkitArenaConfigView;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -46,15 +46,14 @@ public final class ArenaManager {
             arenas.put(id, inst);
             counts.merge(inst.type().id(), 1, Integer::sum);
 
-            logger.info("[Arena] Arena loaded: id={} type={} nameKey={} anchor=({}, {}, {}) spawnpoints={} teamSpawns={}",
+            logger.info("[Arena] Arena loaded: id={} type={} nameKey={} anchor=({}, {}, {}) spawnGroups={}",
                     inst.id(),
                     inst.type(),
                     inst.nameKey(),
                     (int) inst.anchor().getX(),
                     (int) inst.anchor().getY(),
                     (int) inst.anchor().getZ(),
-                    inst.spawnpoints().size(),
-                    inst.teamSpawnpoints().keySet()
+                    inst.spawnGroups().keySet()
             );
         }
 
@@ -64,19 +63,26 @@ public final class ArenaManager {
     private ArenaInstance toInstance(ArenaConfig.ArenaDef def) {
         GameModeType type = parseType(def.type());
 
-        Location anchor = toLocation(def.location());
+        var anchor = toLocation(def.location());
 
-        Bounds2D b = Bounds2D.of(def.range().minX(), def.range().minZ(), def.range().maxX(), def.range().maxZ());
-        Region2D region = new Region2D(world, b);
+        var b = Bounds2D.of(def.range().minX(), def.range().minZ(), def.range().maxX(), def.range().maxZ());
+        var region = new Region2D(world, b);
 
-        List<Location> spList = new ArrayList<>();
-        for (GlobalConfig.Vec3 v : def.spawnpoints()) {
-            spList.add(toLocation(v));
+        Map<String, List<Location>> spawnGroups = new LinkedHashMap<>();
+        for (var e : def.spawnGroups().entrySet()) {
+            List<Location> group = new ArrayList<>();
+            for (ArenaConfig.Vec3 v : e.getValue()) {
+                group.add(toLocation(v));
+            }
+            spawnGroups.put(e.getKey(), group);
         }
 
+        List<Location> spList = new ArrayList<>(spawnGroups.getOrDefault("default", List.of()));
+
         Map<String, Location> teamSp = new LinkedHashMap<>();
-        for (var e : def.teamSpawnpoints().entrySet()) {
-            teamSp.put(e.getKey(), toLocation(e.getValue()));
+        for (var e : spawnGroups.entrySet()) {
+            if ("default".equals(e.getKey()) || e.getValue().isEmpty()) continue;
+            teamSp.put(e.getKey(), e.getValue().getFirst());
         }
 
         return new ArenaInstance(
@@ -86,7 +92,9 @@ public final class ArenaManager {
                 anchor,
                 region,
                 spList,
-                teamSp
+                teamSp,
+                spawnGroups,
+                new BukkitArenaConfigView(def.settings())
         );
     }
 
@@ -94,7 +102,7 @@ public final class ArenaManager {
         return s == null ? GameModeType.BATTLE : GameModeType.of(s);
     }
 
-    private Location toLocation(GlobalConfig.Vec3 v) {
+    private Location toLocation(ArenaConfig.Vec3 v) {
         return new Location(world, v.x() + 0.5, v.y(), v.z() + 0.5);
     }
 
