@@ -19,6 +19,7 @@ dependencies {
     testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)
 
+    testImplementation(testFixtures(project(":cia-api")))
     testImplementation(libs.paper.api)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)

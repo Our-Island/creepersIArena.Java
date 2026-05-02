@@ -18,6 +18,7 @@ import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -252,9 +253,18 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         return target;
     }
 
-    private java.io.InputStream openResource(String resourcePath) {
+    private InputStream openResource(String resourcePath) {
         var cleaned = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
-        var input = classLoader.getResourceAsStream(cleaned);
+        InputStream input;
+        try {
+            input = classLoader instanceof CiaExtensionClassLoader ciaClassLoader
+                    ? ciaClassLoader.openLocalResource(cleaned)
+                    : classLoader.getResourceAsStream(cleaned);
+        } catch (Exception ex) {
+            throw new CiaExtensionLoadException(
+                    "Failed to open resource " + cleaned + " from extension " + descriptor.id(), ex
+            );
+        }
         if (input == null) {
             throw new CiaExtensionLoadException(
                     "Extension " + descriptor.id() + " does not contain resource " + cleaned

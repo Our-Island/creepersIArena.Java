@@ -34,6 +34,7 @@ class CiaExtensionManagerTest {
                 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 
                 public final class MinimalExtension implements ICiaExtension {
+                
                     @Override
                     public void onLoad(ICiaExtensionContext context) throws Exception {
                         write(context, "load:" + context.extensionId());
@@ -58,6 +59,7 @@ class CiaExtensionManagerTest {
                                 StandardOpenOption.APPEND
                         );
                     }
+                
                 }
                 """);
 
@@ -177,6 +179,122 @@ class CiaExtensionManagerTest {
         output.putNextEntry(new JarEntry(name));
         output.write(content.getBytes(StandardCharsets.UTF_8));
         output.closeEntry();
+    }
+
+    @Test
+    void loadAllRecordsIndividualFailuresAndContinuesLoadingOtherExtensions() throws Exception {
+        var goodJar = compileExtensionJar("good-extension", "com.example.GoodExtension", """
+                package com.example;
+                
+                import java.nio.file.Files;
+                import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+                import top.ourisland.creepersiarena.api.extension.ICiaExtension;
+                
+                public final class GoodExtension implements ICiaExtension {
+                
+                    @Override
+                    public void onLoad(ICiaExtensionContext context) throws Exception {
+                        Files.createDirectories(context.dataFolder());
+                        Files.writeString(context.dataFolder().resolve("loaded.txt"), "loaded");
+                    }
+                
+                }
+                """);
+        var badJar = createDescriptorOnlyJar("bad-extension", "com.example.BadExtension", """
+                dependencies:
+                  required: []
+                  optional: []
+                """);
+
+        var manager = managerWithCopiedJars(goodJar, badJar);
+
+        try {
+            manager.loadAll();
+
+            assertNotNull(manager.loadedExtension("good-extension"));
+            assertNotNull(manager.loadFailure("bad-extension"));
+            assertTrue(Files.exists(tempDir.resolve("extension-data/good-extension/loaded.txt")));
+        } finally {
+            manager.disableAll();
+        }
+    }
+
+    private Path createDescriptorOnlyJar(
+            String id,
+            String mainClass,
+            String dependencyBlock
+    ) throws IOException {
+        var jar = Files.createTempFile(tempDir, id + "-", CiaExtensionManager.EXTENSION_FILE_SUFFIX);
+        try (var output = new JarOutputStream(Files.newOutputStream(jar))) {
+            writeEntry(output, CiaExtensionDescriptor.DESCRIPTOR_ENTRY, """
+                    id: %s
+                    name: %s
+                    version: 1.0.0
+                    main: %s
+                    api-version: 1
+                    cia-version: 0.1.0
+                    authors: []
+                    %s
+                    """.formatted(id, id, mainClass, dependencyBlock));
+        }
+        return jar;
+    }
+
+    private CiaExtensionManager managerWithCopiedJars(Path... jars) throws IOException {
+        var manager = new CiaExtensionManager(
+                tempDir.resolve("extensions"),
+                tempDir.resolve("extension-data"),
+                getClass().getClassLoader(),
+                new ComponentCatalog()
+        );
+        Files.createDirectories(manager.extensionsDirectory());
+        for (Path jar : jars) {
+            Files.copy(jar, manager.extensionsDirectory().resolve(jar.getFileName()));
+        }
+        return manager;
+    }
+
+    @Test
+    void loadAllRejectsMissingRequiredDependencyBeforeClassLoading() throws Exception {
+        var jar = createDescriptorOnlyJar("needs-base", "com.example.NeedsBase", """
+                dependencies:
+                  required:
+                    - base-extension
+                  optional: []
+                """);
+        var manager = managerWithCopiedJars(jar);
+
+        var ex = assertThrows(CiaExtensionLoadException.class, manager::loadAll);
+
+        assertTrue(ex.getMessage().contains("requires missing extension base-extension"));
+    }
+
+    @Test
+    void loadAllRejectsDuplicateExtensionIds() throws Exception {
+        var first = createDescriptorOnlyJar("duplicate", "com.example.First", """
+                dependencies:
+                  required: []
+                  optional: []
+                """);
+        var second = createDescriptorOnlyJar("duplicate", "com.example.Second", """
+                dependencies:
+                  required: []
+                  optional: []
+                """);
+
+        var manager = new CiaExtensionManager(
+                tempDir.resolve("extensions"),
+                tempDir.resolve("extension-data"),
+                getClass().getClassLoader(),
+                new ComponentCatalog()
+        );
+        Files.createDirectories(manager.extensionsDirectory());
+        Files.copy(first, manager.extensionsDirectory().resolve("first.cia.jar"));
+        Files.copy(second, manager.extensionsDirectory().resolve("second.cia.jar"));
+
+        var ex = assertThrows(CiaExtensionLoadException.class, manager::loadAll);
+
+        assertTrue(ex.getMessage().contains("Duplicate CIA extension id: duplicate"));
     }
 
     @Test
