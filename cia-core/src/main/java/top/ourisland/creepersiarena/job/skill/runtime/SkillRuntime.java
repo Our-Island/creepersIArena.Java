@@ -1,12 +1,12 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import top.ourisland.creepersiarena.api.config.SkillConfigView;
+import top.ourisland.creepersiarena.api.config.ISkillConfigView;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
-import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.config.model.SkillConfig;
 
 import java.util.List;
@@ -17,15 +17,15 @@ import java.util.function.Supplier;
 public final class SkillRuntime {
 
     private final SkillRegistry registry;
-    private final SkillStateStore store;
+    private final ISkillStateStore store;
     private final DoubleSupplier cooldownFactor;
-    private final Supplier<? extends SkillConfigView> skillConfig;
+    private final Supplier<? extends ISkillConfigView> skillConfig;
 
     public SkillRuntime(
             @lombok.NonNull SkillRegistry registry,
-            @lombok.NonNull SkillStateStore store,
+            @lombok.NonNull ISkillStateStore store,
             @lombok.NonNull DoubleSupplier cooldownFactor,
-            @lombok.NonNull Supplier<? extends SkillConfigView> skillConfig
+            @lombok.NonNull Supplier<? extends ISkillConfigView> skillConfig
     ) {
         this.registry = registry;
         this.store = store;
@@ -89,16 +89,16 @@ public final class SkillRuntime {
     }
 
 
-    public SkillConfigView skillConfig() {
+    public ISkillConfigView skillConfig() {
         try {
-            SkillConfigView c = skillConfig.get();
+            ISkillConfigView c = skillConfig.get();
             return c == null ? SkillConfig.defaults() : c;
         } catch (Throwable _) {
             return SkillConfig.defaults();
         }
     }
 
-    public SkillStateStore store() {
+    public ISkillStateStore store() {
         return store;
     }
 

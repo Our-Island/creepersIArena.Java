@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal.config;
 
-import top.ourisland.creepersiarena.api.config.ArenaConfigView;
+import top.ourisland.creepersiarena.api.config.IArenaConfigView;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public record StealArenaConfig(
         List<?> redstoneBlocks
 ) {
 
-    public static StealArenaConfig from(ArenaConfigView config) {
+    public static StealArenaConfig from(IArenaConfigView config) {
         return new StealArenaConfig(config.getList("redstone-blocks"));
     }
 

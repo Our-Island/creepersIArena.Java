@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.api.game.arena;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import top.ourisland.creepersiarena.api.config.ArenaConfigView;
+import top.ourisland.creepersiarena.api.config.IArenaConfigView;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.region.Region2D;
 
@@ -20,7 +20,7 @@ public record ArenaInstance(
         List<Location> spawnpoints,
         Map<String, Location> teamSpawnpoints,
         Map<String, List<Location>> spawnGroups,
-        ArenaConfigView config
+        IArenaConfigView config
 ) {
 
     public ArenaInstance(
@@ -41,7 +41,7 @@ public record ArenaInstance(
                 spawnpoints,
                 teamSpawnpoints,
                 legacySpawnGroups(spawnpoints, teamSpawnpoints),
-                ArenaConfigView.EMPTY
+                IArenaConfigView.EMPTY
         );
     }
 
@@ -54,7 +54,7 @@ public record ArenaInstance(
             @lombok.NonNull List<Location> spawnpoints,
             @lombok.NonNull Map<String, Location> teamSpawnpoints,
             @lombok.NonNull Map<String, List<Location>> spawnGroups,
-            @lombok.NonNull ArenaConfigView config
+            @lombok.NonNull IArenaConfigView config
     ) {
         this.id = id;
         this.nameKey = nameKey;

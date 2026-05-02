@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.extension.CiaExtension;
+import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -198,19 +198,19 @@ public final class CiaExtensionManager {
         }
     }
 
-    private CiaExtension findMainExtension(
+    private ICiaExtension findMainExtension(
             CiaExtensionDescriptor descriptor,
             ClassLoader classLoader
     ) {
-        var loader = ServiceLoader.load(CiaExtension.class, classLoader);
-        var providers = new ArrayList<CiaExtension>();
+        var loader = ServiceLoader.load(ICiaExtension.class, classLoader);
+        var providers = new ArrayList<ICiaExtension>();
         for (var provider : loader) {
             providers.add(provider);
         }
 
         if (providers.isEmpty()) {
             throw new CiaExtensionLoadException(
-                    "No ServiceLoader provider for " + CiaExtension.class.getName() + " in " + descriptor.id()
+                    "No ServiceLoader provider for " + ICiaExtension.class.getName() + " in " + descriptor.id()
             );
         }
 

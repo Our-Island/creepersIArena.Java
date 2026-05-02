@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.api.skill;
 
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
-import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 
 /**
  * Functional contract for performing the gameplay side of a skill activation.
@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
  * selected the skill as a candidate for execution.
  *
  * <h2>Where executors sit in the activation pipeline</h2>
- * By the time {@link #execute(SkillContext, SkillStateStore)} is invoked, the runtime has already:
+ * By the time {@link #execute(SkillContext, ISkillStateStore)} is invoked, the runtime has already:
  * <ul>
  *     <li>resolved the player's current job and skill definition,</li>
  *     <li>matched the outer trigger chain for the current event,</li>
@@ -43,7 +43,7 @@ import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
  *
  * <h2>State ownership</h2>
  * Executors should not rely on mutating the definition instance itself. Temporary counters, timestamps, chained skill
- * state and similar values should be written to the provided {@link SkillStateStore}, to player/entity persistent data,
+ * state and similar values should be written to the provided {@link ISkillStateStore}, to player/entity persistent data,
  * or to another runtime service designed for mutable per-player state.
  *
  * <h2>Implementation scope</h2>
@@ -51,7 +51,7 @@ import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
  * scheduling short-lived follow-up tasks, and updating transient state needed by later hits or ticks.
  *
  * @see SkillContext
- * @see SkillStateStore
+ * @see ISkillStateStore
  * @see ISkillDefinition
  * @see top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException
  *
@@ -76,6 +76,6 @@ public interface ISkillExecutor {
      *                                                                                         a normal gameplay
      *                                                                                         outcome
      */
-    void execute(SkillContext ctx, SkillStateStore store);
+    void execute(SkillContext ctx, ISkillStateStore store);
 
 }

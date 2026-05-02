@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle.config;
 
-import top.ourisland.creepersiarena.api.config.GameConfigView;
+import top.ourisland.creepersiarena.api.config.IGameConfigView;
 
 /**
  * Battle-owned global mode configuration. This type intentionally lives with default content, not core.
@@ -13,7 +13,7 @@ public record BattleModeConfig(
         boolean forceBalancing
 ) {
 
-    public static BattleModeConfig from(GameConfigView config) {
+    public static BattleModeConfig from(IGameConfigView config) {
         return new BattleModeConfig(
                 config.modeInt("battle", "single-game-time", 600),
                 config.modeInt("battle", "respawn-time", 10),

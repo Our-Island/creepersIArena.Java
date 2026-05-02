@@ -1,12 +1,12 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
-import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class InMemorySkillStateStore implements SkillStateStore {
+public final class InMemorySkillStateStore implements ISkillStateStore {
 
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
 

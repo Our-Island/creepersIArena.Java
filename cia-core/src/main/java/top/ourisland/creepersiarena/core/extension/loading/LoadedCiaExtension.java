@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
-import top.ourisland.creepersiarena.api.CiaExtensionContext;
-import top.ourisland.creepersiarena.api.extension.CiaExtension;
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 
 import java.nio.file.Path;
@@ -12,7 +12,7 @@ public final class LoadedCiaExtension {
     private final CiaExtensionDescriptor descriptor;
     private final Path jarPath;
     private final CiaExtensionClassLoader classLoader;
-    private final CiaExtension extension;
+    private final ICiaExtension extension;
     private final CiaExtensionRuntimeContext context;
     private final Instant loadedAt;
     private boolean enabled;
@@ -21,7 +21,7 @@ public final class LoadedCiaExtension {
             CiaExtensionDescriptor descriptor,
             Path jarPath,
             CiaExtensionClassLoader classLoader,
-            CiaExtension extension,
+            ICiaExtension extension,
             CiaExtensionRuntimeContext context
     ) {
         this.descriptor = descriptor;
@@ -44,11 +44,11 @@ public final class LoadedCiaExtension {
         return classLoader;
     }
 
-    public CiaExtension extension() {
+    public ICiaExtension extension() {
         return extension;
     }
 
-    public CiaExtensionContext context() {
+    public ICiaExtensionContext context() {
         return context;
     }
 

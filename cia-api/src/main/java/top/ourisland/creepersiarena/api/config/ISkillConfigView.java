@@ -6,7 +6,7 @@ package top.ourisland.creepersiarena.api.config;
  * Implementations decide how configuration is loaded and namespaced. Extension code should depend on this generic view
  * instead of core-owned configuration model classes.
  */
-public interface SkillConfigView {
+public interface ISkillConfigView {
 
     int cooldownSeconds(String skillId, int defaultValue);
 

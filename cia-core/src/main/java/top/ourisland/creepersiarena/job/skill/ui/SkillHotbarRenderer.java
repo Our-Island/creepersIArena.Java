@@ -5,7 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.LangKeyResolver;
 
@@ -14,11 +14,11 @@ import java.util.List;
 public final class SkillHotbarRenderer {
 
     private final SkillItemCodec codec;
-    private final SkillStateStore store;
+    private final ISkillStateStore store;
 
     public SkillHotbarRenderer(
             @lombok.NonNull SkillItemCodec codec,
-            @lombok.NonNull SkillStateStore store
+            @lombok.NonNull ISkillStateStore store
     ) {
         this.codec = codec;
         this.store = store;

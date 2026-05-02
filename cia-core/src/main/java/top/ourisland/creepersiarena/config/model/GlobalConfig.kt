@@ -3,14 +3,14 @@ package top.ourisland.creepersiarena.config.model
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
-import top.ourisland.creepersiarena.api.config.GameConfigView
+import top.ourisland.creepersiarena.api.config.IGameConfigView
 import java.util.*
 
 /**
  * Global configuration model loaded from config.yml.
  *
  * Core keeps only platform-owned settings here. Mode-owned settings are exposed as generic sections through
- * [GameConfigView] and are parsed by the mode implementation that owns them.
+ * [IGameConfigView] and are parsed by the mode implementation that owns them.
  */
 data class GlobalConfig(
     @get:JvmName("lang") val lang: String,
@@ -20,7 +20,7 @@ data class GlobalConfig(
     @get:JvmName("ui") val ui: Ui,
     @get:JvmName("world") val world: World,
     private val modeSections: Map<String, ConfigurationSection>,
-) : GameConfigView {
+) : IGameConfigView {
 
     companion object {
 

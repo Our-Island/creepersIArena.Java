@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.api.extension;
 
-import top.ourisland.creepersiarena.api.CiaExtensionContext;
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 
 /**
  * Runtime entry point implemented by a jar-based CIA extension.
@@ -15,7 +15,7 @@ import top.ourisland.creepersiarena.api.CiaExtensionContext;
  * META-INF/services/top.ourisland.creepersiarena.api.extension.CiaExtension
  * </pre>
  */
-public interface CiaExtension {
+public interface ICiaExtension {
 
     /**
      * Called after the extension jar has been discovered and before gameplay components are enabled.
@@ -24,7 +24,7 @@ public interface CiaExtension {
      *
      * @throws Exception when the extension cannot initialize
      */
-    default void onLoad(CiaExtensionContext context) throws Exception {
+    default void onLoad(ICiaExtensionContext context) throws Exception {
     }
 
     /**
@@ -34,7 +34,7 @@ public interface CiaExtension {
      *
      * @throws Exception when the extension cannot enable
      */
-    default void onEnable(CiaExtensionContext context) throws Exception {
+    default void onEnable(ICiaExtensionContext context) throws Exception {
     }
 
     /**
@@ -44,7 +44,7 @@ public interface CiaExtension {
      *
      * @throws Exception when the extension cannot cleanly disable
      */
-    default void onDisable(CiaExtensionContext context) throws Exception {
+    default void onDisable(ICiaExtensionContext context) throws Exception {
     }
 
 }

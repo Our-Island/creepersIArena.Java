@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * keeps the API independent from default content such as battle or steal while still allowing extensions to read their
  * own configuration keys from the shared config tree.
  */
-public interface GameConfigView {
+public interface IGameConfigView {
 
     /**
      * Returns whether the given mode id has been disabled by configuration.

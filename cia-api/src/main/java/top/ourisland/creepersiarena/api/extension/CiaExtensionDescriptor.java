@@ -12,7 +12,7 @@ import java.util.Objects;
  * @param id           stable machine-readable extension id
  * @param name         human-readable extension name
  * @param version      extension version string
- * @param mainClass    fully-qualified {@link CiaExtension} implementation class name
+ * @param mainClass    fully-qualified {@link ICiaExtension} implementation class name
  * @param apiVersion   integer CIA extension descriptor/API version
  * @param ciaVersion   supported CreepersIArena version or version range
  * @param authors      display names of authors

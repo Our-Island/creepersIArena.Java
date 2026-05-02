@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.api.annotation;
 
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+
 import java.lang.annotation.*;
 
 /**
@@ -22,7 +24,7 @@ import java.lang.annotation.*;
  * state, language-key generation and skill ownership metadata, so changing it is effectively a breaking change for any
  * existing data or extension integration.
  *
- * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(String)
+ * @see ICiaExtensionContext#registerAnnotated(String)
  * @see top.ourisland.creepersiarena.api.metadata.JobMetadata
  * @see top.ourisland.creepersiarena.api.job.IJob
  */

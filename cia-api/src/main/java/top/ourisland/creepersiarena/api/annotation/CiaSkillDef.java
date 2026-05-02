@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.api.annotation;
 
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 
 import java.lang.annotation.*;
@@ -26,7 +27,7 @@ import java.lang.annotation.*;
  * {@code cia:creeper.crossbow}. The runtime stores and compares the raw id as-is; language helpers later normalize it
  * into translation-safe segments.
  *
- * @see top.ourisland.creepersiarena.api.CiaExtensionContext#registerAnnotated(String)
+ * @see ICiaExtensionContext#registerAnnotated(String)
  * @see top.ourisland.creepersiarena.api.metadata.SkillMetadata
  * @see top.ourisland.creepersiarena.api.skill.ISkillDefinition
  */

@@ -12,9 +12,9 @@ import java.util.List;
  * fields that only one mode understands belong in this view and are read by that mode implementation. This keeps arena
  * definitions extensible: a custom mode can add custom keys under an arena without changing core config models.
  */
-public interface ArenaConfigView {
+public interface IArenaConfigView {
 
-    ArenaConfigView EMPTY = () -> null;
+    IArenaConfigView EMPTY = () -> null;
 
     default int getInt(String key, int defaultValue) {
         var section = section();

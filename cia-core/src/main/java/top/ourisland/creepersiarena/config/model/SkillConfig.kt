@@ -2,12 +2,12 @@ package top.ourisland.creepersiarena.config.model
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
-import top.ourisland.creepersiarena.api.config.SkillConfigView
+import top.ourisland.creepersiarena.api.config.ISkillConfigView
 import java.util.*
 
 class SkillConfig private constructor(
     private val byId: Map<String, ConfigurationSection>,
-) : SkillConfigView {
+) : ISkillConfigView {
 
     companion object {
 

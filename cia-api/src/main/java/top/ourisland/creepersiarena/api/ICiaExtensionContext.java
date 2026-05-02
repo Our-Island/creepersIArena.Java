@@ -15,7 +15,7 @@ import java.nio.file.Path;
  * points: jobs, skills, modes, annotation discovery and resource installation. Bootstrap modules remain a core-internal
  * mechanism so external extensions do not need to depend on CreepersIArena implementation classes.
  */
-public interface CiaExtensionContext {
+public interface ICiaExtensionContext {
 
     /**
      * Returns the stable owner id for the current extension context.

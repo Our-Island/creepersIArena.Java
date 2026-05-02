@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.api.skill.runtime;
 
 import java.util.UUID;
 
-public interface SkillStateStore {
+public interface ISkillStateStore {
 
     void cooldownEndsAtTick(UUID playerId, String skillId, long endTick);
 

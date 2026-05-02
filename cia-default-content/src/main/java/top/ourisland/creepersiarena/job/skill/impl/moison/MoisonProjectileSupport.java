@@ -5,7 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.SpectralArrow;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
-import top.ourisland.creepersiarena.api.skill.runtime.SkillStateStore;
+import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 
 final class MoisonProjectileSupport {
@@ -14,7 +14,7 @@ final class MoisonProjectileSupport {
     }
 
     static boolean consumeSpectralReserve(
-            SkillStateStore store,
+            ISkillStateStore store,
             Player player,
             long nowTick
     ) {

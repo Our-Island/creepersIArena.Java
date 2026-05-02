@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.api.game.mode;
 
-import top.ourisland.creepersiarena.api.config.GameConfigView;
+import top.ourisland.creepersiarena.api.config.IGameConfigView;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 
 import java.util.function.Function;
@@ -14,19 +14,19 @@ import java.util.function.Supplier;
  */
 public final class GameRuntime {
 
-    private final Supplier<? extends GameConfigView> cfg;
+    private final Supplier<? extends IGameConfigView> cfg;
     private final PlayerSessionStore sessionStore;
     private final Function<Class<?>, Object> serviceResolver;
 
     public GameRuntime(
-            @lombok.NonNull Supplier<? extends GameConfigView> cfg,
+            @lombok.NonNull Supplier<? extends IGameConfigView> cfg,
             @lombok.NonNull PlayerSessionStore sessionStore
     ) {
         this(cfg, sessionStore, ignored -> null);
     }
 
     public GameRuntime(
-            @lombok.NonNull Supplier<? extends GameConfigView> cfg,
+            @lombok.NonNull Supplier<? extends IGameConfigView> cfg,
             @lombok.NonNull PlayerSessionStore sessionStore,
             @lombok.NonNull Function<Class<?>, Object> serviceResolver
     ) {
@@ -35,7 +35,7 @@ public final class GameRuntime {
         this.serviceResolver = serviceResolver;
     }
 
-    public GameConfigView cfg() {
+    public IGameConfigView cfg() {
         return cfg.get();
     }
 

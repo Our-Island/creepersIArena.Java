@@ -6,7 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.CiaExtensionContext;
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-final class CiaExtensionRuntimeContext implements CiaExtensionContext {
+final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
 
     private final BootstrapRuntime rt;
     private final ComponentCatalog catalog;

@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent;
 
-import top.ourisland.creepersiarena.api.CiaExtensionContext;
-import top.ourisland.creepersiarena.api.extension.CiaExtension;
+import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
@@ -14,12 +14,12 @@ import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
  * The default content is intentionally loaded through the same annotation path as external CIA extension jars. This
  * keeps built-in jobs, skills and modes on the same registration surface that third-party content uses.
  */
-public final class DefaultContentExtension implements CiaExtension {
+public final class DefaultContentExtension implements ICiaExtension {
 
     private static final String ROOT_PACKAGE = "top.ourisland.creepersiarena";
 
     @Override
-    public void onLoad(CiaExtensionContext context) {
+    public void onLoad(ICiaExtensionContext context) {
         context.mergeYamlResource("default-content/config.yml", "config.yml");
         context.mergeYamlResource("default-content/arena.yml", "arena.yml");
         context.installResource("default-content/skill.yml", "skill.yml");
@@ -29,7 +29,7 @@ public final class DefaultContentExtension implements CiaExtension {
     }
 
     @Override
-    public void onEnable(CiaExtensionContext context) {
+    public void onEnable(ICiaExtensionContext context) {
         var sessions = context.requireService(PlayerSessionStore.class);
         var runtime = context.requireService(SkillRuntime.class);
         var tickTask = context.requireService(SkillTickTask.class);

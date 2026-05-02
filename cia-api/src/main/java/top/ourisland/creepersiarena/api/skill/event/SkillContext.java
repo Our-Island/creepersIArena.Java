@@ -4,7 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.Nullable;
-import top.ourisland.creepersiarena.api.config.SkillConfigView;
+import top.ourisland.creepersiarena.api.config.ISkillConfigView;
 
 public record SkillContext(
         Player player,
@@ -13,7 +13,7 @@ public record SkillContext(
         @Nullable ItemStack sourceItem,
         @Nullable String sourceSkillId,
         long nowTick,
-        SkillConfigView skillConfig
+        ISkillConfigView skillConfig
 ) {
 
 }
