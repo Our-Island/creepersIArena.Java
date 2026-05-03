@@ -85,22 +85,34 @@ final class PlayerLobbyTransitions {
         var s = sessions.get(p);
         if (s == null) return;
 
+        boolean decorated = false;
         switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(
-                    p,
-                    s,
-                    cfg.get(),
-                    selectableTeamCount(p, s),
-                    showJobSelector(p, s)
-            );
-            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get(), showJobSelector(p, s));
+            case HUB -> {
+                lobbyItemService.applyHubKit(
+                        p,
+                        s,
+                        cfg.get(),
+                        selectableTeamCount(p, s),
+                        showJobSelector(p, s)
+                );
+                decorated = true;
+            }
+            case RESPAWN -> {
+                lobbyItemService.applyDeathKit(p, s, cfg.get(), showJobSelector(p, s));
+                decorated = true;
+            }
             case IN_GAME -> {
                 if (showJobSelector(p, s)) {
                     lobbyItemService.applyJobSelectionKit(p, s, cfg.get());
+                    decorated = true;
                 }
             }
             case null, default -> {
             }
+        }
+
+        if (decorated) {
+            decorateLobbyInventory(p, s);
         }
     }
 
@@ -128,10 +140,31 @@ final class PlayerLobbyTransitions {
         }
     }
 
+    private void decorateLobbyInventory(Player p, PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return;
+        try {
+            flow.decorateLobbyInventory(new ModeLobbyContext(rt, p, session), p.getInventory());
+        } catch (Throwable t) {
+            log.warn("[Lobby] mode lobby-decoration failed: player={} err={}", p.getName(), t.getMessage(), t);
+        }
+    }
+
     boolean acceptsLobbyUiInput(Player p) {
         var s = sessions.get(p);
         if (s == null) return false;
-        return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) {
+            return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
+        }
+        try {
+            return flow.acceptsLobbyUiInput(new ModeLobbyContext(rt, p, s));
+        } catch (Throwable t) {
+            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
+        }
     }
 
     boolean allowJobSelection(Player p) {

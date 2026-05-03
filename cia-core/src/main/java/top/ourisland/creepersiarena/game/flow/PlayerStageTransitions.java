@@ -72,6 +72,7 @@ final class PlayerStageTransitions {
                 selectableTeamCount(p, session),
                 showJobSelector(p, session)
         );
+        decorateLobbyInventory(p, session);
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
@@ -123,6 +124,17 @@ final class PlayerStageTransitions {
         }
     }
 
+    private void decorateLobbyInventory(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return;
+        try {
+            flow.decorateLobbyInventory(new ModeLobbyContext(rt, p, session), p.getInventory());
+        } catch (Throwable t) {
+            log.warn("[Transitions] mode lobby-decoration failed: player={} err={}", p.getName(), t.getMessage(), t);
+        }
+    }
+
     void toRespawnLobby(Player p, int seconds) {
         var session = sessions.ensureSession(p);
 
@@ -135,6 +147,7 @@ final class PlayerStageTransitions {
         teleportAsync(p, to, "RESPAWN");
 
         lobbyItemService.applyDeathKit(p, session, cfg.get(), showJobSelector(p, session));
+        decorateLobbyInventory(p, session);
 
         log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
     }

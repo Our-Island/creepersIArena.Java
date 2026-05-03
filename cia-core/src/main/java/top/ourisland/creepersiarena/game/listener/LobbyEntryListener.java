@@ -54,6 +54,11 @@ public final class LobbyEntryListener implements Listener {
             return;
         }
 
+        if (!flow.allowsHubEntrance(p)) {
+            cancel(p.getUniqueId());
+            return;
+        }
+
         EntryZone zone = lobbyService.entryZone("hub");
         if (zone == null || zone.timeMs() <= 0) {
             cancel(p.getUniqueId());
@@ -79,6 +84,7 @@ public final class LobbyEntryListener implements Listener {
 
             var ss = store.get(now);
             if (ss == null || ss.state() != PlayerState.HUB) return;
+            if (!flow.allowsHubEntrance(now)) return;
 
             EntryZone z2 = lobbyService.entryZone("hub");
             if (z2 == null || !z2.contains(now.getLocation())) return;

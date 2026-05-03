@@ -23,7 +23,7 @@ public record JoinContext(
     }
 
     public boolean fromHubRequest() {
-        return source == JoinSource.HUB_REQUEST;
+        return source == JoinSource.HUB_REQUEST || source == JoinSource.HUB_ENTRANCE;
     }
 
 }

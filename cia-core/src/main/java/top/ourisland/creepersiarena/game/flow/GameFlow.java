@@ -12,10 +12,7 @@ import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
-import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
-import top.ourisland.creepersiarena.api.game.mode.context.JoinSource;
-import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
-import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
+import top.ourisland.creepersiarena.api.game.mode.context.*;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
@@ -110,8 +107,7 @@ public final class GameFlow {
         var rules = gameManager.rules();
 
         if (g != null) {
-            g.addPlayer(p.getUniqueId());
-            log.info("[Flow] player joined gameSession: name={} mode={} arena={}",
+            log.info("[Flow] player joined while game is active: name={} mode={} arena={}",
                     p.getName(), g.mode(), g.arena().id()
             );
 
@@ -145,20 +141,36 @@ public final class GameFlow {
 
         switch (decision) {
             case JoinDecision.ToHub _ -> transitions.toHub(p);
+            case JoinDecision.AttachToHub _ -> {
+                attachToActiveGame(p, g);
+                transitions.toHub(p);
+            }
             case JoinDecision.EnterGame _ -> {
                 if (g == null) {
                     transitions.toHub(p);
                 } else {
+                    attachToActiveGame(p, g);
                     transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
                 }
             }
             case JoinDecision.ToSpectate(Location where) -> {
+                attachToActiveGame(p, g);
                 Location loc = (where != null)
                         ? where
                         : (g != null ? g.arena().anchor().clone().add(0, 8, 0) : transitions.hubAnchor());
                 transitions.toSpectate(p, loc);
             }
         }
+    }
+
+    private void attachToActiveGame(Player p, GameSession g) {
+        if (p == null || g == null) return;
+        UUID id = p.getUniqueId();
+        if (g.players().contains(id)) return;
+        g.addPlayer(id);
+        log.info("[Flow] player attached to gameSession: name={} mode={} arena={}",
+                p.getName(), g.mode(), g.arena().id()
+        );
     }
 
     public void onPlayerLeaveServer(Player p, LeaveReason reason) {
@@ -185,18 +197,21 @@ public final class GameFlow {
     private void detachFromActiveGame(Player p, PlayerSession s, LeaveReason reason) {
         GameSession g = gameManager.active();
         if (g != null) {
-            g.removePlayer(p.getUniqueId());
+            boolean attached = g.players().contains(p.getUniqueId());
+            if (attached) {
+                g.removePlayer(p.getUniqueId());
 
-            log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
-                    p.getName(), g.mode(), g.arena().id(), reason
-            );
+                log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
+                        p.getName(), g.mode(), g.arena().id(), reason
+                );
 
-            var rules = gameManager.rules();
-            if (rules != null && s != null) {
-                try {
-                    rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
-                } catch (Throwable t) {
-                    log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
+                var rules = gameManager.rules();
+                if (rules != null && s != null) {
+                    try {
+                        rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
+                    } catch (Throwable t) {
+                        log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
+                    }
                 }
             }
         }
@@ -295,13 +310,31 @@ public final class GameFlow {
      * Legacy entry (called by LobbyEntryListener). Keep it for compatibility.
      */
     public void onHubEntryTriggered(Player p) {
-        requestJoinFromHub(p);
+        if (!allowsHubEntrance(p)) return;
+        requestJoinFromHub(p, JoinSource.HUB_ENTRANCE);
     }
 
-    /**
-     * /cia join or lobby entry trigger from HUB into the active game.
-     */
-    public JoinFromHubPlan requestJoinFromHub(Player p) {
+    public boolean allowsHubEntrance(Player p) {
+        if (p == null) return false;
+        PlayerSession session = store.get(p);
+        if (session == null || session.state() != PlayerState.HUB) return false;
+
+        GameSession active = gameManager.active();
+        var runtime = gameManager.runtime();
+        var playerFlow = gameManager.playerFlow();
+        if (active == null || runtime == null || playerFlow == null) return false;
+
+        try {
+            return playerFlow.allowHubEntrance(new ModeLobbyContext(runtime, p, session));
+        } catch (Throwable t) {
+            log.warn("[Flow] mode entrance hook failed: player={} mode={} err={}",
+                    p.getName(), active.mode(), t.getMessage(), t
+            );
+            return false;
+        }
+    }
+
+    private JoinFromHubPlan requestJoinFromHub(Player p, JoinSource source) {
         if (p == null) return new JoinFromHubPlan.NotPlayer();
 
         var s = store.get(p);
@@ -319,15 +352,20 @@ public final class GameFlow {
         cancelPendingLeave(p);
         respawns.cancel(p);
 
-        g.addPlayer(p.getUniqueId());
-
         var rules = gameManager.rules();
         var decision = rules == null
                 ? new JoinDecision.EnterGame()
-                : rules.onJoin(new JoinContext(gameManager.runtime(), g, p, s, JoinSource.HUB_REQUEST));
+                : rules.onJoin(new JoinContext(gameManager.runtime(), g, p, s, source));
         applyJoinDecision(p, g, decision);
 
         return new JoinFromHubPlan.Joined();
+    }
+
+    /**
+     * /cia join from HUB into the active game.
+     */
+    public JoinFromHubPlan requestJoinFromHub(Player p) {
+        return requestJoinFromHub(p, JoinSource.HUB_REQUEST);
     }
 
     public void onPlayerDeath(Player p) {
@@ -481,6 +519,7 @@ public final class GameFlow {
             case GameAction.ToHub(Set<UUID> players) -> forEachOnline(players, p -> {
                 cancelPendingLeave(p);
                 respawns.cancel(p);
+                detachFromActiveGame(p, store.get(p), LeaveReason.SYSTEM);
                 transitions.toHub(p);
             });
 
@@ -494,6 +533,7 @@ public final class GameFlow {
                 forEachOnline(players, p -> {
                     cancelPendingLeave(p);
                     respawns.cancel(p);
+                    attachToActiveGame(p, g);
                     transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
                 });
             }
@@ -503,17 +543,25 @@ public final class GameFlow {
                 forEachOnline(players, p -> {
                     cancelPendingLeave(p);
                     respawns.cancel(p);
+                    attachToActiveGame(p, gameManager.active());
                     transitions.toSpectate(p, loc);
                 });
             }
 
-            case GameAction.EndGameAndBackToHub(String reason) -> {
+            case GameAction.EndGame(String reason) -> {
+                gameManager.endActive();
+                log.info("[Flow] end game: reason={}", reason);
+            }
+
+            case GameAction.EndGameAndBackToHub(Set<UUID> requestedPlayers, String reason) -> {
                 var ended = gameManager.active();
-                Set<UUID> players = (ended == null) ? Set.of() : ended.players();
+                Set<UUID> players = requestedPlayers == null || requestedPlayers.isEmpty()
+                        ? ((ended == null) ? Set.of() : Set.copyOf(ended.players()))
+                        : Set.copyOf(requestedPlayers);
 
                 gameManager.endActive();
 
-                log.info("[Flow] end game and back to hub: reason={}", reason);
+                log.info("[Flow] end game and back to hub: reason={} players={}", reason, players.size());
 
                 forEachOnline(players, p -> {
                     cancelPendingLeave(p);

@@ -5,7 +5,17 @@ import org.jspecify.annotations.Nullable;
 
 public sealed interface JoinDecision {
 
+    /**
+     * Keep the player in the generic hub without attaching them to the active game session.
+     */
     record ToHub() implements JoinDecision {
+
+    }
+
+    /**
+     * Keep the player in the generic hub, but attach them to the active session as mode-owned audience/waiting data.
+     */
+    record AttachToHub() implements JoinDecision {
 
     }
 

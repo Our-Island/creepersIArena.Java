@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.api.game.mode;
 
 import org.bukkit.Location;
+import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 
@@ -46,31 +47,33 @@ public interface IModePlayerFlow {
     }
 
     /**
-     * Returns how many teams this mode allows players to select from in the generic lobby UI.
+     * Returns whether the hub entrance region may trigger this mode's join flow.
      * <p>
-     * Returning {@code 0} hides the core-provided team selector. Modes with custom lobby/team selection flows can keep
-     * this disabled and expose their own controls through their extension.
+     * Entrance semantics are mode-owned because some modes, such as always-open battle arenas, treat the entrance as a
+     * direct join, while round-based modes may expose only a ready/waiting UI in the hub.
      *
      * @param ctx lobby context
      *
-     * @return selectable team count; {@code 0} means no generic team selector
+     * @return {@code true} when the generic lobby entrance listener may request a join for this mode
      */
-    default int selectableTeamCount(ModeLobbyContext ctx) {
-        return 0;
+    default boolean allowHubEntrance(ModeLobbyContext ctx) {
+        return false;
     }
 
     /**
-     * Returns whether job-selector items and job-selection commands are accepted right now.
+     * Returns whether the generic lobby listener should protect and route lobby inventory input for this player.
      * <p>
-     * Implementations usually return the same value as {@link #showJobSelector(ModeLobbyContext)}. The method is
-     * separate so a mode can render a read-only selector or accept a command while rendering the UI elsewhere.
+     * Modes with custom lobby items can override this without exposing their item semantics to core. The default keeps
+     * the previous core behaviour for lobby states and enabled core selectors.
      *
      * @param ctx lobby/player context
      *
-     * @return {@code true} when a job selection may update the player's selected job
+     * @return {@code true} when core should cancel and route lobby inventory interactions
      */
-    default boolean allowJobSelection(ModeLobbyContext ctx) {
-        return showJobSelector(ctx);
+    default boolean acceptsLobbyUiInput(ModeLobbyContext ctx) {
+        return ctx != null
+                && ctx.session() != null
+                && (ctx.session().state().isLobbyState() || showJobSelector(ctx) || selectableTeamCount(ctx) > 0);
     }
 
     /**
@@ -86,6 +89,46 @@ public interface IModePlayerFlow {
      */
     default boolean showJobSelector(ModeLobbyContext ctx) {
         return ctx != null && ctx.session() != null && ctx.session().state().isLobbyState();
+    }
+
+    /**
+     * Returns how many teams this mode allows players to select from in the generic lobby UI.
+     * <p>
+     * Returning {@code 0} hides the core-provided team selector. Modes with custom lobby/team selection flows can keep
+     * this disabled and expose their own controls through their extension.
+     *
+     * @param ctx lobby context
+     *
+     * @return selectable team count; {@code 0} means no generic team selector
+     */
+    default int selectableTeamCount(ModeLobbyContext ctx) {
+        return 0;
+    }
+
+    /**
+     * Lets a mode decorate the already-created generic lobby inventory with mode-owned controls.
+     * <p>
+     * Core still owns clearing/protecting the inventory and rendering generic selectors. Mode-specific ready buttons,
+     * phase controls, or read-only indicators belong in the active mode and can be installed here.
+     *
+     * @param ctx       lobby/player context
+     * @param inventory player inventory after generic core items have been applied
+     */
+    default void decorateLobbyInventory(ModeLobbyContext ctx, PlayerInventory inventory) {
+    }
+
+    /**
+     * Returns whether job-selector items and job-selection commands are accepted right now.
+     * <p>
+     * Implementations usually return the same value as {@link #showJobSelector(ModeLobbyContext)}. The method is
+     * separate so a mode can render a read-only selector or accept a command while rendering the UI elsewhere.
+     *
+     * @param ctx lobby/player context
+     *
+     * @return {@code true} when a job selection may update the player's selected job
+     */
+    default boolean allowJobSelection(ModeLobbyContext ctx) {
+        return showJobSelector(ctx);
     }
 
     /**

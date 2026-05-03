@@ -52,6 +52,11 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
     }
 
     @Override
+    public boolean allowHubEntrance(ModeLobbyContext ctx) {
+        return true;
+    }
+
+    @Override
     public int selectableTeamCount(ModeLobbyContext ctx) {
         return BattleModeConfig.from(ctx.runtime().cfg()).maxTeam();
     }

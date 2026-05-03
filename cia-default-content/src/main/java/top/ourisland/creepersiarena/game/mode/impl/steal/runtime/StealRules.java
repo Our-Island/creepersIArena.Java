@@ -55,7 +55,7 @@ final class StealRules implements IModeRules {
 
         ctx.player().playSound(ctx.player(), Sound.BLOCK_NOTE_BLOCK_PLING, SoundCategory.PLAYERS, 1.0f, 2.0f);
         Msg.actionBar(ctx.player(), Component.text("✪ 你已准备加入偷窃模式", NamedTextColor.GREEN));
-        return new JoinDecision.ToHub();
+        return new JoinDecision.AttachToHub();
     }
 
     @Override
