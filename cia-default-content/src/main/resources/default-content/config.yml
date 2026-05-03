@@ -19,6 +19,8 @@ game:
       time-per-round: 180
       target-mine-count: 10
       mine-cooldown-seconds: 3
+      allow-lobby-job-selection: false
+      allow-respawn-job-selection: false
       score-to-win: 4
       round-celebration-time: 5
       game-end-celebration-time: 10

@@ -85,6 +85,14 @@ final class PlayerTransitions {
         lobby.refreshLobbyKit(p);
     }
 
+    boolean acceptsLobbyUiInput(Player p) {
+        return lobby.acceptsLobbyUiInput(p);
+    }
+
+    boolean allowJobSelection(Player p) {
+        return lobby.allowJobSelection(p);
+    }
+
     void selectJob(Player p, String jobIdRaw) {
         lobby.selectJob(p, jobIdRaw);
     }

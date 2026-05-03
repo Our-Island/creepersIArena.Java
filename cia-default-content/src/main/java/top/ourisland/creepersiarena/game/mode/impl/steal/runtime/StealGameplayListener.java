@@ -20,8 +20,6 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
-import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
 
 public final class StealGameplayListener implements Listener {
@@ -108,15 +106,13 @@ public final class StealGameplayListener implements Listener {
             return;
         }
 
-        var arenaConfig = StealArenaConfig.from(active.session().arena());
-        boolean target = arenaConfig.isRedstoneTarget(event.getBlock()) && isRedstoneOre(event.getBlock().getType());
+        boolean target = active.state().arenaConfig().isRedstoneTarget(event.getBlock()) && isRedstoneOre(event.getBlock().getType());
         if (!target) {
             event.setCancelled(true);
             return;
         }
 
-        boolean accepted = active.timeline()
-                .onMinedRedstone(player, StealModeConfig.from(active.timeline().runtime().cfg()));
+        boolean accepted = active.timeline().onMinedRedstone(player, active.state().modeConfig());
         if (!accepted) {
             event.setCancelled(true);
             return;

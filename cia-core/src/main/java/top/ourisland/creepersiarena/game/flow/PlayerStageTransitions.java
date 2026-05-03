@@ -65,7 +65,13 @@ final class PlayerStageTransitions {
         Location to = hubAnchor();
         teleportAsync(p, to, "HUB");
 
-        lobbyItemService.applyHubKit(p, session, cfg.get(), selectableTeamCount(p, session));
+        lobbyItemService.applyHubKit(
+                p,
+                session,
+                cfg.get(),
+                selectableTeamCount(p, session),
+                showJobSelector(p, session)
+        );
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
@@ -105,6 +111,18 @@ final class PlayerStageTransitions {
         }
     }
 
+    private boolean showJobSelector(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
+        try {
+            return flow.showJobSelector(new ModeLobbyContext(rt, p, session));
+        } catch (Throwable t) {
+            log.warn("[Transitions] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return session != null && session.state().isLobbyState();
+        }
+    }
+
     void toRespawnLobby(Player p, int seconds) {
         var session = sessions.ensureSession(p);
 
@@ -116,7 +134,7 @@ final class PlayerStageTransitions {
         Location to = deathAnchor();
         teleportAsync(p, to, "RESPAWN");
 
-        lobbyItemService.applyDeathKit(p, session, cfg.get());
+        lobbyItemService.applyDeathKit(p, session, cfg.get(), showJobSelector(p, session));
 
         log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
     }

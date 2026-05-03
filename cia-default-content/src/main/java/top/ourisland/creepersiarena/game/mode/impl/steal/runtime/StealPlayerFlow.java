@@ -13,8 +13,10 @@ import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
+import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.defaultcontent.DefaultLoadoutService;
-import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
+import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
@@ -29,18 +31,20 @@ import java.util.List;
  */
 final class StealPlayerFlow implements IModePlayerFlow {
 
-    private final GameRuntime runtime;
     private final DefaultLoadoutService kit;
+    private final LobbyItemService lobbyItems;
+    private final ConfigManager configManager;
     private final StealState state;
 
     StealPlayerFlow(GameRuntime runtime, StealState state) {
-        this.runtime = runtime;
         this.kit = new DefaultLoadoutService(
                 runtime.requireService(JobManager.class),
                 runtime.requireService(SkillRegistry.class),
                 runtime.requireService(SkillHotbarRenderer.class),
                 runtime.requireService(SkillTickTask.class)::nowTick
         );
+        this.lobbyItems = runtime.requireService(LobbyItemService.class);
+        this.configManager = runtime.requireService(ConfigManager.class);
         this.state = state;
     }
 
@@ -66,14 +70,41 @@ final class StealPlayerFlow implements IModePlayerFlow {
     }
 
     @Override
+    public boolean showJobSelector(ModeLobbyContext ctx) {
+        if (ctx == null || ctx.session() == null) return false;
+        return switch (state.phase) {
+            case CHOOSE_JOB -> StealPlayerState.participant(ctx.session())
+                    && ctx.session().state() == PlayerState.IN_GAME;
+            case LOBBY, START_COUNTDOWN -> state.modeConfig().allowLobbyJobSelection()
+                    && ctx.session().state() == PlayerState.HUB;
+            case SPECTATOR_TOUR, ROUND_PLAYING, ROUND_CELEBRATION, GAME_END_CELEBRATION ->
+                    state.modeConfig().allowRespawnJobSelection()
+                            && ctx.session().state() == PlayerState.RESPAWN;
+        };
+    }
+
+    @Override
+    public boolean allowJobSelection(ModeLobbyContext ctx) {
+        return showJobSelector(ctx);
+    }
+
+    @Override
     public void onEnterGame(ModePlayerContext ctx) {
         var player = ctx.player();
-        player.setGameMode(GameMode.ADVENTURE);
+
+        if (state.phase == StealPhase.CHOOSE_JOB) {
+            player.setGameMode(GameMode.ADVENTURE);
+            lobbyItems.applyJobSelectionKit(player, ctx.session(), configManager.globalConfig());
+            Msg.actionBar(player, Component.text("请选择本轮职业", NamedTextColor.AQUA));
+            return;
+        }
+
+        player.setGameMode(state.phase == StealPhase.ROUND_PLAYING ? GameMode.SURVIVAL : GameMode.ADVENTURE);
         kit.apply(player, ctx.session());
 
         StealTeam team = state.team(player.getUniqueId());
         if (team == StealTeam.BLUE) {
-            player.getInventory().setItem(6, bluePickaxe(StealModeConfig.from(runtime.cfg()).mineCooldownSeconds()));
+            player.getInventory().setItem(6, bluePickaxe(state.modeConfig().mineCooldownSeconds()));
         }
 
         if (team == null) {

@@ -214,7 +214,7 @@ public final class GameFlow {
         var s = store.get(p);
         if (s == null) return;
 
-        if (!s.state().isLobbyState()) return;
+        if (!transitions.acceptsLobbyUiInput(p)) return;
 
         log.debug("[Flow] lobbyAction: name={} state={} action={} page={} jobId={}",
                 p.getName(), s.state(), action, jobPage, jobId
@@ -249,15 +249,23 @@ public final class GameFlow {
     }
 
     /**
-     * Commands: select a job in HUB/RESPAWN.
+     * Commands: select a job when the active mode allows core job selection.
      */
     public boolean lobbySelectJob(Player p, String jobIdRaw) {
         if (p == null) return false;
         var s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return false;
+        if (s == null || !transitions.allowJobSelection(p)) return false;
 
         transitions.selectJob(p, jobIdRaw);
         return true;
+    }
+
+    /**
+     * Returns whether the current player state or active mode accepts core lobby/job-selector UI input.
+     */
+    public boolean acceptsLobbyUiInput(Player p) {
+        if (p == null) return false;
+        return transitions.acceptsLobbyUiInput(p);
     }
 
     /**
@@ -277,7 +285,7 @@ public final class GameFlow {
     public boolean refreshLobbyKit(Player p) {
         if (p == null) return false;
         PlayerSession s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return false;
+        if (s == null || !transitions.acceptsLobbyUiInput(p)) return false;
 
         transitions.refreshLobbyKit(p);
         return true;

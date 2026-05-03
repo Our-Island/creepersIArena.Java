@@ -47,8 +47,8 @@ final class StealTimeline implements IModeTimeline {
 
     @Override
     public List<GameAction> tick(TickContext ctx) {
-        var cfg = StealModeConfig.from(runtime.cfg());
-        var arenaCfg = StealArenaConfig.from(session.arena());
+        var cfg = state.modeConfig();
+        var arenaCfg = state.arenaConfig();
 
         return switch (state.phase) {
             case LOBBY -> tickLobby(cfg);
@@ -277,7 +277,7 @@ final class StealTimeline implements IModeTimeline {
             p.playSound(p.getLocation(), "minecraft:item.goat_horn.sound.0", SoundCategory.PLAYERS, 1.0f, 0.9f);
         }
         broadcast(Component.text("STEAL：开局！回合时长 " + state.remainingSeconds + "s", NamedTextColor.RED));
-        return List.of();
+        return List.of(new GameAction.EnterGame(new LinkedHashSet<>(state.participants)));
     }
 
     private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
@@ -416,7 +416,7 @@ final class StealTimeline implements IModeTimeline {
 
         boolean finalGame = state.wins(winner) >= cfg.scoreToWin() || state.roundIndex >= cfg.totalRound();
         if (finalGame) {
-            return startFinalCelebration(cfg, StealArenaConfig.from(session.arena()), winner, reason);
+            return startFinalCelebration(cfg, state.arenaConfig(), winner, reason);
         }
 
         state.phase = StealPhase.ROUND_CELEBRATION;

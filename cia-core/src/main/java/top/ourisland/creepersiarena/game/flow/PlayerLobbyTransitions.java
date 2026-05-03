@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
+import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -44,7 +45,7 @@ final class PlayerLobbyTransitions {
 
     void selectJob(Player p, String jobIdRaw) {
         var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
+        if (!allowJobSelection(p, s)) return;
 
         var jobId = JobId.fromId(jobIdRaw);
         if (jobId == null && jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
@@ -68,19 +69,42 @@ final class PlayerLobbyTransitions {
         log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
     }
 
+    private boolean allowJobSelection(Player p, PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
+        try {
+            return flow.allowJobSelection(new ModeLobbyContext(rt, p, session));
+        } catch (Throwable t) {
+            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return session != null && session.state().isLobbyState();
+        }
+    }
+
     void refreshLobbyKit(Player p) {
         var s = sessions.get(p);
         if (s == null) return;
 
         switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get(), selectableTeamCount(p, s));
-            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get());
+            case HUB -> lobbyItemService.applyHubKit(
+                    p,
+                    s,
+                    cfg.get(),
+                    selectableTeamCount(p, s),
+                    showJobSelector(p, s)
+            );
+            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get(), showJobSelector(p, s));
+            case IN_GAME -> {
+                if (showJobSelector(p, s)) {
+                    lobbyItemService.applyJobSelectionKit(p, s, cfg.get());
+                }
+            }
             case null, default -> {
             }
         }
     }
 
-    private int selectableTeamCount(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
+    private int selectableTeamCount(Player p, PlayerSession session) {
         GameRuntime rt = runtime.get();
         IModePlayerFlow flow = playerFlow.get();
         if (rt == null || flow == null) return 0;
@@ -92,9 +116,32 @@ final class PlayerLobbyTransitions {
         }
     }
 
+    private boolean showJobSelector(Player p, PlayerSession session) {
+        GameRuntime rt = runtime.get();
+        IModePlayerFlow flow = playerFlow.get();
+        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
+        try {
+            return flow.showJobSelector(new ModeLobbyContext(rt, p, session));
+        } catch (Throwable t) {
+            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
+            return session != null && session.state().isLobbyState();
+        }
+    }
+
+    boolean acceptsLobbyUiInput(Player p) {
+        var s = sessions.get(p);
+        if (s == null) return false;
+        return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
+    }
+
+    boolean allowJobSelection(Player p) {
+        var s = sessions.get(p);
+        return s != null && allowJobSelection(p, s);
+    }
+
     void nextJobPage(Player p) {
         var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
+        if (!showJobSelector(p, s)) return;
 
         int per = Math.max(1, cfg.get().ui().lobby().jobsPerPage());
         int jobCount = lobbyItemService.totalJobs();

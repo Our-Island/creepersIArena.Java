@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal.runtime;
 
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
+import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
 
 import java.util.*;
@@ -11,6 +13,8 @@ final class StealState {
     final Set<UUID> alive = new LinkedHashSet<>();
     final Map<UUID, StealTeam> teams = new LinkedHashMap<>();
     final Map<UUID, Integer> mineCooldowns = new LinkedHashMap<>();
+    private final StealModeConfig modeConfig;
+    private final StealArenaConfig arenaConfig;
     StealPhase phase = StealPhase.LOBBY;
     int remainingSeconds;
     int roundIndex;
@@ -21,6 +25,20 @@ final class StealState {
     int tourStep = -1;
     boolean closing;
 
+    StealState(StealModeConfig modeConfig, StealArenaConfig arenaConfig) {
+        this.modeConfig = Objects.requireNonNull(modeConfig, "modeConfig");
+        this.arenaConfig = Objects.requireNonNull(arenaConfig, "arenaConfig");
+        this.targetMineCount = Math.max(1, modeConfig.targetMineCount());
+    }
+
+    StealModeConfig modeConfig() {
+        return modeConfig;
+    }
+
+    StealArenaConfig arenaConfig() {
+        return arenaConfig;
+    }
+
     void resetWholeGame() {
         phase = StealPhase.LOBBY;
         remainingSeconds = 0;
@@ -28,7 +46,7 @@ final class StealState {
         redWins = 0;
         blueWins = 0;
         minedBlocks = 0;
-        targetMineCount = 10;
+        targetMineCount = Math.max(1, modeConfig.targetMineCount());
         tourStep = -1;
         closing = false;
         participants.clear();

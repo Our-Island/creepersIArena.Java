@@ -60,6 +60,35 @@ public interface IModePlayerFlow {
     }
 
     /**
+     * Returns whether job-selector items and job-selection commands are accepted right now.
+     * <p>
+     * Implementations usually return the same value as {@link #showJobSelector(ModeLobbyContext)}. The method is
+     * separate so a mode can render a read-only selector or accept a command while rendering the UI elsewhere.
+     *
+     * @param ctx lobby/player context
+     *
+     * @return {@code true} when a job selection may update the player's selected job
+     */
+    default boolean allowJobSelection(ModeLobbyContext ctx) {
+        return showJobSelector(ctx);
+    }
+
+    /**
+     * Returns whether the core-provided job selector should be shown for the supplied player state.
+     * <p>
+     * The default preserves the historical behaviour: jobs can be picked in normal lobby states. Modes with their own
+     * round flow can move this UI into a mode phase, for example a pre-round job-selection phase, and keep HUB/RESPAWN
+     * inventories clean.
+     *
+     * @param ctx lobby/player context
+     *
+     * @return {@code true} when core should render job-selection items for this player
+     */
+    default boolean showJobSelector(ModeLobbyContext ctx) {
+        return ctx != null && ctx.session() != null && ctx.session().state().isLobbyState();
+    }
+
+    /**
      * Applies mode-specific player state after core has moved the player into the generic in-game stage.
      * <p>
      * Typical implementations equip a loadout, update mode-local session data, show mode-specific UI, or set the Bukkit
