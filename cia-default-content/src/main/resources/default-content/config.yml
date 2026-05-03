@@ -11,6 +11,14 @@ game:
 
     steal:
       min-player-to-start: 2
-      prepare-time: 30
-      total-round: 10
-      time-per-round: 10
+      dynamic-ready-requirement: true
+      start-countdown: 15
+      spectator-tour-time: 11
+      choose-job-time: 10
+      total-round: 7
+      time-per-round: 180
+      target-mine-count: 10
+      mine-cooldown-seconds: 3
+      score-to-win: 4
+      round-celebration-time: 5
+      game-end-celebration-time: 10

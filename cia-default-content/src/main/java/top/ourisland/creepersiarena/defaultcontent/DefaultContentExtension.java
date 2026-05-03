@@ -5,6 +5,8 @@ import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.mode.impl.steal.runtime.StealGameplayListener;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
@@ -42,9 +44,11 @@ public final class DefaultContentExtension implements ICiaExtension {
         var sessions = context.requireService(PlayerSessionStore.class);
         var runtime = context.requireService(SkillRuntime.class);
         var tickTask = context.requireService(SkillTickTask.class);
+        var gameManager = context.requireService(GameManager.class);
 
         BuiltinCombatUtils.installSessions(sessions);
         context.registerListener(new SkillImplementationListener(sessions, runtime, tickTask));
+        context.registerListener(new StealGameplayListener(gameManager, sessions));
     }
 
 }
