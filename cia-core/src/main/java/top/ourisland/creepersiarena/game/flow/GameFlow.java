@@ -553,6 +553,11 @@ public final class GameFlow {
                 log.info("[Flow] end game: reason={}", reason);
             }
 
+            case GameAction.RotateArena(String reason) -> {
+                boolean rotated = gameManager.rotateActive(reason);
+                log.info("[Flow] rotate active arena: reason={} rotated={}", reason, rotated);
+            }
+
             case GameAction.EndGameAndBackToHub(Set<UUID> requestedPlayers, String reason) -> {
                 var ended = gameManager.active();
                 Set<UUID> players = requestedPlayers == null || requestedPlayers.isEmpty()

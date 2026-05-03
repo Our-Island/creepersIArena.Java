@@ -65,6 +65,45 @@ public final class GameManager {
                 .getSimpleName());
     }
 
+    public void start(GameModeType type, String arenaId) {
+        var arena = arenaManager.getArena(arenaId);
+        if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
+        if (!arena.type().equals(type)) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
+
+        logger.info("[Game] Start requested: mode={} arenaId={}", type, arenaId);
+
+        startWithArena(type, arena);
+    }
+
+    private void startWithArena(GameModeType type, ArenaInstance arena) {
+        var rt = runtime();
+        var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type).value();
+
+        var session = new GameSession(type, arena);
+        var logic = mode.createLogic(session, rt);
+
+        this.active = session;
+        this.rules = logic.rules();
+        this.timeline = logic.timeline();
+        this.playerFlow = logic.playerFlow();
+        this.lastAutoArenaId.put(type, arena.id());
+
+        logger.info("[Game] Started: mode={} arena={} rules={} timeline={}",
+                type,
+                arena.id(),
+                (rules == null ? "null" : rules.getClass().getSimpleName()),
+                (timeline == null ? "null" : timeline.getClass().getSimpleName())
+        );
+    }
+
+    public boolean rotateActive(String reason) {
+        if (active == null) return false;
+        GameModeType type = active.mode();
+        logger.info("[Game] rotateActive: mode={} arena={} reason={}", type, active.arena().id(), reason);
+        startAuto(type);
+        return true;
+    }
+
     public void startAuto(GameModeType type) {
         List<ArenaInstance> list = arenaManager.arenasOf(type);
         if (list.isEmpty()) throw new IllegalStateException("No arena for mode: " + type);
@@ -84,36 +123,6 @@ public final class GameManager {
         logger.info("[Game] startAuto picked arena: mode={} arena={} (candidates={})", type, picked.id(), n);
 
         startWithArena(type, picked);
-    }
-
-    private void startWithArena(GameModeType type, ArenaInstance arena) {
-        var rt = runtime();
-        var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type).value();
-
-        var session = new GameSession(type, arena);
-        var logic = mode.createLogic(session, rt);
-
-        this.active = session;
-        this.rules = logic.rules();
-        this.timeline = logic.timeline();
-        this.playerFlow = logic.playerFlow();
-
-        logger.info("[Game] Started: mode={} arena={} rules={} timeline={}",
-                type,
-                arena.id(),
-                (rules == null ? "null" : rules.getClass().getSimpleName()),
-                (timeline == null ? "null" : timeline.getClass().getSimpleName())
-        );
-    }
-
-    public void start(GameModeType type, String arenaId) {
-        var arena = arenaManager.getArena(arenaId);
-        if (arena == null) throw new IllegalArgumentException("Arena not found: " + arenaId);
-        if (!arena.type().equals(type)) throw new IllegalArgumentException("Arena type mismatch: " + arenaId);
-
-        logger.info("[Game] Start requested: mode={} arenaId={}", type, arenaId);
-
-        startWithArena(type, arena);
     }
 
     public void endActive() {

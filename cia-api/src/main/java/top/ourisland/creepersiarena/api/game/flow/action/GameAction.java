@@ -52,6 +52,12 @@ public sealed interface GameAction {
 
     }
 
+    record RotateArena(
+            String reason
+    ) implements GameAction {
+
+    }
+
     record EndGameAndBackToHub(
             Set<UUID> players,
             String reason
