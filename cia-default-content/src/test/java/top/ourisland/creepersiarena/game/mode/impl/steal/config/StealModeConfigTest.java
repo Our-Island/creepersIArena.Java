@@ -79,12 +79,14 @@ class StealModeConfigTest {
         assertEquals(1, config.totalRound());
         assertEquals(1, config.timePerRoundSeconds());
         assertEquals(0, config.mineCooldownSeconds());
+        assertEquals(2, config.requiredReadyPlayers(1));
     }
 
     @Test
     void scalesReadyRequirementFromJoinedPlayerCountLikeTheDatapackSurfaceBehavior() {
         var config = new StealModeConfig(2, true, 15, 11, 10, 7, 180, 10, 4, 5, 10, 3, false, false);
 
+        assertEquals(2, config.requiredReadyPlayers(1));
         assertEquals(2, config.requiredReadyPlayers(2));
         assertEquals(3, config.requiredReadyPlayers(5));
         assertEquals(5, config.requiredReadyPlayers(9));
