@@ -18,7 +18,9 @@ public record StealModeConfig(
         int scoreToWin,
         int roundCelebrationSeconds,
         int gameEndCelebrationSeconds,
-        int mineCooldownSeconds
+        int mineCooldownSeconds,
+        boolean allowLobbyJobSelection,
+        boolean allowRespawnJobSelection
 ) {
 
     public static StealModeConfig from(IGameConfigView config) {
@@ -44,7 +46,9 @@ public record StealModeConfig(
                         intValue(section, config, "round-end-seconds", 5))),
                 Math.max(1, intValue(section, config, "game-end-celebration-time",
                         intValue(section, config, "game-end-seconds", 10))),
-                Math.max(0, intValue(section, config, "mine-cooldown-seconds", 3))
+                Math.max(0, intValue(section, config, "mine-cooldown-seconds", 3)),
+                boolValue(section, config, "allow-lobby-job-selection", false),
+                boolValue(section, config, "allow-respawn-job-selection", false)
         );
     }
 
@@ -64,12 +68,11 @@ public record StealModeConfig(
     }
 
     public int requiredReadyPlayers(int population) {
-        if (population <= 0) return minPlayerToStart();
-        int required = minPlayerToStart();
+        int required = Math.max(2, minPlayerToStart());
         if (dynamicReadyRequirement()) {
             required = Math.max(required, datapackLikeRequirement(population));
         }
-        return Math.min(population, required);
+        return required;
     }
 
     private int datapackLikeRequirement(int population) {

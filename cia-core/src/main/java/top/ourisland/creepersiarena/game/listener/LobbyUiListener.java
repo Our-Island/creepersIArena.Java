@@ -40,15 +40,19 @@ public final class LobbyUiListener implements Listener {
         if (!isClick) return;
 
         Player p = e.getPlayer();
-        var s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return;
+        if (store.get(p) == null) return;
 
         var item = e.getItem();
-        if (item == null) return;
+        if (!isLobbyUiItem(item)) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
 
         e.setCancelled(true);
-
         handleLobbyUiItem(p, item);
+    }
+
+    private boolean isLobbyUiItem(ItemStack item) {
+        if (item == null) return false;
+        return codec.readAction(item) != null || codec.readJobId(item) != null;
     }
 
     private void handleLobbyUiItem(Player p, ItemStack item) {
@@ -69,14 +73,13 @@ public final class LobbyUiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-
-        var s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return;
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
 
         e.setCancelled(true);
 
         var cur = e.getCurrentItem();
-        if (cur == null) return;
+        if (!isLobbyUiItem(cur)) return;
 
         handleLobbyUiItem(p, cur);
     }
@@ -84,9 +87,8 @@ public final class LobbyUiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onDrag(InventoryDragEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-
-        var s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return;
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
 
         e.setCancelled(true);
     }
@@ -95,13 +97,13 @@ public final class LobbyUiListener implements Listener {
     public void onSwap(PlayerSwapHandItemsEvent e) {
         Player p = e.getPlayer();
 
-        var s = store.get(p);
-        if (s == null || !s.state().isLobbyState()) return;
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
 
         e.setCancelled(true);
 
         var mainHand = e.getMainHandItem();
-        if (!mainHand.getType().isAir()) handleLobbyUiItem(p, mainHand);
+        if (!mainHand.getType().isAir() && isLobbyUiItem(mainHand)) handleLobbyUiItem(p, mainHand);
     }
 
 }

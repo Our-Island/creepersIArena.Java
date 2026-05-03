@@ -2,9 +2,7 @@ package top.ourisland.creepersiarena.game.flow;
 
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
-import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
+import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -23,28 +21,25 @@ final class PlayerLobbyTransitions {
     private final PlayerSessionFacade sessions;
     private final LobbyItemService lobbyItemService;
     private final Supplier<GlobalConfig> cfg;
-    private final Supplier<GameRuntime> runtime;
-    private final Supplier<IModePlayerFlow> playerFlow;
+    private final PlayerModeLobbyHooks lobbyHooks;
 
     PlayerLobbyTransitions(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionFacade sessions,
             @lombok.NonNull LobbyItemService lobbyItemService,
             @lombok.NonNull Supplier<GlobalConfig> cfg,
-            @lombok.NonNull Supplier<GameRuntime> runtime,
-            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
+            @lombok.NonNull PlayerModeLobbyHooks lobbyHooks
     ) {
         this.log = log;
         this.sessions = sessions;
         this.lobbyItemService = lobbyItemService;
         this.cfg = cfg;
-        this.runtime = runtime;
-        this.playerFlow = playerFlow;
+        this.lobbyHooks = lobbyHooks;
     }
 
     void selectJob(Player p, String jobIdRaw) {
         var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
+        if (!allowJobSelection(p, s)) return;
 
         var jobId = JobId.fromId(jobIdRaw);
         if (jobId == null && jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
@@ -68,33 +63,58 @@ final class PlayerLobbyTransitions {
         log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
     }
 
+    private boolean allowJobSelection(Player p, PlayerSession session) {
+        return lobbyHooks.allowJobSelection(p, session);
+    }
+
     void refreshLobbyKit(Player p) {
         var s = sessions.get(p);
         if (s == null) return;
 
+        boolean decorated = false;
         switch (s.state()) {
-            case HUB -> lobbyItemService.applyHubKit(p, s, cfg.get(), selectableTeamCount(p, s));
-            case RESPAWN -> lobbyItemService.applyDeathKit(p, s, cfg.get());
+            case HUB -> {
+                lobbyItemService.applyHubKit(
+                        p,
+                        s,
+                        cfg.get(),
+                        lobbyHooks.selectableTeamCount(p, s),
+                        lobbyHooks.showJobSelector(p, s)
+                );
+                decorated = true;
+            }
+            case RESPAWN -> {
+                lobbyItemService.applyDeathKit(p, s, cfg.get(), lobbyHooks.showJobSelector(p, s));
+                decorated = true;
+            }
+            case IN_GAME -> {
+                if (lobbyHooks.showJobSelector(p, s)) {
+                    lobbyItemService.applyJobSelectionKit(p, s, cfg.get());
+                    decorated = true;
+                }
+            }
             case null, default -> {
             }
         }
+
+        if (decorated) {
+            lobbyHooks.decorateLobbyInventory(p, s, p.getInventory());
+        }
     }
 
-    private int selectableTeamCount(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return 0;
-        try {
-            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, p, session)));
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return 0;
-        }
+    boolean acceptsLobbyUiInput(Player p) {
+        var s = sessions.get(p);
+        return lobbyHooks.acceptsLobbyUiInput(p, s);
+    }
+
+    boolean allowJobSelection(Player p) {
+        var s = sessions.get(p);
+        return s != null && allowJobSelection(p, s);
     }
 
     void nextJobPage(Player p) {
         var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB && s.state() != PlayerState.RESPAWN) return;
+        if (!lobbyHooks.showJobSelector(p, s)) return;
 
         int per = Math.max(1, cfg.get().ui().lobby().jobsPerPage());
         int jobCount = lobbyItemService.totalJobs();
@@ -111,7 +131,7 @@ final class PlayerLobbyTransitions {
 
     void cycleTeam(Player p) {
         var s = sessions.ensureSession(p);
-        int max = selectableTeamCount(p, s);
+        int max = lobbyHooks.selectableTeamCount(p, s);
         if (max <= 0) return;
 
         Integer cur = s.selectedTeam();
@@ -122,7 +142,7 @@ final class PlayerLobbyTransitions {
         var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB) return false;
 
-        int max = selectableTeamCount(p, s);
+        int max = lobbyHooks.selectableTeamCount(p, s);
         if (max <= 0) return false;
 
         Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, max);

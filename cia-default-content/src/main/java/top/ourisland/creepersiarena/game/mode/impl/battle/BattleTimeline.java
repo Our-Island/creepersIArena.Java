@@ -1,47 +1,59 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
-import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
-import top.ourisland.creepersiarena.game.mode.impl.battle.config.BattleModeConfig;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public final class BattleTimeline implements IModeTimeline {
 
-    private final GameRuntime runtime;
-    private final GameSession session;
+    private final BattleState state;
+    private final BattleBossBars bossBars;
 
-    private int remaining;
-
-    public BattleTimeline(GameRuntime runtime, GameSession session) {
-        this.runtime = runtime;
-        this.session = session;
-        this.remaining = BattleModeConfig.from(runtime.cfg()).singleGameTimeSeconds();
+    public BattleTimeline(BattleState state, BattleBossBars bossBars) {
+        this.state = state;
+        this.bossBars = bossBars;
     }
 
     @Override
     public GameModeType type() {
-        return GameModeType.of("battle");
+        return BattleState.TYPE;
     }
 
     @Override
     public List<GameAction> tick(TickContext ctx) {
-        if (remaining <= 0) return List.of();
+        if (state.rotationPending()) return List.of();
 
-        remaining--;
-        if (remaining > 0) return List.of();
+        bossBars.update(state);
+        if (!state.reachedMapTarget()) return List.of();
 
-        // TODO: 结算/换图：先最小实现 -> 全部回 hub
-        return List.of(
-                new GameAction.Broadcast(Component.text("BATTLE：本局结束！", NamedTextColor.GOLD)),
-                new GameAction.EndGameAndBackToHub("BATTLE_TIMEOUT")
-        );
+        state.rotationPending(true);
+        bossBars.hide();
+
+        Set<UUID> players = Set.copyOf(state.players());
+        var actions = new ArrayList<GameAction>();
+        actions.add(new GameAction.Broadcast(state.mapFinishedMessage()));
+        actions.add(new GameAction.ToHub(players));
+        actions.add(new GameAction.RotateArena("battle map progress reached"));
+        return actions;
+    }
+
+    @Override
+    public void onStop(TickContext ctx) {
+        hideBossBars();
+    }
+
+    public void hideBossBars() {
+        bossBars.hide();
+    }
+
+    public BattleState state() {
+        return state;
     }
 
 }

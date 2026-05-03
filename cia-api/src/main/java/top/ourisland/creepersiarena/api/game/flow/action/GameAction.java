@@ -19,11 +19,19 @@ public sealed interface GameAction {
             Set<UUID> players
     ) implements GameAction {
 
+        public ToHub {
+            players = players == null ? Set.of() : Set.copyOf(players);
+        }
+
     }
 
     record EnterGame(
             Set<UUID> players
     ) implements GameAction {
+
+        public EnterGame {
+            players = players == null ? Set.of() : Set.copyOf(players);
+        }
 
     }
 
@@ -32,11 +40,36 @@ public sealed interface GameAction {
             @Nullable Location where
     ) implements GameAction {
 
+        public ToSpectate {
+            players = players == null ? Set.of() : Set.copyOf(players);
+        }
+
+    }
+
+    record EndGame(
+            String reason
+    ) implements GameAction {
+
+    }
+
+    record RotateArena(
+            String reason
+    ) implements GameAction {
+
     }
 
     record EndGameAndBackToHub(
+            Set<UUID> players,
             String reason
     ) implements GameAction {
+
+        public EndGameAndBackToHub(String reason) {
+            this(Set.of(), reason);
+        }
+
+        public EndGameAndBackToHub {
+            players = players == null ? Set.of() : Set.copyOf(players);
+        }
 
     }
 

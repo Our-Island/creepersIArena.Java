@@ -37,8 +37,9 @@ final class PlayerTransitions {
             @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
     ) {
         this.sessions = new PlayerSessionFacade(plugin, log, store, lobbyItemService);
-        this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, cfg, runtime, playerFlow);
-        this.lobby = new PlayerLobbyTransitions(log, sessions, lobbyItemService, cfg, runtime, playerFlow);
+        var lobbyHooks = new PlayerModeLobbyHooks(log, runtime, playerFlow);
+        this.stage = new PlayerStageTransitions(log, sessions, lobbyItemService, lobbyService, cfg, lobbyHooks);
+        this.lobby = new PlayerLobbyTransitions(log, sessions, lobbyItemService, cfg, lobbyHooks);
     }
 
     PlayerSession getSession(Player p) {
@@ -57,7 +58,12 @@ final class PlayerTransitions {
         return stage.deathAnchor();
     }
 
-    Location gameSpawn(GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow, Player p) {
+    Location gameSpawn(
+            GameSession g,
+            GameRuntime runtime,
+            IModePlayerFlow playerFlow,
+            Player p
+    ) {
         return stage.gameSpawn(g, runtime, playerFlow, p);
     }
 
@@ -77,12 +83,25 @@ final class PlayerTransitions {
         stage.toSpectate(p);
     }
 
-    void enterGame(Player p, GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow) {
+    void enterGame(
+            Player p,
+            GameSession g,
+            GameRuntime runtime,
+            IModePlayerFlow playerFlow
+    ) {
         stage.enterGame(p, g, runtime, playerFlow);
     }
 
     void refreshLobbyKit(Player p) {
         lobby.refreshLobbyKit(p);
+    }
+
+    boolean acceptsLobbyUiInput(Player p) {
+        return lobby.acceptsLobbyUiInput(p);
+    }
+
+    boolean allowJobSelection(Player p) {
+        return lobby.allowJobSelection(p);
     }
 
     void selectJob(Player p, String jobIdRaw) {

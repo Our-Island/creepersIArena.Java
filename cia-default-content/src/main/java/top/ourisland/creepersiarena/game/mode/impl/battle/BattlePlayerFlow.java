@@ -11,7 +11,6 @@ import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.defaultcontent.DefaultLoadoutService;
-import top.ourisland.creepersiarena.game.mode.impl.battle.config.BattleModeConfig;
 import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
@@ -30,9 +29,13 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class BattlePlayerFlow implements IModePlayerFlow {
 
+    private final BattleState state;
+    private final BattleTeamBalancer teams;
     private final DefaultLoadoutService kit;
 
-    public BattlePlayerFlow(GameRuntime runtime) {
+    public BattlePlayerFlow(GameRuntime runtime, BattleState state, BattleTeamBalancer teams) {
+        this.state = state;
+        this.teams = teams;
         this.kit = new DefaultLoadoutService(
                 runtime.requireService(JobManager.class),
                 runtime.requireService(SkillRegistry.class),
@@ -44,24 +47,38 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
     @Override
     public Location spawnLocation(ModePlayerContext ctx) {
         ArenaInstance arena = ctx.game().arena();
-        List<Location> spawns = arena.spawnGroup("default");
-        if (spawns.isEmpty()) {
-            return arena.anchor();
+        var playerSession = ctx.session();
+        if (playerSession != null) {
+            teams.assign(playerSession, state.players());
         }
+        int team = playerSession == null || playerSession.selectedTeam() == null ? 0 : playerSession.selectedTeam();
+        List<Location> spawns = team <= 0 ? List.of() : arena.spawnGroup(String.valueOf(team));
+        if (spawns.isEmpty()) spawns = arena.spawnGroup("team-" + team);
+        if (spawns.isEmpty()) spawns = arena.spawnGroup("default");
+        if (spawns.isEmpty()) return arena.anchor();
         return pickLeastCrowded(spawns, Bukkit.getOnlinePlayers(), 10.0);
     }
 
     @Override
+    public boolean allowHubEntrance(ModeLobbyContext ctx) {
+        return state.config().entranceEnabled();
+    }
+
+    @Override
     public int selectableTeamCount(ModeLobbyContext ctx) {
-        return BattleModeConfig.from(ctx.runtime().cfg()).maxTeam();
+        return state.config().maxTeam();
     }
 
     @Override
     public void onEnterGame(ModePlayerContext ctx) {
         Player player = ctx.player();
+        var playerSession = ctx.session();
+
+        state.markFighter(playerSession);
+
         player.setGameMode(GameMode.ADVENTURE);
-        kit.apply(player, ctx.session());
-        Msg.actionBar(player, Component.text("进入游戏"));
+        kit.apply(player, playerSession);
+        Msg.actionBar(player, Component.text("进入 battle 战场"));
     }
 
     private Location pickLeastCrowded(

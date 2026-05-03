@@ -7,6 +7,7 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.game.GameSession;
@@ -28,16 +29,19 @@ final class StealTimeline implements IModeTimeline {
     private final GameRuntime runtime;
     private final GameSession session;
     private final StealState state;
+    private final StealLobbyUi lobbyUi;
     private final Random random = new Random();
 
     StealTimeline(
             GameRuntime runtime,
             GameSession session,
-            StealState state
+            StealState state,
+            StealLobbyUi lobbyUi
     ) {
         this.runtime = runtime;
         this.session = session;
         this.state = state;
+        this.lobbyUi = lobbyUi;
     }
 
     @Override
@@ -47,8 +51,8 @@ final class StealTimeline implements IModeTimeline {
 
     @Override
     public List<GameAction> tick(TickContext ctx) {
-        var cfg = StealModeConfig.from(runtime.cfg());
-        var arenaCfg = StealArenaConfig.from(session.arena());
+        var cfg = state.modeConfig();
+        var arenaCfg = state.arenaConfig();
 
         return switch (state.phase) {
             case LOBBY -> tickLobby(cfg);
@@ -61,6 +65,11 @@ final class StealTimeline implements IModeTimeline {
         };
     }
 
+    @Override
+    public void onStop(TickContext ctx) {
+        state.bossBars.hideAllTracked();
+    }
+
     GameRuntime runtime() {
         return runtime;
     }
@@ -69,13 +78,22 @@ final class StealTimeline implements IModeTimeline {
         return state;
     }
 
+    boolean isReadyButton(ItemStack item) {
+        return lobbyUi.isReadyButton(item);
+    }
+
+    boolean toggleReady(Player player) {
+        return lobbyUi.toggleReady(player, session);
+    }
+
     private List<GameAction> tickLobby(StealModeConfig cfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         int population = players.size();
         int ready = countReadyOnline();
         int required = cfg.requiredReadyPlayers(population);
 
-        state.bossBars.showWaiting(players, ready, required, Math.max(1, population), 0, cfg.startCountdownSeconds());
+        refreshWaitingUi(players, ready, required);
+        state.bossBars.showWaiting(players, ready, required, Math.max(required, population), 0, cfg.startCountdownSeconds());
         if (population == 0 || ready < required) return List.of();
 
         state.phase = StealPhase.START_COUNTDOWN;
@@ -95,11 +113,12 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private List<GameAction> tickCountdown(StealModeConfig cfg, StealArenaConfig arenaCfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         int population = players.size();
         int ready = countReadyOnline();
         int required = cfg.requiredReadyPlayers(population);
-        state.bossBars.showWaiting(players, ready, required, Math.max(1, population), state.remainingSeconds, cfg.startCountdownSeconds());
+        refreshWaitingUi(players, ready, required);
+        state.bossBars.showWaiting(players, ready, required, Math.max(required, population), state.remainingSeconds, cfg.startCountdownSeconds());
 
         if (population == 0 || ready < required) {
             state.phase = StealPhase.LOBBY;
@@ -135,7 +154,8 @@ final class StealTimeline implements IModeTimeline {
         arenaCfg.resetRedstoneTargets();
         arenaCfg.setSelectionBarriers(false);
 
-        for (var p : onlineSessionPlayers()) {
+        var audience = onlineAudiencePlayers();
+        for (var p : audience) {
             p.getInventory().clear();
             p.setGameMode(GameMode.SPECTATOR);
             p.showTitle(Title.title(
@@ -145,11 +165,11 @@ final class StealTimeline implements IModeTimeline {
             p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.PLAYERS, 1.0f, 1.0f);
         }
 
-        return List.of(new GameAction.ToSpectate(session.players(), session.arena().anchor().clone().add(0, 8, 0)));
+        return List.of(new GameAction.ToSpectate(playerIds(audience), session.arena().anchor().clone().add(0, 8, 0)));
     }
 
     private List<GameAction> tickSpectatorTour(StealModeConfig cfg, StealArenaConfig arenaCfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         state.bossBars.showSpectator(players, state.remainingSeconds, cfg.spectatorTourSeconds());
         showTourPointIfNeeded(arenaCfg, cfg.spectatorTourSeconds());
 
@@ -180,7 +200,7 @@ final class StealTimeline implements IModeTimeline {
 
         state.tourStep = nextStep;
         var point = points.get(nextStep);
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             p.teleportAsync(point.location());
             Msg.send(p, point.message());
             p.playSound(p, Sound.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 1.0f, 0.0f);
@@ -197,7 +217,7 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private void announceRoundObjective() {
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             var ps = runtime.sessionStore().get(p);
             var team = state.team(p.getUniqueId());
             if (!StealPlayerState.participant(ps) || team == null) continue;
@@ -273,15 +293,15 @@ final class StealTimeline implements IModeTimeline {
         state.mineCooldowns.clear();
 
         for (var p : players) {
-            p.setGameMode(GameMode.SURVIVAL);
+            p.setGameMode(GameMode.ADVENTURE);
             p.playSound(p.getLocation(), "minecraft:item.goat_horn.sound.0", SoundCategory.PLAYERS, 1.0f, 0.9f);
         }
         broadcast(Component.text("STEAL：开局！回合时长 " + state.remainingSeconds + "s", NamedTextColor.RED));
-        return List.of();
+        return List.of(new GameAction.EnterGame(new LinkedHashSet<>(state.participants)));
     }
 
     private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         state.bossBars.showRound(players, state.remainingSeconds, cfg.timePerRoundSeconds(), state.minedBlocks, state.targetMineCount);
         state.tickMineCooldowns();
 
@@ -299,7 +319,7 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private List<GameAction> tickRoundCelebration(StealModeConfig cfg, StealArenaConfig arenaCfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         state.bossBars.showCelebration(players, state.remainingSeconds, cfg.roundCelebrationSeconds(), false);
         launchCelebrationFireworks(3);
 
@@ -323,7 +343,7 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private List<GameAction> tickGameEndCelebration(StealModeConfig cfg, StealArenaConfig arenaCfg) {
-        var players = onlineSessionPlayers();
+        var players = onlineAudiencePlayers();
         state.bossBars.showCelebration(players, state.remainingSeconds, cfg.gameEndCelebrationSeconds(), true);
         launchCelebrationFireworks(3);
 
@@ -331,8 +351,9 @@ final class StealTimeline implements IModeTimeline {
         if (state.remainingSeconds > 0) return List.of();
 
         arenaCfg.setSelectionBarriers(false);
+        Set<UUID> playersToHub = playerIds(players);
         cleanupWholeGame();
-        return List.of(new GameAction.EndGameAndBackToHub("steal finished"));
+        return List.of(new GameAction.ToHub(playersToHub));
     }
 
     boolean onMinedRedstone(Player player, StealModeConfig cfg) {
@@ -365,18 +386,32 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private void broadcast(Component message) {
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             Msg.send(p, message);
         }
     }
 
-    private List<Player> onlineSessionPlayers() {
+    private List<Player> onlineAudiencePlayers() {
         var out = new ArrayList<Player>();
-        for (var uuid : session.players()) {
-            var p = Bukkit.getPlayer(uuid);
+        for (var p : Bukkit.getOnlinePlayers()) {
             if (p != null && p.isOnline()) out.add(p);
         }
         return out;
+    }
+
+    private void refreshWaitingUi(Collection<Player> players, int ready, int required) {
+        for (var p : players) {
+            PlayerSession ps = runtime.sessionStore().get(p);
+            if (ps != null) lobbyUi.refreshWaiting(p, ps, ready, required);
+        }
+    }
+
+    private Set<UUID> playerIds(Collection<Player> players) {
+        var ids = new LinkedHashSet<UUID>();
+        for (var p : players) {
+            if (p != null) ids.add(p.getUniqueId());
+        }
+        return ids;
     }
 
     void onPlayerDeath(Player player) {
@@ -416,12 +451,12 @@ final class StealTimeline implements IModeTimeline {
 
         boolean finalGame = state.wins(winner) >= cfg.scoreToWin() || state.roundIndex >= cfg.totalRound();
         if (finalGame) {
-            return startFinalCelebration(cfg, StealArenaConfig.from(session.arena()), winner, reason);
+            return startFinalCelebration(cfg, state.arenaConfig(), winner, reason);
         }
 
         state.phase = StealPhase.ROUND_CELEBRATION;
         state.remainingSeconds = cfg.roundCelebrationSeconds();
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             p.playSound(p, Sound.ENTITY_ENDER_DRAGON_GROWL, SoundCategory.PLAYERS, 1.0f, 1.0f);
         }
         return List.of();
@@ -440,7 +475,7 @@ final class StealTimeline implements IModeTimeline {
 
         var title = Component.text(winner.displayNameZh() + "获得了胜利！", winner.color())
                 .decorate(TextDecoration.BOLD);
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             p.setGameMode(GameMode.ADVENTURE);
             p.showTitle(Title.title(title, Component.empty()));
             p.playSound(p, Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.PLAYERS, 0.7f, 1.0f);
@@ -499,15 +534,15 @@ final class StealTimeline implements IModeTimeline {
         state.teams.clear();
         state.mineCooldowns.clear();
 
-        for (var uuid : session.players()) {
-            var p = Bukkit.getPlayer(uuid);
-            if (p == null || !p.isOnline()) continue;
-
-            var ps = runtime.sessionStore().getOrCreate(p);
+        for (var p : onlineAudiencePlayers()) {
+            var ps = runtime.sessionStore().get(p);
+            if (ps == null) continue;
             boolean participant = StealPlayerState.ready(ps);
             StealPlayerState.participant(ps, participant);
             StealPlayerState.alive(ps, participant);
             if (participant) {
+                UUID uuid = p.getUniqueId();
+                session.addPlayer(uuid);
                 state.participants.add(uuid);
                 state.alive.add(uuid);
             }
@@ -551,22 +586,16 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private void applyTeam(Player p, StealTeam team) {
-        var ps = runtime.sessionStore().getOrCreate(p);
+        var ps = runtime.sessionStore().get(p);
+        if (ps == null) return;
         StealPlayerState.team(ps, team);
         state.setTeam(p.getUniqueId(), team);
         Msg.send(p, Component.text("你加入了", NamedTextColor.WHITE)
                 .append(Component.text(team.displayNameZh(), team.color())));
     }
 
-    private int countReadyOnline() {
-        int c = 0;
-        for (var uuid : session.players()) {
-            var p = Bukkit.getPlayer(uuid);
-            if (p == null || !p.isOnline()) continue;
-            var s = runtime.sessionStore().get(p);
-            if (StealPlayerState.ready(s)) c++;
-        }
-        return c;
+    int countReadyOnline() {
+        return lobbyUi.countReadyOnline();
     }
 
     private List<Player> onlineParticipants() {
@@ -584,7 +613,7 @@ final class StealTimeline implements IModeTimeline {
             Sound sound,
             float pitch
     ) {
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             p.playSound(p, sound, SoundCategory.PLAYERS, 1.0f, pitch);
         }
         broadcast(Component.text("还剩" + formatTime(remaining), color));
@@ -600,7 +629,7 @@ final class StealTimeline implements IModeTimeline {
         int launched = 0;
         for (var p : onlineParticipants()) {
             if (launched >= limit) return;
-            if (p.getGameMode() != GameMode.ADVENTURE && p.getGameMode() != GameMode.SURVIVAL) continue;
+            if (p.getGameMode() != GameMode.ADVENTURE) continue;
             spawnFirework(p.getLocation().clone().add(0, 1.5, 0));
             launched++;
         }
@@ -626,7 +655,7 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private void cleanupWholeGame() {
-        for (var p : onlineSessionPlayers()) {
+        for (var p : onlineAudiencePlayers()) {
             var ps = runtime.sessionStore().get(p);
             StealPlayerState.clear(ps);
             p.getInventory().clear();

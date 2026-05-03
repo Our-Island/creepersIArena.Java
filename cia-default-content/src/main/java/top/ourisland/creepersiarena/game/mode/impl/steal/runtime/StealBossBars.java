@@ -25,7 +25,7 @@ final class StealBossBars {
         waiting.name(waitingName(ready, needed, countdownRemaining));
         waiting.progress(ratio(countdownRemaining > 0 ? countdownRemaining : ready, countdownRemaining > 0
                 ? countdownMax
-                : Math.max(1, population)));
+                : Math.max(1, needed)));
         waiting.color(countdownRemaining > 0 ? BossBar.Color.GREEN : BossBar.Color.RED);
         sync(waiting, players);
         hideAllExcept(waiting, players);
@@ -65,8 +65,9 @@ final class StealBossBars {
 
         for (Player p : players) {
             if (p == null || !p.isOnline()) continue;
-            p.showBossBar(bar);
-            current.add(p.getUniqueId());
+            if (current.add(p.getUniqueId())) {
+                p.showBossBar(bar);
+            }
         }
     }
 

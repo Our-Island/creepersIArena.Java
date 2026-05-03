@@ -25,13 +25,22 @@ public final class LobbyItemService {
             GlobalConfig cfg,
             int selectableTeamCount
     ) {
+        applyHubKit(p, s, cfg, selectableTeamCount, true);
+    }
+
+    public void applyHubKit(
+            Player p,
+            PlayerSession s,
+            GlobalConfig cfg,
+            int selectableTeamCount,
+            boolean showJobSelector
+    ) {
         clear(p);
 
         var inv = p.getInventory();
 
-        switch (cfg.ui().lobby().jobSelectMode()) {
-            case HOTBAR -> fillJobHotbar(inv, s, cfg);
-            case INVENTORY -> fillJobsInventory(inv, s, cfg);
+        if (showJobSelector) {
+            fillJobSelector(inv, s, cfg);
         }
 
         if (selectableTeamCount > 0) {
@@ -46,6 +55,17 @@ public final class LobbyItemService {
         inv.clear();
         inv.setArmorContents(null);
         inv.setItemInOffHand(null);
+    }
+
+    private void fillJobSelector(
+            PlayerInventory inv,
+            PlayerSession s,
+            GlobalConfig cfg
+    ) {
+        switch (cfg.ui().lobby().jobSelectMode()) {
+            case HOTBAR -> fillJobHotbar(inv, s, cfg);
+            case INVENTORY -> fillJobsInventory(inv, s, cfg);
+        }
     }
 
     private void fillJobHotbar(
@@ -98,16 +118,31 @@ public final class LobbyItemService {
             PlayerSession s,
             GlobalConfig cfg
     ) {
+        applyDeathKit(p, s, cfg, true);
+    }
+
+    public void applyDeathKit(
+            Player p,
+            PlayerSession s,
+            GlobalConfig cfg,
+            boolean showJobSelector
+    ) {
         clear(p);
 
-        var inv = p.getInventory();
-
-        switch (cfg.ui().lobby().jobSelectMode()) {
-            case HOTBAR -> fillJobHotbar(inv, s, cfg);
-            case INVENTORY -> fillJobsInventory(inv, s, cfg);
+        if (showJobSelector) {
+            fillJobSelector(p.getInventory(), s, cfg);
         }
 
-        inv.setItem(8, items.backToHubButton());
+        p.getInventory().setItem(8, items.backToHubButton());
+    }
+
+    public void applyJobSelectionKit(
+            Player p,
+            PlayerSession s,
+            GlobalConfig cfg
+    ) {
+        clear(p);
+        fillJobSelector(p.getInventory(), s, cfg);
     }
 
     public int totalJobs() {

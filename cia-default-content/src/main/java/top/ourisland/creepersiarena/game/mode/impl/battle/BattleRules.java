@@ -1,29 +1,24 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
-import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
-import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
-import top.ourisland.creepersiarena.game.mode.impl.battle.config.BattleModeConfig;
 
 public final class BattleRules implements IModeRules {
 
-    private final GameRuntime runtime;
-    private final GameSession session;
+    private final BattleState state;
 
-    public BattleRules(GameRuntime runtime, GameSession session) {
-        this.runtime = runtime;
-        this.session = session;
+    public BattleRules(BattleState state) {
+        this.state = state;
     }
 
     @Override
     public GameModeType type() {
-        return GameModeType.of("battle");
+        return BattleState.TYPE;
     }
 
     @Override
@@ -33,12 +28,17 @@ public final class BattleRules implements IModeRules {
 
     @Override
     public void onLeave(LeaveContext ctx) {
+        if (ctx != null && ctx.session() != null) {
+            state.clearFighter(ctx.session());
+        }
     }
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        var config = BattleModeConfig.from(runtime.cfg());
-        return new RespawnDecision.RespawnLobbyCountdown(config.respawnTimeSeconds());
+        if (ctx == null || ctx.session() == null || !state.session().players().contains(ctx.player().getUniqueId())) {
+            return new RespawnDecision.Hub();
+        }
+        return new RespawnDecision.RespawnLobbyCountdown(state.config().respawnTimeSeconds());
     }
 
 }

@@ -2,12 +2,20 @@ game:
   default-mode: battle
   modes:
     battle:
-      single-game-time: 600
-      respawn-time: 10
+      respawn-time: 8
       leave-in-game-time: 5
       max-team: 4
       team-auto-balancing: true
       force-balancing: false
+      entrance-enabled: true
+      map-progress-target: 4000
+      kill-progress:
+        "1-2": 100
+        "3-4": 75
+        "5-7": 60
+        "8-10": 45
+        "11-14": 30
+        "15+": 20
 
     steal:
       min-player-to-start: 2
@@ -19,6 +27,8 @@ game:
       time-per-round: 180
       target-mine-count: 10
       mine-cooldown-seconds: 3
+      allow-lobby-job-selection: false
+      allow-respawn-job-selection: false
       score-to-win: 4
       round-celebration-time: 5
       game-end-celebration-time: 10
