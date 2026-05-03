@@ -18,10 +18,11 @@ public final class StealLogicFactory {
         var modeConfig = StealModeConfig.from(runtime.cfg());
         var arenaConfig = StealArenaConfig.from(session.arena());
         var state = new StealState(modeConfig, arenaConfig);
+        var lobbyUi = new StealLobbyUi(runtime, state);
         return new ModeLogic(
                 new StealRules(runtime, session, state),
-                new StealTimeline(runtime, session, state),
-                new StealPlayerFlow(runtime, state)
+                new StealTimeline(runtime, session, state, lobbyUi),
+                new StealPlayerFlow(runtime, state, lobbyUi)
         );
     }
 

@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
+import top.ourisland.creepersiarena.api.game.mode.context.JoinSource;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
 import top.ourisland.creepersiarena.utils.Msg;
@@ -36,7 +37,9 @@ final class StealRules implements IModeRules {
     @Override
     public JoinDecision onJoin(JoinContext ctx) {
         return switch (state.phase) {
-            case LOBBY, START_COUNTDOWN -> joinAsReady(ctx);
+            case LOBBY, START_COUNTDOWN -> ctx.source() == JoinSource.HUB_REQUEST
+                    ? joinAsReady(ctx)
+                    : attachWaitingAudience(ctx);
             case SPECTATOR_TOUR, CHOOSE_JOB, ROUND_PLAYING, ROUND_CELEBRATION, GAME_END_CELEBRATION -> {
                 Location view = game.arena().anchor().clone().add(0, 8, 0);
                 yield new JoinDecision.ToSpectate(view);
@@ -45,16 +48,19 @@ final class StealRules implements IModeRules {
     }
 
     private JoinDecision joinAsReady(JoinContext ctx) {
-        if (!ctx.fromHubRequest()) {
-            return new JoinDecision.ToHub();
-        }
-
         StealPlayerState.ready(ctx.session(), true);
         StealPlayerState.participant(ctx.session(), false);
         StealPlayerState.alive(ctx.session(), false);
 
         ctx.player().playSound(ctx.player(), Sound.BLOCK_NOTE_BLOCK_PLING, SoundCategory.PLAYERS, 1.0f, 2.0f);
-        Msg.actionBar(ctx.player(), Component.text("✪ 你已准备加入偷窃模式", NamedTextColor.GREEN));
+        Msg.actionBar(ctx.player(), Component.text("✪ 你已准备加入偷窃模式，不会立即传送", NamedTextColor.GREEN));
+        return new JoinDecision.AttachToHub();
+    }
+
+    private JoinDecision attachWaitingAudience(JoinContext ctx) {
+        StealPlayerState.ready(ctx.session(), false);
+        StealPlayerState.participant(ctx.session(), false);
+        StealPlayerState.alive(ctx.session(), false);
         return new JoinDecision.AttachToHub();
     }
 

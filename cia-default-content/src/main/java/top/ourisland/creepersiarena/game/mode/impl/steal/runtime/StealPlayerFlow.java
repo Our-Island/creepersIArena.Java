@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -32,18 +33,18 @@ import java.util.List;
 final class StealPlayerFlow implements IModePlayerFlow {
 
     private final DefaultLoadoutService kit;
-    private final LobbyItemService lobbyItems;
+    private final StealLobbyUi lobbyUi;
     private final ConfigManager configManager;
     private final StealState state;
 
-    StealPlayerFlow(GameRuntime runtime, StealState state) {
+    StealPlayerFlow(GameRuntime runtime, StealState state, StealLobbyUi lobbyUi) {
         this.kit = new DefaultLoadoutService(
                 runtime.requireService(JobManager.class),
                 runtime.requireService(SkillRegistry.class),
                 runtime.requireService(SkillHotbarRenderer.class),
                 runtime.requireService(SkillTickTask.class)::nowTick
         );
-        this.lobbyItems = runtime.requireService(LobbyItemService.class);
+        this.lobbyUi = lobbyUi;
         this.configManager = runtime.requireService(ConfigManager.class);
         this.state = state;
     }
@@ -64,9 +65,13 @@ final class StealPlayerFlow implements IModePlayerFlow {
     }
 
     @Override
-    public int selectableTeamCount(ModeLobbyContext ctx) {
-        if (state.phase == StealPhase.LOBBY || state.phase == StealPhase.START_COUNTDOWN) return 2;
-        return 0;
+    public boolean allowHubEntrance(ModeLobbyContext ctx) {
+        return false;
+    }
+
+    @Override
+    public boolean acceptsLobbyUiInput(ModeLobbyContext ctx) {
+        return ctx != null && lobbyUi.acceptsInput(ctx.session());
     }
 
     @Override
@@ -75,12 +80,22 @@ final class StealPlayerFlow implements IModePlayerFlow {
         return switch (state.phase) {
             case CHOOSE_JOB -> StealPlayerState.participant(ctx.session())
                     && ctx.session().state() == PlayerState.IN_GAME;
-            case LOBBY, START_COUNTDOWN -> state.modeConfig().allowLobbyJobSelection()
-                    && ctx.session().state() == PlayerState.HUB;
+            case LOBBY, START_COUNTDOWN -> false;
             case SPECTATOR_TOUR, ROUND_PLAYING, ROUND_CELEBRATION, GAME_END_CELEBRATION ->
                     state.modeConfig().allowRespawnJobSelection()
                             && ctx.session().state() == PlayerState.RESPAWN;
         };
+    }
+
+    @Override
+    public int selectableTeamCount(ModeLobbyContext ctx) {
+        if (state.phase == StealPhase.LOBBY || state.phase == StealPhase.START_COUNTDOWN) return 2;
+        return 0;
+    }
+
+    @Override
+    public void decorateLobbyInventory(ModeLobbyContext ctx, org.bukkit.inventory.PlayerInventory inventory) {
+        lobbyUi.decorate(ctx, inventory);
     }
 
     @Override
@@ -94,12 +109,24 @@ final class StealPlayerFlow implements IModePlayerFlow {
 
         if (state.phase == StealPhase.CHOOSE_JOB) {
             player.setGameMode(GameMode.ADVENTURE);
-            lobbyItems.applyJobSelectionKit(player, ctx.session(), configManager.globalConfig());
+            player.getInventory().clear();
+            player.getInventory().setArmorContents(null);
+            player.getInventory().setItemInOffHand(null);
+            runtimeApplyJobSelectionKit(player, ctx);
             Msg.actionBar(player, Component.text("请选择本轮职业", NamedTextColor.AQUA));
             return;
         }
 
-        player.setGameMode(state.phase == StealPhase.ROUND_PLAYING ? GameMode.SURVIVAL : GameMode.ADVENTURE);
+        if (state.phase != StealPhase.ROUND_PLAYING) {
+            player.setGameMode(GameMode.ADVENTURE);
+            player.getInventory().clear();
+            player.getInventory().setArmorContents(null);
+            player.getInventory().setItemInOffHand(null);
+            Msg.actionBar(player, Component.text("等待偷窃模式阶段切换", NamedTextColor.GRAY));
+            return;
+        }
+
+        player.setGameMode(GameMode.ADVENTURE);
         kit.apply(player, ctx.session());
 
         StealTeam team = state.team(player.getUniqueId());
@@ -108,12 +135,17 @@ final class StealPlayerFlow implements IModePlayerFlow {
         }
 
         if (team == null) {
-            Msg.actionBar(player, Component.text("进入游戏", NamedTextColor.GREEN));
+            Msg.actionBar(player, Component.text("进入偷窃回合", NamedTextColor.GREEN));
             return;
         }
 
         Msg.actionBar(player, Component.text("你是", NamedTextColor.WHITE)
                 .append(Component.text(team.displayNameZh(), team.color())));
+    }
+
+    private void runtimeApplyJobSelectionKit(Player player, ModePlayerContext ctx) {
+        var lobbyItems = ctx.runtime().requireService(LobbyItemService.class);
+        lobbyItems.applyJobSelectionKit(player, ctx.session(), configManager.globalConfig());
     }
 
     private ItemStack bluePickaxe(int cooldownSeconds) {

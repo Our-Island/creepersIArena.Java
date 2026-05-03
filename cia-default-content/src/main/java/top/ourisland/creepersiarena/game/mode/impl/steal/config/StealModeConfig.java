@@ -68,12 +68,11 @@ public record StealModeConfig(
     }
 
     public int requiredReadyPlayers(int population) {
-        if (population <= 0) return minPlayerToStart();
-        int required = minPlayerToStart();
+        int required = Math.max(2, minPlayerToStart());
         if (dynamicReadyRequirement()) {
             required = Math.max(required, datapackLikeRequirement(population));
         }
-        return Math.min(population, required);
+        return required;
     }
 
     private int datapackLikeRequirement(int population) {
