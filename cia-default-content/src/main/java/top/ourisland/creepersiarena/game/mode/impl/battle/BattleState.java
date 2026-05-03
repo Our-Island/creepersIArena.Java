@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.GameSession;
@@ -18,8 +19,8 @@ import java.util.UUID;
 public final class BattleState {
 
     static final GameModeType TYPE = GameModeType.of("battle");
-    private static final String MODE_DATA_PREFIX = "battle:";
-    private static final String PARTICIPANT_KEY = MODE_DATA_PREFIX + "participant";
+    static final String MODE_DATA_PREFIX = "battle:";
+    static final String PARTICIPANT_KEY = MODE_DATA_PREFIX + "participant";
 
     private final GameRuntime runtime;
     private final GameSession session;
@@ -33,6 +34,10 @@ public final class BattleState {
         this.runtime = runtime;
         this.session = session;
         this.config = config;
+    }
+
+    static boolean markedFighter(PlayerSession player) {
+        return player != null && player.modeBoolean(PARTICIPANT_KEY, false);
     }
 
     public GameSession session() {
@@ -122,8 +127,26 @@ public final class BattleState {
     }
 
     public Component mapFinishedMessage() {
-        return Component.text("§6Battle map complete: §e" + session.arena().id()
-                + " §8| §f" + scoreSummary());
+        return Component.text("Battle map complete: ", NamedTextColor.GOLD)
+                .append(Component.text(session.arena().id(), NamedTextColor.YELLOW))
+                .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
+                .append(scoreSummaryComponent());
+    }
+
+    public Component scoreSummaryComponent() {
+        if (teamKills.isEmpty()) return Component.text("no kills recorded", NamedTextColor.GRAY);
+
+        Component out = Component.empty();
+        boolean first = true;
+        for (int team = 1; team <= config.maxTeam(); team++) {
+            int kills = teamKills.getOrDefault(team, 0);
+            if (kills <= 0) continue;
+            if (!first) out = out.append(Component.text(" / ", NamedTextColor.GRAY));
+            out = out.append(Component.text("Team " + team + " ", NamedTextColor.GRAY))
+                    .append(Component.text(kills, NamedTextColor.WHITE));
+            first = false;
+        }
+        return first ? Component.text("no kills recorded", NamedTextColor.GRAY) : out;
     }
 
     public String scoreSummary() {
@@ -134,8 +157,8 @@ public final class BattleState {
         for (int team = 1; team <= config.maxTeam(); team++) {
             int kills = teamKills.getOrDefault(team, 0);
             if (kills <= 0) continue;
-            if (!first) out.append(" §7/ ");
-            out.append("Team ").append(team).append(" §f").append(kills);
+            if (!first) out.append(" / ");
+            out.append("Team ").append(team).append(" ").append(kills);
             first = false;
         }
         return first ? "no kills recorded" : out.toString();

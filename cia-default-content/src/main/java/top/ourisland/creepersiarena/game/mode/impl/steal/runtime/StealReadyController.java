@@ -51,8 +51,14 @@ final class StealReadyController {
         if (player == null || session == null || session.state() != PlayerState.HUB) return;
         if (!isWaitingPhase()) return;
 
-        lobbyItems.applyHubKit(player, session, configManager.globalConfig(), 2, false);
-        decorateWaitingInventory(session, player.getInventory(), ready, required);
+        PlayerInventory inventory = player.getInventory();
+        ItemStack desired = readyItems.readyButton(StealPlayerState.ready(session), ready, required);
+        if (!readyItems.isReadyButton(inventory.getItem(0))) {
+            lobbyItems.applyHubKit(player, session, configManager.globalConfig(), 2, false);
+        }
+        if (!desired.isSimilar(inventory.getItem(0))) {
+            inventory.setItem(0, desired);
+        }
     }
 
     int countReadyOnline() {
@@ -72,6 +78,10 @@ final class StealReadyController {
         return state.phase == StealPhase.LOBBY || state.phase == StealPhase.START_COUNTDOWN;
     }
 
+    void decorateWaitingInventory(PlayerSession session, PlayerInventory inventory) {
+        decorateWaitingInventory(session, inventory, countReadyOnline(), requiredReadyPlayers());
+    }
+
     void decorateWaitingInventory(
             PlayerSession session,
             PlayerInventory inventory,
@@ -80,10 +90,6 @@ final class StealReadyController {
     ) {
         if (session == null || inventory == null || !isWaitingPhase()) return;
         inventory.setItem(0, readyItems.readyButton(StealPlayerState.ready(session), ready, required));
-    }
-
-    void decorateWaitingInventory(PlayerSession session, PlayerInventory inventory) {
-        decorateWaitingInventory(session, inventory, countReadyOnline(), requiredReadyPlayers());
     }
 
     boolean toggleReady(Player player, GameSession game) {
@@ -98,8 +104,12 @@ final class StealReadyController {
         StealPlayerState.ready(session, next);
         StealPlayerState.participant(session, false);
         StealPlayerState.alive(session, false);
-        if (!game.players().contains(player.getUniqueId())) {
-            game.addPlayer(player.getUniqueId());
+        if (next) {
+            if (!game.players().contains(player.getUniqueId())) {
+                game.addPlayer(player.getUniqueId());
+            }
+        } else {
+            game.removePlayer(player.getUniqueId());
         }
 
         decorateWaitingInventory(session, player.getInventory(), countReadyOnline(), requiredReadyPlayers());

@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -49,6 +51,29 @@ public final class BattleGameplayListener implements Listener {
         }
     }
 
+    private Player attackingPlayer(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Player player) return player;
+        if (event.getDamager() instanceof Projectile projectile) {
+            ProjectileSource source = projectile.getShooter();
+            if (source instanceof Player player) return player;
+        }
+        return null;
+    }
+
+    private BattleState activeBattle() {
+        GameSession session = gameManager.active();
+        if (session == null || !session.mode().equals(BattleState.TYPE)) return null;
+        if (!(gameManager.timeline() instanceof BattleTimeline timeline)) return null;
+        return timeline.state();
+    }
+
+    private boolean sameTeam(PlayerSession left, PlayerSession right) {
+        if (left == null || right == null) return false;
+        Integer leftTeam = left.selectedTeam();
+        Integer rightTeam = right.selectedTeam();
+        return leftTeam != null && leftTeam.equals(rightTeam);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         BattleState state = activeBattle();
@@ -76,33 +101,11 @@ public final class BattleGameplayListener implements Listener {
 
         Player killer = victim.getKiller();
         if (state.recordKill(killer, victim)) {
-            killer.sendActionBar(net.kyori.adventure.text.Component.text(
-                    "§cBattle progress §f" + state.mapProgress() + "§7/§f" + state.config().mapProgressTarget()
-            ));
+            killer.sendActionBar(Component.text("Battle progress ", NamedTextColor.RED)
+                    .append(Component.text(state.mapProgress(), NamedTextColor.WHITE))
+                    .append(Component.text("/", NamedTextColor.GRAY))
+                    .append(Component.text(state.config().mapProgressTarget(), NamedTextColor.WHITE)));
         }
-    }
-
-    private BattleState activeBattle() {
-        GameSession session = gameManager.active();
-        if (session == null || !session.mode().equals(BattleState.TYPE)) return null;
-        if (!(gameManager.timeline() instanceof BattleTimeline timeline)) return null;
-        return timeline.state();
-    }
-
-    private Player attackingPlayer(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player player) return player;
-        if (event.getDamager() instanceof Projectile projectile) {
-            ProjectileSource source = projectile.getShooter();
-            if (source instanceof Player player) return player;
-        }
-        return null;
-    }
-
-    private boolean sameTeam(PlayerSession left, PlayerSession right) {
-        if (left == null || right == null) return false;
-        Integer leftTeam = left.selectedTeam();
-        Integer rightTeam = right.selectedTeam();
-        return leftTeam != null && leftTeam.equals(rightTeam);
     }
 
 }

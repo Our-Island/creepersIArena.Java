@@ -194,24 +194,42 @@ public final class GameFlow {
         log.debug("[Flow] player left, session removed: name={} reason={}", p.getName(), reason);
     }
 
-    private void detachFromActiveGame(Player p, PlayerSession s, LeaveReason reason) {
-        GameSession g = gameManager.active();
-        if (g != null) {
-            boolean attached = g.players().contains(p.getUniqueId());
-            if (attached) {
-                g.removePlayer(p.getUniqueId());
+    private void detachFromActiveGame(
+            Player p,
+            PlayerSession s,
+            LeaveReason reason
+    ) {
+        detachFromGame(gameManager.active(), p, s, reason);
+    }
 
-                log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
-                        p.getName(), g.mode(), g.arena().id(), reason
-                );
+    private void detachFromGame(
+            GameSession g,
+            Player p,
+            PlayerSession s,
+            LeaveReason reason
+    ) {
+        if (p == null || g == null) {
+            if (p != null) {
+                respawns.cancel(p);
+                cancelPendingLeave(p);
+            }
+            return;
+        }
 
-                var rules = gameManager.rules();
-                if (rules != null && s != null) {
-                    try {
-                        rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
-                    } catch (Throwable t) {
-                        log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
-                    }
+        boolean attached = g.players().contains(p.getUniqueId());
+        if (attached) {
+            g.removePlayer(p.getUniqueId());
+
+            log.info("[Flow] player detached from gameSession: name={} mode={} arena={} reason={}",
+                    p.getName(), g.mode(), g.arena().id(), reason
+            );
+
+            var rules = gameManager.rules();
+            if (rules != null && s != null) {
+                try {
+                    rules.onLeave(new LeaveContext(gameManager.runtime(), g, p, s));
+                } catch (Throwable t) {
+                    log.warn("[Flow] rules.onLeave failed: {}", t.getMessage(), t);
                 }
             }
         }
@@ -549,8 +567,17 @@ public final class GameFlow {
             }
 
             case GameAction.EndGame(String reason) -> {
+                var ended = gameManager.active();
+                Set<UUID> players = ended == null ? Set.of() : Set.copyOf(ended.players());
+
+                forEachOnline(players, p -> {
+                    cancelPendingLeave(p);
+                    respawns.cancel(p);
+                    detachFromGame(ended, p, store.get(p), LeaveReason.SYSTEM);
+                });
+
                 gameManager.endActive();
-                log.info("[Flow] end game: reason={}", reason);
+                log.info("[Flow] end game: reason={} players={}", reason, players.size());
             }
 
             case GameAction.RotateArena(String reason) -> {
@@ -564,15 +591,17 @@ public final class GameFlow {
                         ? ((ended == null) ? Set.of() : Set.copyOf(ended.players()))
                         : Set.copyOf(requestedPlayers);
 
-                gameManager.endActive();
-
                 log.info("[Flow] end game and back to hub: reason={} players={}", reason, players.size());
 
                 forEachOnline(players, p -> {
                     cancelPendingLeave(p);
                     respawns.cancel(p);
-                    transitions.toHub(p);
+                    detachFromGame(ended, p, store.get(p), LeaveReason.SYSTEM);
                 });
+
+                gameManager.endActive();
+
+                forEachOnline(players, transitions::toHub);
             }
         }
     }

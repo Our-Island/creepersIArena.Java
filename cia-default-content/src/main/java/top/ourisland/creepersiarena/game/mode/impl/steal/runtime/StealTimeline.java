@@ -389,17 +389,15 @@ final class StealTimeline implements IModeTimeline {
     private List<Player> onlineAudiencePlayers() {
         var out = new ArrayList<Player>();
         for (var p : Bukkit.getOnlinePlayers()) {
-            if (p == null || !p.isOnline()) continue;
-            runtime.sessionStore().getOrCreate(p);
-            out.add(p);
+            if (p != null && p.isOnline()) out.add(p);
         }
         return out;
     }
 
     private void refreshWaitingUi(Collection<Player> players, int ready, int required) {
         for (var p : players) {
-            PlayerSession ps = runtime.sessionStore().getOrCreate(p);
-            lobbyUi.refreshWaiting(p, ps, ready, required);
+            PlayerSession ps = runtime.sessionStore().get(p);
+            if (ps != null) lobbyUi.refreshWaiting(p, ps, ready, required);
         }
     }
 
@@ -532,7 +530,8 @@ final class StealTimeline implements IModeTimeline {
         state.mineCooldowns.clear();
 
         for (var p : onlineAudiencePlayers()) {
-            var ps = runtime.sessionStore().getOrCreate(p);
+            var ps = runtime.sessionStore().get(p);
+            if (ps == null) continue;
             boolean participant = StealPlayerState.ready(ps);
             StealPlayerState.participant(ps, participant);
             StealPlayerState.alive(ps, participant);
@@ -582,7 +581,8 @@ final class StealTimeline implements IModeTimeline {
     }
 
     private void applyTeam(Player p, StealTeam team) {
-        var ps = runtime.sessionStore().getOrCreate(p);
+        var ps = runtime.sessionStore().get(p);
+        if (ps == null) return;
         StealPlayerState.team(ps, team);
         state.setTeam(p.getUniqueId(), team);
         Msg.send(p, Component.text("你加入了", NamedTextColor.WHITE)

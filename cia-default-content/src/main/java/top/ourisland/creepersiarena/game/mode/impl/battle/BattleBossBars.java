@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.game.mode.impl.battle;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -17,9 +18,15 @@ public final class BattleBossBars {
     public void update(BattleState state) {
         if (state == null) return;
 
-        Component title = Component.text("§cBattle §8| §e" + state.session().arena().id()
-                + " §8| §f" + state.mapProgress() + "§7/§f" + state.config().mapProgressTarget()
-                + " §8| §7" + state.scoreSummary());
+        Component title = Component.text("Battle", NamedTextColor.RED)
+                .append(separator())
+                .append(Component.text(state.session().arena().id(), NamedTextColor.YELLOW))
+                .append(separator())
+                .append(Component.text(state.mapProgress(), NamedTextColor.WHITE))
+                .append(Component.text("/", NamedTextColor.GRAY))
+                .append(Component.text(state.config().mapProgressTarget(), NamedTextColor.WHITE))
+                .append(separator())
+                .append(state.scoreSummaryComponent());
         float progress = state.progressRatio();
 
         if (mapProgress == null) {
@@ -47,6 +54,10 @@ public final class BattleBossBars {
             viewers.remove(uuid);
         }
         viewers.addAll(desired);
+    }
+
+    private Component separator() {
+        return Component.text(" | ", NamedTextColor.DARK_GRAY);
     }
 
     public void hide() {

@@ -26,7 +26,7 @@ public final class BattleTeamBalancer {
         if (target == null) return 1;
 
         Integer requested = normalized(target.selectedTeam());
-        if (target.modeBoolean("battle:participant", false) && requested != null) {
+        if (BattleState.markedFighter(target) && requested != null) {
             return requested;
         }
 

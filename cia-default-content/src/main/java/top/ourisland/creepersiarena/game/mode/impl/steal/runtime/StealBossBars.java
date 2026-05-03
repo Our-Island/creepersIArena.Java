@@ -65,8 +65,9 @@ final class StealBossBars {
 
         for (Player p : players) {
             if (p == null || !p.isOnline()) continue;
-            p.showBossBar(bar);
-            current.add(p.getUniqueId());
+            if (current.add(p.getUniqueId())) {
+                p.showBossBar(bar);
+            }
         }
     }
 

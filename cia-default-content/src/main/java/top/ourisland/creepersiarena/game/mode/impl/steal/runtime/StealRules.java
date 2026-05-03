@@ -61,7 +61,7 @@ final class StealRules implements IModeRules {
         StealPlayerState.ready(ctx.session(), false);
         StealPlayerState.participant(ctx.session(), false);
         StealPlayerState.alive(ctx.session(), false);
-        return new JoinDecision.AttachToHub();
+        return new JoinDecision.ToHub();
     }
 
     @Override
