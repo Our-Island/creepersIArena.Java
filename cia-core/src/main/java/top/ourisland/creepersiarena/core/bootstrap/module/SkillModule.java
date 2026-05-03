@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.job.listener.SkillUiListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.InMemorySkillStateStore;
@@ -54,12 +55,12 @@ public final class SkillModule implements IBootstrapModule {
             var skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
             var tickTask = new SkillTickTask(
                     sessionStore,
+                    () -> rt.getService(GameManager.class),
                     skillRegistry,
                     skillRuntime,
                     rt.plugin(),
                     skillRenderer
             );
-
 
             rt.putAllServices(Map.of(
                     SkillItemCodec.class, skillCodec,

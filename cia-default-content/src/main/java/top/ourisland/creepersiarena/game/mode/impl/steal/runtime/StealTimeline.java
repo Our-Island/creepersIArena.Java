@@ -65,6 +65,11 @@ final class StealTimeline implements IModeTimeline {
         };
     }
 
+    @Override
+    public void onStop(TickContext ctx) {
+        state.bossBars.hideAllTracked();
+    }
+
     GameRuntime runtime() {
         return runtime;
     }

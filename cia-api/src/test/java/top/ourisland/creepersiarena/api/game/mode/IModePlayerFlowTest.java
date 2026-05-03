@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.api.game.mode;
 
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
+import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 
@@ -28,6 +29,9 @@ class IModePlayerFlowTest {
         assertFalse(IModePlayerFlow.DEFAULT.showJobSelector(ctx));
         assertFalse(IModePlayerFlow.DEFAULT.allowJobSelection(ctx));
         assertFalse(IModePlayerFlow.DEFAULT.acceptsLobbyUiInput(ctx));
+        assertTrue(IModePlayerFlow.DEFAULT.allowGameplaySkillRuntime(
+                new ModePlayerContext(null, null, null, session, null)
+        ));
     }
 
 }

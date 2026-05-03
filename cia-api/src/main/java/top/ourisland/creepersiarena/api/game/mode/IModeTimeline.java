@@ -48,4 +48,15 @@ public interface IModeTimeline {
      */
     List<GameAction> tick(TickContext ctx);
 
+    /**
+     * Releases mode-owned runtime UI or temporary state when this timeline is no longer active.
+     * <p>
+     * Core calls this before replacing or ending the active game. Implementations should keep this method cheap and
+     * idempotent; it is primarily intended for side-effect-only resources such as bossbars.
+     *
+     * @param ctx final context for the game session that is being stopped
+     */
+    default void onStop(TickContext ctx) {
+    }
+
 }

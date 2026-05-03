@@ -79,6 +79,8 @@ public final class GameManager {
         var rt = runtime();
         var mode = Objects.requireNonNull(modes.get(type), "Mode not registered: " + type).value();
 
+        stopActiveTimeline("replace active game");
+
         var session = new GameSession(type, arena);
         var logic = mode.createLogic(session, rt);
 
@@ -94,6 +96,20 @@ public final class GameManager {
                 (rules == null ? "null" : rules.getClass().getSimpleName()),
                 (timeline == null ? "null" : timeline.getClass().getSimpleName())
         );
+    }
+
+    private void stopActiveTimeline(String reason) {
+        if (active == null || timeline == null || runtime == null) return;
+        try {
+            timeline.onStop(new TickContext(runtime, active));
+        } catch (Throwable t) {
+            logger.warn("[Game] timeline stop failed: mode={} arena={} reason={}",
+                    active.mode(),
+                    active.arena().id(),
+                    reason,
+                    t
+            );
+        }
     }
 
     public boolean rotateActive(String reason) {
@@ -128,6 +144,7 @@ public final class GameManager {
     public void endActive() {
         if (active == null) return;
         logger.info("[Game] endActive: mode={} arena={}", active.mode(), active.arena().id());
+        stopActiveTimeline("end active game");
         active = null;
         rules = null;
         timeline = null;

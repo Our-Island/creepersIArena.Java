@@ -132,6 +132,21 @@ public interface IModePlayerFlow {
     }
 
     /**
+     * Returns whether the shared job/skill runtime may render and tick gameplay skill items for this player right now.
+     * <p>
+     * Some modes move players into the generic {@code IN_GAME} stage for pre-round UI such as job selection. Those
+     * phases should not receive loadout skill items, otherwise mode-owned selector items can be overwritten by the
+     * global skill hotbar renderer. The default preserves historical behaviour for always-live combat modes.
+     *
+     * @param ctx player-flow context
+     *
+     * @return {@code true} when core skill ticking and hotbar rendering are allowed
+     */
+    default boolean allowGameplaySkillRuntime(ModePlayerContext ctx) {
+        return true;
+    }
+
+    /**
      * Applies mode-specific player state after core has moved the player into the generic in-game stage.
      * <p>
      * Typical implementations equip a loadout, update mode-local session data, show mode-specific UI, or set the Bukkit

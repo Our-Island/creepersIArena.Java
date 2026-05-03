@@ -43,12 +43,17 @@ public final class BattleTimeline implements IModeTimeline {
         return actions;
     }
 
-    public BattleState state() {
-        return state;
+    @Override
+    public void onStop(TickContext ctx) {
+        hideBossBars();
     }
 
     public void hideBossBars() {
         bossBars.hide();
+    }
+
+    public BattleState state() {
+        return state;
     }
 
 }

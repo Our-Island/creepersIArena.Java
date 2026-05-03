@@ -104,6 +104,14 @@ final class StealPlayerFlow implements IModePlayerFlow {
     }
 
     @Override
+    public boolean allowGameplaySkillRuntime(ModePlayerContext ctx) {
+        if (ctx == null || ctx.session() == null || ctx.player() == null) return false;
+        return state.phase == StealPhase.ROUND_PLAYING
+                && StealPlayerState.participant(ctx.session())
+                && state.isAlive(ctx.player().getUniqueId());
+    }
+
+    @Override
     public void onEnterGame(ModePlayerContext ctx) {
         var player = ctx.player();
 
