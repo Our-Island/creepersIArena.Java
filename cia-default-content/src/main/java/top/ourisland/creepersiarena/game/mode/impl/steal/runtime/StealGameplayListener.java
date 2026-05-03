@@ -1,7 +1,5 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal.runtime;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -30,13 +28,11 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
-import top.ourisland.creepersiarena.utils.Msg;
 
 public final class StealGameplayListener implements Listener {
 
     private final GameManager gameManager;
     private final PlayerSessionStore sessions;
-    private final StealReadyItemCodec readyItems = new StealReadyItemCodec();
 
     public StealGameplayListener(GameManager gameManager, PlayerSessionStore sessions) {
         this.gameManager = gameManager;
@@ -48,12 +44,10 @@ public final class StealGameplayListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getAction() == Action.PHYSICAL) return;
 
-        if (readyItems.isReadyButton(event.getItem())) {
-            var active = activeSteal();
-            if (active == null) return;
-
+        var readyActive = activeSteal();
+        if (readyActive != null && readyActive.timeline().isReadyButton(event.getItem())) {
             event.setCancelled(true);
-            toggleReady(event.getPlayer(), active);
+            readyActive.timeline().toggleReady(event.getPlayer());
             return;
         }
 
@@ -79,32 +73,6 @@ public final class StealGameplayListener implements Listener {
         return new ActiveSteal(session, timeline, timeline.state());
     }
 
-    private void toggleReady(Player player, ActiveSteal active) {
-        if (player == null || active == null) return;
-        if (!isWaitingHub(player, active)) {
-            Msg.actionBar(player, Component.text("当前阶段不能切换准备", NamedTextColor.RED));
-            return;
-        }
-
-        PlayerSession session = sessions.getOrCreate(player);
-        boolean next = !StealPlayerState.ready(session);
-        StealPlayerState.ready(session, next);
-        StealPlayerState.participant(session, false);
-        StealPlayerState.alive(session, false);
-        active.session().addPlayer(player.getUniqueId());
-
-        int ready = active.timeline().countReadyOnline();
-        int required = active.state().modeConfig().requiredReadyPlayers(org.bukkit.Bukkit.getOnlinePlayers().size());
-        player.getInventory().setItem(0, readyItems.readyButton(next, ready, required));
-
-        player.playSound(player, next
-                ? Sound.BLOCK_NOTE_BLOCK_PLING
-                : Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, SoundCategory.PLAYERS, 1.0f, next ? 2.0f : 1.0f);
-        Msg.actionBar(player, next
-                ? Component.text("✪ 你已准备加入偷窃模式", NamedTextColor.GREEN)
-                : Component.text("✪ 你取消了准备", NamedTextColor.GRAY));
-    }
-
     private boolean isRedstoneOre(Material material) {
         return material == Material.DEEPSLATE_REDSTONE_ORE || material == Material.REDSTONE_ORE;
     }
@@ -119,44 +87,37 @@ public final class StealGameplayListener implements Listener {
         return true;
     }
 
-    private boolean isWaitingHub(Player player, ActiveSteal active) {
-        if (player == null || active == null) return false;
-        if (active.state().phase != StealPhase.LOBBY && active.state().phase != StealPhase.START_COUNTDOWN)
-            return false;
-        PlayerSession session = sessions.get(player);
-        return session != null && session.state() == PlayerState.HUB;
-    }
-
     @EventHandler(priority = EventPriority.LOWEST)
     public void onReadyClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!readyItems.isReadyButton(event.getCurrentItem())) return;
-
         var active = activeSteal();
-        if (active == null) return;
+        if (active == null || !active.timeline().isReadyButton(event.getCurrentItem())) return;
 
         event.setCancelled(true);
-        toggleReady(player, active);
+        active.timeline().toggleReady(player);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onReadyDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         var active = activeSteal();
-        if (active == null || !isWaitingHub(player, active)) return;
+        if (active == null) return;
+        PlayerSession session = sessions.get(player);
+        if (session == null || session.state() != PlayerState.HUB) return;
         if (event.getRawSlots().contains(0)) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onReadySwap(PlayerSwapHandItemsEvent event) {
-        if (!readyItems.isReadyButton(event.getMainHandItem()) && !readyItems.isReadyButton(event.getOffHandItem()))
-            return;
-
         var active = activeSteal();
         if (active == null) return;
+        if (!active.timeline().isReadyButton(event.getMainHandItem())
+                && !active.timeline().isReadyButton(event.getOffHandItem())) {
+            return;
+        }
 
         event.setCancelled(true);
-        toggleReady(event.getPlayer(), active);
+        active.timeline().toggleReady(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

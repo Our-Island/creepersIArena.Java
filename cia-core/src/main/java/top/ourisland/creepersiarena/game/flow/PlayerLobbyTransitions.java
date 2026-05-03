@@ -2,9 +2,6 @@ package top.ourisland.creepersiarena.game.flow;
 
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
-import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
-import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.job.JobId;
@@ -24,23 +21,20 @@ final class PlayerLobbyTransitions {
     private final PlayerSessionFacade sessions;
     private final LobbyItemService lobbyItemService;
     private final Supplier<GlobalConfig> cfg;
-    private final Supplier<GameRuntime> runtime;
-    private final Supplier<IModePlayerFlow> playerFlow;
+    private final PlayerModeLobbyHooks lobbyHooks;
 
     PlayerLobbyTransitions(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionFacade sessions,
             @lombok.NonNull LobbyItemService lobbyItemService,
             @lombok.NonNull Supplier<GlobalConfig> cfg,
-            @lombok.NonNull Supplier<GameRuntime> runtime,
-            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
+            @lombok.NonNull PlayerModeLobbyHooks lobbyHooks
     ) {
         this.log = log;
         this.sessions = sessions;
         this.lobbyItemService = lobbyItemService;
         this.cfg = cfg;
-        this.runtime = runtime;
-        this.playerFlow = playerFlow;
+        this.lobbyHooks = lobbyHooks;
     }
 
     void selectJob(Player p, String jobIdRaw) {
@@ -70,15 +64,7 @@ final class PlayerLobbyTransitions {
     }
 
     private boolean allowJobSelection(Player p, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
-        try {
-            return flow.allowJobSelection(new ModeLobbyContext(rt, p, session));
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return session != null && session.state().isLobbyState();
-        }
+        return lobbyHooks.allowJobSelection(p, session);
     }
 
     void refreshLobbyKit(Player p) {
@@ -92,17 +78,17 @@ final class PlayerLobbyTransitions {
                         p,
                         s,
                         cfg.get(),
-                        selectableTeamCount(p, s),
-                        showJobSelector(p, s)
+                        lobbyHooks.selectableTeamCount(p, s),
+                        lobbyHooks.showJobSelector(p, s)
                 );
                 decorated = true;
             }
             case RESPAWN -> {
-                lobbyItemService.applyDeathKit(p, s, cfg.get(), showJobSelector(p, s));
+                lobbyItemService.applyDeathKit(p, s, cfg.get(), lobbyHooks.showJobSelector(p, s));
                 decorated = true;
             }
             case IN_GAME -> {
-                if (showJobSelector(p, s)) {
+                if (lobbyHooks.showJobSelector(p, s)) {
                     lobbyItemService.applyJobSelectionKit(p, s, cfg.get());
                     decorated = true;
                 }
@@ -112,59 +98,13 @@ final class PlayerLobbyTransitions {
         }
 
         if (decorated) {
-            decorateLobbyInventory(p, s);
-        }
-    }
-
-    private int selectableTeamCount(Player p, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return 0;
-        try {
-            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, p, session)));
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return 0;
-        }
-    }
-
-    private boolean showJobSelector(Player p, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
-        try {
-            return flow.showJobSelector(new ModeLobbyContext(rt, p, session));
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return session != null && session.state().isLobbyState();
-        }
-    }
-
-    private void decorateLobbyInventory(Player p, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return;
-        try {
-            flow.decorateLobbyInventory(new ModeLobbyContext(rt, p, session), p.getInventory());
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-decoration failed: player={} err={}", p.getName(), t.getMessage(), t);
+            lobbyHooks.decorateLobbyInventory(p, s, p.getInventory());
         }
     }
 
     boolean acceptsLobbyUiInput(Player p) {
         var s = sessions.get(p);
-        if (s == null) return false;
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) {
-            return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
-        }
-        try {
-            return flow.acceptsLobbyUiInput(new ModeLobbyContext(rt, p, s));
-        } catch (Throwable t) {
-            log.warn("[Lobby] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return s.state().isLobbyState() || showJobSelector(p, s) || selectableTeamCount(p, s) > 0;
-        }
+        return lobbyHooks.acceptsLobbyUiInput(p, s);
     }
 
     boolean allowJobSelection(Player p) {
@@ -174,7 +114,7 @@ final class PlayerLobbyTransitions {
 
     void nextJobPage(Player p) {
         var s = sessions.ensureSession(p);
-        if (!showJobSelector(p, s)) return;
+        if (!lobbyHooks.showJobSelector(p, s)) return;
 
         int per = Math.max(1, cfg.get().ui().lobby().jobsPerPage());
         int jobCount = lobbyItemService.totalJobs();
@@ -191,7 +131,7 @@ final class PlayerLobbyTransitions {
 
     void cycleTeam(Player p) {
         var s = sessions.ensureSession(p);
-        int max = selectableTeamCount(p, s);
+        int max = lobbyHooks.selectableTeamCount(p, s);
         if (max <= 0) return;
 
         Integer cur = s.selectedTeam();
@@ -202,7 +142,7 @@ final class PlayerLobbyTransitions {
         var s = sessions.ensureSession(p);
         if (s.state() != PlayerState.HUB) return false;
 
-        int max = selectableTeamCount(p, s);
+        int max = lobbyHooks.selectableTeamCount(p, s);
         if (max <= 0) return false;
 
         Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, max);

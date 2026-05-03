@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
-import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.config.model.GlobalConfig;
@@ -33,8 +32,7 @@ final class PlayerStageTransitions {
     private final LobbyItemService lobbyItemService;
     private final LobbyService lobbyService;
     private final Supplier<GlobalConfig> cfg;
-    private final Supplier<GameRuntime> runtime;
-    private final Supplier<IModePlayerFlow> playerFlow;
+    private final PlayerModeLobbyHooks lobbyHooks;
 
     PlayerStageTransitions(
             @lombok.NonNull Logger log,
@@ -42,16 +40,14 @@ final class PlayerStageTransitions {
             @lombok.NonNull LobbyItemService lobbyItemService,
             @lombok.NonNull LobbyService lobbyService,
             @lombok.NonNull Supplier<GlobalConfig> cfg,
-            @lombok.NonNull Supplier<GameRuntime> runtime,
-            @lombok.NonNull Supplier<IModePlayerFlow> playerFlow
+            @lombok.NonNull PlayerModeLobbyHooks lobbyHooks
     ) {
         this.log = log;
         this.sessions = sessions;
         this.lobbyItemService = lobbyItemService;
         this.lobbyService = lobbyService;
         this.cfg = cfg;
-        this.runtime = runtime;
-        this.playerFlow = playerFlow;
+        this.lobbyHooks = lobbyHooks;
     }
 
     void toHub(Player p) {
@@ -69,10 +65,10 @@ final class PlayerStageTransitions {
                 p,
                 session,
                 cfg.get(),
-                selectableTeamCount(p, session),
-                showJobSelector(p, session)
+                lobbyHooks.selectableTeamCount(p, session),
+                lobbyHooks.showJobSelector(p, session)
         );
-        decorateLobbyInventory(p, session);
+        lobbyHooks.decorateLobbyInventory(p, session, p.getInventory());
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
@@ -100,41 +96,6 @@ final class PlayerStageTransitions {
         });
     }
 
-    private int selectableTeamCount(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return 0;
-        try {
-            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, p, session)));
-        } catch (Throwable t) {
-            log.warn("[Transitions] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return 0;
-        }
-    }
-
-    private boolean showJobSelector(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return session != null && session.state().isLobbyState();
-        try {
-            return flow.showJobSelector(new ModeLobbyContext(rt, p, session));
-        } catch (Throwable t) {
-            log.warn("[Transitions] mode lobby-flow failed: player={} err={}", p.getName(), t.getMessage(), t);
-            return session != null && session.state().isLobbyState();
-        }
-    }
-
-    private void decorateLobbyInventory(Player p, top.ourisland.creepersiarena.api.game.player.PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return;
-        try {
-            flow.decorateLobbyInventory(new ModeLobbyContext(rt, p, session), p.getInventory());
-        } catch (Throwable t) {
-            log.warn("[Transitions] mode lobby-decoration failed: player={} err={}", p.getName(), t.getMessage(), t);
-        }
-    }
-
     void toRespawnLobby(Player p, int seconds) {
         var session = sessions.ensureSession(p);
 
@@ -146,8 +107,8 @@ final class PlayerStageTransitions {
         Location to = deathAnchor();
         teleportAsync(p, to, "RESPAWN");
 
-        lobbyItemService.applyDeathKit(p, session, cfg.get(), showJobSelector(p, session));
-        decorateLobbyInventory(p, session);
+        lobbyItemService.applyDeathKit(p, session, cfg.get(), lobbyHooks.showJobSelector(p, session));
+        lobbyHooks.decorateLobbyInventory(p, session, p.getInventory());
 
         log.debug("[Transitions] {} -> RESPAWN ({}s)", p.getName(), seconds);
     }

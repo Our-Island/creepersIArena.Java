@@ -7,6 +7,7 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.game.GameSession;
@@ -70,6 +71,14 @@ final class StealTimeline implements IModeTimeline {
 
     StealState state() {
         return state;
+    }
+
+    boolean isReadyButton(ItemStack item) {
+        return lobbyUi.isReadyButton(item);
+    }
+
+    boolean toggleReady(Player player) {
+        return lobbyUi.toggleReady(player, session);
     }
 
     private List<GameAction> tickLobby(StealModeConfig cfg) {
@@ -581,13 +590,7 @@ final class StealTimeline implements IModeTimeline {
     }
 
     int countReadyOnline() {
-        int c = 0;
-        for (var p : Bukkit.getOnlinePlayers()) {
-            if (p == null || !p.isOnline()) continue;
-            var s = runtime.sessionStore().get(p);
-            if (StealPlayerState.ready(s)) c++;
-        }
-        return c;
+        return lobbyUi.countReadyOnline();
     }
 
     private List<Player> onlineParticipants() {
