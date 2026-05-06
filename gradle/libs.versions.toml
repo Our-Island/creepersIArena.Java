@@ -11,7 +11,7 @@ luckperms = "5.5"
 
 lombok = "1.18.46"
 jspecify = "1.0.0"
-junit-jupiter = "5.10.3"
+junit-jupiter = "6.0.3"
 junit-platform = "1.10.3"
 
 [libraries]
