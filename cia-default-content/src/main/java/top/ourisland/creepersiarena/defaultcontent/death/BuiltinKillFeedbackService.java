@@ -37,7 +37,7 @@ public final class BuiltinKillFeedbackService implements Listener {
         killer.addPotionEffect(new PotionEffect(
                 PotionEffectType.REGENERATION,
                 REGENERATION_TICKS,
-                1,
+                2,
                 true,
                 true,
                 true
@@ -45,15 +45,15 @@ public final class BuiltinKillFeedbackService implements Listener {
     }
 
     private void playKillSounds(Player killer, int streak) {
-        play(killer, "minecraft:entity.player.attack.strong", 1.0F, 1.0F);
-        play(killer, "minecraft:block.anvil.land", 0.7F, 1.4F);
+        play(killer, "minecraft:entity.player.attack.strong", 80.0F, 0.0F);
+        play(killer, "minecraft:block.anvil.land", 1.0F, 1.0F);
 
-        if (streak >= 2) play(killer, "minecraft:entity.warden.sonic_boom", 0.8F, 1.0F);
-        if (streak >= 3) play(killer, "minecraft:entity.player.breath", 0.8F, 1.0F);
-        if (streak >= 4) play(killer, "minecraft:entity.ender_dragon.growl", 0.8F, 1.0F);
-        if (streak >= 6) play(killer, "minecraft:entity.wither.ambient", 0.8F, 1.0F);
-        if (streak >= 7) play(killer, "minecraft:entity.wither.death", 0.8F, 1.0F);
-        if (streak >= 9) play(killer, "minecraft:ui.toast.challenge_complete", 0.8F, 1.0F);
+        if (streak >= 2) play(killer, "minecraft:entity.warden.sonic_boom", 1.0F, 2.0F);
+        if (streak >= 3) play(killer, "minecraft:entity.player.breath", 1.0F, 0.0F);
+        if (streak >= 4) play(killer, "minecraft:entity.ender_dragon.growl", 1.0F, 1.5F);
+        if (streak >= 6) play(killer, "minecraft:entity.wither.ambient", 1.0F, 0.2F);
+        if (streak >= 7) play(killer, "minecraft:entity.wither.death", 1.0F, 0.0F);
+        if (streak >= 9) play(killer, "minecraft:ui.toast.challenge_complete", 1.0F, 1.0F);
     }
 
     private void play(

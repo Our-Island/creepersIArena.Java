@@ -28,8 +28,10 @@ public final class BuiltinDeathMessageProvider implements IDeathMessageProvider 
     }
 
     private Component render(String template, DeathResult result) {
-        var label = catalog.label(result.label());
-        var labelComponent = Component.text(label.text(), color(label.color()));
+        var labelComponent = labelComponent(catalog.label(result.label()));
+        var deathComponent = labelComponent(catalog.namedLabel("death", "死亡"));
+        var suicideComponent = labelComponent(catalog.namedLabel("suicide", "自杀"));
+        var friendlyFireComponent = labelComponent(catalog.namedLabel("friendly_fire", "误杀"));
         var victim = result.victim().displayName();
         var killer = result.killer() == null ? Component.empty() : result.killer().displayName();
 
@@ -38,22 +40,54 @@ public final class BuiltinDeathMessageProvider implements IDeathMessageProvider 
         while (cursor < template.length()) {
             int next = template.indexOf('{', cursor);
             if (next < 0) {
-                return rendered.append(Component.text(template.substring(cursor), NamedTextColor.GRAY));
+                return rendered.append(Component.text(template.substring(cursor), NamedTextColor.WHITE));
             }
             if (next > cursor) {
-                rendered = rendered.append(Component.text(template.substring(cursor, next), NamedTextColor.GRAY));
+                rendered = rendered.append(Component.text(template.substring(cursor, next), NamedTextColor.WHITE));
             }
 
             int end = template.indexOf('}', next);
             if (end < 0) {
-                return rendered.append(Component.text(template.substring(next), NamedTextColor.GRAY));
+                return rendered.append(Component.text(template.substring(next), NamedTextColor.WHITE));
             }
 
             String token = template.substring(next + 1, end);
-            rendered = rendered.append(componentFor(token, labelComponent, victim, killer));
+            rendered = rendered.append(componentFor(
+                    token,
+                    labelComponent,
+                    deathComponent,
+                    suicideComponent,
+                    friendlyFireComponent,
+                    victim,
+                    killer
+            ));
             cursor = end + 1;
         }
         return rendered;
+    }
+
+    private Component labelComponent(BuiltinDeathMessageCatalog.LabelEntry label) {
+        return Component.text(label.text() + " ➷ ", color(label.color()));
+    }
+
+    private Component componentFor(
+            String token,
+            Component label,
+            Component death,
+            Component suicide,
+            Component friendlyFire,
+            Component victim,
+            Component killer
+    ) {
+        return switch (token) {
+            case "label" -> label;
+            case "death" -> death;
+            case "suicide" -> suicide;
+            case "friendly_fire" -> friendlyFire;
+            case "victim" -> victim;
+            case "killer" -> killer;
+            default -> Component.text("{" + token + "}", NamedTextColor.WHITE);
+        };
     }
 
     private NamedTextColor color(String raw) {
@@ -76,20 +110,6 @@ public final class BuiltinDeathMessageProvider implements IDeathMessageProvider 
             case "yellow" -> NamedTextColor.YELLOW;
             case "white" -> NamedTextColor.WHITE;
             default -> NamedTextColor.GRAY;
-        };
-    }
-
-    private Component componentFor(
-            String token,
-            Component label,
-            Component victim,
-            Component killer
-    ) {
-        return switch (token) {
-            case "label" -> label;
-            case "victim" -> victim;
-            case "killer" -> killer;
-            default -> Component.text("{" + token + "}", NamedTextColor.GRAY);
         };
     }
 

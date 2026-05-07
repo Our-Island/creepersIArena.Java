@@ -18,19 +18,22 @@ public final class BuiltinDeathMessageCatalog {
     private static final String GENERIC_KEY = StandardDeathCauses.GENERIC.toString();
 
     private final Map<DeathMessageLabel, LabelEntry> labels;
+    private final Map<String, LabelEntry> namedLabels;
     private final Map<String, MessagePool> messages;
 
     private BuiltinDeathMessageCatalog(
             Map<DeathMessageLabel, LabelEntry> labels,
+            Map<String, LabelEntry> namedLabels,
             Map<String, MessagePool> messages
     ) {
         this.labels = labels;
+        this.namedLabels = namedLabels;
         this.messages = messages;
     }
 
     public static BuiltinDeathMessageCatalog load(Path file, ClassLoader classLoader) {
         var yaml = loadYaml(file, classLoader);
-        return new BuiltinDeathMessageCatalog(loadLabels(yaml), loadMessages(yaml));
+        return new BuiltinDeathMessageCatalog(loadLabels(yaml), loadNamedLabels(yaml), loadMessages(yaml));
     }
 
     private static YamlConfiguration loadYaml(Path file, ClassLoader classLoader) {
@@ -52,14 +55,26 @@ public final class BuiltinDeathMessageCatalog {
 
     private static Map<DeathMessageLabel, LabelEntry> loadLabels(YamlConfiguration yaml) {
         var loaded = new EnumMap<DeathMessageLabel, LabelEntry>(DeathMessageLabel.class);
-        ConfigurationSection section = yaml.getConfigurationSection("labels");
-        if (section == null) return loaded;
+        Map<String, LabelEntry> named = loadNamedLabels(yaml);
 
         for (var label : DeathMessageLabel.values()) {
             String key = label.name().toLowerCase(Locale.ROOT);
+            LabelEntry entry = named.get(key);
+            if (entry != null) loaded.put(label, entry);
+        }
+        return loaded;
+    }
+
+    private static Map<String, LabelEntry> loadNamedLabels(YamlConfiguration yaml) {
+        var loaded = new HashMap<String, LabelEntry>();
+        ConfigurationSection section = yaml.getConfigurationSection("labels");
+        if (section == null) return loaded;
+
+        for (String key : section.getKeys(false)) {
+            String normalized = key.toLowerCase(Locale.ROOT);
             String text = section.getString(key + ".text", key);
             String color = section.getString(key + ".color", "gray");
-            loaded.put(label, new LabelEntry(text, color));
+            loaded.put(normalized, new LabelEntry(text, color));
         }
         return loaded;
     }
@@ -81,7 +96,18 @@ public final class BuiltinDeathMessageCatalog {
         LabelEntry entry = labels.get(label);
         if (entry != null) return entry;
 
-        return new LabelEntry(label.name().toLowerCase(Locale.ROOT), "gray");
+        String key = label.name().toLowerCase(Locale.ROOT);
+        entry = namedLabels.get(key);
+        if (entry != null) return entry;
+
+        return new LabelEntry(key, "gray");
+    }
+
+    public LabelEntry namedLabel(String key, String fallbackText) {
+        String normalized = key == null ? "" : key.toLowerCase(Locale.ROOT);
+        LabelEntry entry = namedLabels.get(normalized);
+        if (entry != null) return entry;
+        return new LabelEntry(fallbackText == null ? normalized : fallbackText, "gray");
     }
 
     public List<String> templates(DeathCauseId causeId, boolean hasKiller) {
@@ -97,8 +123,8 @@ public final class BuiltinDeathMessageCatalog {
     }
 
     private static List<String> fallbackTemplates(boolean hasKiller) {
-        if (hasKiller) return List.of("{label} {victim} 被 {killer} 击败了");
-        return List.of("{label} {victim} 倒下了");
+        if (hasKiller) return List.of("{label}{victim} 被 {killer} 击败了");
+        return List.of("{death}{victim} 倒下了");
     }
 
     public record LabelEntry(

@@ -1,8 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,7 +16,6 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils;
-import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +25,8 @@ import java.util.UUID;
  * Battle-owned respawn lobby presentation.
  * <p>
  * Core still owns the generic respawn decision and countdown. This listener overlays the old datapack-style battle
- * feedback while the player is in the generic RESPAWN stage: temporary max-health recovery, resistance, healing,
- * actionbar text and sounds. No battle coordinates or countdown rules are written into core.
+ * feedback while the player is in the generic RESPAWN stage: temporary max-health recovery, resistance, healing and
+ * sounds. No battle coordinates or countdown rules are written into core.
  */
 public final class BattleRespawnPresentation implements Listener {
 
@@ -42,6 +39,7 @@ public final class BattleRespawnPresentation implements Listener {
     private final PlayerSessionStore sessions;
     private final Map<UUID, ScheduledTask> tasks = new HashMap<>();
     private final Map<UUID, Integer> pendingRespawns = new HashMap<>();
+    private final Map<UUID, Integer> presentationTicks = new HashMap<>();
 
     public BattleRespawnPresentation(
             Plugin plugin,
@@ -76,6 +74,7 @@ public final class BattleRespawnPresentation implements Listener {
         if (playerId == null) return;
         ScheduledTask old = tasks.remove(playerId);
         if (old != null) old.cancel();
+        presentationTicks.remove(playerId);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -98,31 +97,41 @@ public final class BattleRespawnPresentation implements Listener {
         var playerId = player.getUniqueId();
         cancelTask(playerId);
 
-        applyStep(player, configuredSeconds);
+        int totalTicks = Math.max(1, configuredTotalSeconds(configuredSeconds) * 20);
+        presentationTicks.put(playerId, 0);
+        player.playSound(player.getLocation(), "minecraft:entity.wither.spawn", SoundCategory.PLAYERS, 1.0F, 1.5F);
+        applyInitialHealth(player);
+
         var task = player.getScheduler().runAtFixedRate(
                 plugin,
                 scheduled -> {
                     if (!player.isOnline() || !isBattleRespawn(player)) {
                         scheduled.cancel();
                         tasks.remove(playerId);
-                        restore(player);
+                        presentationTicks.remove(playerId);
+                        restore(player, !isInGame(player));
                         return;
                     }
 
                     var session = sessions.get(player);
                     int remaining = session == null ? 0 : session.respawnSecondsRemaining();
-                    if (remaining <= 0) {
-                        scheduled.cancel();
-                        tasks.remove(playerId);
-                        restore(player);
-                        return;
+                    int elapsedTicks = presentationTicks.merge(playerId, 1, Integer::sum);
+
+                    playAmbient(player);
+                    if (elapsedTicks % 20 == 0) {
+                        applyStep(player, elapsedTicks / 20);
                     }
 
-                    applyStep(player, remaining);
+                    if (remaining <= 0 || elapsedTicks >= totalTicks) {
+                        scheduled.cancel();
+                        tasks.remove(playerId);
+                        presentationTicks.remove(playerId);
+                        restore(player, false);
+                    }
                 },
                 null,
-                20L,
-                20L
+                1L,
+                1L
         );
         tasks.put(playerId, task);
     }
@@ -138,18 +147,17 @@ public final class BattleRespawnPresentation implements Listener {
                 && state.session().players().contains(player.getUniqueId());
     }
 
-    private void applyStep(Player player, int remainingSeconds) {
-        int totalSeconds = Math.max(1, configuredTotalSeconds(remainingSeconds));
-        int elapsed = Math.max(0, totalSeconds - Math.max(0, remainingSeconds));
-        double maxHealth = Math.min(FULL_HEALTH, START_HEALTH + elapsed * HEALTH_STEP);
+    private void applyInitialHealth(Player player) {
+        applyMaxHealth(player, START_HEALTH);
+    }
 
-        BuiltinAttributeUtils.setBaseValue(player, maxHealth, "max_health", "generic_max_health");
-        double currentMax = currentMaxHealth(player, maxHealth);
-        player.setHealth(Math.min(currentMax, Math.clamp(player.getHealth(), 1.0D, maxHealth)));
+    private void applyStep(Player player, int elapsedSeconds) {
+        double maxHealth = Math.min(FULL_HEALTH, START_HEALTH + Math.max(0, elapsedSeconds) * HEALTH_STEP);
+        applyMaxHealth(player, maxHealth);
         player.addPotionEffect(new PotionEffect(
                 PotionEffectType.RESISTANCE,
                 40,
-                4,
+                5,
                 true,
                 false,
                 false
@@ -157,29 +165,39 @@ public final class BattleRespawnPresentation implements Listener {
         player.addPotionEffect(new PotionEffect(
                 PotionEffectType.INSTANT_HEALTH,
                 1,
-                1,
+                0,
                 true,
                 false,
                 false
         ));
-
-        Msg.actionBar(player, Component.text("Battle 复活准备 ", NamedTextColor.RED)
-                .append(Component.text(Math.max(0, remainingSeconds), NamedTextColor.YELLOW))
-                .append(Component.text("s  ", NamedTextColor.GRAY))
-                .append(Component.text((int) maxHealth + "/20 ❤", NamedTextColor.GREEN)));
-        player.playSound(player.getLocation(), "minecraft:block.note_block.hat", SoundCategory.PLAYERS, 0.6F, 1.6F);
+        player.playSound(player.getLocation(), "minecraft:item.lead.tied", SoundCategory.PLAYERS, 1.0F, 0.0F);
     }
 
-    private void restore(Player player) {
+    private void applyMaxHealth(Player player, double maxHealth) {
+        BuiltinAttributeUtils.setBaseValue(player, maxHealth, "max_health", "generic_max_health");
+        double currentMax = currentMaxHealth(player, maxHealth);
+        player.setHealth(Math.min(currentMax, Math.clamp(player.getHealth(), 1.0D, maxHealth)));
+    }
+
+    private void playAmbient(Player player) {
+        player.playSound(player.getLocation(), "minecraft:block.beacon.ambient", SoundCategory.PLAYERS, 10.0F, 0.1F);
+    }
+
+    private void restore(Player player, boolean removeResistance) {
         if (player == null || !player.isOnline()) return;
         BuiltinAttributeUtils.setBaseValue(player, FULL_HEALTH, "max_health", "generic_max_health");
         double currentMax = currentMaxHealth(player, FULL_HEALTH);
         if (player.getHealth() < currentMax) {
             player.setHealth(currentMax);
         }
-        player.removePotionEffect(PotionEffectType.RESISTANCE);
-        player.playSound(player.getLocation(), "minecraft:entity.player.levelup", SoundCategory.PLAYERS, 0.8F, 1.2F);
-        Msg.actionBar(player, Component.text("Battle 复活完成", NamedTextColor.GREEN));
+        if (removeResistance) {
+            player.removePotionEffect(PotionEffectType.RESISTANCE);
+        }
+    }
+
+    private boolean isInGame(Player player) {
+        var session = sessions.get(player);
+        return session != null && session.state() == PlayerState.IN_GAME;
     }
 
     private int configuredTotalSeconds(int currentRemaining) {

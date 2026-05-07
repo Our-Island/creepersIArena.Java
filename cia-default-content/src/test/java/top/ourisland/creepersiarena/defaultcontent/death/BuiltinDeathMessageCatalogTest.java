@@ -18,9 +18,9 @@ class BuiltinDeathMessageCatalogTest {
         var catalog = BuiltinDeathMessageCatalog.load(null, getClass().getClassLoader());
 
         assertTrue(catalog.templates(StandardDeathCauses.VOID, true).stream()
-                .anyMatch(template -> template.contains("{killer}")));
+                .anyMatch(template -> template.startsWith("{label}") && template.contains("{killer}")));
         assertTrue(catalog.templates(DefaultContentDeathCauses.creeperExplosionEnemy(), true).stream()
-                .anyMatch(template -> template.contains("苦力怕")));
+                .anyMatch(template -> template.startsWith("{label}") && template.contains("苦力怕")));
     }
 
     @Test
@@ -39,6 +39,8 @@ class BuiltinDeathMessageCatalogTest {
 
         assertEquals("双杀", catalog.label(DeathMessageLabel.DOUBLE_KILL).text());
         assertEquals("gold", catalog.label(DeathMessageLabel.DOUBLE_KILL).color());
+        assertEquals("死亡", catalog.namedLabel("death", "死亡").text());
+        assertEquals("误杀", catalog.namedLabel("friendly_fire", "误杀").text());
     }
 
     @Test
