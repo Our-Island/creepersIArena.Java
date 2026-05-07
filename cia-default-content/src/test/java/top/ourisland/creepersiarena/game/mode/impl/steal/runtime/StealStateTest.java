@@ -15,8 +15,8 @@ class StealStateTest {
     @Test
     void tracksParticipantsTeamsAliveAndCooldownsWithoutBukkitRuntime() {
         var state = state();
-        UUID red = UUID.randomUUID();
-        UUID blue = UUID.randomUUID();
+        var red = UUID.randomUUID();
+        var blue = UUID.randomUUID();
 
         state.participants.add(red);
         state.participants.add(blue);
@@ -44,14 +44,15 @@ class StealStateTest {
     private StealState state() {
         return new StealState(
                 new StealModeConfig(2, true, 15, 11, 10, 7, 180, 10, 4, 5, 10, 3, false, false),
-                new StealArenaConfig(List.of(), List.of(), List.of())
+                new StealArenaConfig(List.of(), List.of(), List.of(), null)
         );
     }
 
     @Test
     void wholeGameResetClearsModeOwnedRuntimeCollections() {
         var state = state();
-        UUID player = UUID.randomUUID();
+        var player = UUID.randomUUID();
+
         state.phase = StealPhase.ROUND_PLAYING;
         state.remainingSeconds = 99;
         state.roundIndex = 3;
