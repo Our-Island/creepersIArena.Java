@@ -8,8 +8,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.persistence.PersistentDataType;
+import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
@@ -127,10 +127,9 @@ public final class SkillImplementationListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onDeath(EntityDeathEvent e) {
-        if (!(e.getEntity() instanceof Player dead)) return;
-        Player killer = dead.getKiller();
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onResolvedDeath(ArenaPlayerDeathResolvedEvent event) {
+        var killer = event.result().killer();
         if (killer == null) return;
         var session = sessions.get(killer);
         if (session == null || session.selectedJob() == null) return;

@@ -13,6 +13,7 @@ public final class CoreDeathCauseMapper {
         if (damageCause == null) return StandardDeathCauses.GENERIC;
 
         return switch (damageCause) {
+            case CONTACT -> StandardDeathCauses.CONTACT;
             case VOID -> StandardDeathCauses.VOID;
             case FIRE,
                  FIRE_TICK,

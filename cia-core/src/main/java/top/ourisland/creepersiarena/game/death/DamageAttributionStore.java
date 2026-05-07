@@ -34,6 +34,49 @@ public final class DamageAttributionStore {
         attributions.put(victimId, attribution);
     }
 
+    public DeathAttribution recordDamage(
+            @lombok.NonNull UUID victimId,
+            @lombok.NonNull DeathAttribution attribution
+    ) {
+        DeathAttribution effective = attribution;
+        if (shouldCarryRecentAttacker(victimId, attribution)) {
+            DeathAttribution recent = findRecent(victimId, attribution.tick()).orElse(null);
+            if (recent != null) {
+                effective = withRecentAttacker(attribution, recent);
+            }
+        }
+
+        record(victimId, effective);
+        return effective;
+    }
+
+    private boolean shouldCarryRecentAttacker(UUID victimId, DeathAttribution attribution) {
+        if (attribution.attackerId() != null) return false;
+        if (!CoreDeathCauseMapper.isExplicitEnvironmentalDamage(attribution.bukkitCause())) return false;
+
+        return findRecent(victimId, attribution.tick())
+                .filter(recent -> recent.attackerId() != null)
+                .filter(recent -> !recent.selfInflicted())
+                .filter(recent -> !recent.attackerId().equals(victimId))
+                .isPresent();
+    }
+
+    private DeathAttribution withRecentAttacker(
+            DeathAttribution attribution,
+            DeathAttribution recent
+    ) {
+        return new DeathAttribution(
+                attribution.causeId(),
+                recent.attackerId(),
+                attribution.victimId(),
+                false,
+                recent.friendlyFire(),
+                null,
+                attribution.bukkitCause(),
+                attribution.tick()
+        );
+    }
+
     public Optional<DeathAttribution> findRecent(UUID victimId, long currentTick) {
         if (victimId == null) return Optional.empty();
 
@@ -46,10 +89,6 @@ public final class DamageAttributionStore {
         }
 
         return Optional.of(attribution);
-    }
-
-    private boolean isExpired(DeathAttribution attribution, long currentTick) {
-        return currentTick - attribution.tick() > validTicks;
     }
 
     public void clear(UUID victimId) {
@@ -66,6 +105,10 @@ public final class DamageAttributionStore {
         attributions.entrySet().removeIf(
                 entry -> isExpired(entry.getValue(), this.currentTick)
         );
+    }
+
+    private boolean isExpired(DeathAttribution attribution, long currentTick) {
+        return currentTick - attribution.tick() > validTicks;
     }
 
 }

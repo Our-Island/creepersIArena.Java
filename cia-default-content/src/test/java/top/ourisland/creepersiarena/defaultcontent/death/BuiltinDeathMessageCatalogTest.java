@@ -19,6 +19,8 @@ class BuiltinDeathMessageCatalogTest {
 
         assertTrue(catalog.templates(StandardDeathCauses.VOID, true).stream()
                 .anyMatch(template -> template.startsWith("{label}") && template.contains("{killer}")));
+        assertTrue(catalog.templates(StandardDeathCauses.CONTACT, false).stream()
+                .anyMatch(template -> template.startsWith("{suicide}") && template.contains("扎")));
         assertTrue(catalog.templates(DefaultContentDeathCauses.creeperExplosionEnemy(), true).stream()
                 .anyMatch(template -> template.startsWith("{label}") && template.contains("苦力怕")));
     }

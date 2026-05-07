@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.game.listener;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.EvokerFangs;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -52,7 +51,7 @@ public final class ArenaDamageAttributionListener implements Listener {
 
         DeathAttribution attribution = resolveAttribution(event, victim)
                 .orElseGet(() -> fallbackAttribution(event, victim));
-        recordWithoutDiscardingRecentAttacker(victim, attribution);
+        attributionStore.recordDamage(victim.getUniqueId(), attribution);
     }
 
     private boolean isInGame(Player player) {
@@ -97,19 +96,6 @@ public final class ArenaDamageAttributionListener implements Listener {
                 event.getCause(),
                 attributionStore.currentTick()
         );
-    }
-
-    private void recordWithoutDiscardingRecentAttacker(Player victim, DeathAttribution attribution) {
-        long currentTick = attributionStore.currentTick();
-        boolean hasNewAttacker = attribution.attackerId() != null;
-        boolean hasRecentAttacker = attributionStore.findRecent(victim.getUniqueId(), currentTick)
-                .map(DeathAttribution::attackerId)
-                .map(attackerId -> Bukkit.getPlayer(attackerId) != null)
-                .orElse(false);
-
-        if (!hasNewAttacker && hasRecentAttacker) return;
-
-        attributionStore.record(victim.getUniqueId(), attribution);
     }
 
     private Player attackerFrom(EntityDamageEvent event) {

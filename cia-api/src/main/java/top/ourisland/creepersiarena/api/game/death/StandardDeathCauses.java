@@ -10,6 +10,7 @@ package top.ourisland.creepersiarena.api.game.death;
 public final class StandardDeathCauses {
 
     public static final DeathCauseId GENERIC = DeathCauseId.accident("generic");
+    public static final DeathCauseId CONTACT = DeathCauseId.accident("contact");
     public static final DeathCauseId DIRECT_HIT = DeathCauseId.accident("direct_hit");
     public static final DeathCauseId VOID = DeathCauseId.accident("void");
     public static final DeathCauseId FIRE = DeathCauseId.accident("fire");

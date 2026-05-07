@@ -10,6 +10,7 @@ class CoreDeathCauseMapperTest {
 
     @Test
     void mapsEnvironmentalDamageToStandardCauses() {
+        assertEquals(StandardDeathCauses.CONTACT, CoreDeathCauseMapper.fromDamageCause(EntityDamageEvent.DamageCause.CONTACT));
         assertEquals(StandardDeathCauses.VOID, CoreDeathCauseMapper.fromDamageCause(EntityDamageEvent.DamageCause.VOID));
         assertEquals(StandardDeathCauses.FIRE, CoreDeathCauseMapper.fromDamageCause(EntityDamageEvent.DamageCause.LAVA));
         assertEquals(StandardDeathCauses.FALL, CoreDeathCauseMapper.fromDamageCause(EntityDamageEvent.DamageCause.FALL));
