@@ -6,6 +6,8 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
+import top.ourisland.creepersiarena.game.death.DeathStreakService;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 
 /**
@@ -30,6 +32,7 @@ public final class GameTickModule implements IBootstrapModule {
                     .runAtFixedRate(rt.plugin(), task -> {
                         try {
                             flow.tick1s();
+                            tickDeathRuntime(rt);
                         } catch (Throwable t) {
                             rt.log().warn("[GameTick] error: {}", t.getMessage(), t);
                         }
@@ -49,6 +52,16 @@ public final class GameTickModule implements IBootstrapModule {
             } catch (Throwable _) {
             }
         }, "Stopping game tick...", "Finished scheduling game tick.");
+    }
+
+    private void tickDeathRuntime(BootstrapRuntime rt) {
+        var attributions = rt.getService(DamageAttributionStore.class);
+        var streaks = rt.getService(DeathStreakService.class);
+        if (attributions == null || streaks == null) return;
+
+        long currentTick = attributions.currentTick() + 20L;
+        attributions.tick(currentTick);
+        streaks.tick(currentTick);
     }
 
     public record GameTickHandle(ScheduledTask task) {

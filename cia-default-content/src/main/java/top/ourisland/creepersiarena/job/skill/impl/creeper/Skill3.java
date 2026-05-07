@@ -15,6 +15,8 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
@@ -86,6 +88,12 @@ public class Skill3 implements ISkillDefinition {
                 f.setFireworkMeta(m);
                 f.addScoreboardTag(TAG_SKILL3_FW);
                 f.addScoreboardTag(TAG_SKILL3_OWNER + p.getUniqueId());
+                BuiltinDamageAttributionMarker.markEntitySource(
+                        f,
+                        p,
+                        DefaultContentDeathCauses.creeperFireworkMount(),
+                        id()
+                );
                 try {
                     f.setShotAtAngle(true);
                 } catch (Throwable _) {

@@ -10,9 +10,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.projectiles.ProjectileSource;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.death.DeathResult;
+import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.game.GameManager;
@@ -89,17 +90,16 @@ public final class BattleGameplayListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onDeath(PlayerDeathEvent event) {
+    public void onDeathResolved(ArenaPlayerDeathResolvedEvent event) {
         BattleState state = activeBattle();
         if (state == null) return;
 
-        Player victim = event.getEntity();
+        DeathResult result = event.result();
+        var victim = result.victim();
         if (!state.isFighter(victim)) return;
+        if (!result.hasKiller()) return;
 
-        event.getDrops().clear();
-        event.setDroppedExp(0);
-
-        Player killer = victim.getKiller();
+        var killer = result.killer();
         if (state.recordKill(killer, victim)) {
             killer.sendActionBar(Component.text("Battle progress ", NamedTextColor.RED)
                     .append(Component.text(state.mapProgress(), NamedTextColor.WHITE))

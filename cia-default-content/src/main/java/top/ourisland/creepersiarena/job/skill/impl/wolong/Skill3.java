@@ -14,6 +14,8 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
@@ -79,6 +81,12 @@ public class Skill3 implements ISkillDefinition {
                                 a.setCritical(false);
                                 a.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
                                 a.setVelocity(dir.multiply(2.8));
+                                BuiltinDamageAttributionMarker.markEntitySource(
+                                        a,
+                                        p,
+                                        DefaultContentDeathCauses.wolongArrow(),
+                                        id()
+                                );
                             });
                         } else {
                             arrow = p.getWorld().spawn(loc, Arrow.class, a -> {
@@ -86,6 +94,12 @@ public class Skill3 implements ISkillDefinition {
                                 a.setCritical(false);
                                 a.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
                                 a.setVelocity(dir.multiply(2.8));
+                                BuiltinDamageAttributionMarker.markEntitySource(
+                                        a,
+                                        p,
+                                        DefaultContentDeathCauses.wolongArrow(),
+                                        id()
+                                );
                             });
                         }
                         arrow.setDamage(0.8);

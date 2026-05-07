@@ -13,6 +13,7 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.*;
 
 import java.util.List;
@@ -79,7 +80,13 @@ public class Skill2 implements ISkillDefinition {
                                     case 4 -> 4.0;
                                     default -> 3.0;
                                 };
-                                BuiltinCombatUtils.damage(p, target, dmg);
+                                BuiltinCombatUtils.damage(
+                                        p,
+                                        target,
+                                        dmg,
+                                        DefaultContentDeathCauses.ysahanFishExplosion(),
+                                        id()
+                                );
                                 BuiltinCombatUtils.glow(target, (int) Math.max(20, (5.5 - d) * 20));
                             }
                         },

@@ -17,6 +17,8 @@ import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 
@@ -81,6 +83,12 @@ public class Skill2 implements ISkillDefinition {
                     fangs.setOwner(p);
                 } catch (Throwable _) {
                 }
+                BuiltinDamageAttributionMarker.markEntitySource(
+                        fangs,
+                        p,
+                        DefaultContentDeathCauses.golemFangs(),
+                        id()
+                );
             });
             p.playSound(p, Sound.ENTITY_EVOKER_CAST_SPELL, SoundCategory.PLAYERS, 1f, 0.8f);
         };

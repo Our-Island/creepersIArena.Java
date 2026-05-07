@@ -2,6 +2,10 @@ package top.ourisland.creepersiarena.api;
 
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
+import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
+import top.ourisland.creepersiarena.api.game.death.IDeathMessageProvider;
+import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -16,15 +20,6 @@ import java.nio.file.Path;
  * mechanism so external extensions do not need to depend on CreepersIArena implementation classes.
  */
 public interface ICiaExtensionContext {
-
-    /**
-     * Returns the stable owner id for the current extension context.
-     * <p>
-     * For jar-based CIA extensions this is the descriptor id.
-     *
-     * @return extension owner id
-     */
-    String extensionId();
 
     /**
      * Returns the data directory reserved for this extension context.
@@ -44,35 +39,6 @@ public interface ICiaExtensionContext {
      * @return owning Paper plugin
      */
     Plugin plugin();
-
-    /**
-     * Returns a runtime service by type or throws when missing.
-     *
-     * @param type service class
-     * @param <T>  service type
-     *
-     * @return service instance
-     */
-    default <T> T requireService(Class<T> type) {
-        T service = getService(type);
-        if (service == null) {
-            throw new IllegalStateException("Missing CIA runtime service: " + type.getName());
-        }
-        return service;
-    }
-
-    /**
-     * Returns a runtime service by type, or {@code null} when that service is unavailable.
-     * <p>
-     * This is primarily intended for bundled/default content while the public service API is still stabilizing.
-     * External extensions should prefer the dedicated registration and context methods where possible.
-     *
-     * @param type service class
-     * @param <T>  service type
-     *
-     * @return service instance, or null
-     */
-    <T> T getService(Class<T> type);
 
     /**
      * Installs a resource from the extension jar into the main CreepersIArena data directory when the target file does
@@ -128,6 +94,71 @@ public interface ICiaExtensionContext {
      * @param mode mode definition to publish
      */
     void registerMode(IGameMode mode);
+
+    /**
+     * Registers a death cause resolver owned by this extension.
+     *
+     * @param resolver resolver to publish
+     */
+    default void registerDeathCauseResolver(IDeathCauseResolver resolver) {
+        requireService(IDeathResolutionRegistry.class).registerResolver(extensionId(), resolver);
+    }
+
+    /**
+     * Returns a runtime service by type or throws when missing.
+     *
+     * @param type service class
+     * @param <T>  service type
+     *
+     * @return service instance
+     */
+    default <T> T requireService(Class<T> type) {
+        T service = getService(type);
+        if (service == null) {
+            throw new IllegalStateException("Missing CIA runtime service: " + type.getName());
+        }
+        return service;
+    }
+
+    /**
+     * Returns the stable owner id for the current extension context.
+     * <p>
+     * For jar-based CIA extensions this is the descriptor id.
+     *
+     * @return extension owner id
+     */
+    String extensionId();
+
+    /**
+     * Returns a runtime service by type, or {@code null} when that service is unavailable.
+     * <p>
+     * This is primarily intended for bundled/default content while the public service API is still stabilizing.
+     * External extensions should prefer the dedicated registration and context methods where possible.
+     *
+     * @param type service class
+     * @param <T>  service type
+     *
+     * @return service instance, or null
+     */
+    <T> T getService(Class<T> type);
+
+    /**
+     * Registers a death message provider owned by this extension.
+     *
+     * @param provider message provider to publish
+     */
+    default void registerDeathMessageProvider(IDeathMessageProvider provider) {
+        requireService(IDeathResolutionRegistry.class).registerMessageProvider(extensionId(), provider);
+    }
+
+    /**
+     * Registers a death cleanup participant owned by this extension.
+     *
+     * @param participant cleanup participant to publish
+     */
+    default void registerDeathCleanupParticipant(IDeathCleanupParticipant participant) {
+        requireService(IDeathResolutionRegistry.class).registerCleanupParticipant(extensionId(), participant);
+    }
 
     /**
      * Registers a Bukkit listener owned by this extension.

@@ -5,8 +5,10 @@ import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
+import top.ourisland.creepersiarena.api.game.death.DeathCauseId
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore
 import top.ourisland.creepersiarena.api.game.player.PlayerState
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.damage
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.installSessions
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.isEnemy
@@ -165,10 +167,48 @@ object BuiltinCombatUtils {
      */
     @JvmStatic
     fun damage(source: Player?, target: Player?, amount: Double) {
+        damage(source, target, amount, null, null)
+    }
+
+    /**
+     * Applies team-aware damage and tags the next damage event with a built-in death cause.
+     *
+     * The marker lets the core death pipeline keep skill attribution without duplicating default-content job knowledge.
+     * The temporary player marker is cleared immediately after Paper finishes dispatching the damage call.
+     *
+     * @param source attacking player, or `null` to skip damage
+     * @param target target player, or `null` to skip damage
+     * @param amount damage amount passed to Paper
+     * @param causeId default-content death cause id for this damage
+     */
+    @JvmStatic
+    fun damage(source: Player?, target: Player?, amount: Double, causeId: DeathCauseId?) {
+        damage(source, target, amount, causeId, null)
+    }
+
+    /**
+     * Applies team-aware damage and tags the next damage event with a built-in death cause and source skill id.
+     *
+     * @param source attacking player, or `null` to skip damage
+     * @param target target player, or `null` to skip damage
+     * @param amount damage amount passed to Paper
+     * @param causeId default-content death cause id for this damage
+     * @param sourceSkillId skill id that produced the damage
+     */
+    @JvmStatic
+    fun damage(source: Player?, target: Player?, amount: Double, causeId: DeathCauseId?, sourceSkillId: String?) {
         if (source == null || target == null) return
         val sessions = installedSessions
         if (sessions != null && !isEnemy(sessions, source, target)) return
-        target.damage(amount, source)
+
+        if (causeId != null) {
+            BuiltinDamageAttributionMarker.markNextDamage(target, source, causeId, sourceSkillId)
+        }
+        try {
+            target.damage(amount, source)
+        } finally {
+            BuiltinDamageAttributionMarker.clearNextDamage(target)
+        }
     }
 
     /**

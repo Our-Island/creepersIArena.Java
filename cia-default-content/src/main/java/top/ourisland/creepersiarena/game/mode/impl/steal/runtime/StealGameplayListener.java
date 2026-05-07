@@ -14,7 +14,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -22,6 +21,7 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.projectiles.ProjectileSource;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -215,14 +215,15 @@ public final class StealGameplayListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onDeath(PlayerDeathEvent event) {
+    public void onDeathResolved(ArenaPlayerDeathResolvedEvent event) {
         var active = activeSteal();
         if (active == null) return;
 
-        PlayerSession playerSession = sessions.get(event.getEntity());
+        var victim = event.result().victim();
+        var playerSession = sessions.get(victim);
         if (playerSession == null || playerSession.state() != PlayerState.IN_GAME) return;
 
-        active.timeline().onPlayerDeath(event.getEntity());
+        active.timeline().onPlayerDeathResolved(victim);
     }
 
     private record ActiveSteal(

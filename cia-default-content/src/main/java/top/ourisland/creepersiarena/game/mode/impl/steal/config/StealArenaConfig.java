@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.game.mode.impl.steal.config;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -22,17 +23,19 @@ import java.util.function.Consumer;
 public record StealArenaConfig(
         List<BlockCuboid> redstoneBlocks,
         List<BlockCuboid> selectionBarriers,
-        List<TourPoint> tourPoints
+        List<TourPoint> tourPoints,
+        Location spectatorFallback
 ) {
 
     public static StealArenaConfig from(ArenaInstance arena) {
         if (arena == null) return from(IArenaConfigView.EMPTY);
         var config = arena.config();
-        World world = arena.world();
+        var world = arena.world();
         return new StealArenaConfig(
                 parseCuboids(world, config.getList("redstone-blocks")),
                 parseCuboids(world, config.getList("selection-barriers")),
-                parseTourPoints(arena)
+                parseTourPoints(arena),
+                parseSpectatorFallback(arena)
         );
     }
 
@@ -41,8 +44,34 @@ public record StealArenaConfig(
         return new StealArenaConfig(
                 parseCuboids(null, view.getList("redstone-blocks")),
                 parseCuboids(null, view.getList("selection-barriers")),
-                parseTourPoints(null, view)
+                parseTourPoints(null, view),
+                parseSpectatorFallback(null, view)
         );
+    }
+
+    private static Location parseSpectatorFallback(ArenaInstance arena) {
+        return parseSpectatorFallback(arena, arena == null ? IArenaConfigView.EMPTY : arena.config());
+    }
+
+    private static Location parseSpectatorFallback(ArenaInstance arena, IArenaConfigView config) {
+        var world = arena == null ? null : arena.world();
+        var section = config.section();
+        if (section != null) {
+            Location direct = parseLocation(world, section.get("spectator-fallback"));
+            if (direct != null) return direct;
+
+            var fallback = section.getConfigurationSection("spectator-fallback");
+            if (fallback != null) {
+                Location nested = parseLocation(world, fallback.get("location"));
+                if (nested != null) return nested;
+            }
+
+            Location legacy = parseLocation(world, section.get("spectator-fallback-location"));
+            if (legacy != null) return legacy;
+        }
+
+        if (arena == null) return null;
+        return arena.anchor().clone().add(0, 8, 0);
     }
 
     private static List<TourPoint> parseTourPoints(ArenaInstance arena) {
@@ -50,7 +79,7 @@ public record StealArenaConfig(
     }
 
     private static List<TourPoint> parseTourPoints(ArenaInstance arena, IArenaConfigView config) {
-        World world = arena == null ? null : arena.world();
+        var world = arena == null ? null : arena.world();
         var section = config.getSection("tour");
         if (section != null) {
             var points = new ArrayList<TourPoint>();
@@ -77,19 +106,19 @@ public record StealArenaConfig(
 
     private static TourPoint parseTourPoint(World world, Object entry) {
         if (entry instanceof ConfigurationSection section) {
-            Location location = parseLocation(world, section.get("location"));
+            var location = parseLocation(world, section.get("location"));
             if (location == null) return null;
             return new TourPoint(location, Component.text(section.getString("message", "观察地图"), NamedTextColor.GRAY));
         }
         if (entry instanceof Map<?, ?> map) {
-            Location location = parseLocation(world, map.get("location"));
+            var location = parseLocation(world, map.get("location"));
             if (location == null) return null;
             Object rawMessage = map.get("message");
             return new TourPoint(location, Component.text(rawMessage == null
                     ? "观察地图"
                     : String.valueOf(rawMessage), NamedTextColor.GRAY));
         }
-        Location location = parseLocation(world, entry);
+        var location = parseLocation(world, entry);
         return location == null ? null : new TourPoint(location, Component.text("观察地图", NamedTextColor.GRAY));
     }
 
@@ -171,6 +200,12 @@ public record StealArenaConfig(
         return null;
     }
 
+    public Location spectatorFallbackOrAnchor(ArenaInstance arena) {
+        if (spectatorFallback != null) return spectatorFallback.clone();
+        if (arena == null) return null;
+        return arena.anchor().clone().add(0, 8, 0);
+    }
+
     public int redstoneTargetCount() {
         int count = 0;
         for (BlockCuboid cuboid : redstoneBlocks) {
@@ -199,7 +234,7 @@ public record StealArenaConfig(
     }
 
     public void setSelectionBarriers(boolean enabled) {
-        Material material = enabled ? Material.BARRIER : Material.AIR;
+        var material = enabled ? Material.BARRIER : Material.AIR;
         for (BlockCuboid cuboid : selectionBarriers) {
             cuboid.forEachBlock(block -> block.setType(material, false));
         }
@@ -233,12 +268,31 @@ public record StealArenaConfig(
         }
 
         public void forEachBlock(Consumer<Block> consumer) {
-            World world = from.getWorld();
+            var world = from.getWorld();
             if (world == null || consumer == null) return;
-            for (int x = min(from.getBlockX(), to.getBlockX()); x <= max(from.getBlockX(), to.getBlockX()); x++) {
-                for (int y = min(from.getBlockY(), to.getBlockY()); y <= max(from.getBlockY(), to.getBlockY()); y++) {
-                    for (int z = min(from.getBlockZ(), to.getBlockZ()); z <= max(from.getBlockZ(), to.getBlockZ()); z++) {
-                        consumer.accept(world.getBlockAt(x, y, z));
+
+            int minX = Math.min(from.getBlockX(), to.getBlockX());
+            int maxX = Math.max(from.getBlockX(), to.getBlockX());
+            int minY = Math.min(from.getBlockY(), to.getBlockY());
+            int maxY = Math.max(from.getBlockY(), to.getBlockY());
+            int minZ = Math.min(from.getBlockZ(), to.getBlockZ());
+            int maxZ = Math.max(from.getBlockZ(), to.getBlockZ());
+
+            for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
+                for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
+                    Chunk chunk = world.getChunkAt(cx, cz);
+
+                    int startX = Math.max(minX, cx << 4);
+                    int endX = Math.min(maxX, (cx << 4) + 15);
+                    int startZ = Math.max(minZ, cz << 4);
+                    int endZ = Math.min(maxZ, (cz << 4) + 15);
+
+                    for (int x = startX; x <= endX; x++) {
+                        for (int z = startZ; z <= endZ; z++) {
+                            for (int y = minY; y <= maxY; y++) {
+                                consumer.accept(chunk.getBlock(x & 15, y, z & 15));
+                            }
+                        }
                     }
                 }
             }
