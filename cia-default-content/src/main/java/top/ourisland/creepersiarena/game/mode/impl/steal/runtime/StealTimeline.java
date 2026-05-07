@@ -414,7 +414,7 @@ final class StealTimeline implements IModeTimeline {
         return ids;
     }
 
-    void onPlayerDeath(Player player) {
+    void onPlayerDeathResolved(Player player) {
         if (player == null || state.phase != StealPhase.ROUND_PLAYING) return;
         if (!state.isParticipant(player.getUniqueId())) return;
         state.markDead(player.getUniqueId());
