@@ -15,6 +15,7 @@ import top.ourisland.creepersiarena.job.JobManager;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
+import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.ArrayList;
@@ -77,6 +78,9 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
         state.markFighter(playerSession);
 
         player.setGameMode(GameMode.ADVENTURE);
+        BuiltinAttributeUtils.setBaseValue(player, 20.0D, "max_health", "generic_max_health");
+        Double maxHealth = BuiltinAttributeUtils.baseValue(player, "max_health", "generic_max_health");
+        player.setHealth(maxHealth == null ? 20.0D : Math.max(1.0D, maxHealth));
         kit.apply(player, playerSession);
         Msg.actionBar(player, Component.text("进入 battle 战场"));
     }

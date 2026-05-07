@@ -165,7 +165,7 @@ final class StealTimeline implements IModeTimeline {
             p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.PLAYERS, 1.0f, 1.0f);
         }
 
-        return List.of(new GameAction.ToSpectate(playerIds(audience), session.arena().anchor().clone().add(0, 8, 0)));
+        return List.of(new GameAction.ToSpectate(playerIds(audience), arenaCfg.spectatorFallbackOrAnchor(session.arena())));
     }
 
     private List<GameAction> tickSpectatorTour(StealModeConfig cfg, StealArenaConfig arenaCfg) {

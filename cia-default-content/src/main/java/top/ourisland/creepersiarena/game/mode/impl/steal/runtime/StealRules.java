@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.game.mode.impl.steal.runtime;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -41,7 +42,7 @@ final class StealRules implements IModeRules {
                     ? joinAsReady(ctx)
                     : attachWaitingAudience(ctx);
             case SPECTATOR_TOUR, CHOOSE_JOB, ROUND_PLAYING, ROUND_CELEBRATION, GAME_END_CELEBRATION -> {
-                Location view = game.arena().anchor().clone().add(0, 8, 0);
+                Location view = state.arenaConfig().spectatorFallbackOrAnchor(game.arena());
                 yield new JoinDecision.ToSpectate(view);
             }
         };
@@ -72,8 +73,29 @@ final class StealRules implements IModeRules {
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        Location view = game.arena().anchor().clone().add(0, 8, 0);
-        return new RespawnDecision.Spectate(view);
+        Location teammateView = livingTeammateLocation(ctx);
+        if (teammateView != null) return new RespawnDecision.Spectate(teammateView);
+
+        return new RespawnDecision.Spectate(state.arenaConfig().spectatorFallbackOrAnchor(game.arena()));
+    }
+
+    private Location livingTeammateLocation(RespawnContext ctx) {
+        if (ctx == null || ctx.player() == null) return null;
+
+        var victimId = ctx.player().getUniqueId();
+        var team = state.team(victimId);
+        if (team == null) return null;
+
+        for (var candidateId : state.participantIds()) {
+            if (candidateId == null || candidateId.equals(victimId)) continue;
+            if (!state.isAlive(candidateId) || state.team(candidateId) != team) continue;
+
+            var teammate = Bukkit.getPlayer(candidateId);
+            if (teammate != null && teammate.isOnline()) {
+                return teammate.getLocation().clone();
+            }
+        }
+        return null;
     }
 
 }

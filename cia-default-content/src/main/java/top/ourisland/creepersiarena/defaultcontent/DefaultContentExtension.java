@@ -5,13 +5,11 @@ import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathCauseResolver;
-import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathCleanupParticipant;
-import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathMessageCatalog;
-import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathMessageProvider;
+import top.ourisland.creepersiarena.defaultcontent.death.*;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleGameplayListener;
+import top.ourisland.creepersiarena.game.mode.impl.battle.BattleRespawnPresentation;
 import top.ourisland.creepersiarena.game.mode.impl.steal.runtime.StealGameplayListener;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
@@ -59,7 +57,9 @@ public final class DefaultContentExtension implements ICiaExtension {
         registerDeathContent(context, sessions);
 
         context.registerListener(new SkillImplementationListener(sessions, runtime, tickTask));
+        context.registerListener(new BuiltinKillFeedbackService());
         context.registerListener(new BattleGameplayListener(gameManager, sessions));
+        context.registerListener(new BattleRespawnPresentation(context.plugin(), gameManager, sessions));
         context.registerListener(new StealGameplayListener(gameManager, sessions));
     }
 

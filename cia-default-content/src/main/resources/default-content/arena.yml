@@ -33,6 +33,7 @@ arena:
     settings:
       # Steal-owned settings. Core only preserves this raw section; the mode reads it through ArenaConfigView.
       # The source datapack uses 18 physical ores and ends the round after 10 are mined.
+      spectator-fallback: [ -20000, 82, -20000, 135, 55 ]
       redstone-blocks:
         - from: [ -20034, 71, -19966 ]
           to: [ -20033, 71, -19967 ]
