@@ -13,9 +13,10 @@ import org.bukkit.projectiles.ProjectileSource;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
+import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
-import top.ourisland.creepersiarena.game.death.CoreDeathCauseIds;
+import top.ourisland.creepersiarena.game.death.CoreDeathCauseMapper;
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.death.DeathCauseRegistry;
 import top.ourisland.creepersiarena.game.death.DeathStreakService;
@@ -78,10 +79,11 @@ public final class ArenaDamageAttributionListener implements Listener {
     }
 
     private DeathAttribution fallbackAttribution(EntityDamageEvent event, Player victim) {
-        Player attacker = attackerFrom(event);
-        DeathCauseId causeId = attacker == null
-                ? CoreDeathCauseIds.fromDamageCause(event.getCause())
-                : CoreDeathCauseIds.DIRECT_HIT;
+        var attacker = attackerFrom(event);
+        DeathCauseId causeId = CoreDeathCauseMapper.fromDamageCause(event.getCause());
+        if (attacker != null && StandardDeathCauses.GENERIC.equals(causeId)) {
+            causeId = StandardDeathCauses.DIRECT_HIT;
+        }
         var attackerId = attacker == null ? null : attacker.getUniqueId();
         boolean selfInflicted = attackerId != null && attackerId.equals(victim.getUniqueId());
 

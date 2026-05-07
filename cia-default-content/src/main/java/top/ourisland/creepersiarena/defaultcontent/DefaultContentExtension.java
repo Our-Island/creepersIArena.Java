@@ -5,13 +5,20 @@ import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathCauseResolver;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathCleanupParticipant;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathMessageCatalog;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDeathMessageProvider;
 import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleGameplayListener;
 import top.ourisland.creepersiarena.game.mode.impl.steal.runtime.StealGameplayListener;
 import top.ourisland.creepersiarena.job.listener.SkillImplementationListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
+
+import java.util.function.LongSupplier;
 
 /**
  * Entry point for CreepersIArena's bundled gameplay content.
@@ -35,6 +42,7 @@ public final class DefaultContentExtension implements ICiaExtension {
         context.mergeYamlResource("default-content/config.yml", "config.yml");
         context.mergeYamlResource("default-content/arena.yml", "arena.yml");
         context.installResource("default-content/skill.yml", "skill.yml");
+        context.installResource("default-content/death-messages.yml", "death-messages.yml");
         context.mergePropertiesResource("lang/en_us.properties", "lang/en_us.properties");
         context.mergePropertiesResource("lang/zh_cn.properties", "lang/zh_cn.properties");
         context.registerAnnotated(ROOT_PACKAGE);
@@ -48,9 +56,27 @@ public final class DefaultContentExtension implements ICiaExtension {
         var gameManager = context.requireService(GameManager.class);
 
         BuiltinCombatUtils.installSessions(sessions);
+        registerDeathContent(context, sessions);
+
         context.registerListener(new SkillImplementationListener(sessions, runtime, tickTask));
         context.registerListener(new BattleGameplayListener(gameManager, sessions));
         context.registerListener(new StealGameplayListener(gameManager, sessions));
+    }
+
+    private void registerDeathContent(
+            ICiaExtensionContext context,
+            PlayerSessionStore sessions
+    ) {
+        var attributionStore = context.getService(DamageAttributionStore.class);
+        LongSupplier currentTick = attributionStore == null ? () -> 0L : attributionStore::currentTick;
+        var catalog = BuiltinDeathMessageCatalog.load(
+                context.plugin().getDataFolder().toPath().resolve("death-messages.yml"),
+                getClass().getClassLoader()
+        );
+
+        context.registerDeathCauseResolver(new BuiltinDeathCauseResolver(sessions, currentTick));
+        context.registerDeathMessageProvider(new BuiltinDeathMessageProvider(catalog));
+        context.registerDeathCleanupParticipant(new BuiltinDeathCleanupParticipant());
     }
 
 }

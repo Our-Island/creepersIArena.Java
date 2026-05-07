@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
+import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
@@ -104,12 +105,12 @@ public final class DeathResolutionService {
         }
 
         if (victim.getLastDamageCause() != null) {
-            DeathCauseId bukkitCauseId = CoreDeathCauseIds.fromDamageCause(victim.getLastDamageCause().getCause());
+            DeathCauseId bukkitCauseId = CoreDeathCauseMapper.fromDamageCause(victim.getLastDamageCause().getCause());
             if (lastAttribution != null && isDirectOrGeneric(bukkitCauseId)) return lastAttribution.causeId();
             return bukkitCauseId;
         }
         if (lastAttribution != null) return lastAttribution.causeId();
-        return CoreDeathCauseIds.GENERIC;
+        return StandardDeathCauses.GENERIC;
     }
 
     private Player resolveKiller(Player victim, DeathAttribution lastAttribution) {
@@ -128,7 +129,7 @@ public final class DeathResolutionService {
     }
 
     private boolean isDirectOrGeneric(DeathCauseId causeId) {
-        return CoreDeathCauseIds.DIRECT_HIT.equals(causeId) || CoreDeathCauseIds.GENERIC.equals(causeId);
+        return StandardDeathCauses.DIRECT_HIT.equals(causeId) || StandardDeathCauses.GENERIC.equals(causeId);
     }
 
 }

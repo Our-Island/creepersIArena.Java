@@ -11,6 +11,8 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
@@ -62,6 +64,12 @@ public class Skill1 implements ISkillDefinition {
 
             var creeper = (Creeper) world.spawnEntity(spawnLoc, EntityType.CREEPER);
             creeper.addScoreboardTag(TAG);
+            BuiltinDamageAttributionMarker.markEntitySource(
+                    creeper,
+                    caster,
+                    DefaultContentDeathCauses.creeperExplosionEnemy(),
+                    id()
+            );
             creeper.setInvulnerable(true);
             creeper.setCollidable(false);
             creeper.setVelocity(dir.multiply(speed));

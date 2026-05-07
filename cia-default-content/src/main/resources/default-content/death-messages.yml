@@ -1,0 +1,169 @@
+labels:
+  first_blood:
+    text: "一破"
+    color: "yellow"
+  double_kill:
+    text: "双杀"
+    color: "gold"
+  shutdown:
+    text: "终结"
+    color: "aqua"
+  triple_kill:
+    text: "三杀"
+    color: "green"
+  quadra_kill:
+    text: "四杀"
+    color: "red"
+  penta_kill:
+    text: "五杀"
+    color: "red"
+  ace_elite:
+    text: "王牌精英"
+    color: "dark_green"
+  godlike:
+    text: "神迹在世"
+    color: "dark_purple"
+  suicide:
+    text: "自杀"
+    color: "gray"
+
+messages:
+  cia:accident/generic:
+    killer:
+      - "{label} {victim} 被 {killer} 击败了"
+      - "{label} {killer} 终结了 {victim} 的想象"
+    solo:
+      - "{label} {victim} 倒下了"
+      - "{label} {victim} 没能活过这次意外"
+  cia:accident/direct_hit:
+    killer:
+      - "{label} {victim} 被 {killer} 正面击败"
+      - "{label} {killer} 用普通攻击击倒了 {victim}"
+    solo:
+      - "{label} {victim} 被自己的攻势反噬了"
+  cia:accident/void:
+    killer:
+      - "{label} {victim} 被 {killer} 送入了虚空"
+      - "{label} {killer} 让 {victim} 体验了失重"
+    solo:
+      - "{label} {victim} 掉出了这个世界"
+      - "{label} {victim} 与虚空进行了亲密接触"
+  cia:accident/fire:
+    killer:
+      - "{label} {victim} 被 {killer} 逼进了烈焰"
+      - "{label} {killer} 让 {victim} 在火光中倒下"
+    solo:
+      - "{label} {victim} 被火焰吞没了"
+      - "{label} {victim} 忘记远离热源"
+  cia:accident/fall:
+    killer:
+      - "{label} {victim} 被 {killer} 摔成了碎片"
+      - "{label} {killer} 让 {victim} 以地面收场"
+    solo:
+      - "{label} {victim} 忘记了落地要减速"
+      - "{label} {victim} 与地面进行了硬碰硬"
+  cia:accident/drowning:
+    killer:
+      - "{label} {victim} 被 {killer} 逼到水下窒息"
+      - "{label} {killer} 让 {victim} 没能浮出水面"
+    solo:
+      - "{label} {victim} 沉入了水底"
+      - "{label} {victim} 忘记了换气"
+  cia:skill/creeper/explosion_enemy:
+    killer:
+      - "{label} {killer} 的苦力怕炸飞了 {victim}"
+      - "{label} {victim} 被 {killer} 的爆炸吞没"
+    solo:
+      - "{label} {victim} 被爆炸波及了"
+  cia:skill/creeper/explosion_friendly:
+    killer:
+      - "{label} {killer} 的苦力怕误伤了队友 {victim}"
+      - "{label} {victim} 被 {killer} 的友军爆破送走"
+    solo:
+      - "{label} {victim} 被友军爆炸卷入"
+  cia:skill/creeper/explosion_self:
+    killer:
+      - "{label} {victim} 被自己的苦力怕炸飞了"
+    solo:
+      - "{label} {victim} 被自己的苦力怕炸飞了"
+      - "{label} {victim} 离爆炸中心太近了"
+  cia:skill/creeper/firework_crossbow:
+    killer:
+      - "{label} {victim} 被 {killer} 的烟花弩轰落"
+      - "{label} {killer} 用远程轰炸击败了 {victim}"
+    solo:
+      - "{label} {victim} 被烟花爆炸击倒"
+  cia:skill/creeper/firework_mount:
+    killer:
+      - "{label} {victim} 被 {killer} 的烟花坐骑炸翻"
+      - "{label} {killer} 骑着烟花撞碎了 {victim} 的防线"
+    solo:
+      - "{label} {victim} 被烟花坐骑的爆炸带走"
+  cia:skill/moison/arrow_1:
+    killer:
+      - "{label} {victim} 被 {killer} 的吹箭击中要害"
+      - "{label} {killer} 用机关箭击倒了 {victim}"
+    solo:
+      - "{label} {victim} 被机关箭击倒"
+  cia:skill/moison/arrow_2:
+    killer:
+      - "{label} {victim} 倒在 {killer} 的箭雨之下"
+      - "{label} {killer} 的放箭压制了 {victim}"
+    solo:
+      - "{label} {victim} 被箭雨吞没"
+  cia:skill/avenger/normal_hit:
+    killer:
+      - "{label} {killer} 用愤怒之刃击败了 {victim}"
+      - "{label} {victim} 挡不住 {killer} 的怒火"
+    solo:
+      - "{label} {victim} 被愤怒之刃击倒"
+  cia:skill/avenger/strong_hit:
+    killer:
+      - "{label} {killer} 用复仇之刃终结了 {victim}"
+      - "{label} {victim} 被 {killer} 的复仇重击击溃"
+    solo:
+      - "{label} {victim} 被复仇之刃击倒"
+  cia:skill/bloodline/skill_1:
+    killer:
+      - "{label} {victim} 被 {killer} 的吸血魔珠抽干"
+      - "{label} {killer} 用血脉脉冲击败了 {victim}"
+    solo:
+      - "{label} {victim} 被血脉力量击倒"
+  cia:skill/bloodline/skill_2:
+    killer:
+      - "{label} {victim} 被 {killer} 的血脉技能击败"
+    solo:
+      - "{label} {victim} 被血脉技能击败"
+  cia:skill/golem/skill_1:
+    killer:
+      - "{label} {victim} 被 {killer} 的石化攻势击倒"
+    solo:
+      - "{label} {victim} 被石化攻势击倒"
+  cia:skill/golem/fangs:
+    killer:
+      - "{label} {victim} 被 {killer} 召出的石牙刺穿"
+      - "{label} {killer} 的裂隙石牙咬住了 {victim}"
+    solo:
+      - "{label} {victim} 被裂隙石牙吞没"
+  cia:skill/wolong/fan:
+    killer:
+      - "{label} {victim} 被 {killer} 的折扇攻势击败"
+    solo:
+      - "{label} {victim} 被折扇攻势击败"
+  cia:skill/wolong/arrow:
+    killer:
+      - "{label} {victim} 被 {killer} 的诸葛连弩射落"
+      - "{label} {killer} 的连弩贯穿了 {victim}"
+    solo:
+      - "{label} {victim} 被连弩射落"
+  cia:skill/ysahan/rod:
+    killer:
+      - "{label} {victim} 被 {killer} 的钓竿戏法击败"
+    solo:
+      - "{label} {victim} 被钓竿戏法击败"
+  cia:skill/ysahan/fish_explosion:
+    killer:
+      - "{label} {victim} 被 {killer} 的河豚炸弹击中"
+      - "{label} {killer} 用鱼类爆炸带走了 {victim}"
+    solo:
+      - "{label} {victim} 被河豚炸弹炸倒"

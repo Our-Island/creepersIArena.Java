@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
@@ -80,7 +81,13 @@ public class Skill1 implements ISkillDefinition {
                                 0.0
                         );
                         if (target != null) {
-                            BuiltinCombatUtils.damage(p, target, 1.0);
+                            BuiltinCombatUtils.damage(
+                                    p,
+                                    target,
+                                    1.0,
+                                    DefaultContentDeathCauses.bloodlineSkill1(),
+                                    id()
+                            );
                             BuiltinCombatUtils.glow(target, 20);
                             p.addPotionEffect(new PotionEffect(
                                     PotionEffectType.STRENGTH,

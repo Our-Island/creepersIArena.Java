@@ -5,7 +5,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.SpectralArrow;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
+import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 
 final class MoisonProjectileSupport {
@@ -56,6 +59,12 @@ final class MoisonProjectileSupport {
                         PersistentDataType.BYTE,
                         (byte) 1
                 );
+                BuiltinDamageAttributionMarker.markEntitySource(
+                        spawned,
+                        player,
+                        causeIdFor(sourceId),
+                        sourceId
+                );
             });
             arrow.setDamage(damage);
             return;
@@ -77,8 +86,20 @@ final class MoisonProjectileSupport {
                     PersistentDataType.STRING,
                     sourceId
             );
+            BuiltinDamageAttributionMarker.markEntitySource(
+                    spawned,
+                    player,
+                    causeIdFor(sourceId),
+                    sourceId
+            );
         });
         arrow.setDamage(damage);
+    }
+
+    private static DeathCauseId causeIdFor(String sourceId) {
+        return "cia:moison.volley".equals(sourceId)
+                ? DefaultContentDeathCauses.moisonArrow2()
+                : DefaultContentDeathCauses.moisonArrow1();
     }
 
 }

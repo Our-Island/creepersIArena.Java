@@ -14,6 +14,8 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.death.BuiltinDamageAttributionMarker;
+import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 
 import java.util.List;
@@ -106,6 +108,12 @@ public class Skill2 implements ISkillDefinition {
 
             w.spawn(spawnPosition, Firework.class, f -> {
                 f.setShooter(p);
+                BuiltinDamageAttributionMarker.markEntitySource(
+                        f,
+                        p,
+                        DefaultContentDeathCauses.creeperFireworkCrossbow(),
+                        id()
+                );
                 var meta = f.getFireworkMeta();
                 meta.clearEffects();
                 meta.addEffect(buildEffect());
