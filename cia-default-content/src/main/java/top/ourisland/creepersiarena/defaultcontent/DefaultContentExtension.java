@@ -54,7 +54,7 @@ public final class DefaultContentExtension implements ICiaExtension {
         var gameManager = context.requireService(GameManager.class);
 
         BuiltinCombatUtils.installSessions(sessions);
-        registerDeathContent(context, sessions);
+        registerDeathContent(context, sessions, runtime);
 
         context.registerListener(new SkillImplementationListener(sessions, runtime, tickTask));
         context.registerListener(new BuiltinKillFeedbackService());
@@ -65,7 +65,8 @@ public final class DefaultContentExtension implements ICiaExtension {
 
     private void registerDeathContent(
             ICiaExtensionContext context,
-            PlayerSessionStore sessions
+            PlayerSessionStore sessions,
+            SkillRuntime runtime
     ) {
         var attributionStore = context.getService(DamageAttributionStore.class);
         LongSupplier currentTick = attributionStore == null ? () -> 0L : attributionStore::currentTick;
@@ -76,7 +77,7 @@ public final class DefaultContentExtension implements ICiaExtension {
 
         context.registerDeathCauseResolver(new BuiltinDeathCauseResolver(sessions, currentTick));
         context.registerDeathMessageProvider(new BuiltinDeathMessageProvider(catalog));
-        context.registerDeathCleanupParticipant(new BuiltinDeathCleanupParticipant());
+        context.registerDeathCleanupParticipant(new BuiltinDeathCleanupParticipant(runtime.store()));
     }
 
 }
