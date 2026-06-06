@@ -95,7 +95,9 @@ public final class StealGameplayListener implements Listener {
         boolean accepted = active.timeline().onMinedRedstone(player, active.state().modeConfig());
         if (!accepted) return false;
 
-        regeneration.breakRest(player, RegenerationBreakReason.OBJECTIVE_ACTION);
+        if (regeneration != null) {
+            regeneration.breakRest(player, RegenerationBreakReason.OBJECTIVE_ACTION);
+        }
 
         block.setType(Material.AIR, false);
         player.playSound(player, Sound.BLOCK_DEEPSLATE_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);

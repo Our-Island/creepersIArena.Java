@@ -5,6 +5,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
@@ -65,11 +66,6 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     }
 
     @Override
-    public String extensionId() {
-        return descriptor.id();
-    }
-
-    @Override
     public Path dataFolder() {
         return dataFolder;
     }
@@ -77,12 +73,6 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     @Override
     public Plugin plugin() {
         return rt.plugin();
-    }
-
-    @Override
-    public <T> T getService(Class<T> type) {
-        Objects.requireNonNull(type, "type");
-        return rt == null ? null : rt.getService(type);
     }
 
     @Override
@@ -199,6 +189,16 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         var gm = rt == null ? null : rt.getService(GameManager.class);
         if (gm != null) gm.registerMode(descriptor.id(), mode);
         logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode());
+    }
+
+    @Override
+    public String extensionId() {
+        return descriptor.id();
+    }
+
+    @Override
+    public <T> @Nullable T getService(@lombok.NonNull Class<T> type) {
+        return rt == null ? null : rt.getService(type);
     }
 
     @Override
