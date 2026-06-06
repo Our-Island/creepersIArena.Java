@@ -1,0 +1,90 @@
+package top.ourisland.creepersiarena.core.bootstrap.module;
+
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.Bukkit;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
+import top.ourisland.creepersiarena.core.bootstrap.StageTask;
+import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.listener.RegenerationListener;
+import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
+import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
+
+@CiaBootstrapModule(name = "regeneration", order = 1150)
+public final class RegenerationModule implements IBootstrapModule {
+
+    @Override
+    public String name() {
+        return "regeneration";
+    }
+
+    @Override
+    public StageTask install(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var service = new RegenerationService(
+                    rt.log(),
+                    rt.requireService(ConfigManager.class),
+                    rt.requireService(PlayerSessionStore.class),
+                    rt.requireService(GameManager.class)
+            );
+            rt.putService(RegenerationService.class, service);
+        }, "Loading resting regeneration...", "Resting regeneration loaded.");
+    }
+
+    @Override
+    public StageTask start(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var service = rt.requireService(RegenerationService.class);
+            ScheduledTask task = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
+                    rt.plugin(),
+                    _ -> service.tick(),
+                    1L,
+                    1L
+            );
+            rt.trackTask(task);
+            rt.putService(RegenerationTickHandle.class, new RegenerationTickHandle(task));
+        }, "Starting resting regeneration tick...", "Resting regeneration tick started.");
+    }
+
+    @Override
+    public StageTask stop(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var service = rt.getService(RegenerationService.class);
+            if (service != null) service.clearAll();
+
+            var handle = rt.getService(RegenerationTickHandle.class);
+            if (handle == null) return;
+            try {
+                handle.task().cancel();
+            } catch (Throwable _) {
+            }
+        }, "Stopping resting regeneration tick...", "Resting regeneration tick stopped.");
+    }
+
+    @Override
+    public StageTask reload(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var service = rt.requireService(RegenerationService.class);
+            service.reloadConfig();
+        }, "Reloading resting regeneration...", "Resting regeneration reloaded.");
+    }
+
+    @Override
+    public boolean registerListeners(ListenerBinder binder) {
+        var rt = binder.rt();
+        binder.register("RestingRegenerationListener", () -> new RegenerationListener(
+                rt.requireService(RegenerationService.class),
+                rt.getService(SkillItemCodec.class)
+        ));
+        return true;
+    }
+
+    public record RegenerationTickHandle(ScheduledTask task) {
+
+    }
+
+}

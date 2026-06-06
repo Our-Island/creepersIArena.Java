@@ -20,11 +20,12 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
+import top.ourisland.creepersiarena.game.regeneration.IRegenerationEligibility;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.*;
 
-final class StealTimeline implements IModeTimeline {
+final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
 
     private final GameRuntime runtime;
     private final GameSession session;
@@ -68,6 +69,13 @@ final class StealTimeline implements IModeTimeline {
     @Override
     public void onStop(TickContext ctx) {
         state.bossBars.hideAllTracked();
+    }
+
+    @Override
+    public boolean allowRegeneration(Player player) {
+        if (player == null || state.phase != StealPhase.ROUND_PLAYING) return false;
+        var playerId = player.getUniqueId();
+        return state.isParticipant(playerId) && state.isAlive(playerId);
     }
 
     GameRuntime runtime() {
