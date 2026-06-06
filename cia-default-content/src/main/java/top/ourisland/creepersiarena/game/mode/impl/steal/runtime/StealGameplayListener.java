@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.projectiles.ProjectileSource;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
@@ -28,15 +29,23 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
+import top.ourisland.creepersiarena.game.regeneration.RegenerationBreakReason;
+import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
 
 public final class StealGameplayListener implements Listener {
 
     private final GameManager gameManager;
     private final PlayerSessionStore sessions;
+    private final RegenerationService regeneration;
 
-    public StealGameplayListener(GameManager gameManager, PlayerSessionStore sessions) {
+    public StealGameplayListener(
+            GameManager gameManager,
+            PlayerSessionStore sessions,
+            RegenerationService regeneration
+    ) {
         this.gameManager = gameManager;
         this.sessions = sessions;
+        this.regeneration = regeneration;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -77,10 +86,18 @@ public final class StealGameplayListener implements Listener {
         return material == Material.DEEPSLATE_REDSTONE_ORE || material == Material.REDSTONE_ORE;
     }
 
-    private boolean tryMineRedstone(Player player, Block block, ActiveSteal active) {
+    private boolean tryMineRedstone(
+            @Nullable Player player,
+            @Nullable Block block,
+            @Nullable ActiveSteal active
+    ) {
         if (player == null || block == null || active == null) return false;
         boolean accepted = active.timeline().onMinedRedstone(player, active.state().modeConfig());
         if (!accepted) return false;
+
+        if (regeneration != null) {
+            regeneration.breakRest(player, RegenerationBreakReason.OBJECTIVE_ACTION);
+        }
 
         block.setType(Material.AIR, false);
         player.playSound(player, Sound.BLOCK_DEEPSLATE_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);

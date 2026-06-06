@@ -25,6 +25,96 @@ game:
   # Shared game-level settings owned by core.
   leave-delay-seconds: 5
 
+  # Core-owned resting regeneration ability. Players can heal by sneaking without moving while in game.
+  regeneration:
+    enabled: true
+    require-in-game: true
+    require-team: true
+    valid-teams: [ 1, 2, 3, 4 ]
+    stationary-horizontal-epsilon: 0.003
+    max-vertical-delta: 0.08
+    require-on-ground: true
+    clear-effect-on-break: true
+    stages:
+      - tick: 20
+        duration-ticks: 40
+        amplifier: 0
+        sound: minecraft:block.note_block.chime
+        volume: 20.0
+        pitch: 0.2
+      - tick: 40
+        duration-ticks: 40
+        amplifier: 0
+        sound: minecraft:block.note_block.chime
+        volume: 20.0
+        pitch: 0.9
+      - tick: 60
+        duration-ticks: 40
+        amplifier: 1
+        sound: minecraft:block.note_block.chime
+        volume: 20.0
+        pitch: 1.2
+      - tick: 80
+        duration-ticks: 40
+        amplifier: 1
+        sound: minecraft:block.beacon.ambient
+        volume: 1.5
+        pitch: 2.0
+      - tick: 105
+        duration-ticks: 40
+        amplifier: 2
+        sound: minecraft:block.beacon.ambient
+        volume: 1.25
+        pitch: 2.0
+      - tick: 130
+        duration-ticks: 40
+        amplifier: 2
+        sound: minecraft:block.beacon.ambient
+        volume: 1.0
+        pitch: 2.0
+      - tick: 155
+        duration-ticks: 40
+        amplifier: 3
+        sound: minecraft:block.beacon.ambient
+        volume: 0.75
+        pitch: 2.0
+      - tick: 180
+        duration-ticks: 60
+        amplifier: 3
+        sound: minecraft:block.beacon.ambient
+        volume: 0.5
+        pitch: 2.0
+      - tick: 210
+        duration-ticks: 60
+        amplifier: 4
+        sound: minecraft:block.beacon.ambient
+        volume: 0.4
+        pitch: 2.0
+      - tick: 240
+        duration-ticks: 60
+        amplifier: 5
+        sound: minecraft:block.beacon.ambient
+        volume: 0.3
+        pitch: 2.0
+      - tick: 270
+        duration-ticks: 60
+        amplifier: 6
+        sound: minecraft:block.beacon.ambient
+        volume: 0.25
+        pitch: 2.0
+      - tick: 300
+        duration-ticks: 60
+        amplifier: 7
+        sound: minecraft:block.beacon.ambient
+        volume: 0.15
+        pitch: 2.0
+      - tick: 330
+        duration-ticks: 60
+        amplifier: 8
+        sound: minecraft:block.beacon.ambient
+        volume: 0.1
+        pitch: 2.0
+
 ui:
   lobby:
     job-select-mode: hotbar

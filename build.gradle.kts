@@ -12,11 +12,11 @@ allprojects {
     description = property("description") as String
 
     repositories {
-        mavenCentral()
         maven {
             name = "papermc-repo"
             url = uri("https://repo.papermc.io/repository/maven-public/")
         }
+        mavenCentral()
     }
 }
 
