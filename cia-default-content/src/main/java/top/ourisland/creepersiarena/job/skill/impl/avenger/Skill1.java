@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.job.impl.AvengerJob;
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
-import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
+import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class Skill1 implements ISkillDefinition {
             var dest = BuiltinCombatUtils.safeForwardBlink(p, 3.5);
             p.teleport(dest);
             p.setVelocity(p.getLocation().getDirection().normalize().multiply(0.15));
-            BuiltinStateUtils.markTimed(
+            EntityStateUtils.markTimed(
                     p.getPersistentDataContainer(),
                     BuiltinKeys.key("avenger_armor_until"),
                     6000L

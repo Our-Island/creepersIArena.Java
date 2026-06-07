@@ -15,7 +15,7 @@ import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
-import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
+import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.UUID;
 
@@ -89,7 +89,7 @@ public final class SkillImplementationListener implements Listener {
         reduceCooldown(owner, "cia:moison.volley", now, 40L);
 
         if (arrow.getPersistentDataContainer().has(BuiltinKeys.key("moison_spectral"), PersistentDataType.BYTE)) {
-            BuiltinStateUtils.applyHiddenEffect(victim, org.bukkit.potion.PotionEffectType.GLOWING, 20);
+            EntityStateUtils.applyHiddenEffect(victim, org.bukkit.potion.PotionEffectType.GLOWING, 20);
         }
     }
 
@@ -113,7 +113,7 @@ public final class SkillImplementationListener implements Listener {
         if (jobId == null) return;
 
         if (jobId.equals("cia:bloodline")) {
-            BuiltinStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.SPEED, 20);
+            EntityStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.SPEED, 20);
         }
         if (jobId.equals("cia:golem")) {
             attacker.getPersistentDataContainer().set(
@@ -123,7 +123,7 @@ public final class SkillImplementationListener implements Listener {
             );
         }
         if (jobId.equals("cia:ysahan")) {
-            BuiltinStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.GLOWING, 20);
+            EntityStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.GLOWING, 20);
         }
     }
 
@@ -135,7 +135,7 @@ public final class SkillImplementationListener implements Listener {
         if (session == null || session.selectedJob() == null) return;
         if (!session.selectedJob().id().equals("cia:ysahan")) return;
 
-        BuiltinStateUtils.extendTimedIfActive(
+        EntityStateUtils.extendTimedIfActive(
                 killer.getPersistentDataContainer(),
                 BuiltinKeys.key("ysahan_whale_until"),
                 6000L

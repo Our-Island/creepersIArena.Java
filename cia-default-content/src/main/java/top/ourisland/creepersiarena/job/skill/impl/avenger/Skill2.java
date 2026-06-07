@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.job.impl.AvengerJob;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
-import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
+import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.List;
 
@@ -41,14 +41,14 @@ public class Skill2 implements ISkillDefinition {
             var p = ctx.player();
             var armorKey = BuiltinKeys.key("avenger_armor_until");
             boolean revenge = p.getHealth() <= 10.0;
-            boolean rageArmor = BuiltinStateUtils.isTimedActive(p.getPersistentDataContainer(), armorKey);
+            boolean rageArmor = EntityStateUtils.isTimedActive(p.getPersistentDataContainer(), armorKey);
 
             p.getInventory().setItem(0, AvengerJob.buildWeapon(revenge));
             p.getInventory().setHelmet(AvengerJob.buildHelmet(revenge));
             p.getInventory().setChestplate(AvengerJob.buildChest(null, rageArmor));
 
             if (!rageArmor) {
-                BuiltinStateUtils.clearTimed(p.getPersistentDataContainer(), armorKey);
+                EntityStateUtils.clearTimed(p.getPersistentDataContainer(), armorKey);
             }
         };
     }

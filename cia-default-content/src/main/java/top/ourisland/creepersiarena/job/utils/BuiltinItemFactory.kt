@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.inventory.meta.trim.TrimMaterial
 import org.bukkit.inventory.meta.trim.TrimPattern
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory.armor
+import top.ourisland.creepersiarena.utils.AttributeUtils
 
 /**
  * Central factory for the built-in jobs' display items, weapons and armor pieces.
@@ -31,7 +32,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory.armor
  * - armor helpers support trim, leather colour, enchantments and arbitrary extra modifiers
  * - display helpers return hidden, UI-friendly item stacks suitable for hotbars and lobby previews
  *
- * @see BuiltinAttributeUtils
+ * @see AttributeUtils
  */
 object BuiltinItemFactory {
 
@@ -64,7 +65,7 @@ object BuiltinItemFactory {
         meta.isUnbreakable = true
         addModifier(
             meta,
-            BuiltinAttributeUtils.attribute("attack_damage", "generic_attack_damage"),
+            AttributeUtils.attribute("attack_damage", "generic_attack_damage"),
             attackDamageAmount,
             AttributeModifier.Operation.ADD_NUMBER,
             EquipmentSlot.HAND,
@@ -72,7 +73,7 @@ object BuiltinItemFactory {
         )
         addModifier(
             meta,
-            BuiltinAttributeUtils.attribute("attack_speed", "generic_attack_speed"),
+            AttributeUtils.attribute("attack_speed", "generic_attack_speed"),
             attackSpeedAmount,
             AttributeModifier.Operation.ADD_NUMBER,
             EquipmentSlot.HAND,
@@ -130,7 +131,15 @@ object BuiltinItemFactory {
     ) {
         if (meta == null || attribute == null) return
         val path = name?.trim().takeUnless { it.isNullOrEmpty() } ?: "modifier"
-        meta.addAttributeModifier(attribute, BuiltinAttributeUtils.modifier(path, amount, operation, slot))
+        meta.addAttributeModifier(
+            attribute,
+            AttributeModifier(
+                BuiltinKeys.key(path),
+                amount,
+                operation,
+                slot.group
+            )
+        )
     }
 
     /**
@@ -204,7 +213,7 @@ object BuiltinItemFactory {
      * Builds a [ModifierSpec] from one or more attribute aliases.
      *
      * This overload is useful when call sites want to stay close to legacy attribute names while still benefiting from
-     * the registry-based resolution performed by [BuiltinAttributeUtils].
+     * the registry-based resolution performed by [AttributeUtils].
      *
      * @param attributeNames candidate attribute aliases
      * @param amount modifier amount
@@ -221,7 +230,7 @@ object BuiltinItemFactory {
         slot: EquipmentSlot,
         name: String
     ): ModifierSpec = ModifierSpec(
-        BuiltinAttributeUtils.attribute(*attributeNames),
+        AttributeUtils.attribute(*attributeNames),
         amount,
         operation,
         slot,

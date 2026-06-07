@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.job.utils
+package top.ourisland.creepersiarena.utils
 
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.LivingEntity
@@ -6,10 +6,10 @@ import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
-import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils.applyHiddenEffect
+import top.ourisland.creepersiarena.utils.EntityStateUtils.applyHiddenEffect
 
 /**
- * Helpers for short-lived built-in skill state.
+ * Helpers for temporary entity state stored in persistent data and short hidden potion effects.
  *
  * Many migrated skills need temporary "active until" windows or short hidden potion effects. Instead of duplicating the
  * same persistent-data and potion boilerplate in every executor/listener pair, this object centralises those patterns.
@@ -22,7 +22,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils.applyHiddenEffec
  * [applyHiddenEffect] applies effects with ambient particles, visible particles and inventory icons disabled. This keeps
  * built-in combat feedback intentional and avoids cluttering the player's HUD for very short mechanics windows.
  */
-object BuiltinStateUtils {
+object EntityStateUtils {
 
     /**
      * Stores a future expiry timestamp for a temporary state.
@@ -33,7 +33,11 @@ object BuiltinStateUtils {
      * @return stored expiry timestamp in epoch milliseconds
      */
     @JvmStatic
-    fun markTimed(container: PersistentDataContainer, key: NamespacedKey, durationMillis: Long): Long {
+    fun markTimed(
+        container: PersistentDataContainer,
+        key: NamespacedKey,
+        durationMillis: Long
+    ): Long {
         val until = System.currentTimeMillis() + durationMillis
         container.set(key, PersistentDataType.LONG, until)
         return until

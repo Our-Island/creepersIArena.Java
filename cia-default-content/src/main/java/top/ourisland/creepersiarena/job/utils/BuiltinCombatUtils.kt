@@ -14,6 +14,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.installSessions
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.isEnemy
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.nearbyOtherPlayers
 import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils.rayOtherPlayer
+import top.ourisland.creepersiarena.utils.EntityStateUtils
 
 /**
  * Shared combat-oriented helpers used by the built-in jobs.
@@ -222,7 +223,7 @@ object BuiltinCombatUtils {
      */
     @JvmStatic
     fun glow(player: Player, ticks: Int) {
-        BuiltinStateUtils.applyHiddenEffect(player, org.bukkit.potion.PotionEffectType.GLOWING, ticks)
+        EntityStateUtils.applyHiddenEffect(player, org.bukkit.potion.PotionEffectType.GLOWING, ticks)
     }
 
     /** Returns the shortest distance between [point] and the infinite ray defined by [origin] and [direction]. */
