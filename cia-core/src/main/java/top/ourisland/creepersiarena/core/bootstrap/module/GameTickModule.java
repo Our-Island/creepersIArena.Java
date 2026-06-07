@@ -9,6 +9,8 @@ import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.death.DeathStreakService;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
+import top.ourisland.creepersiarena.game.mutation.MutationService;
+import top.ourisland.creepersiarena.game.mutation.ScaledTickAccumulator;
 
 /**
  * Module controlling game tick settings.
@@ -27,12 +29,19 @@ public final class GameTickModule implements IBootstrapModule {
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var flow = rt.requireService(GameFlow.class);
+            var scaledClock = new ScaledTickAccumulator();
 
             var gameTickTask = Bukkit.getServer().getGlobalRegionScheduler()
-                    .runAtFixedRate(rt.plugin(), task -> {
+                    .runAtFixedRate(rt.plugin(), _ -> {
                         try {
-                            flow.tick1s();
-                            tickDeathRuntime(rt);
+                            var mutation = rt.getService(MutationService.class);
+                            double scale = mutation == null ? 1.0D : mutation.gameSecondScale();
+                            int maxSteps = mutation == null ? 1 : mutation.maxLogicalStepsPerRun();
+                            int steps = scaledClock.steps(scale, maxSteps);
+                            for (int i = 0; i < steps; i++) {
+                                flow.tick1s();
+                                tickDeathRuntime(rt);
+                            }
                         } catch (Throwable t) {
                             rt.log().warn("[GameTick] error: {}", t.getMessage(), t);
                         }

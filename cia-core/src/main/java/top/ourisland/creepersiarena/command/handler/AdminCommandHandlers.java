@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.core.extension.debug.ExtensionDiagnostics;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
+import top.ourisland.creepersiarena.game.mutation.MutationService;
 import top.ourisland.creepersiarena.utils.I18n;
 import top.ourisland.creepersiarena.utils.Msg;
 
@@ -153,7 +154,26 @@ public final class AdminCommandHandlers {
     }
 
     public void mutation(CommandSender sender, String[] args) {
-        Msg.send(sender, "TBI");
+        var mutation = rt.getService(MutationService.class);
+        if (mutation == null) {
+            Msg.send(sender, "Mutation service is not available.");
+            return;
+        }
+
+        if (args.length < 1) {
+            Msg.send(sender, mutation.statusLine());
+            return;
+        }
+
+        Boolean enabled = parseBoolean(args[0]);
+        if (enabled == null) {
+            Msg.send(sender, "Usage: /ciaa mutation <boolean>");
+            return;
+        }
+
+        mutation.setAdminEnabled(enabled);
+        Msg.send(sender, "Mutation admin enabled: " + enabled);
+        Msg.send(sender, mutation.statusLine());
     }
 
     public void entrance(CommandSender sender, String[] args) {

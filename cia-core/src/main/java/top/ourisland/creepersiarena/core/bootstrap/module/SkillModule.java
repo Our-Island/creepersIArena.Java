@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.mutation.MutationService;
 import top.ourisland.creepersiarena.job.listener.SkillUiListener;
 import top.ourisland.creepersiarena.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.job.skill.runtime.InMemorySkillStateStore;
@@ -59,7 +60,15 @@ public final class SkillModule implements IBootstrapModule {
                     skillRegistry,
                     skillRuntime,
                     rt.plugin(),
-                    skillRenderer
+                    skillRenderer,
+                    () -> {
+                        var mutation = rt.getService(MutationService.class);
+                        return mutation == null ? 1.0D : mutation.skillTickScale();
+                    },
+                    () -> {
+                        var mutation = rt.getService(MutationService.class);
+                        return mutation == null ? 1 : mutation.maxLogicalStepsPerRun();
+                    }
             );
 
             rt.putAllServices(Map.of(
