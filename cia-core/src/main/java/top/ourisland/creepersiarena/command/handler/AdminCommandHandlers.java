@@ -36,7 +36,7 @@ public final class AdminCommandHandlers {
                 /ciaa skip [arena_id]
                 /ciaa cooldown <factor>
                 /ciaa regen <factor>
-                /ciaa mutation [bool]
+                /ciaa mutation [<bool>|trigger]
                 /ciaa entrance <bool>
                 /ciaa language <id>
                 /ciaa reload
@@ -165,9 +165,16 @@ public final class AdminCommandHandlers {
             return;
         }
 
+        if ("trigger".equalsIgnoreCase(args[0])) {
+            var result = mutation.trigger();
+            Msg.send(sender, result.message());
+            Msg.send(sender, mutation.statusLine());
+            return;
+        }
+
         Boolean enabled = parseBoolean(args[0]);
         if (enabled == null) {
-            Msg.send(sender, "Usage: /ciaa mutation <boolean>");
+            Msg.send(sender, "Usage: /ciaa mutation (<boolean>|trigger)");
             return;
         }
 

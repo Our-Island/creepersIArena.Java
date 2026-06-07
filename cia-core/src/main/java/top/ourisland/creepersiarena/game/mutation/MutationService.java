@@ -210,27 +210,8 @@ public final class MutationService implements IMutationEffectContext {
             return;
         }
 
-        try {
-            var result = effect.start(this);
-            state.activeType(effect.type());
-            state.idleCounterTicks(0);
-            state.remainingTicks(result.durationTicks());
-            logger.info("[Mutation] Started {} for arena {}.", effect.type(), currentMarker());
-        } catch (Throwable t) {
-            logger.warn("[Mutation] Failed to start {}: {}", effect.type(), t.getMessage(), t);
-            try {
-                effect.reset(this, MutationResetReason.MANUAL, false);
-            } catch (Throwable resetFailure) {
-                logger.warn("[Mutation] Failed to clean up {} after start failure: {}",
-                        effect.type(),
-                        resetFailure.getMessage(),
-                        resetFailure
-                );
-            }
-            state.clear();
-            activeClock.reset();
-            rollFailure(currentConfig);
-        }
+        var result = startEffect(effect);
+        if (result.kind() != MutationTriggerResult.Kind.STARTED) rollFailure(currentConfig);
     }
 
     private double currentLogicalScale() {
@@ -263,6 +244,33 @@ public final class MutationService implements IMutationEffectContext {
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
     }
 
+    private MutationTriggerResult startEffect(IMutationEffect effect) {
+        if (effect == null) return MutationTriggerResult.noEffect();
+
+        try {
+            var result = effect.start(this);
+            state.activeType(effect.type());
+            state.idleCounterTicks(0);
+            state.remainingTicks(result.durationTicks());
+            logger.info("[Mutation] Started {} for arena {}.", effect.type(), currentMarker());
+            return MutationTriggerResult.started(effect.type());
+        } catch (Throwable t) {
+            logger.warn("[Mutation] Failed to start {}: {}", effect.type(), t.getMessage(), t);
+            try {
+                effect.reset(this, MutationResetReason.MANUAL, false);
+            } catch (Throwable resetFailure) {
+                logger.warn("[Mutation] Failed to clean up {} after start failure: {}",
+                        effect.type(),
+                        resetFailure.getMessage(),
+                        resetFailure
+                );
+            }
+            state.clear();
+            activeClock.reset();
+            return MutationTriggerResult.failed(effect.type(), "Failed to start mutation " + effect.type() + ": " + t.getMessage());
+        }
+    }
+
     private boolean allowMutationTarget(Player player) {
         if (gameManager.timeline() instanceof IMutationEligibility eligibility) {
             try {
@@ -273,6 +281,26 @@ public final class MutationService implements IMutationEffectContext {
             }
         }
         return true;
+    }
+
+    public MutationTriggerResult trigger() {
+        if (state.active()) {
+            var activeType = state.activeType();
+            reset(MutationResetReason.MANUAL);
+            return MutationTriggerResult.cancelled(activeType);
+        }
+
+        var currentConfig = config;
+        if (!effectiveEnabled(currentConfig)) return MutationTriggerResult.disabled();
+        if (!hasEligibleActiveGame(currentConfig)) return MutationTriggerResult.noEligibleGame();
+
+        var marker = currentMarker();
+        if (marker == null) return MutationTriggerResult.noEligibleGame();
+        state.sessionMarker(marker);
+
+        var effect = pickEnabledEffect();
+        if (effect == null) return MutationTriggerResult.noEffect();
+        return startEffect(effect);
     }
 
     public void nudgeFromDeath() {
