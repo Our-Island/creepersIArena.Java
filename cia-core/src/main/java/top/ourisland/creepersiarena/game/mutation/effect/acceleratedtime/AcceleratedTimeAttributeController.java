@@ -7,6 +7,7 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.plugin.Plugin;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.utils.AttributeUtils;
 
@@ -32,12 +33,16 @@ final class AcceleratedTimeAttributeController {
     }
 
     public void ensureApplied(
-            Collection<Player> targets,
+            @Nullable Collection<Player> targets,
             double amount
     ) {
-        if (targets == null || amount <= 0.0D) return;
+        if (targets == null) return;
+
+        clearAll();
+
+        if (amount <= 0.0D) return;
+
         if (Double.isNaN(appliedAmount) || Double.compare(appliedAmount, amount) != 0) {
-            clearAll();
             appliedAmount = amount;
         }
 

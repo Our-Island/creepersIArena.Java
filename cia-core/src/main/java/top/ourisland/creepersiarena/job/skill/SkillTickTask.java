@@ -70,17 +70,32 @@ public final class SkillTickTask {
         int steps = scaledClock.steps(tickScale.getAsDouble(), Math.max(1, maxStepsPerRun.getAsInt()));
         if (steps <= 0) return;
 
+        var eligiblePlayers = eligiblePlayers();
         long now = tick.get();
         for (int i = 0; i < steps; i++) {
             now = tick.incrementAndGet();
-            runSkillTick(now);
+            runSkillTick(now, eligiblePlayers);
         }
 
-        renderHotbars(now);
+        renderHotbars(now, eligiblePlayers);
     }
 
-    private void runSkillTick(long now) {
-        for (var p : eligiblePlayers()) {
+    private List<Player> eligiblePlayers() {
+        var out = new ArrayList<Player>();
+        for (var p : Bukkit.getOnlinePlayers()) {
+            var s = sessions.get(p);
+            if (s == null || s.state() != PlayerState.IN_GAME) continue;
+            if (!allowsGameplaySkills(p, s)) continue;
+            out.add(p);
+        }
+        return out;
+    }
+
+    private void runSkillTick(
+            long now,
+            List<Player> eligiblePlayers
+    ) {
+        for (var p : eligiblePlayers) {
             runtime.handle(new SkillContext(
                     p,
                     plugin,
@@ -93,21 +108,13 @@ public final class SkillTickTask {
         }
     }
 
-    private void renderHotbars(long now) {
-        for (var p : eligiblePlayers()) {
+    private void renderHotbars(
+            long now,
+            List<Player> eligiblePlayers
+    ) {
+        for (var p : eligiblePlayers) {
             renderer.render(p, registry.skillsOf(p), now);
         }
-    }
-
-    private List<Player> eligiblePlayers() {
-        var out = new ArrayList<Player>();
-        for (var p : Bukkit.getOnlinePlayers()) {
-            var s = sessions.get(p);
-            if (s == null || s.state() != PlayerState.IN_GAME) continue;
-            if (!allowsGameplaySkills(p, s)) continue;
-            out.add(p);
-        }
-        return out;
     }
 
     private boolean allowsGameplaySkills(Player player, PlayerSession session) {

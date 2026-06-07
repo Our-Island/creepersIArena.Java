@@ -13,6 +13,7 @@ public record AcceleratedTimeMutationConfig(
         MutationTargetScope timeTargetScope,
         boolean startDaylightCycle,
         boolean resetDaylightCycle,
+        boolean resetTimeEnabled,
         long resetTime,
         MutationTargetScope speedTargetScope,
         AcceleratedTimeSoundConfig startSound,
@@ -38,6 +39,11 @@ public record AcceleratedTimeMutationConfig(
         if (messages == null) messages = AcceleratedTimeMessageSet.defaults();
     }
 
+    public static AcceleratedTimeMutationConfig fromMutationSection(ConfigurationSection mutationSection) {
+        if (mutationSection == null) return defaults();
+        return fromSection(mutationSection.getConfigurationSection("accelerated-time"));
+    }
+
     public static AcceleratedTimeMutationConfig defaults() {
         return new AcceleratedTimeMutationConfig(
                 true,
@@ -49,17 +55,13 @@ public record AcceleratedTimeMutationConfig(
                 MutationTargetScope.ACTIVE_GAME_PLAYERS,
                 true,
                 false,
+                true,
                 6000L,
                 MutationTargetScope.ACTIVE_GAME_PLAYERS,
                 AcceleratedTimeSoundConfig.startDefault(),
                 AcceleratedTimeSoundConfig.endDefault(),
                 AcceleratedTimeMessageSet.defaults()
         );
-    }
-
-    public static AcceleratedTimeMutationConfig fromMutationSection(ConfigurationSection mutationSection) {
-        if (mutationSection == null) return defaults();
-        return fromSection(mutationSection.getConfigurationSection("accelerated-time"));
     }
 
     public static AcceleratedTimeMutationConfig fromSection(ConfigurationSection section) {
@@ -74,6 +76,7 @@ public record AcceleratedTimeMutationConfig(
                 MutationTargetScope.fromConfig(section.getString("time-target-scope", "ACTIVE_GAME_PLAYERS")),
                 section.getBoolean("start-daylight-cycle", true),
                 section.getBoolean("reset-daylight-cycle", false),
+                section.getBoolean("reset-time-enabled", true),
                 section.getLong("reset-time", 6000L),
                 MutationTargetScope.fromConfig(section.getString("speed-target-scope", "ACTIVE_GAME_PLAYERS")),
                 AcceleratedTimeSoundConfig.fromSection(

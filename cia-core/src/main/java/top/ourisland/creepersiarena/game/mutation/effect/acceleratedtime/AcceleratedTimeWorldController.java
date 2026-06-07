@@ -43,7 +43,9 @@ final class AcceleratedTimeWorldController {
     public void onReset(AcceleratedTimeMutationConfig config) {
         try {
             world.setGameRule(GameRules.ADVANCE_TIME, config.resetDaylightCycle());
-            world.setTime(config.resetTime());
+            if (config.resetTimeEnabled()) {
+                world.setTime(config.resetTime());
+            }
         } catch (Throwable t) {
             logger.warn("[Mutation] Failed to reset accelerated-time world time: {}", t.getMessage(), t);
         }

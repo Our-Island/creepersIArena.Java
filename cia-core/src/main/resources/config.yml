@@ -140,6 +140,7 @@ game:
       time-target-scope: ACTIVE_GAME_PLAYERS
       start-daylight-cycle: true
       reset-daylight-cycle: false
+      reset-time-enabled: true
       reset-time: 6000
       speed-target-scope: ACTIVE_GAME_PLAYERS
       start-sound:
