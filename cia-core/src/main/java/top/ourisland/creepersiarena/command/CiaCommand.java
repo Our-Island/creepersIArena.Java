@@ -281,6 +281,11 @@ public final class CiaCommand {
 
         adm.then(Commands.literal("mutation")
                 .requires(src -> hasPerm(src, P_ADMIN + ".mutation"))
+                .then(Commands.literal("trigger")
+                        .executes(ctx -> {
+                            admin.mutation(sender(ctx), new String[]{"trigger"});
+                            return 1;
+                        }))
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
                         .suggests((c, b) -> suggestStatic(b, List.of("true", "false")))
                         .executes(ctx -> {

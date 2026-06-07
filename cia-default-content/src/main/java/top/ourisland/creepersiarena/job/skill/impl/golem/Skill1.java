@@ -8,9 +8,9 @@ import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils;
 import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
-import top.ourisland.creepersiarena.job.utils.BuiltinStateUtils;
+import top.ourisland.creepersiarena.utils.AttributeUtils;
+import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.List;
 
@@ -46,19 +46,19 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            Double previous = BuiltinAttributeUtils.baseValue(p, "generic.knockback_resistance");
+            Double previous = AttributeUtils.baseValue(p, "generic.knockback_resistance");
             if (previous != null) {
-                BuiltinAttributeUtils.setBaseValue(p, 1.0, "generic.knockback_resistance");
+                AttributeUtils.setBaseValue(p, 1.0, "generic.knockback_resistance");
             }
 
-            BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 60, 4);
+            EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 60, 4);
 
             var plugin = ctx.plugin();
             p.getScheduler().runDelayed(
                     plugin,
                     _ -> {
                         if (previous != null) {
-                            BuiltinAttributeUtils.setBaseValue(p, previous, "generic.knockback_resistance");
+                            AttributeUtils.setBaseValue(p, previous, "generic.knockback_resistance");
                         }
                     },
                     null,

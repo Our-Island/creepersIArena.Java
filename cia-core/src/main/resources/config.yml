@@ -115,6 +115,53 @@ game:
         volume: 0.1
         pitch: 2.0
 
+  mutation:
+    enabled: true
+    eligible-modes: [ battle ]
+    idle-attempt-ticks: 6000
+    failed-roll-counter-value: 500
+    death-nudge-ticks: 1
+    require-online-target: true
+    clock-mode: AUTO
+    max-logical-steps-per-run: 8
+    selection:
+      online-roll-min: -5
+      online-roll-max: 10
+      offline-roll-min: -5
+      offline-roll-max: 0
+      start-min-inclusive: 1
+    accelerated-time:
+      enabled: true
+      duration-ticks: 9000
+      tick-rate-min: 34.0
+      tick-rate-max: 58.0
+      movement-speed-add: 0.1
+      time-add-per-target-per-tick: 8
+      time-target-scope: ACTIVE_GAME_PLAYERS
+      start-daylight-cycle: true
+      reset-daylight-cycle: false
+      reset-time-enabled: true
+      reset-time: 6000
+      speed-target-scope: ACTIVE_GAME_PLAYERS
+      start-sound:
+        sound: minecraft:block.beacon.activate
+        volume: 1.0
+        pitch: 0.8
+      end-sound:
+        sound: minecraft:block.beacon.deactivate
+        volume: 1.0
+        pitch: 0.8
+      start-messages:
+        - "🕸 神秘的力量开始操控魔法"
+        - "🕸 一股神秘的力量..."
+        - "🕸 时间要开始加速了？还好，只加速了一部分...吗？"
+        - "🕸 快快快！太慢了太慢了！"
+      end-messages:
+        - "🕸 神秘的力量消失了..."
+        - "🕸 时间流速恢复正常..."
+        - "🕸 你感觉身体变慢了..."
+        - "🕸 好像世界变慢了？"
+
 ui:
   lobby:
     job-select-mode: hotbar

@@ -15,7 +15,7 @@ import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils;
+import top.ourisland.creepersiarena.utils.AttributeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -174,7 +174,7 @@ public final class BattleRespawnPresentation implements Listener {
     }
 
     private void applyMaxHealth(Player player, double maxHealth) {
-        BuiltinAttributeUtils.setBaseValue(player, maxHealth, "max_health", "generic_max_health");
+        AttributeUtils.setBaseValue(player, maxHealth, "max_health", "generic_max_health");
         double currentMax = currentMaxHealth(player, maxHealth);
         player.setHealth(Math.min(currentMax, Math.clamp(player.getHealth(), 1.0D, maxHealth)));
     }
@@ -185,7 +185,7 @@ public final class BattleRespawnPresentation implements Listener {
 
     private void restore(Player player, boolean removeResistance) {
         if (player == null || !player.isOnline()) return;
-        BuiltinAttributeUtils.setBaseValue(player, FULL_HEALTH, "max_health", "generic_max_health");
+        AttributeUtils.setBaseValue(player, FULL_HEALTH, "max_health", "generic_max_health");
         double currentMax = currentMaxHealth(player, FULL_HEALTH);
         if (player.getHealth() < currentMax) {
             player.setHealth(currentMax);
@@ -207,7 +207,7 @@ public final class BattleRespawnPresentation implements Listener {
     }
 
     private double currentMaxHealth(Player player, double fallback) {
-        Double value = BuiltinAttributeUtils.baseValue(player, "max_health", "generic_max_health");
+        Double value = AttributeUtils.baseValue(player, "max_health", "generic_max_health");
         return value == null ? fallback : Math.max(1.0D, value);
     }
 

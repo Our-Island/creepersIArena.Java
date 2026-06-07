@@ -6,8 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
+import top.ourisland.creepersiarena.utils.AttributeUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -69,7 +69,7 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
         container.remove(key("golem_last_target"));
         container.remove(key("ysahan_whale_until"));
         container.remove(key("ysahan_whale_task"));
-        BuiltinAttributeUtils.setBaseValue(
+        AttributeUtils.setBaseValue(
                 player,
                 1.0D,
                 "generic.scale"

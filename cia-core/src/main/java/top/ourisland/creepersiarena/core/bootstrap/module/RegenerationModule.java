@@ -11,6 +11,8 @@ import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.listener.RegenerationListener;
+import top.ourisland.creepersiarena.game.mutation.MutationService;
+import top.ourisland.creepersiarena.game.mutation.ScaledTickAccumulator;
 import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
 import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 
@@ -39,9 +41,18 @@ public final class RegenerationModule implements IBootstrapModule {
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var service = rt.requireService(RegenerationService.class);
+            var scaledClock = new ScaledTickAccumulator();
             ScheduledTask task = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
                     rt.plugin(),
-                    _ -> service.tick(),
+                    _ -> {
+                        var mutation = rt.getService(MutationService.class);
+                        double scale = mutation == null ? 1.0D : mutation.serverTickScale();
+                        int maxSteps = mutation == null ? 1 : mutation.maxLogicalStepsPerRun();
+                        int steps = scaledClock.steps(scale, maxSteps);
+                        for (int i = 0; i < steps; i++) {
+                            service.tick();
+                        }
+                    },
                     1L,
                     1L
             );

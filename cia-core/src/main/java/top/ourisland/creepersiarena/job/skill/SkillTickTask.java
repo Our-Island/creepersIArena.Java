@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.job.skill;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -10,11 +11,16 @@ import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.event.impl.TickEvent;
 import top.ourisland.creepersiarena.core.bootstrap.module.SkillModule;
 import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.mutation.ScaledTickAccumulator;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class SkillTickTask {
@@ -23,8 +29,11 @@ public final class SkillTickTask {
     private final Supplier<GameManager> gameManager;
     private final SkillRegistry registry;
     private final SkillRuntime runtime;
-    private final org.bukkit.plugin.Plugin plugin;
+    private final Plugin plugin;
     private final SkillHotbarRenderer renderer;
+    private final DoubleSupplier tickScale;
+    private final IntSupplier maxStepsPerRun;
+    private final ScaledTickAccumulator scaledClock = new ScaledTickAccumulator();
 
     private final AtomicLong tick = new AtomicLong(0);
 
@@ -33,8 +42,10 @@ public final class SkillTickTask {
             Supplier<GameManager> gameManager,
             SkillRegistry registry,
             SkillRuntime runtime,
-            org.bukkit.plugin.Plugin plugin,
-            SkillHotbarRenderer renderer
+            Plugin plugin,
+            SkillHotbarRenderer renderer,
+            DoubleSupplier tickScale,
+            IntSupplier maxStepsPerRun
     ) {
         this.sessions = sessions;
         this.gameManager = gameManager;
@@ -42,6 +53,8 @@ public final class SkillTickTask {
         this.runtime = runtime;
         this.plugin = plugin;
         this.renderer = renderer;
+        this.tickScale = tickScale == null ? () -> 1.0D : tickScale;
+        this.maxStepsPerRun = maxStepsPerRun == null ? () -> 1 : maxStepsPerRun;
     }
 
     public long nowTick() {
@@ -54,13 +67,35 @@ public final class SkillTickTask {
      * <p>Scheduled via Paper/Folia schedulers from {@link SkillModule}.
      */
     public void tick() {
-        long now = tick.incrementAndGet();
+        int steps = scaledClock.steps(tickScale.getAsDouble(), Math.max(1, maxStepsPerRun.getAsInt()));
+        if (steps <= 0) return;
 
-        for (Player p : Bukkit.getOnlinePlayers()) {
+        var eligiblePlayers = eligiblePlayers();
+        long now = tick.get();
+        for (int i = 0; i < steps; i++) {
+            now = tick.incrementAndGet();
+            runSkillTick(now, eligiblePlayers);
+        }
+
+        renderHotbars(now, eligiblePlayers);
+    }
+
+    private List<Player> eligiblePlayers() {
+        var out = new ArrayList<Player>();
+        for (var p : Bukkit.getOnlinePlayers()) {
             var s = sessions.get(p);
             if (s == null || s.state() != PlayerState.IN_GAME) continue;
             if (!allowsGameplaySkills(p, s)) continue;
+            out.add(p);
+        }
+        return out;
+    }
 
+    private void runSkillTick(
+            long now,
+            List<Player> eligiblePlayers
+    ) {
+        for (var p : eligiblePlayers) {
             runtime.handle(new SkillContext(
                     p,
                     plugin,
@@ -70,7 +105,14 @@ public final class SkillTickTask {
                     now,
                     runtime.skillConfig()
             ));
+        }
+    }
 
+    private void renderHotbars(
+            long now,
+            List<Player> eligiblePlayers
+    ) {
+        for (var p : eligiblePlayers) {
             renderer.render(p, registry.skillsOf(p), now);
         }
     }

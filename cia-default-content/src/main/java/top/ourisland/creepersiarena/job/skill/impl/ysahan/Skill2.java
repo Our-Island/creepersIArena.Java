@@ -14,7 +14,11 @@ import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.defaultcontent.death.DefaultContentDeathCauses;
-import top.ourisland.creepersiarena.job.utils.*;
+import top.ourisland.creepersiarena.job.utils.BuiltinCombatUtils;
+import top.ourisland.creepersiarena.job.utils.BuiltinItemFactory;
+import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
+import top.ourisland.creepersiarena.utils.AttributeUtils;
+import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -51,7 +55,7 @@ public class Skill2 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            BuiltinStateUtils.markTimed(
+            EntityStateUtils.markTimed(
                     p.getPersistentDataContainer(),
                     BuiltinKeys.key("ysahan_whale_until"),
                     8000L
@@ -111,30 +115,30 @@ public class Skill2 implements ISkillDefinition {
         p.getScheduler().runAtFixedRate(
                 plugin,
                 task -> {
-                    Long until = BuiltinStateUtils.timedUntil(
+                    Long until = EntityStateUtils.timedUntil(
                             p.getPersistentDataContainer(),
                             BuiltinKeys.key("ysahan_whale_until")
                     );
                     long now = System.currentTimeMillis();
                     if (!p.isOnline() || until == null || until <= now) {
-                        BuiltinStateUtils.clearTimed(
+                        EntityStateUtils.clearTimed(
                                 p.getPersistentDataContainer(),
                                 BuiltinKeys.key("ysahan_whale_until")
                         );
                         p.getPersistentDataContainer().remove(BuiltinKeys.key("ysahan_whale_task"));
                         p.setExp(0f);
                         p.setLevel(0);
-                        BuiltinAttributeUtils.setBaseValue(p, 1.0, "generic.scale");
+                        AttributeUtils.setBaseValue(p, 1.0, "generic.scale");
                         task.cancel();
                         return;
                     }
-                    BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.SPEED, 15);
-                    BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 15);
-                    BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.STRENGTH, 15);
-                    BuiltinStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.RESISTANCE, 15);
+                    EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.SPEED, 15);
+                    EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 15);
+                    EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.STRENGTH, 15);
+                    EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.RESISTANCE, 15);
                     p.setExp((float) Math.clamp((until - now) / 8000.0, 0.0, 1.0));
                     p.setLevel((int) Math.ceil((until - now) / 1000.0));
-                    BuiltinAttributeUtils.setBaseValue(p, 1.3, "generic.scale");
+                    AttributeUtils.setBaseValue(p, 1.3, "generic.scale");
                 },
                 null,
                 1L,

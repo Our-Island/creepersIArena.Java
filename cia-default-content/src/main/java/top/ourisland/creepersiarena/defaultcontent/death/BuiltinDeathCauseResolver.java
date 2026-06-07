@@ -13,7 +13,6 @@ import org.bukkit.projectiles.ProjectileSource;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
-import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;

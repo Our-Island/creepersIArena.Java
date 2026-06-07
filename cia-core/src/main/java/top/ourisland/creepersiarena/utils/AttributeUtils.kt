@@ -1,19 +1,18 @@
-package top.ourisland.creepersiarena.job.utils
+package top.ourisland.creepersiarena.utils
 
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.attribute.Attributable
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import org.bukkit.inventory.EquipmentSlot
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.attribute
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.attributeOrNull
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.baseValue
-import top.ourisland.creepersiarena.job.utils.BuiltinAttributeUtils.setBaseValue
+import top.ourisland.creepersiarena.utils.AttributeUtils.attribute
+import top.ourisland.creepersiarena.utils.AttributeUtils.attributeOrNull
+import top.ourisland.creepersiarena.utils.AttributeUtils.baseValue
+import top.ourisland.creepersiarena.utils.AttributeUtils.setBaseValue
 import java.util.*
 
 /**
- * Registry-based attribute helper used by the built-in jobs.
+ * Registry-based attribute helper.
  *
  * Modern Paper versions expose attributes through [Registry.ATTRIBUTE] and prefer key-based [AttributeModifier]
  * construction. This object wraps those APIs so the migrated job code can stay readable and consistent while avoiding
@@ -36,9 +35,8 @@ import java.util.*
  * - [setBaseValue] and [baseValue] are safe convenience wrappers for entity attribute instances.
  *
  * @see Registry.ATTRIBUTE
- * @see BuiltinKeys
  */
-object BuiltinAttributeUtils {
+object AttributeUtils {
 
     private val aliasToPath: Map<String, String> = mapOf(
         "attack_damage" to "attack_damage",
@@ -86,31 +84,6 @@ object BuiltinAttributeUtils {
         names.asSequence()
             .mapNotNull(::normalizeAttributeKey)
             .firstNotNullOfOrNull(Registry.ATTRIBUTE::get)
-
-    /**
-     * Creates a modern key-based [AttributeModifier] for the supplied equipment slot.
-     *
-     * Modifier keys are namespaced through [BuiltinKeys] so built-in items do not collide with extension-defined modifiers.
-     * The modifier is bound to the slot's group, matching current Paper expectations.
-     *
-     * @param path plugin-local path used to build the modifier key
-     * @param amount modifier amount
-     * @param operation arithmetic operation applied by the modifier
-     * @param slot equipment slot whose group should receive the modifier
-     * @return a key-based attribute modifier suitable for current Paper APIs
-     */
-    @JvmStatic
-    fun modifier(
-        path: String,
-        amount: Double,
-        operation: AttributeModifier.Operation,
-        slot: EquipmentSlot
-    ): AttributeModifier = AttributeModifier(
-        BuiltinKeys.key(path),
-        amount,
-        operation,
-        slot.group
-    )
 
     /**
      * Reads the current base value of an attribute on an [Attributable].
