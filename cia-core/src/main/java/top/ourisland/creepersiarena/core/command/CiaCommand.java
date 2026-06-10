@@ -40,9 +40,10 @@ import java.util.concurrent.CompletableFuture;
 
 public final class CiaCommand {
 
-    private static final String P_BASE = "creepersiarena.command";
-    private static final String P_ADMIN = "creepersiarena.command.admin";
-    private static final String P_CHOOSEJOB = "creepersiarena.choosejob";
+    private static final String
+            P_BASE = "creepersiarena.command",
+            P_ADMIN = "creepersiarena.command.admin",
+            P_CHOOSEJOB = "creepersiarena.choosejob";
 
     private CiaCommand() {
     }
@@ -373,6 +374,7 @@ public final class CiaCommand {
                 }));
 
         adm.then(buildAbilitySubtree(rt, admin, "ability"));
+        adm.then(buildDatabaseSubtree(admin, "database"));
         adm.then(buildEconomySubtree(rt, admin, "economy"));
         adm.then(buildStoreAdminSubtree(rt, admin, "store"));
 
@@ -433,6 +435,33 @@ public final class CiaCommand {
                 });
 
         return adm;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildDatabaseSubtree(
+            AdminCommandHandlers admin,
+            String literalName
+    ) {
+        return Commands.literal(literalName)
+                .requires(src -> hasPerm(src, P_ADMIN + ".database"))
+                .executes(ctx -> {
+                    admin.database(sender(ctx), new String[]{"status"});
+                    return 1;
+                })
+                .then(Commands.literal("status")
+                        .executes(ctx -> {
+                            admin.database(sender(ctx), new String[]{"status"});
+                            return 1;
+                        }))
+                .then(Commands.literal("ping")
+                        .executes(ctx -> {
+                            admin.database(sender(ctx), new String[]{"ping"});
+                            return 1;
+                        }))
+                .then(Commands.literal("tables")
+                        .executes(ctx -> {
+                            admin.database(sender(ctx), new String[]{"tables"});
+                            return 1;
+                        }));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildEconomySubtree(

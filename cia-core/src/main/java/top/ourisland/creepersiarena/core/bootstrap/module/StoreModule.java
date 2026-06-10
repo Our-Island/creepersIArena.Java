@@ -12,10 +12,8 @@ import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.core.economy.store.StoreClickListener;
-import top.ourisland.creepersiarena.core.economy.store.StoreItemCodec;
-import top.ourisland.creepersiarena.core.economy.store.StoreRegistry;
-import top.ourisland.creepersiarena.core.economy.store.StoreService;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
+import top.ourisland.creepersiarena.core.economy.store.*;
 
 @CiaBootstrapModule(name = "store", order = 680)
 public final class StoreModule implements IBootstrapModule {
@@ -31,10 +29,12 @@ public final class StoreModule implements IBootstrapModule {
             var registry = new StoreRegistry(rt.log());
             var codec = new StoreItemCodec(rt.plugin());
             var service = new StoreService(registry, codec, rt.requireService(IAbilityGate.class));
+            var purchases = new StorePurchaseRepository(rt.requireService(JdbcDatabaseService.class));
             rt.putService(StoreRegistry.class, registry);
             rt.putService(IStoreRegistry.class, registry);
             rt.putService(StoreService.class, service);
             rt.putService(IStoreService.class, service);
+            rt.putService(StorePurchaseRepository.class, purchases);
             rt.requireService(IAbilityRegistry.class).registerAbility(
                     RegisteredComponent.CORE_OWNER,
                     new SimpleAbility(CoreAbilities.STORE_UI)

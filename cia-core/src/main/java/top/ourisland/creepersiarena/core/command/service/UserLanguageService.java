@@ -1,32 +1,70 @@
 package top.ourisland.creepersiarena.core.command.service;
 
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
+import org.slf4j.Logger;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
+import top.ourisland.creepersiarena.core.database.PlayerRepository;
+import top.ourisland.creepersiarena.core.player.PlayerDataParticipant;
+import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
-public final class UserLanguageService {
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-    private final NamespacedKey userLangKey;
+public final class UserLanguageService implements PlayerDataParticipant {
 
-    public UserLanguageService(Plugin plugin) {
-        this.userLangKey = new NamespacedKey(plugin, "cia_user_lang");
+    private final Logger logger;
+    private final JdbcDatabaseService database;
+    private final PlayerRepository players;
+    private final Map<UUID, String> languageByPlayer = new ConcurrentHashMap<>();
+
+    public UserLanguageService(
+            Logger logger,
+            JdbcDatabaseService database,
+            PlayerDataService playerData
+    ) {
+        this.logger = logger;
+        this.database = database;
+        this.players = new PlayerRepository(database);
+        playerData.registerParticipant(this);
+    }
+
+    @Override
+    public void load(UUID playerId) throws Exception {
+        String language = players.language(playerId);
+        if (language == null) {
+            languageByPlayer.remove(playerId);
+        } else {
+            languageByPlayer.put(playerId, language);
+        }
+    }
+
+    @Override
+    public void unload(UUID playerId) {
+        languageByPlayer.remove(playerId);
     }
 
     public String getOrNull(Player p) {
-        var pdc = p.getPersistentDataContainer();
-        String v = pdc.get(userLangKey, PersistentDataType.STRING);
+        if (p == null) return null;
+        String v = languageByPlayer.get(p.getUniqueId());
         if (v == null || v.isBlank()) return null;
         return v.trim();
     }
 
     public void set(Player p, String langOrNull) {
-        var pdc = p.getPersistentDataContainer();
-        if (langOrNull == null || langOrNull.isBlank()) {
-            pdc.remove(userLangKey);
-            return;
+        if (p == null) return;
+        var playerId = p.getUniqueId();
+        String value = langOrNull == null || langOrNull.isBlank() ? null : langOrNull.trim();
+        if (value == null) {
+            languageByPlayer.remove(playerId);
+        } else {
+            languageByPlayer.put(playerId, value);
         }
-        pdc.set(userLangKey, PersistentDataType.STRING, langOrNull.trim());
+
+        database.runAsync(() -> players.setLanguage(playerId, value)).exceptionally(error -> {
+            logger.warn("[PlayerProfile] Failed to persist language for {}: {}", playerId, error.getMessage(), error);
+            return null;
+        });
     }
 
 }

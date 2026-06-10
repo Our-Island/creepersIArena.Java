@@ -2,6 +2,58 @@ lang: "zh_cn"
 
 disabled-jobs: [ ]
 
+database:
+  # Supported values: sqlite, h2, mysql, postgresql.
+  type: sqlite
+  table-prefix: cia_
+
+  sqlite:
+    file: database/creepersiarena.db
+    pool-size: 1
+    busy-timeout-ms: 5000
+    journal-mode: WAL
+    synchronous: NORMAL
+
+  h2:
+    file: database/creepersiarena
+    username: sa
+    password: ""
+    pool-size: 2
+
+  mysql:
+    host: localhost
+    port: 3306
+    database: creepersiarena
+    username: creepersiarena
+    password: ""
+    pool-size: 10
+    connection-timeout-ms: 5000
+    parameters:
+      useUnicode: true
+      useSSL: false
+      allowPublicKeyRetrieval: true
+      characterEncoding: utf8
+      serverTimezone: UTC
+
+  postgresql:
+    host: localhost
+    port: 5432
+    database: creepersiarena
+    username: creepersiarena
+    password: ""
+    pool-size: 10
+    connection-timeout-ms: 5000
+    parameters:
+      ssl: false
+
+  migrations:
+    validate-checksum: true
+    fail-on-error: true
+
+  executor:
+    threads: 2
+    queue-size: 10000
+
 lobbies:
   hub:
     location: [ 0, 100, 0 ]

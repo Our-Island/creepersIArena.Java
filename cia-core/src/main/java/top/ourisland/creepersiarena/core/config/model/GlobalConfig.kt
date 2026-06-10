@@ -4,6 +4,7 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
 import top.ourisland.creepersiarena.api.config.IGameConfigView
+import top.ourisland.creepersiarena.api.database.DatabaseType
 import java.util.*
 
 /**
@@ -19,6 +20,7 @@ data class GlobalConfig(
     @get:JvmName("game") val game: Game,
     @get:JvmName("ui") val ui: Ui,
     @get:JvmName("world") val world: World,
+    @get:JvmName("database") val database: Database,
     private val modeSections: Map<String, ConfigurationSection>,
 ) : IGameConfigView {
 
@@ -31,6 +33,7 @@ data class GlobalConfig(
             Game.defaults(),
             Ui.defaults(),
             World.defaults(),
+            Database.defaults(),
             mapOf(),
         )
 
@@ -54,6 +57,7 @@ data class GlobalConfig(
 
             val ui = Ui.fromSection(yml.getConfigurationSection("ui"))
             val world = World.fromSection(yml.getConfigurationSection("world"))
+            val database = Database.fromSection(yml.getConfigurationSection("database"))
 
             return GlobalConfig(
                 lang,
@@ -62,6 +66,7 @@ data class GlobalConfig(
                 game,
                 ui,
                 world,
+                database,
                 Collections.unmodifiableMap(modeSections),
             )
         }
@@ -277,6 +282,174 @@ data class GlobalConfig(
                 jobSelectMode = JobSelectMode.HOTBAR,
                 jobsPerPage = 5,
             )
+
+        }
+
+    }
+
+    data class Database(
+        @get:JvmName("type") val type: DatabaseType,
+        @get:JvmName("tablePrefix") val tablePrefix: String,
+        @get:JvmName("host") val host: String,
+        @get:JvmName("port") val port: Int,
+        @get:JvmName("database") val database: String,
+        @get:JvmName("username") val username: String,
+        @get:JvmName("password") val password: String,
+        @get:JvmName("file") val file: String,
+        @get:JvmName("parameters") val parameters: Map<String, String>,
+        @get:JvmName("poolSize") val poolSize: Int,
+        @get:JvmName("connectionTimeoutMs") val connectionTimeoutMs: Long,
+        @get:JvmName("busyTimeoutMs") val busyTimeoutMs: Int,
+        @get:JvmName("journalMode") val journalMode: String,
+        @get:JvmName("synchronous") val synchronous: String,
+        @get:JvmName("executorThreads") val executorThreads: Int,
+        @get:JvmName("executorQueueSize") val executorQueueSize: Int,
+        @get:JvmName("validateMigrationChecksum") val validateMigrationChecksum: Boolean,
+        @get:JvmName("failOnMigrationError") val failOnMigrationError: Boolean,
+    ) {
+
+        companion object {
+
+            fun fromSection(sec: ConfigurationSection?): Database {
+                if (sec == null) return defaults()
+
+                val type = DatabaseType.parse(sec.getString("type", "sqlite"))
+                val tablePrefix = sanitizeTablePrefix(sec.getString("table-prefix", "cia_"))
+                val typed = sec.getConfigurationSection(type.name.lowercase(Locale.ROOT))
+
+                val host = typed?.getString("host") ?: sec.getString("host", "localhost") ?: "localhost"
+
+                val defaultPort = when (type) {
+                    DatabaseType.MYSQL -> 3306
+                    DatabaseType.POSTGRESQL -> 5432
+                    DatabaseType.H2 -> 0
+                    DatabaseType.SQLITE -> 0
+                }
+                val port = typed?.getInt("port", defaultPort)
+                    ?: sec.getInt("port", defaultPort)
+
+                val database = typed?.getString("database")
+                    ?: sec.getString("database", "creepersiarena")
+                    ?: "creepersiarena"
+                val username = typed?.getString("username")
+                    ?: sec.getString("username", "")
+                    ?: ""
+                val password = typed?.getString("password")
+                    ?: sec.getString("password", "")
+                    ?: ""
+                val file = typed?.getString("file")
+                    ?: sec.getString("file", defaultFile(type))
+                    ?: defaultFile(type)
+                val parameters = parseParameters(
+                    typed?.getConfigurationSection("parameters")
+                        ?: sec.getConfigurationSection("parameters")
+                )
+
+                val poolSize = positive(
+                    typed?.getInt("pool-size", defaultPoolSize(type))
+                        ?: sec.getInt("pool-size", defaultPoolSize(type)),
+                    defaultPoolSize(type)
+                )
+                val connectionTimeoutMs = positiveLong(
+                    typed?.getLong("connection-timeout-ms", 5000L)
+                        ?: sec.getLong("connection-timeout-ms", 5000L),
+                    5000L
+                )
+                val busyTimeoutMs = positive(
+                    typed?.getInt("busy-timeout-ms", 5000)
+                        ?: sec.getInt("busy-timeout-ms", 5000),
+                    5000
+                )
+                val journalMode = (typed?.getString("journal-mode") ?: sec.getString("journal-mode", "WAL") ?: "WAL")
+                    .trim().uppercase(Locale.ROOT)
+                val synchronous =
+                    (typed?.getString("synchronous") ?: sec.getString("synchronous", "NORMAL") ?: "NORMAL")
+                        .trim().uppercase(Locale.ROOT)
+
+                val executorSec = sec.getConfigurationSection("executor")
+                val executorThreads = positive(executorSec?.getInt("threads", 2) ?: 2, 2)
+                val executorQueueSize = positive(executorSec?.getInt("queue-size", 10000) ?: 10000, 10000)
+
+                val migrationSec = sec.getConfigurationSection("migrations")
+                val validateChecksum = migrationSec?.getBoolean("validate-checksum", true) ?: true
+                val failOnError = migrationSec?.getBoolean("fail-on-error", true) ?: true
+
+                return Database(
+                    type,
+                    tablePrefix,
+                    host,
+                    port,
+                    database,
+                    username,
+                    password,
+                    file,
+                    parameters,
+                    poolSize,
+                    connectionTimeoutMs,
+                    busyTimeoutMs,
+                    journalMode,
+                    synchronous,
+                    executorThreads,
+                    executorQueueSize,
+                    validateChecksum,
+                    failOnError,
+                )
+            }
+
+            fun defaults(): Database = Database(
+                type = DatabaseType.SQLITE,
+                tablePrefix = "cia_",
+                host = "localhost",
+                port = 0,
+                database = "creepersiarena",
+                username = "",
+                password = "",
+                file = "database/creepersiarena.db",
+                parameters = mapOf(),
+                poolSize = 1,
+                connectionTimeoutMs = 5000L,
+                busyTimeoutMs = 5000,
+                journalMode = "WAL",
+                synchronous = "NORMAL",
+                executorThreads = 2,
+                executorQueueSize = 10000,
+                validateMigrationChecksum = true,
+                failOnMigrationError = true,
+            )
+
+            private fun defaultFile(type: DatabaseType): String = when (type) {
+                DatabaseType.H2 -> "database/creepersiarena"
+                else -> "database/creepersiarena.db"
+            }
+
+            private fun defaultPoolSize(type: DatabaseType): Int = when (type) {
+                DatabaseType.SQLITE -> 1
+                DatabaseType.H2 -> 2
+                else -> 10
+            }
+
+            private fun positive(value: Int, fallback: Int): Int = if (value > 0) value else fallback
+
+            private fun positiveLong(value: Long, fallback: Long): Long = if (value > 0L) value else fallback
+
+            private fun parseParameters(sec: ConfigurationSection?): Map<String, String> {
+                if (sec == null) return mapOf()
+
+                val out = LinkedHashMap<String, String>()
+                for (key in sec.getKeys(false)) {
+                    val value = sec.get(key) ?: continue
+                    out[key] = value.toString()
+                }
+
+                return Collections.unmodifiableMap(out)
+            }
+
+            private fun sanitizeTablePrefix(raw: String?): String {
+                val text = raw?.trim() ?: "cia_"
+                val cleaned = text.replace(Regex("[^A-Za-z0-9_]"), "_")
+                if (cleaned.isBlank()) return "cia_"
+                return cleaned
+            }
 
         }
 

@@ -5,6 +5,7 @@ import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.core.game.GameManager;
 
 public final class DeathStatsService {
 
@@ -14,17 +15,24 @@ public final class DeathStatsService {
 
     private final PlayerSessionStore store;
     private final IAbilityGate abilities;
+    private final GameManager gameManager;
+    private final PersistentStatsRepository persistentStats;
 
     public DeathStatsService(
             @lombok.NonNull PlayerSessionStore store,
-            @lombok.NonNull IAbilityGate abilities
+            @lombok.NonNull IAbilityGate abilities,
+            @lombok.NonNull GameManager gameManager,
+            @lombok.NonNull PersistentStatsRepository persistentStats
     ) {
         this.store = store;
         this.abilities = abilities;
+        this.gameManager = gameManager;
+        this.persistentStats = persistentStats;
     }
 
     public void record(@lombok.NonNull DeathResult result) {
         if (!abilities.isEnabled(CoreAbilities.DEATH_STATS, result.victim(), "death_stats")) return;
+        persistentStats.recordDeath(gameManager.active(), result);
         increment(result.victim(), DEATHS_KEY);
 
         if (!result.hasKiller()) return;
