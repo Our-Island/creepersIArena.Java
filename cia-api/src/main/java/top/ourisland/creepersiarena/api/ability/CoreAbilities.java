@@ -15,7 +15,10 @@ public final class CoreAbilities {
             RESPAWN_COUNTDOWN = AbilityId.of("core:respawn_countdown"),
             SKILL_RUNTIME = AbilityId.of("core:skill_runtime"),
             SKILL_HOTBAR = AbilityId.of("core:skill_hotbar"),
-            SKILL_COOLDOWN = AbilityId.of("core:skill_cooldown");
+            SKILL_COOLDOWN = AbilityId.of("core:skill_cooldown"),
+            CURRENCY = AbilityId.of("core:currency"),
+            STORE_UI = AbilityId.of("core:store_ui"),
+            COSMETIC_RUNTIME = AbilityId.of("core:cosmetic_runtime");
 
     private CoreAbilities() {
     }

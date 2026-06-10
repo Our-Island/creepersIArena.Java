@@ -59,6 +59,15 @@ game:
       skill-cooldown:
         enabled: true
         default-active: true
+      currency:
+        enabled: true
+        default-active: true
+      store-ui:
+        enabled: true
+        default-active: true
+      cosmetic-runtime:
+        enabled: true
+        default-active: true
 
 ui:
   lobby:
