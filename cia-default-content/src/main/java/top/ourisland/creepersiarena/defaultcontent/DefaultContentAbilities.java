@@ -19,7 +19,10 @@ public final class DefaultContentAbilities {
             STEAL_CELEBRATION_BOSSBAR = AbilityId.of("cia-default-content:steal_celebration_bossbar"),
             STEAL_SELECTION_BARRIERS = AbilityId.of("cia-default-content:steal_selection_barriers"),
             STEAL_OBJECTIVE_FEEDBACK = AbilityId.of("cia-default-content:steal_objective_feedback"),
-            STEAL_CELEBRATION_FIREWORKS = AbilityId.of("cia-default-content:steal_celebration_fireworks");
+            STEAL_CELEBRATION_FIREWORKS = AbilityId.of("cia-default-content:steal_celebration_fireworks"),
+            PARTICLE_STORE = AbilityId.of("cia-default-content:particle_store"),
+            PARTICLE_COSMETICS = AbilityId.of("cia-default-content:particle_cosmetics"),
+            PARTICLE_PREVIEW_DISPLAYS = AbilityId.of("cia-default-content:particle_preview_displays");
 
     private DefaultContentAbilities() {
     }

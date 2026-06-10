@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.api.ability;
+package top.ourisland.creepersiarena.api.store;
 
 import org.bukkit.NamespacedKey;
 import org.jspecify.annotations.NonNull;
@@ -6,19 +6,16 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
 
-/**
- * Stable identifier for a runtime gameplay ability.
- */
-public record AbilityId(
+public record StoreItemId(
         String namespace,
         String value
 ) {
 
-    public AbilityId {
+    public StoreItemId {
         namespace = normalizeNamespace(namespace);
         value = normalizeValue(value);
-        if (namespace.isBlank()) throw new IllegalArgumentException("ability namespace is blank");
-        if (value.isBlank()) throw new IllegalArgumentException("ability value is blank");
+        if (namespace.isBlank()) throw new IllegalArgumentException("store item namespace is blank");
+        if (value.isBlank()) throw new IllegalArgumentException("store item value is blank");
     }
 
     private static @NonNull String normalizeNamespace(@Nullable String raw) {
@@ -37,35 +34,24 @@ public record AbilityId(
                         .replace(' ', '_');
     }
 
-    public static @NonNull AbilityId of(@lombok.NonNull String raw) {
+    public static @NonNull StoreItemId of(@NonNull String raw) {
         String text = raw.trim();
         int colon = text.indexOf(':');
         if (colon >= 0) {
-            return new AbilityId(
-                    text.substring(0, colon),
-                    text.substring(colon + 1)
-            );
+            return new StoreItemId(text.substring(0, colon), text.substring(colon + 1));
         }
-        return new AbilityId("core", text);
+        return new StoreItemId("core", text);
     }
 
-    public static @NonNull AbilityId of(
+    public static @NonNull StoreItemId of(
             @NonNull String namespace,
             @NonNull String value
     ) {
-        return new AbilityId(namespace, value);
+        return new StoreItemId(namespace, value);
     }
 
-    public static @NonNull AbilityId of(@NonNull NamespacedKey key) {
-        return new AbilityId(key.getNamespace(), key.getKey());
-    }
-
-    public @NonNull String configPath() {
-        return "game.abilities." + configNamespace() + "." + configValue();
-    }
-
-    public @NonNull String configNamespace() {
-        return namespace;
+    public static @NonNull StoreItemId of(@NonNull NamespacedKey key) {
+        return new StoreItemId(key.getNamespace(), key.getKey());
     }
 
     public @NonNull String configValue() {

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.command.handler;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -7,9 +8,13 @@ import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.economy.*;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.store.IStoreRegistry;
+import top.ourisland.creepersiarena.api.store.IStoreService;
+import top.ourisland.creepersiarena.api.store.StoreId;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -38,13 +43,15 @@ public final class AdminCommandHandlers {
 
     public void help(CommandSender sender) {
         Msg.send(sender, """
-                /ciaa mode <mode_id>
+                /ciaa mode <mode_id|namespace:mode>
                 /ciaa arena <arena_id>
                 /ciaa skip [arena_id]
                 /ciaa cooldown <factor>
                 /ciaa regen <factor>
                 /ciaa mutation [<bool>|trigger]
-                /ciaa ability <list|info|status|enable|disable|reload> [ability_id]
+                /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]
+                /ciaa economy <balance|give|take|set> ...
+                /ciaa store <list|open> ...
                 /ciaa entrance <bool>
                 /ciaa language <id>
                 /ciaa reload
@@ -56,7 +63,7 @@ public final class AdminCommandHandlers {
 
     public void mode(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            Msg.send(sender, "Usage: /ciaa mode <mode_id>");
+            Msg.send(sender, "Usage: /ciaa mode <mode_id|namespace:mode>");
             return;
         }
 
@@ -232,7 +239,7 @@ public final class AdminCommandHandlers {
 
         var id = parseAbilityId(args, 1);
         if (id == null) {
-            Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [ability_id]");
+            Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]");
             return;
         }
 
@@ -248,7 +255,8 @@ public final class AdminCommandHandlers {
                 abilityInfo(sender, id);
             }
             case "info", "status" -> abilityInfo(sender, id);
-            default -> Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [ability_id]");
+            default ->
+                    Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]");
         }
     }
 
@@ -280,6 +288,148 @@ public final class AdminCommandHandlers {
         Msg.send(sender, "  effective-current-game: " + (gate == null
                 ? admin.isEnabled(id, null)
                 : gate.isEnabledForGame(id, "command")));
+    }
+
+    public void store(CommandSender sender, String[] args) {
+        var stores = rt.getService(IStoreService.class);
+        var registry = rt.getService(IStoreRegistry.class);
+
+        if (stores == null || registry == null) {
+            Msg.send(sender, "Store service is not available.");
+            return;
+        }
+
+        if (args.length < 1 || "list".equalsIgnoreCase(args[0])) {
+            Msg.send(sender, "Stores:");
+            for (var store : registry.stores()) {
+                Msg.send(sender, "- " + store.id().asString() + " items=" + registry.items(store.id()).size());
+            }
+            return;
+        }
+
+        if ("open".equalsIgnoreCase(args[0])) {
+            if (args.length < 3) {
+                Msg.send(sender, "Usage: /ciaa store open <player> <namespace:store>");
+                return;
+            }
+            var player = Bukkit.getPlayerExact(args[1]);
+            if (player == null) {
+                Msg.send(sender, "Player must be online: " + args[1]);
+                return;
+            }
+            StoreId storeId = StoreId.of(args[2]);
+            if (registry.store(storeId) == null) {
+                Msg.send(sender, "Unknown store: " + args[2]);
+                return;
+            }
+            stores.openStore(player, storeId);
+            Msg.send(sender, "Opened store " + storeId.asString() + " for " + player.getName());
+            return;
+        }
+
+        Msg.send(sender, "Usage: /ciaa store <list|open>");
+    }
+
+    public void economy(CommandSender sender, String[] args) {
+        var wallet = rt.getService(IWalletService.class);
+        var currencies = rt.getService(ICurrencyRegistry.class);
+
+        if (wallet == null || currencies == null) {
+            Msg.send(sender, "Economy service is not available.");
+            return;
+        }
+
+        if (args.length < 1 || "help".equalsIgnoreCase(args[0])) {
+            Msg.send(sender, "Usage: /ciaa economy balance <player>");
+            Msg.send(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
+            return;
+        }
+
+        String action = args[0].toLowerCase(Locale.ROOT);
+        if ("balance".equals(action)) {
+            if (args.length < 2) {
+                Msg.send(sender, "Usage: /ciaa economy balance <player>");
+                return;
+            }
+            var player = Bukkit.getPlayerExact(args[1]);
+            if (player == null) {
+                Msg.send(sender, "Player must be online for economy commands: " + args[1]);
+                return;
+            }
+            if (!wallet.loaded(player.getUniqueId())) {
+                Msg.send(sender, "Player data is still loading: " + player.getName());
+                return;
+            }
+            Msg.send(sender, "Balance for " + player.getName() + ":");
+            var balances = wallet.balances(player.getUniqueId());
+            for (var currency : currencies.currencies()) {
+                Msg.send(sender, "- " + currency.id().asString() + ": " + balances.getOrDefault(currency.id(), 0L));
+            }
+            return;
+        }
+
+        if (args.length < 4) {
+            Msg.send(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
+            return;
+        }
+
+        var player = Bukkit.getPlayerExact(args[1]);
+        if (player == null) {
+            Msg.send(sender, "Player must be online for economy commands: " + args[1]);
+            return;
+        }
+
+        if (!wallet.loaded(player.getUniqueId())) {
+            Msg.send(sender, "Player data is still loading: " + player.getName());
+            return;
+        }
+
+        CurrencyId currencyId = CurrencyId.of(args[2]);
+        if (currencies.currency(currencyId) == null) {
+            Msg.send(sender, "Unknown currency: " + args[2]);
+            return;
+        }
+
+        Long amount = parseLong(args[3]);
+        if (amount == null || amount < 0L) {
+            Msg.send(sender, "Invalid amount: " + args[3]);
+            return;
+        }
+
+        var currencyAmount = new CurrencyAmount(currencyId, amount);
+        var reason = WalletChangeReason.command("admin:" + action);
+        var result = switch (action) {
+            case "give" -> wallet.deposit(player.getUniqueId(), currencyAmount, reason);
+            case "take" -> wallet.withdraw(player.getUniqueId(), CurrencyCost.of(currencyAmount), reason);
+            case "set" -> wallet.set(player.getUniqueId(), currencyAmount, reason);
+            default -> null;
+        };
+
+        if (result == null) {
+            Msg.send(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
+            return;
+        }
+
+        if (result.disabled()) {
+            Msg.send(sender, "Currency ability is disabled.");
+            return;
+        }
+
+        if (!result.success()) {
+            Msg.send(sender, "Transaction failed. Missing: " + result.missingAmounts());
+            return;
+        }
+
+        Msg.send(sender, "Economy updated: " + player.getName() + " " + currencyId.asString()
+                + " = " + wallet.balance(player.getUniqueId(), currencyId));
+    }
+
+    private Long parseLong(String raw) {
+        try {
+            return Long.parseLong(String.valueOf(raw).trim());
+        } catch (Throwable _) {
+            return null;
+        }
     }
 
     public void entrance(CommandSender sender, String[] args) {

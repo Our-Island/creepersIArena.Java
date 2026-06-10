@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.defaultcontent;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
+import top.ourisland.creepersiarena.api.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
@@ -10,8 +11,14 @@ import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
 import top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
+import top.ourisland.creepersiarena.api.store.IStoreService;
+import top.ourisland.creepersiarena.defaultcontent.cosmetic.particle.DefaultParticleCosmetics;
+import top.ourisland.creepersiarena.defaultcontent.cosmetic.particle.ParticlePreviewDisplayService;
 import top.ourisland.creepersiarena.defaultcontent.death.*;
+import top.ourisland.creepersiarena.defaultcontent.economy.DefaultCurrencies;
 import top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime.AcceleratedTimeMutationEffect;
+import top.ourisland.creepersiarena.defaultcontent.store.DefaultParticleStore;
+import top.ourisland.creepersiarena.defaultcontent.store.DefaultParticleStoreAccessListener;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleGameplayListener;
@@ -40,6 +47,7 @@ import java.util.function.LongSupplier;
 public final class DefaultContentExtension implements ICiaExtension {
 
     private static final String ROOT_PACKAGE = "top.ourisland.creepersiarena";
+    private ParticlePreviewDisplayService particlePreviewDisplays;
 
     @Override
     public void onLoad(ICiaExtensionContext context) {
@@ -64,6 +72,7 @@ public final class DefaultContentExtension implements ICiaExtension {
         registerDefaultAbilities(context);
         registerMutationContent(context);
         registerDeathContent(context, sessions, runtime);
+        registerEconomyStoreAndCosmetics(context);
 
         context.registerListener(
                 new SkillImplementationListener(sessions, runtime, tickTask, () -> context.getService(IAbilityGate.class)),
@@ -75,8 +84,21 @@ public final class DefaultContentExtension implements ICiaExtension {
                         sessions,
                         context.requireService(IAbilityGate.class)
                 ),
-                new StealGameplayListener(gameManager, sessions, restState)
+                new StealGameplayListener(gameManager, sessions, restState),
+                new DefaultParticleStoreAccessListener(
+                        context.requireService(IStoreService.class),
+                        context.requireService(IAbilityGate.class),
+                        context.plugin().getDataFolder().toPath().resolve("config.yml")
+                )
         );
+    }
+
+    @Override
+    public void onDisable(ICiaExtensionContext context) {
+        if (particlePreviewDisplays != null) {
+            particlePreviewDisplays.stop();
+            particlePreviewDisplays = null;
+        }
     }
 
     private void registerDefaultAbilities(ICiaExtensionContext context) {
@@ -95,7 +117,10 @@ public final class DefaultContentExtension implements ICiaExtension {
                 new SimpleAbility(DefaultContentAbilities.STEAL_CELEBRATION_BOSSBAR),
                 new SimpleAbility(DefaultContentAbilities.STEAL_SELECTION_BARRIERS),
                 new SimpleAbility(DefaultContentAbilities.STEAL_OBJECTIVE_FEEDBACK),
-                new SimpleAbility(DefaultContentAbilities.STEAL_CELEBRATION_FIREWORKS)
+                new SimpleAbility(DefaultContentAbilities.STEAL_CELEBRATION_FIREWORKS),
+                new SimpleAbility(DefaultContentAbilities.PARTICLE_STORE),
+                new SimpleAbility(DefaultContentAbilities.PARTICLE_COSMETICS),
+                new SimpleAbility(DefaultContentAbilities.PARTICLE_PREVIEW_DISPLAYS)
         );
     }
 
@@ -125,6 +150,20 @@ public final class DefaultContentExtension implements ICiaExtension {
         registry.registerResolver(context.extensionId(), new BuiltinDeathCauseResolver(sessions, currentTick));
         registry.registerMessageProvider(context.extensionId(), new BuiltinDeathMessageProvider(catalog));
         registry.registerCleanupParticipant(context.extensionId(), new BuiltinDeathCleanupParticipant(runtime.store()));
+    }
+
+    private void registerEconomyStoreAndCosmetics(ICiaExtensionContext context) {
+        DefaultCurrencies.register(context);
+        DefaultParticleCosmetics.register(context);
+        DefaultParticleStore.register(context);
+
+        particlePreviewDisplays = new ParticlePreviewDisplayService(
+                context.plugin(),
+                context.requireService(IAbilityGate.class),
+                context.requireService(ICosmeticRegistry.class),
+                context.plugin().getDataFolder().toPath().resolve("config.yml")
+        );
+        particlePreviewDisplays.start();
     }
 
 }
