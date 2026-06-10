@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.core.economy;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.economy.CurrencyId;
 import top.ourisland.creepersiarena.api.economy.WalletChangeReason;
 import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
@@ -19,13 +21,18 @@ public final class WalletRepository {
         this.database = database;
     }
 
-    public Map<CurrencyId, Long> loadBalances(UUID playerId) throws SQLException {
-        try (Connection connection = database.connection()) {
+    public @NonNull Map<CurrencyId, Long> loadBalances(
+            @Nullable UUID playerId
+    ) throws SQLException {
+        try (var connection = database.connection()) {
             return loadBalances(connection, playerId);
         }
     }
 
-    public Map<CurrencyId, Long> loadBalances(Connection connection, UUID playerId) throws SQLException {
+    public @NonNull Map<CurrencyId, Long> loadBalances(
+            @NonNull Connection connection,
+            @Nullable UUID playerId
+    ) throws SQLException {
         var out = new LinkedHashMap<CurrencyId, Long>();
         if (playerId == null) return out;
 
@@ -43,19 +50,19 @@ public final class WalletRepository {
     }
 
     public void saveBalance(
-            UUID playerId,
-            CurrencyId currencyId,
+            @Nullable UUID playerId,
+            @Nullable CurrencyId currencyId,
             long balance
     ) throws SQLException {
-        try (Connection connection = database.connection()) {
+        try (var connection = database.connection()) {
             saveBalance(connection, playerId, currencyId, balance);
         }
     }
 
     public void saveBalance(
-            Connection connection,
-            UUID playerId,
-            CurrencyId currencyId,
+            @Nullable Connection connection,
+            @Nullable UUID playerId,
+            @Nullable CurrencyId currencyId,
             long balance
     ) throws SQLException {
         if (connection == null || playerId == null || currencyId == null) return;
@@ -80,27 +87,66 @@ public final class WalletRepository {
         }
     }
 
+    public void saveBalances(
+            @Nullable Connection connection,
+            @Nullable UUID playerId,
+            @Nullable Map<CurrencyId, Long> balances
+    ) throws SQLException {
+        if (connection == null || playerId == null || balances == null || balances.isEmpty()) return;
+
+        String table = database.names().walletBalances();
+        long now = Instant.now().toEpochMilli();
+        String player = playerId.toString();
+
+        try (
+                var delete = connection.prepareStatement("DELETE FROM " + table + " WHERE player_uuid = ? AND currency_namespace = ? AND currency_value = ?");
+                var insert = connection.prepareStatement("INSERT INTO " + table + " (player_uuid, currency_namespace, currency_value, balance, updated_at) VALUES (?, ?, ?, ?, ?)")
+        ) {
+            for (var entry : balances.entrySet()) {
+                var currencyId = entry.getKey();
+                if (currencyId == null) continue;
+
+                long balance = entry.getValue() == null ? 0L : entry.getValue();
+
+                delete.setString(1, player);
+                delete.setString(2, currencyId.namespace());
+                delete.setString(3, currencyId.value());
+                delete.addBatch();
+
+                insert.setString(1, player);
+                insert.setString(2, currencyId.namespace());
+                insert.setString(3, currencyId.value());
+                insert.setLong(4, Math.max(0L, balance));
+                insert.setLong(5, now);
+                insert.addBatch();
+            }
+
+            delete.executeBatch();
+            insert.executeBatch();
+        }
+    }
+
     public String appendTransaction(
-            UUID playerId,
-            CurrencyId currencyId,
+            @Nullable UUID playerId,
+            @Nullable CurrencyId currencyId,
             long deltaAmount,
             long balanceBefore,
             long balanceAfter,
-            WalletChangeReason reason
+            @Nullable WalletChangeReason reason
     ) throws SQLException {
-        try (Connection connection = database.connection()) {
+        try (var connection = database.connection()) {
             return appendTransaction(connection, playerId, currencyId, deltaAmount, balanceBefore, balanceAfter, reason);
         }
     }
 
     public String appendTransaction(
-            Connection connection,
-            UUID playerId,
-            CurrencyId currencyId,
+            @Nullable Connection connection,
+            @Nullable UUID playerId,
+            @Nullable CurrencyId currencyId,
             long deltaAmount,
             long balanceBefore,
             long balanceAfter,
-            WalletChangeReason reason
+            @Nullable WalletChangeReason reason
     ) throws SQLException {
         if (connection == null || playerId == null || currencyId == null || deltaAmount == 0L) return null;
 
@@ -111,10 +157,10 @@ public final class WalletRepository {
     }
 
     private void insertTransactionHeader(
-            Connection connection,
+            @NonNull Connection connection,
             String transactionId,
-            UUID playerId,
-            WalletChangeReason reason,
+            @NonNull UUID playerId,
+            @Nullable WalletChangeReason reason,
             boolean success
     ) throws SQLException {
         var actualReason = reason == null ? new WalletChangeReason("unknown", "") : reason;
@@ -134,9 +180,9 @@ public final class WalletRepository {
     }
 
     private void insertTransactionEntry(
-            Connection connection,
+            @NonNull Connection connection,
             String transactionId,
-            CurrencyId currencyId,
+            @NonNull CurrencyId currencyId,
             long deltaAmount,
             long balanceBefore,
             long balanceAfter

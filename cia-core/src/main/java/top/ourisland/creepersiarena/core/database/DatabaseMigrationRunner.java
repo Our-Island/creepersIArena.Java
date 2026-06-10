@@ -6,7 +6,6 @@ import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -51,24 +50,22 @@ public final class DatabaseMigrationRunner {
     private void ensureMigrationTable(Connection connection) throws SQLException {
         String table = database.names().schemaMigrations();
 
-        if (tableExists(connection, table) && !columnExists(connection, table, "owner_id")) {
-            try (var statement = connection.createStatement()) {
-                statement.executeUpdate("DROP TABLE " + table);
-            }
+        if (DatabaseSchemaUtils.tableExists(connection, table)
+                && !DatabaseSchemaUtils.columnExists(connection, table, "owner_id")) {
+            DatabaseSchemaUtils.dropTable(connection, table);
         }
 
-        try (var statement = connection.createStatement()) {
-            statement.executeUpdate(
-                    "CREATE TABLE IF NOT EXISTS " + table + " (" +
-                            "owner_id VARCHAR(128) NOT NULL, " +
-                            "version INTEGER NOT NULL, " +
-                            "name VARCHAR(128) NOT NULL, " +
-                            "checksum VARCHAR(128) NOT NULL, " +
-                            "applied_at BIGINT NOT NULL, " +
-                            "PRIMARY KEY (owner_id, version)" +
-                            ")"
-            );
-        }
+        DatabaseSchemaUtils.executeDdl(
+                connection,
+                "CREATE TABLE IF NOT EXISTS " + DatabaseSchemaUtils.identifier(table) + " (" +
+                        "owner_id VARCHAR(128) NOT NULL, " +
+                        "version INTEGER NOT NULL, " +
+                        "name VARCHAR(128) NOT NULL, " +
+                        "checksum VARCHAR(128) NOT NULL, " +
+                        "applied_at BIGINT NOT NULL, " +
+                        "PRIMARY KEY (owner_id, version)" +
+                        ")"
+        );
     }
 
     private void runOne(
@@ -107,33 +104,6 @@ public final class DatabaseMigrationRunner {
         }
     }
 
-    private boolean tableExists(
-            Connection connection,
-            String table
-    ) throws SQLException {
-        var meta = connection.getMetaData();
-        try (var rs = meta.getTables(null, null, table, null)) {
-            if (rs.next()) return true;
-        }
-        try (var rs = meta.getTables(null, null, table.toUpperCase(Locale.ROOT), null)) {
-            return rs.next();
-        }
-    }
-
-    private boolean columnExists(
-            Connection connection,
-            String table,
-            String column
-    ) throws SQLException {
-        var meta = connection.getMetaData();
-        try (var rs = meta.getColumns(null, null, table, column)) {
-            if (rs.next()) return true;
-        }
-        try (var rs = meta.getColumns(null, null, table.toUpperCase(Locale.ROOT), column.toUpperCase(Locale.ROOT))) {
-            return rs.next();
-        }
-    }
-
     private String normalize(String raw) {
         if (raw == null || raw.isBlank()) return "unknown";
         return raw.trim().toLowerCase(Locale.ROOT);
@@ -144,7 +114,7 @@ public final class DatabaseMigrationRunner {
             String owner,
             int version
     ) throws SQLException {
-        String table = database.names().schemaMigrations();
+        String table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
 
         try (var st = connection.prepareStatement("SELECT checksum FROM " + table + " WHERE owner_id = ? AND version = ?")) {
             st.setString(1, owner);
@@ -162,7 +132,7 @@ public final class DatabaseMigrationRunner {
             String owner,
             IDatabaseMigration migration
     ) throws SQLException {
-        String table = database.names().schemaMigrations();
+        String table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
 
         try (var st = connection.prepareStatement("INSERT INTO " + table + " (owner_id, version, name, checksum, applied_at) VALUES (?, ?, ?, ?, ?)")) {
             st.setString(1, owner);

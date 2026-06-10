@@ -5,7 +5,6 @@ import top.ourisland.creepersiarena.api.database.IDatabaseMigration;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public final class CoreSchemaMigration implements IDatabaseMigration {
 
@@ -232,10 +231,10 @@ public final class CoreSchemaMigration implements IDatabaseMigration {
                             ")"
             );
 
-            createIndex(st, names.walletTransactions(), "idx_wallet_transactions_player", "player_uuid, created_at");
-            createIndex(st, names.storePurchases(), "idx_store_purchases_player", "player_uuid, purchased_at");
-            createIndex(st, names.matchDeaths(), "idx_match_deaths_victim", "victim_uuid, occurred_at");
-            createIndex(st, names.matchDeaths(), "idx_match_deaths_killer", "killer_uuid, occurred_at");
+            DatabaseSchemaUtils.createIndex(connection, names.walletTransactions(), "idx_wallet_transactions_player", "player_uuid, created_at");
+            DatabaseSchemaUtils.createIndex(connection, names.storePurchases(), "idx_store_purchases_player", "player_uuid, purchased_at");
+            DatabaseSchemaUtils.createIndex(connection, names.matchDeaths(), "idx_match_deaths_victim", "victim_uuid, occurred_at");
+            DatabaseSchemaUtils.createIndex(connection, names.matchDeaths(), "idx_match_deaths_killer", "killer_uuid, occurred_at");
         }
     }
 
@@ -245,12 +244,10 @@ public final class CoreSchemaMigration implements IDatabaseMigration {
             String requiredColumn
     ) {
         try {
-            if (!tableExists(connection, table)) return;
-            if (columnExists(connection, table, requiredColumn)) return;
+            if (!DatabaseSchemaUtils.tableExists(connection, table)) return;
+            if (DatabaseSchemaUtils.columnExists(connection, table, requiredColumn)) return;
 
-            try (Statement st = connection.createStatement()) {
-                st.executeUpdate("DROP TABLE " + table);
-            }
+            DatabaseSchemaUtils.dropTable(connection, table);
         } catch (SQLException _) {
         }
     }
@@ -262,58 +259,12 @@ public final class CoreSchemaMigration implements IDatabaseMigration {
             String ddl
     ) {
         try {
-            if (columnExists(connection, table, column)) return;
+            if (DatabaseSchemaUtils.columnExists(connection, table, column)) return;
 
-            try (Statement st = connection.createStatement()) {
-                st.executeUpdate("ALTER TABLE " + table + " ADD COLUMN " + ddl);
-            }
+            DatabaseSchemaUtils.addColumn(connection, table, ddl);
         } catch (SQLException _) {
             // Existing servers may have an older partial schema. Failed additive fixes are tolerated here; the fresh
             // schema above is authoritative for new installs.
-        }
-    }
-
-    private static void createIndex(
-            Statement st,
-            String table,
-            String name,
-            String columns
-    ) {
-        try {
-            st.executeUpdate("CREATE INDEX IF NOT EXISTS " + name + " ON " + table + " (" + columns + ")");
-        } catch (SQLException first) {
-            try {
-                st.executeUpdate("CREATE INDEX " + name + " ON " + table + " (" + columns + ")");
-            } catch (SQLException _) {
-                // Index creation differences are non-fatal; table correctness is the critical migration step.
-            }
-        }
-    }
-
-    private static boolean tableExists(
-            Connection connection,
-            String table
-    ) throws SQLException {
-        var meta = connection.getMetaData();
-        try (var rs = meta.getTables(null, null, table, null)) {
-            if (rs.next()) return true;
-        }
-        try (var rs = meta.getTables(null, null, table.toUpperCase(java.util.Locale.ROOT), null)) {
-            return rs.next();
-        }
-    }
-
-    private static boolean columnExists(
-            Connection connection,
-            String table,
-            String column
-    ) throws SQLException {
-        var meta = connection.getMetaData();
-        try (var rs = meta.getColumns(null, null, table, column)) {
-            if (rs.next()) return true;
-        }
-        try (var rs = meta.getColumns(null, null, table.toUpperCase(java.util.Locale.ROOT), column.toUpperCase(java.util.Locale.ROOT))) {
-            return rs.next();
         }
     }
 

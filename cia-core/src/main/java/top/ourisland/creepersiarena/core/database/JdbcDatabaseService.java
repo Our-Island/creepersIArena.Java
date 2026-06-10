@@ -130,19 +130,17 @@ public final class JdbcDatabaseService implements IDatabaseService {
             Class<?> configClass = Class.forName("com.zaxxer.hikari.HikariConfig");
             Object hikariConfig = configClass.getConstructor().newInstance();
 
+            int poolSize = config.type() == DatabaseType.SQLITE ? 1 : Math.max(1, config.poolSize());
+
             invoke(configClass, hikariConfig, "setPoolName", String.class, "CreepersIArena-" + config.type());
             invoke(configClass, hikariConfig, "setJdbcUrl", String.class, jdbcUrl);
-            invoke(configClass, hikariConfig, "setMaximumPoolSize", int.class, Math.max(1, config.poolSize()));
-            invoke(configClass, hikariConfig, "setMinimumIdle", int.class, Math.clamp(config.poolSize(), 1, 1));
+            invoke(configClass, hikariConfig, "setMaximumPoolSize", int.class, poolSize);
+            invoke(configClass, hikariConfig, "setMinimumIdle", int.class, poolSize);
             invoke(configClass, hikariConfig, "setConnectionTimeout", long.class, Math.max(1000L, config.connectionTimeoutMs()));
             invoke(configClass, hikariConfig, "setAutoCommit", boolean.class, true);
 
             for (String key : properties.stringPropertyNames()) {
                 invoke(configClass, hikariConfig, "addDataSourceProperty", String.class, Object.class, key, properties.getProperty(key));
-            }
-
-            if (config.type() == DatabaseType.SQLITE) {
-                invoke(configClass, hikariConfig, "setMaximumPoolSize", int.class, 1);
             }
 
             Class<?> dsClass = Class.forName("com.zaxxer.hikari.HikariDataSource");
@@ -407,13 +405,13 @@ public final class JdbcDatabaseService implements IDatabaseService {
         }
 
         @Override
-        public void setLoginTimeout(int seconds) throws SQLException {
-            DriverManager.setLoginTimeout(seconds);
+        public boolean isWrapperFor(Class<?> iface) {
+            return false;
         }
 
         @Override
-        public boolean isWrapperFor(Class<?> iface) {
-            return false;
+        public void setLoginTimeout(int seconds) throws SQLException {
+            DriverManager.setLoginTimeout(seconds);
         }
 
         @Override

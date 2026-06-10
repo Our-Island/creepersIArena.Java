@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.player.PlayerDataParticipant;
 import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -62,15 +63,31 @@ public final class CosmeticService implements ICosmeticService, PlayerDataPartic
 
     @Override
     public void flushAll() throws Exception {
-        for (var entry : unlockedByPlayer.entrySet()) {
-            for (CosmeticId cosmeticId : entry.getValue()) {
-                repository.saveUnlock(entry.getKey(), cosmeticId);
-            }
-        }
+        try (var connection = database.connection()) {
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
 
-        for (var entry : selectionsByPlayer.entrySet()) {
-            for (var selection : entry.getValue().entrySet()) {
-                repository.saveSelection(entry.getKey(), selection.getKey(), selection.getValue());
+            try {
+                for (var entry : unlockedByPlayer.entrySet()) {
+                    repository.saveUnlocks(connection, entry.getKey(), List.copyOf(entry.getValue()));
+                }
+
+                for (var entry : selectionsByPlayer.entrySet()) {
+                    var selections = new EnumMap<CosmeticSlot, CosmeticId>(CosmeticSlot.class);
+                    selections.putAll(entry.getValue());
+                    repository.saveSelections(connection, entry.getKey(), selections);
+                }
+
+                connection.commit();
+            } catch (Throwable t) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollback) {
+                    t.addSuppressed(rollback);
+                }
+                throw t;
+            } finally {
+                connection.setAutoCommit(autoCommit);
             }
         }
     }

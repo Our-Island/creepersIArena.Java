@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.player.PlayerDataParticipant;
 import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,10 +53,25 @@ public final class WalletService implements IWalletService, PlayerDataParticipan
 
     @Override
     public void flushAll() throws Exception {
-        for (var entry : balancesByPlayer.entrySet()) {
-            var playerId = entry.getKey();
-            for (var balance : entry.getValue().entrySet()) {
-                repository.saveBalance(playerId, balance.getKey(), balance.getValue());
+        try (var connection = database.connection()) {
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            try {
+                for (var entry : balancesByPlayer.entrySet()) {
+                    repository.saveBalances(connection, entry.getKey(), new LinkedHashMap<>(entry.getValue()));
+                }
+
+                connection.commit();
+            } catch (Throwable t) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollback) {
+                    t.addSuppressed(rollback);
+                }
+                throw t;
+            } finally {
+                connection.setAutoCommit(autoCommit);
             }
         }
     }
