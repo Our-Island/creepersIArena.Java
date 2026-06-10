@@ -2,18 +2,19 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
-import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.listener.MutationListener;
+import top.ourisland.creepersiarena.game.mutation.MutationRegistry;
 import top.ourisland.creepersiarena.game.mutation.MutationResetReason;
 import top.ourisland.creepersiarena.game.mutation.MutationService;
-import top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime.AcceleratedTimeMutationEffect;
 
 @CiaBootstrapModule(name = "mutation", order = 1120)
 public final class MutationModule implements IBootstrapModule {
@@ -26,17 +27,18 @@ public final class MutationModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
+            var gate = rt.requireService(IAbilityGate.class);
+            var registry = new MutationRegistry(rt.log(), gate);
             var service = new MutationService(
                     rt.log(),
-                    rt.requireService(ConfigManager.class),
-                    rt.requireService(GameManager.class)
+                    rt.requireService(GameManager.class),
+                    gate,
+                    registry
             );
-            service.registerMutation(new AcceleratedTimeMutationEffect(
-                    rt.plugin(),
-                    rt.requireService(World.class),
-                    rt.log()
-            ));
+            rt.putService(MutationRegistry.class, registry);
             rt.putService(MutationService.class, service);
+            rt.putService(top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry.class, registry);
+            rt.requireService(IAbilityRegistry.class).registerAbility(RegisteredComponent.CORE_OWNER, service);
         }, "Loading mutation runtime...", "Mutation runtime loaded.");
     }
 

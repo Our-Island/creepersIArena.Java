@@ -9,17 +9,26 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilityChecks;
+import top.ourisland.creepersiarena.game.GameManager;
 
 /**
  * Default-content presentation for resolved kills.
  * <p>
  * Core owns death resolution, stats, streak calculation and death messages. This listener intentionally only consumes
- * the resolved {@link DeathResult}: it gives the killer the legacy feedback effects and sounds without recomputing
- * streaks or broadcasting another death message.
+ * the resolved {@link DeathResult}: it gives the killer default feedback effects and sounds without recomputing streaks
+ * or broadcasting another death message.
  */
 public final class BuiltinKillFeedbackService implements Listener {
 
     private static final int REGENERATION_TICKS = 3 * 20;
+
+    private final GameManager gameManager;
+
+    public BuiltinKillFeedbackService(GameManager gameManager) {
+        this.gameManager = gameManager;
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeathResolved(ArenaPlayerDeathResolvedEvent event) {
@@ -28,6 +37,14 @@ public final class BuiltinKillFeedbackService implements Listener {
 
         var killer = result.killer();
         if (killer == null || !killer.isOnline()) return;
+        if (!DefaultContentAbilityChecks.enabled(
+                gameManager == null ? null : gameManager.runtime(),
+                gameManager == null ? null : gameManager.active(),
+                killer,
+                DefaultContentAbilities.KILL_FEEDBACK,
+                null,
+                "kill_feedback"
+        )) return;
 
         giveKillReward(killer);
         playKillSounds(killer, result.killerStreakAfterKill());

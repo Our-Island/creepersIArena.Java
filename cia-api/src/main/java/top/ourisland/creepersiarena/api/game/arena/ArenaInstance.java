@@ -30,28 +30,6 @@ public record ArenaInstance(
             @lombok.NonNull Location anchor,
             @lombok.NonNull Region2D region,
             @lombok.NonNull List<Location> spawnpoints,
-            @lombok.NonNull Map<String, Location> teamSpawnpoints
-    ) {
-        this(
-                id,
-                nameKey,
-                type,
-                anchor,
-                region,
-                spawnpoints,
-                teamSpawnpoints,
-                legacySpawnGroups(spawnpoints, teamSpawnpoints),
-                IArenaConfigView.EMPTY
-        );
-    }
-
-    public ArenaInstance(
-            @lombok.NonNull String id,
-            @lombok.NonNull String nameKey,
-            @lombok.NonNull GameModeType type,
-            @lombok.NonNull Location anchor,
-            @lombok.NonNull Region2D region,
-            @lombok.NonNull List<Location> spawnpoints,
             @lombok.NonNull Map<String, Location> teamSpawnpoints,
             @lombok.NonNull Map<String, List<Location>> spawnGroups,
             @lombok.NonNull IArenaConfigView config
@@ -65,22 +43,6 @@ public record ArenaInstance(
         this.teamSpawnpoints = Map.copyOf(teamSpawnpoints);
         this.spawnGroups = copySpawnGroups(spawnGroups);
         this.config = config;
-    }
-
-    private static Map<String, List<Location>> legacySpawnGroups(
-            List<Location> spawnpoints,
-            Map<String, Location> teamSpawnpoints
-    ) {
-        var out = new LinkedHashMap<String, List<Location>>();
-        if (spawnpoints != null && !spawnpoints.isEmpty()) {
-            out.put("default", List.copyOf(spawnpoints));
-        }
-        if (teamSpawnpoints != null) {
-            for (var entry : teamSpawnpoints.entrySet()) {
-                out.put(normalize(entry.getKey()), List.of(entry.getValue()));
-            }
-        }
-        return out;
     }
 
     private static Map<String, List<Location>> copySpawnGroups(Map<String, List<Location>> input) {

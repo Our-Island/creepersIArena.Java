@@ -17,7 +17,7 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.death.CoreDeathCauseMapper;
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
-import top.ourisland.creepersiarena.game.death.DeathCauseRegistry;
+import top.ourisland.creepersiarena.game.death.DeathResolutionRegistry;
 import top.ourisland.creepersiarena.game.death.DeathStreakService;
 
 import java.util.Optional;
@@ -26,14 +26,14 @@ public final class ArenaDamageAttributionListener implements Listener {
 
     private final Logger log;
     private final PlayerSessionStore store;
-    private final DeathCauseRegistry registry;
+    private final DeathResolutionRegistry registry;
     private final DamageAttributionStore attributionStore;
     private final DeathStreakService streakService;
 
     public ArenaDamageAttributionListener(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionStore store,
-            @lombok.NonNull DeathCauseRegistry registry,
+            @lombok.NonNull DeathResolutionRegistry registry,
             @lombok.NonNull DamageAttributionStore attributionStore,
             @lombok.NonNull DeathStreakService streakService
     ) {

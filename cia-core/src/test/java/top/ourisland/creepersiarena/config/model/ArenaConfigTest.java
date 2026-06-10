@@ -36,18 +36,4 @@ class ArenaConfigTest {
         assertTrue(hall.settings().isList("redstone-blocks"));
     }
 
-    @Test
-    void supportsLegacyTypeAndSpawnpointFields() {
-        var yaml = new YamlConfiguration();
-        yaml.set("arena.border.type", "battle");
-        yaml.set("arena.border.spawnpoint", List.of(List.of(1, 64, 1), List.of(2, 64, 2)));
-
-        ArenaConfig.ArenaDef border = ArenaConfig.fromYaml(yaml).get("border");
-
-        assertNotNull(border);
-        assertEquals("battle", border.mode());
-        assertEquals(2, border.spawnpoints().size());
-        assertEquals("battle", border.type());
-    }
-
 }

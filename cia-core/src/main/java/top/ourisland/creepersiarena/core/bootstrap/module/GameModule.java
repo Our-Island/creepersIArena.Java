@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -59,7 +60,8 @@ public final class GameModule implements IBootstrapModule {
                     store,
                     gameManager,
                     lobbyItems,
-                    lobbyService
+                    lobbyService,
+                    rt.requireService(IAbilityGate.class)
             );
 
             rt.putAllServices(Map.of(

@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -11,10 +11,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.utils.AttributeUtils;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 final class AcceleratedTimeAttributeController {
 
@@ -38,27 +35,37 @@ final class AcceleratedTimeAttributeController {
     ) {
         if (targets == null) return;
 
-        clearAll();
+        if (amount <= 0.0D) {
+            clearAll();
+            return;
+        }
 
-        if (amount <= 0.0D) return;
+        boolean amountChanged = Double.isNaN(appliedAmount) || Double.compare(appliedAmount, amount) != 0;
+        if (amountChanged) {
+            new HashSet<>(appliedPlayers).stream()
+                    .map(Bukkit::getPlayer)
+                    .filter(Objects::nonNull)
+                    .forEach(this::remove);
 
-        if (Double.isNaN(appliedAmount) || Double.compare(appliedAmount, amount) != 0) {
+            appliedPlayers.clear();
             appliedAmount = amount;
         }
 
         var current = new HashSet<UUID>();
-        for (var player : targets) {
-            if (player == null || !player.isOnline()) continue;
-            current.add(player.getUniqueId());
-            ensureApplied(player, amount);
-        }
+        targets.stream()
+                .filter(player -> player != null && player.isOnline())
+                .forEach(player -> {
+                    current.add(player.getUniqueId());
+                    ensureApplied(player, amount);
+                });
 
-        for (var playerId : new HashSet<>(appliedPlayers)) {
-            if (current.contains(playerId)) continue;
-            var player = Bukkit.getPlayer(playerId);
-            if (player != null) remove(player);
-            appliedPlayers.remove(playerId);
-        }
+        new HashSet<>(appliedPlayers).stream()
+                .filter(playerId -> !current.contains(playerId))
+                .forEach(playerId -> {
+                    var player = Bukkit.getPlayer(playerId);
+                    if (player != null) remove(player);
+                    appliedPlayers.remove(playerId);
+                });
     }
 
     public void clear(Player player) {
@@ -70,9 +77,9 @@ final class AcceleratedTimeAttributeController {
     private void remove(Player player) {
         AttributeInstance instance = movementSpeedInstance(player);
         if (instance == null) return;
-        for (var modifier : Set.copyOf(instance.getModifiers())) {
-            if (movementSpeedKey.equals(modifier.getKey())) instance.removeModifier(modifier);
-        }
+        Set.copyOf(instance.getModifiers()).stream()
+                .filter(modifier -> movementSpeedKey.equals(modifier.getKey()))
+                .forEach(instance::removeModifier);
     }
 
     private AttributeInstance movementSpeedInstance(Player player) {
@@ -82,10 +89,11 @@ final class AcceleratedTimeAttributeController {
     }
 
     public void clearAll() {
-        for (var playerId : new HashSet<>(appliedPlayers)) {
-            var player = Bukkit.getPlayer(playerId);
-            if (player != null) remove(player);
-        }
+        new HashSet<>(appliedPlayers).stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .forEach(this::remove);
+
         appliedPlayers.clear();
         appliedAmount = Double.NaN;
     }

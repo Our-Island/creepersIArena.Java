@@ -19,21 +19,15 @@ import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.game.regeneration.RegenerationBreakReason;
 import top.ourisland.creepersiarena.game.regeneration.RegenerationConfig;
 import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
-import top.ourisland.creepersiarena.job.skill.ui.SkillItemCodec;
 
 import java.util.Objects;
 
 public final class RegenerationListener implements Listener {
 
     private final RegenerationService regeneration;
-    private final SkillItemCodec skillItemCodec;
 
-    public RegenerationListener(
-            RegenerationService regeneration,
-            SkillItemCodec skillItemCodec
-    ) {
+    public RegenerationListener(RegenerationService regeneration) {
         this.regeneration = regeneration;
-        this.skillItemCodec = skillItemCodec;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -96,11 +90,6 @@ public final class RegenerationListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getAction() == Action.PHYSICAL) return;
         if (event.getItem() == null) return;
-
-        if (skillItemCodec != null && skillItemCodec.isSkillItem(event.getItem())) {
-            regeneration.breakRest(event.getPlayer(), RegenerationBreakReason.USED_SKILL);
-            return;
-        }
 
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             regeneration.breakRest(event.getPlayer(), RegenerationBreakReason.USED_ITEM);

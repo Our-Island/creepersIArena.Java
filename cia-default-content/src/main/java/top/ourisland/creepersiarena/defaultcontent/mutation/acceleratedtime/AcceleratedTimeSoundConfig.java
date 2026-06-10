@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import org.bukkit.configuration.ConfigurationSection;
 

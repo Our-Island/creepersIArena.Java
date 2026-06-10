@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.game.mutation;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.game.mutation.MutationType;
 
 public record MutationTriggerResult(
         MutationTriggerResult.Kind kind,
@@ -49,10 +49,7 @@ public record MutationTriggerResult(
         );
     }
 
-    public static @NonNull MutationTriggerResult failed(
-            @Nullable MutationType type,
-            String message
-    ) {
+    public static @NonNull MutationTriggerResult failed(MutationType type, String message) {
         return new MutationTriggerResult(
                 Kind.FAILED,
                 type == null

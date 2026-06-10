@@ -54,6 +54,8 @@ public final class PluginBootstrap {
             runStage(StagePhase.LOAD, i + 1, total, bootstrapModules.get(i));
         }
 
+        extensionManager.enableAll();
+
         var binder = new ListenerBinder(rt).verbose(false);
         int usedModules = 0;
         for (IBootstrapModule m : bootstrapModules) {
@@ -69,8 +71,6 @@ public final class PluginBootstrap {
         for (int i = 0; i < total; i++) {
             runStage(StagePhase.START, i + 1, total, bootstrapModules.get(i));
         }
-
-        extensionManager.enableAll();
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Enabled in {}ms.", ms);

@@ -1,14 +1,13 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.SoundCategory;
-import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.game.mutation.*;
+import top.ourisland.creepersiarena.api.game.mutation.*;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -28,12 +27,16 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
 
     public AcceleratedTimeMutationEffect(
             Plugin plugin,
-            World world,
             Logger logger
     ) {
         this.tickRateController = new AcceleratedTimeTickRateController(logger);
-        this.worldController = new AcceleratedTimeWorldController(world, logger);
+        this.worldController = new AcceleratedTimeWorldController(logger);
         this.attributeController = new AcceleratedTimeAttributeController(plugin, logger);
+    }
+
+    @Override
+    public String configKey() {
+        return "accelerated-time";
     }
 
     @Override
@@ -43,10 +46,10 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
 
     @Override
     public void reload(
-            ConfigurationSection mutationSection,
+            ConfigurationSection effectSection,
             Logger logger
     ) {
-        config = AcceleratedTimeMutationConfig.fromMutationSection(mutationSection);
+        config = AcceleratedTimeMutationConfig.fromSection(effectSection);
     }
 
     @Override
@@ -55,14 +58,19 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
     }
 
     @Override
+    public int weight(MutationCandidateContext context) {
+        return config.weight();
+    }
+
+    @Override
     public MutationStartResult start(IMutationEffectContext context) {
         activeRate = randomRate(config.tickRateMin(), config.tickRateMax());
-        physicalTickRateApplied = switch (context.config().clockMode()) {
+        physicalTickRateApplied = config.serverGlobalTickRateEnabled() && switch (context.clockMode()) {
             case VANILLA_TICK_RATE, AUTO -> tickRateController.applyTickRate(activeRate);
             case LOGICAL -> false;
         };
 
-        worldController.onStart(config);
+        worldController.onStart(context.world(), config);
         var speedTargets = context.targets(config.speedTargetScope());
         attributeController.ensureApplied(speedTargets, config.movementSpeedAdd());
         broadcast(speedTargets, config.messages().randomStart());
@@ -80,13 +88,13 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
         Collection<Player> timeTargets = context.targets(config.timeTargetScope());
 
         attributeController.ensureApplied(speedTargets, config.movementSpeedAdd());
-        worldController.tick(config, timeTargets.size(), syntheticSteps);
+        worldController.tick(context.world(), config, timeTargets.size(), syntheticSteps);
     }
 
     @Override
     public void reset(
             IMutationEffectContext context,
-            MutationResetReason reason,
+            Object reason,
             boolean wasActive
     ) {
         if (wasActive) {
@@ -97,7 +105,7 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
 
         attributeController.clearAll();
         tickRateController.resetToNormal();
-        worldController.onReset(config);
+        worldController.onReset(context.world(), config);
         activeRate = 20.0D;
         physicalTickRateApplied = false;
     }

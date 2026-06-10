@@ -90,7 +90,7 @@ public final class LobbyEntryListener implements Listener {
             if (z2 == null || !z2.contains(now.getLocation())) return;
 
             log.info("[LobbyEntry] join game triggered: name={} stayedMs={}", now.getName(), zone.timeMs());
-            flow.onHubEntryTriggered(now);
+            flow.requestJoinFromHubEntrance(now);
         }, () -> pending.remove(id), ticks);
 
         if (task != null) {

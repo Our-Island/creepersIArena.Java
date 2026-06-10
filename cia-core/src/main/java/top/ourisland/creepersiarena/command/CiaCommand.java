@@ -14,6 +14,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
+import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.command.handler.AdminCommandHandlers;
 import top.ourisland.creepersiarena.command.handler.PlayerCommandHandlers;
@@ -297,6 +298,8 @@ public final class CiaCommand {
                     return 1;
                 }));
 
+        adm.then(buildAbilitySubtree(rt, admin, "ability"));
+
         adm.then(Commands.literal("entrance")
                 .requires(src -> hasPerm(src, P_ADMIN + ".entrance"))
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
@@ -354,6 +357,85 @@ public final class CiaCommand {
                 });
 
         return adm;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildAbilitySubtree(
+            BootstrapRuntime rt,
+            AdminCommandHandlers admin,
+            String literalName
+    ) {
+        return Commands.literal(literalName)
+                .requires(src -> hasPerm(src, P_ADMIN + ".ability"))
+                .executes(ctx -> {
+                    admin.ability(sender(ctx), new String[]{"list"});
+                    return 1;
+                })
+                .then(Commands.literal("list")
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"list"});
+                            return 1;
+                        }))
+                .then(Commands.literal("reload")
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"reload"});
+                            return 1;
+                        }))
+                .then(Commands.literal("info")
+                        .then(argWord("ability_id")
+                                .suggests((_, b) -> suggestAbilityIds(rt, b))
+                                .executes(ctx -> {
+                                    admin.ability(sender(ctx), new String[]{
+                                            "info",
+                                            StringArgumentType.getString(ctx, "ability_id")
+                                    });
+                                    return 1;
+                                }))
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"info"});
+                            return 1;
+                        }))
+                .then(Commands.literal("status")
+                        .then(argWord("ability_id")
+                                .suggests((_, b) -> suggestAbilityIds(rt, b))
+                                .executes(ctx -> {
+                                    admin.ability(sender(ctx), new String[]{
+                                            "status",
+                                            StringArgumentType.getString(ctx, "ability_id")
+                                    });
+                                    return 1;
+                                }))
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"status"});
+                            return 1;
+                        }))
+                .then(Commands.literal("enable")
+                        .then(argWord("ability_id")
+                                .suggests((_, b) -> suggestAbilityIds(rt, b))
+                                .executes(ctx -> {
+                                    admin.ability(sender(ctx), new String[]{
+                                            "enable",
+                                            StringArgumentType.getString(ctx, "ability_id")
+                                    });
+                                    return 1;
+                                }))
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"enable"});
+                            return 1;
+                        }))
+                .then(Commands.literal("disable")
+                        .then(argWord("ability_id")
+                                .suggests((_, b) -> suggestAbilityIds(rt, b))
+                                .executes(ctx -> {
+                                    admin.ability(sender(ctx), new String[]{
+                                            "disable",
+                                            StringArgumentType.getString(ctx, "ability_id")
+                                    });
+                                    return 1;
+                                }))
+                        .executes(ctx -> {
+                            admin.ability(sender(ctx), new String[]{"disable"});
+                            return 1;
+                        }));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildExtensionSubtree(
@@ -419,6 +501,19 @@ public final class CiaCommand {
     ) {
         var am = rt.requireService(ArenaManager.class);
         List<String> ids = am.arenas().stream().map(ArenaInstance::id).toList();
+        return suggestWithPrefix(b, ids);
+    }
+
+    private static CompletableFuture<Suggestions> suggestAbilityIds(
+            BootstrapRuntime rt,
+            SuggestionsBuilder b
+    ) {
+        var admin = rt.getService(IAbilityAdmin.class);
+        if (admin == null) return b.buildFuture();
+        List<String> ids = admin.abilityIds().stream()
+                .map(id -> id.asString().replace('_', '-'))
+                .sorted(String::compareToIgnoreCase)
+                .toList();
         return suggestWithPrefix(b, ids);
     }
 

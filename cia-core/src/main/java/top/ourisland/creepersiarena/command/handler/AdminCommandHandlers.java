@@ -1,6 +1,12 @@
 package top.ourisland.creepersiarena.command.handler;
 
 import org.bukkit.command.CommandSender;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.ability.AbilityId;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
@@ -9,6 +15,7 @@ import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.extension.debug.ExtensionDiagnostics;
 import top.ourisland.creepersiarena.game.GameManager;
+import top.ourisland.creepersiarena.game.ability.AbilityService;
 import top.ourisland.creepersiarena.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
 import top.ourisland.creepersiarena.game.mutation.MutationService;
@@ -37,6 +44,7 @@ public final class AdminCommandHandlers {
                 /ciaa cooldown <factor>
                 /ciaa regen <factor>
                 /ciaa mutation [<bool>|trigger]
+                /ciaa ability <list|info|status|enable|disable|reload> [ability_id]
                 /ciaa entrance <bool>
                 /ciaa language <id>
                 /ciaa reload
@@ -161,14 +169,14 @@ public final class AdminCommandHandlers {
         }
 
         if (args.length < 1) {
-            Msg.send(sender, mutation.statusLine());
+            Msg.send(sender, mutation.statusLine(mutationAdminEnabled()));
             return;
         }
 
         if ("trigger".equalsIgnoreCase(args[0])) {
             var result = mutation.trigger();
             Msg.send(sender, result.message());
-            Msg.send(sender, mutation.statusLine());
+            Msg.send(sender, mutation.statusLine(mutationAdminEnabled()));
             return;
         }
 
@@ -178,9 +186,100 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        mutation.setAdminEnabled(enabled);
+        var admin = rt.getService(IAbilityAdmin.class);
+        if (admin == null) {
+            Msg.send(sender, "Ability admin service is not available.");
+            return;
+        }
+        admin.setAdminEnabled(CoreAbilities.MUTATION, enabled);
+        if (!enabled) mutation.reset(top.ourisland.creepersiarena.game.mutation.MutationResetReason.ADMIN_DISABLED);
         Msg.send(sender, "Mutation admin enabled: " + enabled);
-        Msg.send(sender, mutation.statusLine());
+        Msg.send(sender, mutation.statusLine(admin.adminEnabled(CoreAbilities.MUTATION)));
+    }
+
+    private boolean mutationAdminEnabled() {
+        var admin = rt.getService(IAbilityAdmin.class);
+        return admin == null || admin.adminEnabled(CoreAbilities.MUTATION);
+    }
+
+    public void ability(CommandSender sender, String[] args) {
+        var admin = rt.getService(IAbilityAdmin.class);
+        if (admin == null) {
+            Msg.send(sender, "Ability admin service is not available.");
+            return;
+        }
+
+        if (args.length < 1 || "list".equalsIgnoreCase(args[0])) {
+            var ids = admin.abilityIds();
+            if (ids.isEmpty()) {
+                Msg.send(sender, "No abilities are registered or configured.");
+                return;
+            }
+            Msg.send(sender, "Abilities:");
+            for (AbilityId id : ids) {
+                Msg.send(sender, "- " + id.asString() + " admin=" + admin.adminEnabled(id)
+                        + " config=" + admin.config(id).enabled(false));
+            }
+            return;
+        }
+
+        String action = args[0].toLowerCase(Locale.ROOT);
+        if ("reload".equals(action)) {
+            admin.reload();
+            Msg.send(sender, "Ability runtime reloaded, including registered ability settings.");
+            return;
+        }
+
+        var id = parseAbilityId(args, 1);
+        if (id == null) {
+            Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [ability_id]");
+            return;
+        }
+
+        switch (action) {
+            case "enable" -> {
+                admin.setAdminEnabled(id, true);
+                Msg.send(sender, "Ability admin override cleared/enabled: " + id.asString());
+                abilityInfo(sender, id);
+            }
+            case "disable" -> {
+                admin.setAdminEnabled(id, false);
+                Msg.send(sender, "Ability admin disabled: " + id.asString());
+                abilityInfo(sender, id);
+            }
+            case "info", "status" -> abilityInfo(sender, id);
+            default -> Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [ability_id]");
+        }
+    }
+
+    private @Nullable AbilityId parseAbilityId(String @NonNull [] args, int startIndex) {
+        if (args.length <= startIndex) return null;
+        String first = args[startIndex];
+        if (first == null || first.isBlank()) return null;
+        if (first.contains(":")) return AbilityId.of(first);
+        if (args.length > startIndex + 1 && args[startIndex + 1] != null && !args[startIndex + 1].isBlank()) {
+            return AbilityId.of(first, args[startIndex + 1]);
+        }
+        return AbilityId.of(first);
+    }
+
+    private void abilityInfo(CommandSender sender, AbilityId id) {
+        var admin = rt.requireService(IAbilityAdmin.class);
+        var gate = rt.getService(IAbilityGate.class);
+        var view = admin.config(id);
+        var service = rt.getService(AbilityService.class);
+        var registered = service == null ? null : service.registeredAbility(id);
+
+        Msg.send(sender, "Ability: " + id.asString());
+        Msg.send(sender, "  registered: " + (registered != null));
+        if (registered != null) Msg.send(sender, "  owner: " + registered.ownerId());
+        Msg.send(sender, "  config-exists: " + view.exists());
+        Msg.send(sender, "  config-enabled: " + view.enabled(false));
+        Msg.send(sender, "  default-active: " + view.defaultActive(false));
+        Msg.send(sender, "  admin-enabled: " + admin.adminEnabled(id));
+        Msg.send(sender, "  effective-current-game: " + (gate == null
+                ? admin.isEnabled(id, null)
+                : gate.isEnabledForGame(id, "command")));
     }
 
     public void entrance(CommandSender sender, String[] args) {
@@ -228,7 +327,6 @@ public final class AdminCommandHandlers {
         rt.reloadPlugin();
         Msg.send(sender, "Reloaded.");
     }
-
 
     public void extensionsList(CommandSender sender) {
         sendLines(sender, ExtensionDiagnostics.listLines(rt));

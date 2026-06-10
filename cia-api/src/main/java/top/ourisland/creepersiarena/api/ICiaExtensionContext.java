@@ -2,10 +2,11 @@ package top.ourisland.creepersiarena.api;
 
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
-import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
-import top.ourisland.creepersiarena.api.game.death.IDeathMessageProvider;
-import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
+import org.jspecify.annotations.NonNull;
+import top.ourisland.creepersiarena.api.ability.IAbility;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.ability.IAbilityPolicy;
+import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -15,9 +16,10 @@ import java.nio.file.Path;
 /**
  * Mutable registration context handed to CIA extension callbacks.
  * <p>
- * This is the public publication surface for CIA extensions. It intentionally exposes only content-level extension
- * points: jobs, skills, modes, annotation discovery and resource installation. Bootstrap modules remain a core-internal
- * mechanism so external extensions do not need to depend on CreepersIArena implementation classes.
+ * This context intentionally exposes only stable, top-level extension operations: resources, service lookup,
+ * job/skill/mode publication, ability publication, listener registration and annotation discovery. Domain-specific
+ * extension points such as mutation effects or death resolvers are registered through their own runtime registry
+ * services obtained via {@link #requireService(Class)}.
  */
 public interface ICiaExtensionContext {
 
@@ -95,13 +97,8 @@ public interface ICiaExtensionContext {
      */
     void registerMode(IGameMode mode);
 
-    /**
-     * Registers a death cause resolver owned by this extension.
-     *
-     * @param resolver resolver to publish
-     */
-    default void registerDeathCauseResolver(IDeathCauseResolver resolver) {
-        requireService(IDeathResolutionRegistry.class).registerResolver(extensionId(), resolver);
+    default void registerAbility(IAbility... abilities) {
+        requireService(IAbilityRegistry.class).registerAbility(extensionId(), abilities);
     }
 
     /**
@@ -142,22 +139,18 @@ public interface ICiaExtensionContext {
      */
     <T> T getService(Class<T> type);
 
-    /**
-     * Registers a death message provider owned by this extension.
-     *
-     * @param provider message provider to publish
-     */
-    default void registerDeathMessageProvider(IDeathMessageProvider provider) {
-        requireService(IDeathResolutionRegistry.class).registerMessageProvider(extensionId(), provider);
+    default void registerAbilityPolicy(IAbilityPolicy... policies) {
+        requireService(IAbilityRegistry.class).registerPolicy(extensionId(), policies);
     }
 
-    /**
-     * Registers a death cleanup participant owned by this extension.
-     *
-     * @param participant cleanup participant to publish
-     */
-    default void registerDeathCleanupParticipant(IDeathCleanupParticipant participant) {
-        requireService(IDeathResolutionRegistry.class).registerCleanupParticipant(extensionId(), participant);
+    default IAbilityGate abilityGate() {
+        return requireService(IAbilityGate.class);
+    }
+
+    default void registerListener(Listener @NonNull ... listeners) {
+        for (Listener listener : listeners) {
+            registerListener(listener);
+        }
     }
 
     /**

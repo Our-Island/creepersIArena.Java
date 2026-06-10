@@ -4,11 +4,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
+import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvingEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.game.flow.GameFlow;
@@ -19,24 +22,26 @@ public final class DeathResolutionService {
 
     private final Logger log;
     private final PlayerSessionStore store;
-    private final DeathCauseRegistry registry;
+    private final DeathResolutionRegistry registry;
     private final DamageAttributionStore attributionStore;
     private final DeathCleanupService cleanupService;
     private final DeathStatsService statsService;
     private final DeathStreakService streakService;
     private final DeathMessageService messageService;
     private final GameFlow flow;
+    private final IAbilityGate abilities;
 
     public DeathResolutionService(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionStore store,
-            @lombok.NonNull DeathCauseRegistry registry,
+            @lombok.NonNull DeathResolutionRegistry registry,
             @lombok.NonNull DamageAttributionStore attributionStore,
             @lombok.NonNull DeathCleanupService cleanupService,
             @lombok.NonNull DeathStatsService statsService,
             @lombok.NonNull DeathStreakService streakService,
             @lombok.NonNull DeathMessageService messageService,
-            @lombok.NonNull GameFlow flow
+            @lombok.NonNull GameFlow flow,
+            @lombok.NonNull IAbilityGate abilities
     ) {
         this.log = log;
         this.store = store;
@@ -47,6 +52,7 @@ public final class DeathResolutionService {
         this.streakService = streakService;
         this.messageService = messageService;
         this.flow = flow;
+        this.abilities = abilities;
     }
 
     public void handleDeath(@lombok.NonNull PlayerDeathEvent event) {
@@ -59,13 +65,15 @@ public final class DeathResolutionService {
         event.deathMessage(null);
 
         long currentTick = attributionStore.currentTick();
-        DeathAttribution lastAttribution = attributionStore.findRecent(victim.getUniqueId(), currentTick).orElse(null);
-        DeathCauseId causeId = resolveCause(event, victim, lastAttribution);
+        var lastAttribution = attributionStore.findRecent(victim.getUniqueId(), currentTick).orElse(null);
+        var causeId = resolveCause(event, victim, lastAttribution);
         var killer = resolveKiller(victim, lastAttribution);
         boolean hasKiller = killer != null;
         boolean selfKill = !hasKiller;
 
-        DeathStreakService.StreakOutcome streak = streakService.apply(victim, killer, currentTick);
+        DeathStreakService.StreakOutcome streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
+                ? streakService.apply(victim, killer, currentTick)
+                : DeathStreakService.StreakOutcome.none(hasKiller);
         var result = new DeathResult(
                 victim,
                 killer,
@@ -77,6 +85,7 @@ public final class DeathResolutionService {
                 streak.label()
         );
 
+        Bukkit.getPluginManager().callEvent(new ArenaPlayerDeathResolvingEvent(victim, killer, result));
         cleanupService.cleanupAfterDeath(victim);
         statsService.record(result);
         messageService.broadcast(result);
@@ -105,7 +114,7 @@ public final class DeathResolutionService {
         }
 
         if (victim.getLastDamageCause() != null) {
-            DeathCauseId bukkitCauseId = CoreDeathCauseMapper.fromDamageCause(victim.getLastDamageCause().getCause());
+            var bukkitCauseId = CoreDeathCauseMapper.fromDamageCause(victim.getLastDamageCause().getCause());
             if (lastAttribution != null && isDirectOrGeneric(bukkitCauseId)) return lastAttribution.causeId();
             return bukkitCauseId;
         }
@@ -119,7 +128,7 @@ public final class DeathResolutionService {
         if (lastAttribution != null && lastAttribution.attackerId() != null) {
             if (lastAttribution.attackerId().equals(victim.getUniqueId())) return null;
 
-            Player attacker = Bukkit.getPlayer(lastAttribution.attackerId());
+            var attacker = Bukkit.getPlayer(lastAttribution.attackerId());
             if (attacker != null && attacker.isOnline()) return attacker;
         }
 

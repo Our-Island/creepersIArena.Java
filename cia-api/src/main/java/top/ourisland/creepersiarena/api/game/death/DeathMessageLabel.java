@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.api.game.death;
 
 public enum DeathMessageLabel {
 
+    KILL,
     FIRST_BLOOD,
     DOUBLE_KILL,
     SHUTDOWN,

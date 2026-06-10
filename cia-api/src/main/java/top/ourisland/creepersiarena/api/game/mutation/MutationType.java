@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation;
+package top.ourisland.creepersiarena.api.game.mutation;
 
 import lombok.Getter;
 import org.jspecify.annotations.NonNull;
@@ -10,10 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Stable mutation identifier.
- *
- * <p>This is intentionally not an enum so additional mutation effects can be registered without changing the core
- * state machine.</p>
+ * Stable mutation identifier. It is intentionally not an enum so extensions can add effects.
  */
 @Getter
 public final class MutationType {

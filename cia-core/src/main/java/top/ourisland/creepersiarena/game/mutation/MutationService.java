@@ -1,86 +1,55 @@
 package top.ourisland.creepersiarena.game.mutation;
 
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbility;
+import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.GameSession;
-import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.api.game.mutation.*;
 import top.ourisland.creepersiarena.game.GameManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class MutationService implements IMutationEffectContext {
+public final class MutationService implements IAbility, IMutationEffectContext {
 
     private final Logger logger;
-    private final ConfigManager configManager;
     private final GameManager gameManager;
+    private final IAbilityGate abilities;
+    private final MutationRegistry registry;
     private final ScaledTickAccumulator activeClock = new ScaledTickAccumulator();
     private final MutationState state = new MutationState();
-    private final Map<MutationType, IMutationEffect> effects = new LinkedHashMap<>();
 
     private MutationConfig config = MutationConfig.defaults();
-    private boolean adminEnabled = true;
 
     public MutationService(
             Logger logger,
-            ConfigManager configManager,
-            GameManager gameManager
+            GameManager gameManager,
+            IAbilityGate abilities,
+            MutationRegistry registry
     ) {
         this.logger = logger;
-        this.configManager = configManager;
         this.gameManager = gameManager;
-        reloadConfig();
+        this.abilities = abilities;
+        this.registry = registry;
+        reload(abilities.config(CoreAbilities.MUTATION));
     }
 
-    public void reloadConfig() {
-        config = MutationConfig.load(configManager, logger);
-        var section = mutationSection();
-        for (var effect : effects.values()) {
-            reloadEffect(effect, section);
-        }
-
-        if (!effectiveEnabled(config)) {
-            reset(MutationResetReason.DISABLED);
-            return;
-        }
-
-        if (state.active()) {
-            var activeEffect = effects.get(state.activeType());
-            if (activeEffect == null || !activeEffect.enabled()) reset(MutationResetReason.RELOAD);
-        }
-    }
-
-    private @Nullable ConfigurationSection mutationSection() {
-        try {
-            return MutationConfig.loadSection(configManager);
-        } catch (Throwable t) {
-            logger.warn("[Mutation] Failed to load effect config section: {}", t.getMessage(), t);
-            return null;
-        }
-    }
-
-    private void reloadEffect(
-            IMutationEffect effect,
-            @Nullable ConfigurationSection section
-    ) {
-        try {
-            effect.reload(section, logger);
-        } catch (Throwable t) {
-            logger.warn("[Mutation] Failed to reload {}: {}", effect.type(), t.getMessage(), t);
-        }
-    }
-
-    private boolean effectiveEnabled(MutationConfig currentConfig) {
-        return adminEnabled && currentConfig.enabled();
+    private boolean abilityEnabled() {
+        return abilities.isEnabledForGame(CoreAbilities.MUTATION, "mutation");
     }
 
     public void reset(MutationResetReason reason) {
         boolean wasActive = state.active();
         var activeType = state.activeType();
-        var activeEffect = effects.get(activeType);
+        var activeEffect = registry.get(activeType);
 
         if (activeEffect != null) {
             try {
@@ -94,24 +63,40 @@ public final class MutationService implements IMutationEffectContext {
         activeClock.reset();
     }
 
-    public void registerMutation(IMutationEffect effect) {
-        if (effect == null || effect.type() == null || effect.type().isNone()) return;
-        effects.put(effect.type(), effect);
-        reloadEffect(effect);
+    @Override
+    public top.ourisland.creepersiarena.api.ability.AbilityId id() {
+        return CoreAbilities.MUTATION;
     }
 
-    private void reloadEffect(IMutationEffect effect) {
-        reloadEffect(effect, mutationSection());
-    }
+    @Override
+    public void reload(IAbilityConfigView view) {
+        config = MutationConfig.load(view, logger);
+        var section = view == null ? null : view.settingsSection();
+        registry.reloadAll(section);
 
-    public void tick() {
-        var currentConfig = config;
-        if (!effectiveEnabled(currentConfig)) {
+        if (!abilityEnabled()) {
             reset(MutationResetReason.DISABLED);
             return;
         }
 
-        if (!hasEligibleActiveGame(currentConfig)) {
+        if (state.active()) {
+            var activeEffect = registry.get(state.activeType());
+            if (activeEffect == null || !activeEffect.enabled()) reset(MutationResetReason.RELOAD);
+        }
+    }
+
+    public void reloadConfig() {
+        reload(abilities.config(CoreAbilities.MUTATION));
+    }
+
+    public void tick() {
+        var currentConfig = config;
+        if (!abilityEnabled()) {
+            reset(MutationResetReason.DISABLED);
+            return;
+        }
+
+        if (!hasEligibleActiveGame()) {
             reset(MutationResetReason.NO_ELIGIBLE_GAME);
             state.sessionMarker(null);
             return;
@@ -138,19 +123,10 @@ public final class MutationService implements IMutationEffectContext {
         tickActive(currentConfig);
     }
 
-    private boolean hasEligibleActiveGame(MutationConfig currentConfig) {
+    private boolean hasEligibleActiveGame() {
         GameSession active = gameManager.active();
         if (active == null) return false;
-        if (!currentConfig.isEligibleMode(active.mode().id())) return false;
-        if (gameManager.timeline() instanceof IMutationEligibility eligibility) {
-            try {
-                return eligibility.allowMutation();
-            } catch (Throwable t) {
-                logger.warn("[Mutation] Timeline mutation eligibility failed: {}", t.getMessage(), t);
-                return false;
-            }
-        }
-        return true;
+        return abilities.isEnabledForGame(CoreAbilities.MUTATION, "mutation_eligible_game");
     }
 
     private MutationState.GameSessionMarker currentMarker() {
@@ -166,7 +142,7 @@ public final class MutationService implements IMutationEffectContext {
     }
 
     private void tickActive(MutationConfig currentConfig) {
-        var effect = effects.get(state.activeType());
+        var effect = registry.get(state.activeType());
         if (effect == null) {
             reset(MutationResetReason.MANUAL);
             return;
@@ -204,7 +180,7 @@ public final class MutationService implements IMutationEffectContext {
             return;
         }
 
-        var effect = pickEnabledEffect();
+        var effect = pickEnabledEffect(currentConfig);
         if (effect == null) {
             rollFailure(currentConfig);
             return;
@@ -216,7 +192,7 @@ public final class MutationService implements IMutationEffectContext {
 
     private double currentLogicalScale() {
         if (!state.active()) return 1.0D;
-        var effect = effects.get(state.activeType());
+        var effect = registry.get(state.activeType());
         if (effect == null) return 1.0D;
         double scale = effect.logicalScale(this);
         if (Double.isNaN(scale) || Double.isInfinite(scale) || scale <= 0.0D) return 1.0D;
@@ -235,13 +211,33 @@ public final class MutationService implements IMutationEffectContext {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 
-    private IMutationEffect pickEnabledEffect() {
-        var candidates = new ArrayList<IMutationEffect>();
-        for (IMutationEffect effect : effects.values()) {
-            if (effect.enabled()) candidates.add(effect);
+    private IMutationEffect pickEnabledEffect(MutationConfig currentConfig) {
+        var context = candidateContext();
+        var candidates = new ArrayList<WeightedEffect>();
+        int totalWeight = 0;
+
+        for (var effect : registry.effects()) {
+            if (effect == null || !effect.enabled()) continue;
+            try {
+                if (!effect.canStart(context)) continue;
+                int weight = Math.max(0, effect.weight(context));
+                if (weight == 0) continue;
+                candidates.add(new WeightedEffect(effect, weight));
+                totalWeight += weight;
+            } catch (Throwable t) {
+                logger.warn("[Mutation] Candidate evaluation failed for {}: {}", effect.type(), t.getMessage(), t);
+            }
         }
-        if (candidates.isEmpty()) return null;
-        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+
+        if (candidates.isEmpty() || totalWeight <= 0) return null;
+
+        int roll = ThreadLocalRandom.current().nextInt(totalWeight);
+        for (var candidate : candidates) {
+            roll -= candidate.weight();
+            if (roll < 0) return candidate.effect();
+        }
+
+        return candidates.getLast().effect();
     }
 
     private MutationTriggerResult startEffect(IMutationEffect effect) {
@@ -272,15 +268,22 @@ public final class MutationService implements IMutationEffectContext {
     }
 
     private boolean allowMutationTarget(Player player) {
-        if (gameManager.timeline() instanceof IMutationEligibility eligibility) {
-            try {
-                return eligibility.allowMutationTarget(player);
-            } catch (Throwable t) {
-                logger.warn("[Mutation] Timeline mutation target eligibility failed: {}", t.getMessage(), t);
-                return false;
-            }
-        }
-        return true;
+        if (player == null) return false;
+        return abilities.isEnabled(CoreAbilities.MUTATION, player, "mutation_target");
+    }
+
+    private MutationCandidateContext candidateContext() {
+        var active = gameManager.active();
+        String modeId = active == null || active.mode() == null ? "" : active.mode().id();
+        String arenaId = active == null || active.arena() == null ? "" : active.arena().id();
+
+        return new MutationCandidateContext(
+                active,
+                modeId,
+                arenaId,
+                state.idleCounterTicks(),
+                targets(MutationTargetScope.ACTIVE_GAME_PLAYERS)
+        );
     }
 
     public MutationTriggerResult trigger() {
@@ -291,14 +294,14 @@ public final class MutationService implements IMutationEffectContext {
         }
 
         var currentConfig = config;
-        if (!effectiveEnabled(currentConfig)) return MutationTriggerResult.disabled();
-        if (!hasEligibleActiveGame(currentConfig)) return MutationTriggerResult.noEligibleGame();
+        if (!abilityEnabled()) return MutationTriggerResult.disabled();
+        if (!hasEligibleActiveGame()) return MutationTriggerResult.noEligibleGame();
 
         var marker = currentMarker();
         if (marker == null) return MutationTriggerResult.noEligibleGame();
         state.sessionMarker(marker);
 
-        var effect = pickEnabledEffect();
+        var effect = pickEnabledEffect(currentConfig);
         if (effect == null) return MutationTriggerResult.noEffect();
         return startEffect(effect);
     }
@@ -318,16 +321,6 @@ public final class MutationService implements IMutationEffectContext {
         state.addIdleTicks(ticks);
     }
 
-    public void setAdminEnabled(boolean enabled) {
-        adminEnabled = enabled;
-        if (!enabled) reset(MutationResetReason.ADMIN_DISABLED);
-    }
-
-    public boolean adminEnabled() {
-        return adminEnabled;
-    }
-
-    @Override
     public MutationConfig config() {
         return config;
     }
@@ -338,12 +331,28 @@ public final class MutationService implements IMutationEffectContext {
     }
 
     @Override
+    public World world() {
+        var active = gameManager.active();
+        return active == null || active.arena() == null ? null : active.arena().world();
+    }
+
+    @Override
+    public GameSession game() {
+        return gameManager.active();
+    }
+
+    @Override
+    public MutationClockMode clockMode() {
+        return config.clockMode();
+    }
+
+    @Override
     public Collection<Player> targets(MutationTargetScope scope) {
         if (scope == MutationTargetScope.ALL_ONLINE) {
             return List.copyOf(Bukkit.getOnlinePlayers());
         }
 
-        GameSession active = gameManager.active();
+        var active = gameManager.active();
         if (active == null) return List.of();
 
         var out = new ArrayList<Player>();
@@ -356,24 +365,26 @@ public final class MutationService implements IMutationEffectContext {
         return out;
     }
 
-    public String statusLine() {
-        var activeEffect = effects.get(state.activeType());
+    public String statusLine(boolean adminEnabled) {
+        var activeEffect = registry.get(state.activeType());
         String detail = activeEffect == null ? "" : activeEffect.status(this);
         if (!detail.isBlank()) detail = " " + detail;
-        return "Mutation: enabled=%s configEnabled=%s adminEnabled=%s active=%s idle=%d remaining=%d mode=%s%s".formatted(
-                effectiveEnabled(),
-                config.enabled(),
+        var view = abilities.config(CoreAbilities.MUTATION);
+        return "Mutation: enabled=%s configEnabled=%s adminEnabled=%s active=%s idle=%d remaining=%d mode=%s effects=%d%s".formatted(
+                abilityEnabled(),
+                view.enabled(false),
                 adminEnabled,
                 state.activeType(),
                 state.idleCounterTicks(),
                 state.remainingTicks(),
                 config.clockMode(),
+                registry.size(),
                 detail
         );
     }
 
     public boolean effectiveEnabled() {
-        return effectiveEnabled(config);
+        return abilityEnabled();
     }
 
     public double gameSecondScale() {
@@ -393,13 +404,14 @@ public final class MutationService implements IMutationEffectContext {
     }
 
     public void clearPlayer(@Nullable Player player) {
-        for (IMutationEffect effect : effects.values()) {
-            try {
-                effect.clearPlayer(player);
-            } catch (Throwable t) {
-                logger.warn("[Mutation] Failed to clear player for {}: {}", effect.type(), t.getMessage(), t);
-            }
-        }
+        registry.clearPlayer(player);
+    }
+
+    private record WeightedEffect(
+            IMutationEffect effect,
+            int weight
+    ) {
+
     }
 
 }

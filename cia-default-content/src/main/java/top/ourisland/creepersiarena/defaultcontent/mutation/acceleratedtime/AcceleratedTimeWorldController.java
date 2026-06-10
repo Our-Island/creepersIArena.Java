@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import org.bukkit.GameRules;
 import org.bukkit.World;
@@ -6,19 +6,14 @@ import org.slf4j.Logger;
 
 final class AcceleratedTimeWorldController {
 
-    private final World world;
     private final Logger logger;
 
-    public AcceleratedTimeWorldController(
-            World world,
-            Logger logger
-    ) {
-        this.world = world;
+    public AcceleratedTimeWorldController(Logger logger) {
         this.logger = logger;
     }
 
-    public void onStart(AcceleratedTimeMutationConfig config) {
-        if (!config.startDaylightCycle()) return;
+    public void onStart(World world, AcceleratedTimeMutationConfig config) {
+        if (world == null || !config.startDaylightCycle()) return;
         try {
             world.setGameRule(GameRules.ADVANCE_TIME, true);
         } catch (Throwable t) {
@@ -27,11 +22,12 @@ final class AcceleratedTimeWorldController {
     }
 
     public void tick(
+            World world,
             AcceleratedTimeMutationConfig config,
             int targetCount,
             int syntheticSteps
     ) {
-        if (config.timeAddPerTargetPerTick() <= 0L || targetCount <= 0 || syntheticSteps <= 0) return;
+        if (world == null || config.timeAddPerTargetPerTick() <= 0L || targetCount <= 0 || syntheticSteps <= 0) return;
         try {
             long delta = config.timeAddPerTargetPerTick() * targetCount * (long) syntheticSteps;
             world.setFullTime(world.getFullTime() + delta);
@@ -40,7 +36,8 @@ final class AcceleratedTimeWorldController {
         }
     }
 
-    public void onReset(AcceleratedTimeMutationConfig config) {
+    public void onReset(World world, AcceleratedTimeMutationConfig config) {
+        if (world == null) return;
         try {
             world.setGameRule(GameRules.ADVANCE_TIME, config.resetDaylightCycle());
             if (config.resetTimeEnabled()) {
