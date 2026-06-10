@@ -6,16 +6,16 @@ import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
-import top.ourisland.creepersiarena.api.cosmetic.ICosmeticRegistry;
-import top.ourisland.creepersiarena.api.cosmetic.ICosmeticService;
+import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
+import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.cosmetic.CosmeticRegistry;
-import top.ourisland.creepersiarena.game.cosmetic.CosmeticService;
-import top.ourisland.creepersiarena.game.playerdata.PlayerDataService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.data.PlayerDataService;
+import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticRegistry;
+import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticService;
 
 @CiaBootstrapModule(name = "cosmetic", order = 690)
 public final class CosmeticModule implements IBootstrapModule {

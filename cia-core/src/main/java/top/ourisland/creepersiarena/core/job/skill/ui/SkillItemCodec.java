@@ -1,0 +1,49 @@
+package top.ourisland.creepersiarena.core.job.skill.ui;
+
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
+import org.jspecify.annotations.Nullable;
+
+public final class SkillItemCodec {
+
+    private final NamespacedKey skillIdKey;
+    private final NamespacedKey slotKey;
+
+    public SkillItemCodec(@lombok.NonNull Plugin plugin) {
+        this.skillIdKey = new NamespacedKey(plugin, "skill_id");
+        this.slotKey = new NamespacedKey(plugin, "skill_slot");
+    }
+
+    public void markSkill(ItemStack it, String skillId, int uiSlot) {
+        if (it == null) return;
+        var meta = it.getItemMeta();
+        if (meta == null) return;
+
+        meta.getPersistentDataContainer().set(skillIdKey, PersistentDataType.STRING, skillId);
+        meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, uiSlot);
+
+        it.setItemMeta(meta);
+    }
+
+    public int readUiSlot(ItemStack it) {
+        if (it == null) return -1;
+        var meta = it.getItemMeta();
+        if (meta == null) return -1;
+        Integer v = meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
+        return v == null ? -1 : v;
+    }
+
+    public boolean isSkillItem(ItemStack it) {
+        return readSkillId(it) != null;
+    }
+
+    public @Nullable String readSkillId(ItemStack it) {
+        if (it == null) return null;
+        var meta = it.getItemMeta();
+        if (meta == null) return null;
+        return meta.getPersistentDataContainer().get(skillIdKey, PersistentDataType.STRING);
+    }
+
+}

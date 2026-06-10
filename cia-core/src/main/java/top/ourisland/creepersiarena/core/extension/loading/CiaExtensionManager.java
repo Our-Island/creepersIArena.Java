@@ -1,11 +1,11 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
+import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.extension.metadata.CiaExtensionDescriptorException;
 import top.ourisland.creepersiarena.core.extension.metadata.CiaExtensionDescriptorReader;
 

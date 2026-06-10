@@ -4,9 +4,9 @@ import lombok.Getter;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponentScanner;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
-import top.ourisland.creepersiarena.core.component.discovery.ModuleOrderResolver;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.AnnotationComponentScanner;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ModuleOrderResolver;
 import top.ourisland.creepersiarena.core.extension.loading.BundledExtensionExtractor;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
 

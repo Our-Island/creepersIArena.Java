@@ -8,13 +8,13 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.listener.MutationListener;
-import top.ourisland.creepersiarena.game.mutation.MutationRegistry;
-import top.ourisland.creepersiarena.game.mutation.MutationResetReason;
-import top.ourisland.creepersiarena.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.game.mutation.MutationListener;
+import top.ourisland.creepersiarena.core.game.mutation.MutationRegistry;
+import top.ourisland.creepersiarena.core.game.mutation.MutationResetReason;
+import top.ourisland.creepersiarena.core.game.mutation.MutationService;
 
 @CiaBootstrapModule(name = "mutation", order = 1120)
 public final class MutationModule implements IBootstrapModule {

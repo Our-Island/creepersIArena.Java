@@ -2,14 +2,14 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.playerdata.PlayerDataListener;
-import top.ourisland.creepersiarena.game.playerdata.PlayerDataService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.data.PlayerDataListener;
+import top.ourisland.creepersiarena.core.data.PlayerDataService;
 
 @CiaBootstrapModule(name = "player-data", order = 625)
 public final class PlayerDataModule implements IBootstrapModule {

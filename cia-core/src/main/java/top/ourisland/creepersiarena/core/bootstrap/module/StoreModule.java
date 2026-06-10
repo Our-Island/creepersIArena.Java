@@ -4,18 +4,18 @@ import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
-import top.ourisland.creepersiarena.api.store.IStoreRegistry;
-import top.ourisland.creepersiarena.api.store.IStoreService;
+import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
+import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.store.StoreClickListener;
-import top.ourisland.creepersiarena.game.store.StoreItemCodec;
-import top.ourisland.creepersiarena.game.store.StoreRegistry;
-import top.ourisland.creepersiarena.game.store.StoreService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.economy.store.StoreClickListener;
+import top.ourisland.creepersiarena.core.economy.store.StoreItemCodec;
+import top.ourisland.creepersiarena.core.economy.store.StoreRegistry;
+import top.ourisland.creepersiarena.core.economy.store.StoreService;
 
 @CiaBootstrapModule(name = "store", order = 680)
 public final class StoreModule implements IBootstrapModule {

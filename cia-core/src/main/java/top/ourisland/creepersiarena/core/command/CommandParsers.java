@@ -1,0 +1,103 @@
+package top.ourisland.creepersiarena.core.command;
+
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.core.utils.Msg;
+
+import java.util.Locale;
+import java.util.Optional;
+
+public final class CommandParsers {
+
+    private CommandParsers() {
+    }
+
+    public static GameModeType parseMode(String s) {
+        return GameModeType.fromId(s);
+    }
+
+    public static Object parseValue(String s) {
+        if (s == null) return null;
+        String v = s.trim();
+
+        if (v.equalsIgnoreCase("null")) return null;
+
+        Boolean b = parseBoolean(v);
+        if (b != null) return b;
+
+        Integer i = parseInt(v);
+        if (i != null) return i;
+
+        Double d = parseDouble(v);
+        if (d != null) return d;
+
+        if ((v.startsWith("\"") && v.endsWith("\"")) || (v.startsWith("'") && v.endsWith("'"))) {
+            return v.substring(1, v.length() - 1);
+        }
+        return v;
+    }
+
+    public static Boolean parseBoolean(String s) {
+        if (s == null) return null;
+        String v = s.trim().toLowerCase(Locale.ROOT);
+        if (v.equals("true") || v.equals("yes") || v.equals("on") || v.equals("1")) return true;
+        if (v.equals("false") || v.equals("no") || v.equals("off") || v.equals("0")) return false;
+        return null;
+    }
+
+    public static Integer parseInt(String s) {
+        try {
+            return Integer.parseInt(String.valueOf(s).trim());
+        } catch (Throwable _) {
+            return null;
+        }
+    }
+
+    public static Double parseDouble(String s) {
+        try {
+            return Double.parseDouble(String.valueOf(s).trim());
+        } catch (Throwable _) {
+            return null;
+        }
+    }
+
+    public static String normalizeCiaId(String raw) {
+        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public static Integer parseTeamId(String token) {
+        if (token == null) return null;
+        if (token.equalsIgnoreCase("random")) return null;
+
+        Integer n = parseInt(token);
+        if (n != null) return n;
+
+        return switch (token.toLowerCase(Locale.ROOT)) {
+            case "red" -> 1;
+            case "blue" -> 2;
+            case "green" -> 3;
+            case "yellow" -> 4;
+            case "aqua", "cyan" -> 5;
+            case "purple" -> 6;
+            case "white" -> 7;
+            case "black" -> 8;
+            default -> null;
+        };
+    }
+
+    public static Optional<Player> asPlayer(CommandSender sender) {
+        if (sender instanceof Player p) {
+            return Optional.of(p);
+        }
+        Msg.send(sender, "You can only execute this command as a player!");
+        return Optional.empty();
+    }
+
+    public static void asHelp(CommandSender sender, String[] args, String help) {
+        if (args.length == 0) {
+            Msg.send(sender, help);
+        }
+    }
+
+}

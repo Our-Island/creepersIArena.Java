@@ -1,14 +1,14 @@
 package top.ourisland.creepersiarena.core.extension.debug;
 
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionLoadFailure;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
 import top.ourisland.creepersiarena.core.extension.loading.LoadedCiaExtension;
-import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.job.JobManager;
+import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

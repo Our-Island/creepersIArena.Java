@@ -1,0 +1,108 @@
+package top.ourisland.creepersiarena.core.game.lobby.item;
+
+import org.bukkit.SoundCategory;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+
+public final class LobbyUiListener implements Listener {
+
+    private final LobbyItemCodec codec;
+    private final PlayerSessionStore store;
+    private final GameFlow flow;
+
+    public LobbyUiListener(LobbyItemCodec codec, PlayerSessionStore store, GameFlow flow) {
+        this.codec = codec;
+        this.store = store;
+        this.flow = flow;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInteract(PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        if (e.getAction() == Action.PHYSICAL) return;
+
+        var a = e.getAction();
+        boolean isClick =
+                a == Action.RIGHT_CLICK_AIR || a == Action.RIGHT_CLICK_BLOCK ||
+                        a == Action.LEFT_CLICK_AIR || a == Action.LEFT_CLICK_BLOCK;
+        if (!isClick) return;
+
+        Player p = e.getPlayer();
+        if (store.get(p) == null) return;
+
+        var item = e.getItem();
+        if (!isLobbyUiItem(item)) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
+
+        e.setCancelled(true);
+        handleLobbyUiItem(p, item);
+    }
+
+    private boolean isLobbyUiItem(ItemStack item) {
+        if (item == null) return false;
+        return codec.readAction(item) != null || codec.readJobId(item) != null;
+    }
+
+    private void handleLobbyUiItem(Player p, ItemStack item) {
+        p.playSound(p, "minecraft:ui.button.click", SoundCategory.UI, 1.0f, 1.0f);
+
+        var action = codec.readAction(item);
+        if (action != null) {
+            flow.onLobbyAction(p, action, codec.readJobPage(item), codec.readJobId(item));
+            return;
+        }
+
+        String jobId = codec.readJobId(item);
+        if (jobId != null) {
+            flow.onLobbySelectJob(p, jobId);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onClick(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
+
+        e.setCancelled(true);
+
+        var cur = e.getCurrentItem();
+        if (!isLobbyUiItem(cur)) return;
+
+        handleLobbyUiItem(p, cur);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDrag(InventoryDragEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
+
+        e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSwap(PlayerSwapHandItemsEvent e) {
+        Player p = e.getPlayer();
+
+        if (store.get(p) == null) return;
+        if (!flow.acceptsLobbyUiInput(p)) return;
+
+        e.setCancelled(true);
+
+        var mainHand = e.getMainHandItem();
+        if (!mainHand.getType().isAir() && isLobbyUiItem(mainHand)) handleLobbyUiItem(p, mainHand);
+    }
+
+}

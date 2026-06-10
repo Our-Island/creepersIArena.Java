@@ -4,8 +4,8 @@ import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 
 /**
  * Module attempting to fix issues occurred when reloading the plugin.

@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.core.extension.loading;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 
 import javax.tools.ToolProvider;
 import java.io.IOException;

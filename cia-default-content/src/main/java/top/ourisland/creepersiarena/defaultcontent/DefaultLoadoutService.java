@@ -3,9 +3,9 @@ package top.ourisland.creepersiarena.defaultcontent;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
-import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
-import top.ourisland.creepersiarena.job.skill.ui.SkillHotbarRenderer;
+import top.ourisland.creepersiarena.core.job.JobManager;
+import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.core.job.skill.ui.SkillHotbarRenderer;
 
 import java.util.function.LongSupplier;
 

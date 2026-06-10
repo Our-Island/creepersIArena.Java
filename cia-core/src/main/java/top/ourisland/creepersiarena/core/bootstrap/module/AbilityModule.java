@@ -1,16 +1,16 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.api.ability.*;
-import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.core.ability.AbilityContextFactory;
+import top.ourisland.creepersiarena.core.ability.AbilityGate;
+import top.ourisland.creepersiarena.core.ability.AbilityService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.ability.AbilityContextFactory;
-import top.ourisland.creepersiarena.game.ability.AbilityGate;
-import top.ourisland.creepersiarena.game.ability.AbilityService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.game.GameManager;
 
 import java.util.Map;
 

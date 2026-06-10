@@ -13,11 +13,11 @@ import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.component.discovery.AnnotationComponentScanner;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
-import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.job.JobManager;
-import top.ourisland.creepersiarena.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.AnnotationComponentScanner;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.job.JobManager;
+import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

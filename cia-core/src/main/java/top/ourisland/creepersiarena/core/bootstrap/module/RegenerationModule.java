@@ -10,13 +10,13 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.listener.RegenerationListener;
-import top.ourisland.creepersiarena.game.mutation.MutationService;
-import top.ourisland.creepersiarena.game.mutation.ScaledTickAccumulator;
-import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.game.mutation.ScaledTickAccumulator;
+import top.ourisland.creepersiarena.core.game.regeneration.RegenerationListener;
+import top.ourisland.creepersiarena.core.game.regeneration.RegenerationService;
 
 @CiaBootstrapModule(name = "regeneration", order = 1150)
 public final class RegenerationModule implements IBootstrapModule {

@@ -2,17 +2,17 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.bukkit.World;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.flow.GameFlow;
-import top.ourisland.creepersiarena.game.listener.LobbyEntryListener;
-import top.ourisland.creepersiarena.game.listener.PlayerStateRulesListener;
-import top.ourisland.creepersiarena.game.lobby.LobbyManager;
-import top.ourisland.creepersiarena.game.lobby.LobbyService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.game.flow.PlayerStateRulesListener;
+import top.ourisland.creepersiarena.core.game.lobby.LobbyEntryListener;
+import top.ourisland.creepersiarena.core.game.lobby.LobbyManager;
+import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
 
 import java.util.Map;
 

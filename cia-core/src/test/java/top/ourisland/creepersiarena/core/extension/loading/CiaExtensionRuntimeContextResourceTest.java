@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
-import top.ourisland.creepersiarena.core.component.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 
 import java.io.InputStreamReader;
 import java.net.URL;

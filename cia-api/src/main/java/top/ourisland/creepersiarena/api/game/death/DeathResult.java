@@ -3,8 +3,6 @@ package top.ourisland.creepersiarena.api.game.death;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Objects;
-
 public record DeathResult(
         @lombok.NonNull Player victim,
         @Nullable Player killer,

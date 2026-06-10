@@ -1,0 +1,142 @@
+package top.ourisland.creepersiarena.core.game.flow;
+
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
+import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
+
+public final class PlayerStateRulesListener implements Listener {
+
+    private final PlayerSessionStore store;
+    private final LobbyService lobbyService;
+    private final ConfigManager configManager;
+
+    public PlayerStateRulesListener(
+            PlayerSessionStore store,
+            LobbyService lobbyService,
+            ConfigManager configManager
+    ) {
+        this.store = store;
+        this.lobbyService = lobbyService;
+        this.configManager = configManager;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent e) {
+        // Paper optimization: only run boundary checks when the player changed blocks.
+        if (!e.hasChangedBlock()) return;
+
+        var p = e.getPlayer();
+        if (p.getGameMode() != GameMode.ADVENTURE) return;
+
+        var s = store.get(p);
+        if (s == null) return;
+
+        Location to = e.getTo();
+
+        if (s.state() == PlayerState.HUB) {
+            var region = lobbyService.lobbyRegion("hub");
+            if (region != null && !region.contains(to)) {
+                e.setTo(region.clampXZ(to));
+            }
+        }
+
+        if (s.state() == PlayerState.RESPAWN) {
+            var region = lobbyService.lobbyRegion("death");
+            if (region != null && !region.contains(to)) {
+                e.setTo(region.clampXZ(to));
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player p)) return;
+
+        var st = state(p);
+        if (st == null) return;
+
+        if (st == PlayerState.HUB || st == PlayerState.RESPAWN) {
+            e.setCancelled(true);
+        }
+    }
+
+    private PlayerState state(Player p) {
+        var s = store.get(p);
+        return s == null ? null : s.state();
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPvp(EntityDamageByEntityEvent e) {
+        if (!(e.getDamager() instanceof Player damager)) return;
+        var st = state(damager);
+        if (st == null) return;
+
+        if (st != PlayerState.IN_GAME) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBreak(BlockBreakEvent e) {
+        var st = state(e.getPlayer());
+        if (st == null) return;
+
+        if (st != PlayerState.IN_GAME) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDrop(PlayerDropItemEvent e) {
+        var st = state(e.getPlayer());
+        if (st == null) return;
+
+        if (st != PlayerState.IN_GAME) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPickup(EntityPickupItemEvent e) {
+        if (!(e.getEntity() instanceof Player p)) return;
+
+        var st = state(p);
+        if (st == null) return;
+
+        if (st != PlayerState.IN_GAME) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onExhaust(EntityExhaustionEvent e) {
+        if (!(e.getEntity() instanceof Player)) return;
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onAirChange(EntityAirChangeEvent e) {
+        if (!(e.getEntity() instanceof Player p)) return;
+
+        var st = state(p);
+        if (st == null) return;
+
+        if (st != PlayerState.IN_GAME) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerPortal(PlayerPortalEvent e) {
+        if (configManager.globalConfig().world().portalsEnabled()) return;
+
+        if (e.getTo().getWorld() != null && e.getTo().getWorld().getEnvironment() == World.Environment.NETHER) {
+            e.setCancelled(true);
+        }
+    }
+
+}

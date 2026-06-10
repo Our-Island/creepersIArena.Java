@@ -3,9 +3,9 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.permission.CiaPermissions;
-import top.ourisland.creepersiarena.core.permission.LuckPermsService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
+import top.ourisland.creepersiarena.core.command.permission.LuckPermsService;
 
 /**
  * Registers permissions in code and optionally hooks LuckPerms.

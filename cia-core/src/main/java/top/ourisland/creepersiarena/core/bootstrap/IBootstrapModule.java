@@ -1,6 +1,6 @@
 package top.ourisland.creepersiarena.core.bootstrap;
 
-import top.ourisland.creepersiarena.core.component.metadata.BootstrapModuleMetadata;
+import top.ourisland.creepersiarena.core.bootstrap.metadata.BootstrapModuleMetadata;
 
 /**
  * A bootstrap module representing a logical unit of initialization and lifecycle management.

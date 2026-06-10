@@ -9,11 +9,11 @@ import top.ourisland.creepersiarena.api.economy.IWalletService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.game.economy.CurrencyRegistry;
-import top.ourisland.creepersiarena.game.economy.WalletService;
-import top.ourisland.creepersiarena.game.playerdata.PlayerDataService;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.data.PlayerDataService;
+import top.ourisland.creepersiarena.core.economy.CurrencyRegistry;
+import top.ourisland.creepersiarena.core.economy.WalletService;
 
 @CiaBootstrapModule(name = "economy", order = 670)
 public final class EconomyModule implements IBootstrapModule {

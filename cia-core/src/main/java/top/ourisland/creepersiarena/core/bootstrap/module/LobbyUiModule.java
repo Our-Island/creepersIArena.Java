@@ -5,13 +5,13 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.flow.GameFlow;
-import top.ourisland.creepersiarena.game.listener.LobbyUiListener;
-import top.ourisland.creepersiarena.game.lobby.item.LobbyItemCodec;
-import top.ourisland.creepersiarena.game.lobby.item.LobbyItemFactory;
-import top.ourisland.creepersiarena.game.lobby.item.LobbyItemService;
-import top.ourisland.creepersiarena.job.JobManager;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemCodec;
+import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemFactory;
+import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
+import top.ourisland.creepersiarena.core.game.lobby.item.LobbyUiListener;
+import top.ourisland.creepersiarena.core.job.JobManager;
 
 import java.util.Map;
 

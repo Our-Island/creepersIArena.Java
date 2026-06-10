@@ -1,11 +1,11 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.utils.I18n;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.utils.I18n;
 
 /**
  * Module controlling configurations and internationalization & localization function.

@@ -5,12 +5,12 @@ import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
-import top.ourisland.creepersiarena.game.death.DeathStreakService;
-import top.ourisland.creepersiarena.game.flow.GameFlow;
-import top.ourisland.creepersiarena.game.mutation.MutationService;
-import top.ourisland.creepersiarena.game.mutation.ScaledTickAccumulator;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.game.death.DamageAttributionStore;
+import top.ourisland.creepersiarena.core.game.death.DeathStreakService;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.game.mutation.ScaledTickAccumulator;
 
 /**
  * Module controlling game tick settings.

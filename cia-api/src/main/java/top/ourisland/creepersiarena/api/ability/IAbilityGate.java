@@ -8,8 +8,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * Runtime-facing read-only ability helper.
  * <p>
- * Runtime systems should depend on this gate instead of carrying both a registry and a project-specific context factory.
- * Registration belongs to {@link IAbilityRegistry}; admin overrides and diagnostics belong to {@link IAbilityAdmin}.
+ * Runtime systems should depend on this gate instead of carrying both a registry and a project-specific context
+ * factory. Registration belongs to {@link IAbilityRegistry}; admin overrides and diagnostics belong to
+ * {@link IAbilityAdmin}.
  */
 public interface IAbilityGate {
 

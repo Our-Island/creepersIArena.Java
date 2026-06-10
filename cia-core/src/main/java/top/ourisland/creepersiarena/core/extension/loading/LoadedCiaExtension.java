@@ -1,8 +1,8 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
-import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
+import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 
 import java.nio.file.Path;
 import java.time.Instant;

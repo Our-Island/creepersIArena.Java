@@ -5,9 +5,9 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
-import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.game.flow.GameFlow;
-import top.ourisland.creepersiarena.game.listener.PlayerConnectionListener;
+import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.game.flow.PlayerConnectionListener;
 
 /**
  * Module controlling player related.
