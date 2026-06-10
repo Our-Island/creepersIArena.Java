@@ -6,11 +6,12 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.*;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
@@ -43,6 +44,7 @@ public final class GameFlow {
 
     private final PlayerTransitions transitions;
     private final RespawnService respawns;
+    private final IAbilityGate abilities;
 
     private final Map<UUID, PendingLeave> pendingLeaveToHub = new HashMap<>();
 
@@ -53,13 +55,15 @@ public final class GameFlow {
             @lombok.NonNull PlayerSessionStore store,
             @lombok.NonNull GameManager gameManager,
             @lombok.NonNull LobbyItemService lobbyItemService,
-            @lombok.NonNull LobbyService lobbyService
+            @lombok.NonNull LobbyService lobbyService,
+            @lombok.NonNull IAbilityGate abilities
     ) {
         this.plugin = plugin;
         this.log = log;
         this.cfg = cfg;
         this.store = store;
         this.gameManager = gameManager;
+        this.abilities = abilities;
 
         this.transitions = new PlayerTransitions(
                 plugin,
@@ -324,10 +328,7 @@ public final class GameFlow {
         return true;
     }
 
-    /**
-     * Legacy entry (called by LobbyEntryListener). Keep it for compatibility.
-     */
-    public void onHubEntryTriggered(Player p) {
+    public void requestJoinFromHubEntrance(Player p) {
         if (!allowsHubEntrance(p)) return;
         requestJoinFromHub(p, JoinSource.HUB_ENTRANCE);
     }
@@ -434,6 +435,9 @@ public final class GameFlow {
 
             case RespawnDecision.RespawnLobbyCountdown(int sec) -> {
                 int wait = Math.max(0, sec);
+                if (!abilities.isEnabled(CoreAbilities.RESPAWN_COUNTDOWN, p, "respawn_countdown")) {
+                    wait = 0;
+                }
 
                 if (wait == 0) {
                     respawns.cancel(p);
@@ -727,7 +731,6 @@ public final class GameFlow {
             JoinFromHubPlan.NotPlayer,
             JoinFromHubPlan.NotInHub,
             JoinFromHubPlan.NoActiveGame,
-            JoinFromHubPlan.ModeNotSupported,
             JoinFromHubPlan.Joined {
 
         record NotPlayer() implements JoinFromHubPlan {
@@ -742,13 +745,6 @@ public final class GameFlow {
 
         }
 
-        /**
-         * Kept for binary/source compatibility with older command handling. The generic flow no longer rejects
-         * non-default modes here; modes should reject joins through {@link JoinDecision} when needed.
-         */
-        record ModeNotSupported(GameModeType mode) implements JoinFromHubPlan {
-
-        }
 
         record Joined() implements JoinFromHubPlan {
 

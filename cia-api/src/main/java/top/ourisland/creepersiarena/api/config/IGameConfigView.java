@@ -34,8 +34,7 @@ public interface IGameConfigView {
     }
 
     /**
-     * Returns the raw configuration section for a mode under {@code game.modes.<mode-id>}. Implementations may also
-     * support legacy {@code game.<mode-id>} sections for compatibility.
+     * Returns the raw configuration section for a mode under {@code game.modes.<mode-id>}.
      *
      * @param modeId mode id, namespaced or plain
      *

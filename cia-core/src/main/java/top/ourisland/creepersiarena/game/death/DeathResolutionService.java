@@ -4,6 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
@@ -19,24 +21,26 @@ public final class DeathResolutionService {
 
     private final Logger log;
     private final PlayerSessionStore store;
-    private final DeathCauseRegistry registry;
+    private final DeathResolutionRegistry registry;
     private final DamageAttributionStore attributionStore;
     private final DeathCleanupService cleanupService;
     private final DeathStatsService statsService;
     private final DeathStreakService streakService;
     private final DeathMessageService messageService;
     private final GameFlow flow;
+    private final IAbilityGate abilities;
 
     public DeathResolutionService(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionStore store,
-            @lombok.NonNull DeathCauseRegistry registry,
+            @lombok.NonNull DeathResolutionRegistry registry,
             @lombok.NonNull DamageAttributionStore attributionStore,
             @lombok.NonNull DeathCleanupService cleanupService,
             @lombok.NonNull DeathStatsService statsService,
             @lombok.NonNull DeathStreakService streakService,
             @lombok.NonNull DeathMessageService messageService,
-            @lombok.NonNull GameFlow flow
+            @lombok.NonNull GameFlow flow,
+            @lombok.NonNull IAbilityGate abilities
     ) {
         this.log = log;
         this.store = store;
@@ -47,6 +51,7 @@ public final class DeathResolutionService {
         this.streakService = streakService;
         this.messageService = messageService;
         this.flow = flow;
+        this.abilities = abilities;
     }
 
     public void handleDeath(@lombok.NonNull PlayerDeathEvent event) {
@@ -65,7 +70,9 @@ public final class DeathResolutionService {
         boolean hasKiller = killer != null;
         boolean selfKill = !hasKiller;
 
-        DeathStreakService.StreakOutcome streak = streakService.apply(victim, killer, currentTick);
+        DeathStreakService.StreakOutcome streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
+                ? streakService.apply(victim, killer, currentTick)
+                : DeathStreakService.StreakOutcome.none(hasKiller);
         var result = new DeathResult(
                 victim,
                 killer,

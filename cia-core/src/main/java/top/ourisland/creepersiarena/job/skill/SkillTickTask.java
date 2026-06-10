@@ -3,6 +3,9 @@ package top.ourisland.creepersiarena.job.skill;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import top.ourisland.creepersiarena.api.ability.AbilityId;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -33,6 +36,7 @@ public final class SkillTickTask {
     private final SkillHotbarRenderer renderer;
     private final DoubleSupplier tickScale;
     private final IntSupplier maxStepsPerRun;
+    private final Supplier<IAbilityGate> abilities;
     private final ScaledTickAccumulator scaledClock = new ScaledTickAccumulator();
 
     private final AtomicLong tick = new AtomicLong(0);
@@ -45,7 +49,8 @@ public final class SkillTickTask {
             Plugin plugin,
             SkillHotbarRenderer renderer,
             DoubleSupplier tickScale,
-            IntSupplier maxStepsPerRun
+            IntSupplier maxStepsPerRun,
+            Supplier<IAbilityGate> abilities
     ) {
         this.sessions = sessions;
         this.gameManager = gameManager;
@@ -55,6 +60,7 @@ public final class SkillTickTask {
         this.renderer = renderer;
         this.tickScale = tickScale == null ? () -> 1.0D : tickScale;
         this.maxStepsPerRun = maxStepsPerRun == null ? () -> 1 : maxStepsPerRun;
+        this.abilities = abilities == null ? () -> null : abilities;
     }
 
     public long nowTick() {
@@ -85,6 +91,7 @@ public final class SkillTickTask {
         for (var p : Bukkit.getOnlinePlayers()) {
             var s = sessions.get(p);
             if (s == null || s.state() != PlayerState.IN_GAME) continue;
+            if (!abilityEnabled(CoreAbilities.SKILL_RUNTIME, p, "skill_runtime")) continue;
             if (!allowsGameplaySkills(p, s)) continue;
             out.add(p);
         }
@@ -113,8 +120,19 @@ public final class SkillTickTask {
             List<Player> eligiblePlayers
     ) {
         for (var p : eligiblePlayers) {
+            if (!abilityEnabled(CoreAbilities.SKILL_HOTBAR, p, "skill_hotbar")) continue;
             renderer.render(p, registry.skillsOf(p), now);
         }
+    }
+
+    private boolean abilityEnabled(
+            AbilityId id,
+            Player player,
+            String reason
+    ) {
+        var gate = abilities.get();
+        if (gate == null) return true;
+        return gate.isEnabled(id, player, reason);
     }
 
     private boolean allowsGameplaySkills(Player player, PlayerSession session) {

@@ -64,11 +64,11 @@ data class ArenaConfig(
 
             internal fun fromSection(id: String, sec: ConfigurationSection): ArenaDef {
                 val nameKey = sec.getString("name", "cia.arena.$id") ?: "cia.arena.$id"
-                val type = sec.getString("mode", sec.getString("type", "battle")) ?: "battle"
+                val type = sec.getString("mode", "battle") ?: "battle"
                 val loc = Vec3.fromList(sec.getList("location"))
                 val range = Range2D.fromSection(sec.getConfigurationSection("range"))
                 val spawnGroups = parseSpawnGroups(sec)
-                val settings = sec.getConfigurationSection("settings") ?: sec
+                val settings = sec.getConfigurationSection("settings")
 
                 return ArenaDef(
                     id,
@@ -92,29 +92,7 @@ data class ArenaConfig(
                     }
                 }
 
-                if (out.isEmpty()) {
-                    parseLegacySpawnpoint(sec.get("spawnpoint"), out)
-                }
-
                 return out
-            }
-
-            private fun parseLegacySpawnpoint(value: Any?, out: MutableMap<String, List<Vec3>>) {
-                when (value) {
-                    is List<*> -> putSpawnGroup(out, "default", value)
-                    is ConfigurationSection -> {
-                        for (key in value.getKeys(false)) {
-                            putSpawnGroup(out, key, value.get(key))
-                        }
-                    }
-
-                    is Map<*, *> -> {
-                        for ((key, groupValue) in value) {
-                            if (key == null) continue
-                            putSpawnGroup(out, key.toString(), groupValue)
-                        }
-                    }
-                }
             }
 
             private fun putSpawnGroup(out: MutableMap<String, List<Vec3>>, key: String, value: Any?) {

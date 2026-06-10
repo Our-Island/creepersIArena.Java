@@ -71,29 +71,12 @@ data class GlobalConfig(
 
             val out = LinkedHashMap<String, ConfigurationSection>()
 
-            // Preferred schema: game.modes.<mode-id>
             val modesSec = gameSec.getConfigurationSection("modes")
             if (modesSec != null) {
                 for (key in modesSec.getKeys(false)) {
                     val sec = modesSec.getConfigurationSection(key) ?: continue
                     putModeSection(out, key, sec)
                 }
-            }
-
-            // Compatibility with the old schema: game.battle / game.steal / game.<custom-mode>
-            val reserved = setOf(
-                "disabled-modes",
-                "default-mode",
-                "leave-delay-seconds",
-                "modes",
-                "cooldown",
-                "regeneration",
-                "mutation",
-            )
-            for (key in gameSec.getKeys(false)) {
-                if (key.lowercase(Locale.ROOT) in reserved) continue
-                val sec = gameSec.getConfigurationSection(key) ?: continue
-                putModeSection(out, key, sec)
             }
 
             return out
@@ -300,17 +283,17 @@ data class GlobalConfig(
     }
 
     data class World(
-        @get:JvmName("enablePortals") val enablePortals: Boolean,
+        @get:JvmName("portalsEnabled") val portalsEnabled: Boolean,
     ) {
 
         companion object {
 
             fun fromSection(sec: ConfigurationSection?): World {
                 if (sec == null) return defaults()
-                return World(sec.getBoolean("enable-portals", true))
+                return World(sec.getBoolean("portals-enabled", false))
             }
 
-            fun defaults(): World = World(true)
+            fun defaults(): World = World(false)
 
         }
 

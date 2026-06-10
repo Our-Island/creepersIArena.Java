@@ -14,6 +14,8 @@ import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilityChecks;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.utils.AttributeUtils;
 
@@ -57,6 +59,7 @@ public final class BattleRespawnPresentation implements Listener {
         if (state == null) return;
 
         var victim = event.result().victim();
+        if (!abilityEnabled(state, victim, "battle_respawn_presentation")) return;
         if (!state.isFighter(victim)) return;
 
         pendingRespawns.put(victim.getUniqueId(), Math.max(0, state.config().respawnTimeSeconds()));
@@ -68,6 +71,17 @@ public final class BattleRespawnPresentation implements Listener {
         if (session == null || !session.mode().equals(BattleState.TYPE)) return null;
         if (!(gameManager.timeline() instanceof BattleTimeline timeline)) return null;
         return timeline.state();
+    }
+
+    private boolean abilityEnabled(BattleState state, Player player, String reason) {
+        return state != null && DefaultContentAbilityChecks.enabled(
+                state.runtime(),
+                state.session(),
+                player,
+                DefaultContentAbilities.BATTLE_RESPAWN_PRESENTATION,
+                null,
+                reason
+        );
     }
 
     private void cancelTask(UUID playerId) {
@@ -140,6 +154,7 @@ public final class BattleRespawnPresentation implements Listener {
         if (player == null) return false;
         BattleState state = activeBattle();
         if (state == null) return false;
+        if (!abilityEnabled(state, player, "battle_respawn_presentation")) return false;
 
         var session = sessions.get(player);
         return session != null

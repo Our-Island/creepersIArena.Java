@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.battle;
 
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -22,13 +23,13 @@ public final class BattleState {
     static final String MODE_DATA_PREFIX = "battle:";
     static final String PARTICIPANT_KEY = MODE_DATA_PREFIX + "participant";
 
-    private final GameRuntime runtime;
-    private final GameSession session;
-    private final BattleModeConfig config;
+    @Getter private final GameRuntime runtime;
+    @Getter private final GameSession session;
+    @Getter private final BattleModeConfig config;
     private final Map<Integer, Integer> teamKills = new LinkedHashMap<>();
 
-    private int mapProgress;
-    private boolean rotationPending;
+    @Getter private int mapProgress;
+    @Getter private boolean rotationPending;
 
     public BattleState(GameRuntime runtime, GameSession session, BattleModeConfig config) {
         this.runtime = runtime;
@@ -40,24 +41,8 @@ public final class BattleState {
         return player != null && player.modeBoolean(PARTICIPANT_KEY, false);
     }
 
-    public GameSession session() {
-        return session;
-    }
-
-    public BattleModeConfig config() {
-        return config;
-    }
-
-    public int mapProgress() {
-        return mapProgress;
-    }
-
     public float progressRatio() {
         return Math.clamp((float) mapProgress / config.mapProgressTarget(), 0.0F, 1.0F);
-    }
-
-    public boolean rotationPending() {
-        return rotationPending;
     }
 
     public void rotationPending(boolean rotationPending) {
@@ -82,8 +67,8 @@ public final class BattleState {
         if (killer == null || victim == null || killer.equals(victim)) return false;
         if (!isFighter(killer) || !isFighter(victim)) return false;
 
-        PlayerSession killerSession = runtime.sessionStore().get(killer);
-        PlayerSession victimSession = runtime.sessionStore().get(victim);
+        var killerSession = runtime.sessionStore().get(killer);
+        var victimSession = runtime.sessionStore().get(victim);
         if (sameTeam(killerSession, victimSession)) return false;
 
         int team = teamOf(killerSession);
@@ -97,7 +82,7 @@ public final class BattleState {
     public boolean isFighter(Player player) {
         if (player == null || !player.isOnline()) return false;
         if (!session.players().contains(player.getUniqueId())) return false;
-        PlayerSession playerSession = runtime.sessionStore().get(player);
+        var playerSession = runtime.sessionStore().get(player);
         return playerSession != null && playerSession.state() == PlayerState.IN_GAME;
     }
 
@@ -136,7 +121,7 @@ public final class BattleState {
     public Component scoreSummaryComponent() {
         if (teamKills.isEmpty()) return Component.text("no kills recorded", NamedTextColor.GRAY);
 
-        Component out = Component.empty();
+        var out = Component.empty();
         boolean first = true;
         for (int team = 1; team <= config.maxTeam(); team++) {
             int kills = teamKills.getOrDefault(team, 0);
@@ -152,7 +137,7 @@ public final class BattleState {
     public String scoreSummary() {
         if (teamKills.isEmpty()) return "no kills recorded";
 
-        StringBuilder out = new StringBuilder();
+        var out = new StringBuilder();
         boolean first = true;
         for (int team = 1; team <= config.maxTeam(); team++) {
             int kills = teamKills.getOrDefault(team, 0);

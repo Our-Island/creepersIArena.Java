@@ -9,6 +9,7 @@ import static top.ourisland.creepersiarena.api.testsupport.TestGameConfigViews.f
 
 class StealModeConfigTest {
 
+    @SuppressWarnings("ExtractMethodRecommender")
     @Test
     void readsCanonicalStealConfigFromModeSection() {
         var yaml = new YamlConfiguration();
@@ -43,24 +44,6 @@ class StealModeConfigTest {
         assertEquals(9, config.gameEndCelebrationSeconds());
         assertTrue(config.allowLobbyJobSelection());
         assertTrue(config.allowRespawnJobSelection());
-    }
-
-    @Test
-    void keepsLegacyKeyAliasesReadable() {
-        var yaml = new YamlConfiguration();
-        yaml.set("game.modes.steal.prepare-time", 45);
-        yaml.set("game.modes.steal.total-rounds", 7);
-        yaml.set("game.modes.steal.round-seconds", 120);
-        yaml.set("game.modes.steal.required-mines", 5);
-        yaml.set("game.modes.steal.wins-to-finish", 2);
-
-        var config = StealModeConfig.from(fromYaml(yaml));
-
-        assertEquals(45, config.startCountdownSeconds());
-        assertEquals(7, config.totalRound());
-        assertEquals(120, config.timePerRoundSeconds());
-        assertEquals(5, config.targetMineCount());
-        assertEquals(2, config.scoreToWin());
     }
 
     @Test

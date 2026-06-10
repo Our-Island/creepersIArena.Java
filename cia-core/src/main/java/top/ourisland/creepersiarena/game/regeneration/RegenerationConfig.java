@@ -1,16 +1,14 @@
 package top.ourisland.creepersiarena.game.regeneration;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.config.ConfigManager;
+import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
 
 import java.util.*;
 
 public record RegenerationConfig(
-        boolean enabled,
         boolean requireInGame,
         boolean requireTeam,
         Set<Integer> validTeams,
@@ -26,18 +24,14 @@ public record RegenerationConfig(
     private static final String DEFAULT_BEACON_SOUND = "minecraft:block.beacon.ambient";
 
     public static RegenerationConfig load(
-            @Nullable ConfigManager configManager,
+            @Nullable IAbilityConfigView view,
             @NonNull Logger logger
     ) {
-        if (configManager == null) return defaults();
-
-        var path = configManager.dataDir().resolve("config.yml");
         try {
-            var yaml = YamlConfiguration.loadConfiguration(path.toFile());
-            return fromSection(yaml.getConfigurationSection("game.regeneration"));
+            return fromSection(view == null ? null : view.settingsSection());
         } catch (Throwable throwable) {
             logger.warn(
-                    "[Regeneration] Failed to load game.regeneration from config.yml, using defaults: {}",
+                    "[Regeneration] Failed to load resting regeneration settings, using defaults: {}",
                     throwable.getMessage(),
                     throwable
             );
@@ -49,7 +43,6 @@ public record RegenerationConfig(
         return new RegenerationConfig(
                 true,
                 true,
-                true,
                 DEFAULT_VALID_TEAMS,
                 0.003D,
                 0.08D,
@@ -59,7 +52,7 @@ public record RegenerationConfig(
         );
     }
 
-    static @NonNull RegenerationConfig fromSection(@Nullable ConfigurationSection section) {
+    public static @NonNull RegenerationConfig fromSection(@Nullable ConfigurationSection section) {
         RegenerationConfig defaults = defaults();
         if (section == null) return defaults;
 
@@ -68,7 +61,6 @@ public record RegenerationConfig(
         if (stages.isEmpty()) stages = defaults.stages();
 
         return new RegenerationConfig(
-                section.getBoolean("enabled", defaults.enabled()),
                 section.getBoolean("require-in-game", defaults.requireInGame()),
                 section.getBoolean("require-team", defaults.requireTeam()),
                 validTeams.isEmpty() ? defaults.validTeams() : Set.copyOf(validTeams),

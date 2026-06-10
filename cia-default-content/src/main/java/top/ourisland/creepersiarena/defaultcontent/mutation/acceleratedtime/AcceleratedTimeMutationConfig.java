@@ -1,7 +1,7 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import org.bukkit.configuration.ConfigurationSection;
-import top.ourisland.creepersiarena.game.mutation.MutationTargetScope;
+import top.ourisland.creepersiarena.api.game.mutation.MutationTargetScope;
 
 public record AcceleratedTimeMutationConfig(
         boolean enabled,

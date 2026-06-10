@@ -2,10 +2,10 @@ package top.ourisland.creepersiarena.game.death;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
-import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 
 public final class DeathCleanupService {
@@ -17,22 +17,28 @@ public final class DeathCleanupService {
     private final Logger log;
     private final PlayerSessionStore store;
     private final DamageAttributionStore attributionStore;
-    private final DeathCauseRegistry registry;
+    private final DeathResolutionRegistry registry;
+    private final IAbilityGate abilities;
 
     public DeathCleanupService(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionStore store,
             @lombok.NonNull DamageAttributionStore attributionStore,
-            @lombok.NonNull DeathCauseRegistry registry
+            @lombok.NonNull DeathResolutionRegistry registry,
+            @lombok.NonNull IAbilityGate abilities
     ) {
         this.log = log;
         this.store = store;
         this.attributionStore = attributionStore;
         this.registry = registry;
+        this.abilities = abilities;
     }
 
     public void cleanupAfterDeath(@lombok.NonNull Player player) {
         cleanupCore(player);
+
+        if (!abilities.isEnabled(CoreAbilities.DEATH_CLEANUP_PARTICIPANTS, player, "death_cleanup_participants"))
+            return;
 
         for (var registered : registry.cleanupParticipants()) {
             try {
@@ -64,7 +70,7 @@ public final class DeathCleanupService {
         setBaseValue(player, "max_absorption", DEFAULT_MAX_ABSORPTION);
         setBaseValue(player, "knockback_resistance", DEFAULT_KNOCKBACK_RESISTANCE);
 
-        PlayerSession session = store.get(player);
+        var session = store.get(player);
         if (session != null) {
             session.respawnSecondsRemaining(0);
         }
@@ -72,11 +78,15 @@ public final class DeathCleanupService {
         attributionStore.clear(player.getUniqueId());
     }
 
-    private void setBaseValue(Player player, String attributePath, double value) {
+    private void setBaseValue(
+            Player player,
+            String attributePath,
+            double value
+    ) {
         var attribute = Registry.ATTRIBUTE.get(NamespacedKey.minecraft(attributePath));
         if (attribute == null) return;
 
-        AttributeInstance instance = player.getAttribute(attribute);
+        var instance = player.getAttribute(attribute);
         if (instance == null) return;
 
         instance.setBaseValue(value);

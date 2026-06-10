@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.game.mode.impl.steal.runtime;
 
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -10,26 +11,32 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import top.ourisland.creepersiarena.api.ability.AbilityContext;
+import top.ourisland.creepersiarena.api.ability.AbilityDecision;
+import top.ourisland.creepersiarena.api.ability.AbilityId;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.IModeAbilityPolicy;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilityChecks;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealArenaConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.config.StealModeConfig;
 import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
-import top.ourisland.creepersiarena.game.regeneration.IRegenerationEligibility;
 import top.ourisland.creepersiarena.utils.Msg;
 
 import java.util.*;
 
-final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
+final class StealTimeline implements IModeTimeline, IModeAbilityPolicy {
 
-    private final GameRuntime runtime;
+    @Getter private final GameRuntime runtime;
     private final GameSession session;
-    private final StealState state;
+    @Getter private final StealState state;
     private final StealLobbyUi lobbyUi;
     private final Random random = new Random();
 
@@ -72,18 +79,26 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
     }
 
     @Override
-    public boolean allowRegeneration(Player player) {
+    public void contributeAbilityContext(AbilityContext.Builder builder) {
+        builder.phase(state.phase.name());
+    }
+
+    @Override
+    public AbilityDecision evaluateAbility(AbilityId abilityId, AbilityContext context) {
+        if (CoreAbilities.RESTING_REGENERATION.equals(abilityId)) {
+            Player player = context == null ? null : context.player();
+            return allowRegeneration(player) ? AbilityDecision.ALLOW : AbilityDecision.DENY;
+        }
+        if (CoreAbilities.MUTATION.equals(abilityId)) {
+            return AbilityDecision.DENY;
+        }
+        return AbilityDecision.PASS;
+    }
+
+    private boolean allowRegeneration(Player player) {
         if (player == null || state.phase != StealPhase.ROUND_PLAYING) return false;
         var playerId = player.getUniqueId();
         return state.isParticipant(playerId) && state.isAlive(playerId);
-    }
-
-    GameRuntime runtime() {
-        return runtime;
-    }
-
-    StealState state() {
-        return state;
     }
 
     boolean isReadyButton(ItemStack item) {
@@ -101,7 +116,7 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         int required = cfg.requiredReadyPlayers(population);
 
         refreshWaitingUi(players, ready, required);
-        state.bossBars.showWaiting(players, ready, required, Math.max(required, population), 0, cfg.startCountdownSeconds());
+        showWaitingBossBar(players, ready, required, Math.max(required, population), 0, cfg.startCountdownSeconds());
         if (population == 0 || ready < required) return List.of();
 
         state.phase = StealPhase.START_COUNTDOWN;
@@ -126,7 +141,7 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         int ready = countReadyOnline();
         int required = cfg.requiredReadyPlayers(population);
         refreshWaitingUi(players, ready, required);
-        state.bossBars.showWaiting(players, ready, required, Math.max(required, population), state.remainingSeconds, cfg.startCountdownSeconds());
+        showWaitingBossBar(players, ready, required, Math.max(required, population), state.remainingSeconds, cfg.startCountdownSeconds());
 
         if (population == 0 || ready < required) {
             state.phase = StealPhase.LOBBY;
@@ -160,7 +175,13 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         state.tourStep = -1;
         state.closing = false;
         arenaCfg.resetRedstoneTargets();
-        arenaCfg.setSelectionBarriers(false);
+        setSelectionBarriers(arenaCfg, false);
+
+        if (!abilityEnabled(DefaultContentAbilities.STEAL_SPECTATOR_TOUR, "steal_spectator_tour")) {
+            state.targetMineCount = effectiveTargetMineCount(cfg, arenaCfg);
+            announceRoundObjective();
+            return startChooseJob(cfg, arenaCfg);
+        }
 
         var audience = onlineAudiencePlayers();
         for (var p : audience) {
@@ -178,8 +199,10 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
 
     private List<GameAction> tickSpectatorTour(StealModeConfig cfg, StealArenaConfig arenaCfg) {
         var players = onlineAudiencePlayers();
-        state.bossBars.showSpectator(players, state.remainingSeconds, cfg.spectatorTourSeconds());
-        showTourPointIfNeeded(arenaCfg, cfg.spectatorTourSeconds());
+        if (abilityEnabled(DefaultContentAbilities.STEAL_SPECTATOR_TOUR, "steal_spectator_tour")) {
+            state.bossBars.showSpectator(players, state.remainingSeconds, cfg.spectatorTourSeconds());
+            showTourPointIfNeeded(arenaCfg, cfg.spectatorTourSeconds());
+        }
 
         state.remainingSeconds--;
         if (state.remainingSeconds > 0) return List.of();
@@ -241,6 +264,29 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         }
     }
 
+    private void showWaitingBossBar(
+            Collection<Player> players,
+            int ready,
+            int required,
+            int population,
+            int countdownRemaining,
+            int countdownMax
+    ) {
+        if (abilityEnabled(DefaultContentAbilities.STEAL_WAITING_BOSSBAR, "steal_waiting_bossbar")) {
+            state.bossBars.showWaiting(players, ready, required, population, countdownRemaining, countdownMax);
+        }
+    }
+
+    private void setSelectionBarriers(StealArenaConfig arenaCfg, boolean enabled) {
+        if (!enabled || abilityEnabled(DefaultContentAbilities.STEAL_SELECTION_BARRIERS, "steal_selection_barriers")) {
+            arenaCfg.setSelectionBarriers(enabled);
+        }
+    }
+
+    private boolean abilityEnabled(AbilityId id, String reason) {
+        return DefaultContentAbilityChecks.enabled(runtime, session, id, state.phase.name(), reason);
+    }
+
     private List<GameAction> startChooseJob(StealModeConfig cfg, StealArenaConfig arenaCfg) {
         if (state.participants.isEmpty())
             return startFinalCelebration(cfg, arenaCfg, StealTeam.RED, StealRoundReason.NO_PARTICIPANTS);
@@ -250,7 +296,11 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         state.roundIndex++;
         state.resetRoundCounters(effectiveTargetMineCount(cfg, arenaCfg));
         arenaCfg.resetRedstoneTargets();
-        arenaCfg.setSelectionBarriers(true);
+        setSelectionBarriers(arenaCfg, true);
+
+        if (!abilityEnabled(DefaultContentAbilities.STEAL_CHOOSE_JOB_PHASE, "steal_choose_job_phase")) {
+            return startRoundPlaying(cfg, arenaCfg, onlineParticipants());
+        }
 
         for (var p : onlineParticipants()) {
             p.getInventory().clear();
@@ -287,14 +337,12 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         return List.of(new GameAction.EnterGame(new LinkedHashSet<>(state.participants)));
     }
 
-    private List<GameAction> tickChooseJob(StealModeConfig cfg, StealArenaConfig arenaCfg) {
-        var players = onlineParticipants();
-        state.bossBars.showChooseJob(players, state.remainingSeconds, cfg.chooseJobSeconds());
-
-        state.remainingSeconds--;
-        if (state.remainingSeconds > 0) return List.of();
-
-        arenaCfg.setSelectionBarriers(false);
+    private List<GameAction> startRoundPlaying(
+            StealModeConfig cfg,
+            StealArenaConfig arenaCfg,
+            Collection<Player> players
+    ) {
+        setSelectionBarriers(arenaCfg, false);
         state.phase = StealPhase.ROUND_PLAYING;
         state.remainingSeconds = cfg.timePerRoundSeconds();
         state.minedBlocks = 0;
@@ -308,9 +356,21 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
         return List.of(new GameAction.EnterGame(new LinkedHashSet<>(state.participants)));
     }
 
+    private List<GameAction> tickChooseJob(StealModeConfig cfg, StealArenaConfig arenaCfg) {
+        var players = onlineParticipants();
+        if (abilityEnabled(DefaultContentAbilities.STEAL_CHOOSE_JOB_PHASE, "steal_choose_job_phase"))
+            state.bossBars.showChooseJob(players, state.remainingSeconds, cfg.chooseJobSeconds());
+
+        state.remainingSeconds--;
+        if (state.remainingSeconds > 0) return List.of();
+
+        return startRoundPlaying(cfg, arenaCfg, players);
+    }
+
     private List<GameAction> tickRoundPlaying(StealModeConfig cfg) {
         var players = onlineAudiencePlayers();
-        state.bossBars.showRound(players, state.remainingSeconds, cfg.timePerRoundSeconds(), state.minedBlocks, state.targetMineCount);
+        if (abilityEnabled(DefaultContentAbilities.STEAL_ROUND_BOSSBAR, "steal_round_bossbar"))
+            state.bossBars.showRound(players, state.remainingSeconds, cfg.timePerRoundSeconds(), state.minedBlocks, state.targetMineCount);
         state.tickMineCooldowns();
 
         if (state.minedBlocks >= state.targetMineCount)
@@ -328,14 +388,16 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
 
     private List<GameAction> tickRoundCelebration(StealModeConfig cfg, StealArenaConfig arenaCfg) {
         var players = onlineAudiencePlayers();
-        state.bossBars.showCelebration(players, state.remainingSeconds, cfg.roundCelebrationSeconds(), false);
-        launchCelebrationFireworks(3);
+        if (abilityEnabled(DefaultContentAbilities.STEAL_CELEBRATION_BOSSBAR, "steal_celebration_bossbar"))
+            state.bossBars.showCelebration(players, state.remainingSeconds, cfg.roundCelebrationSeconds(), false);
+        if (abilityEnabled(DefaultContentAbilities.STEAL_CELEBRATION_FIREWORKS, "steal_celebration_fireworks"))
+            launchCelebrationFireworks(3);
 
         state.remainingSeconds--;
         if (state.remainingSeconds > 0) return List.of();
 
         state.bossBars.hideAll(players);
-        arenaCfg.setSelectionBarriers(false);
+        setSelectionBarriers(arenaCfg, false);
 
         if (state.participantsOn(StealTeam.RED) == 0 && state.participantsOn(StealTeam.BLUE) == 0) {
             return startFinalCelebration(cfg, arenaCfg, StealTeam.RED, StealRoundReason.NO_PARTICIPANTS);
@@ -352,13 +414,15 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
 
     private List<GameAction> tickGameEndCelebration(StealModeConfig cfg, StealArenaConfig arenaCfg) {
         var players = onlineAudiencePlayers();
-        state.bossBars.showCelebration(players, state.remainingSeconds, cfg.gameEndCelebrationSeconds(), true);
-        launchCelebrationFireworks(3);
+        if (abilityEnabled(DefaultContentAbilities.STEAL_CELEBRATION_BOSSBAR, "steal_celebration_bossbar"))
+            state.bossBars.showCelebration(players, state.remainingSeconds, cfg.gameEndCelebrationSeconds(), true);
+        if (abilityEnabled(DefaultContentAbilities.STEAL_CELEBRATION_FIREWORKS, "steal_celebration_fireworks"))
+            launchCelebrationFireworks(3);
 
         state.remainingSeconds--;
         if (state.remainingSeconds > 0) return List.of();
 
-        arenaCfg.setSelectionBarriers(false);
+        setSelectionBarriers(arenaCfg, false);
         Set<UUID> playersToHub = playerIds(players);
         cleanupWholeGame();
         return List.of(new GameAction.ToHub(playersToHub));
@@ -476,7 +540,7 @@ final class StealTimeline implements IModeTimeline, IRegenerationEligibility {
             StealTeam winner,
             StealRoundReason reason
     ) {
-        arenaCfg.setSelectionBarriers(false);
+        setSelectionBarriers(arenaCfg, false);
         state.phase = StealPhase.GAME_END_CELEBRATION;
         state.remainingSeconds = cfg.gameEndCelebrationSeconds();
         state.closing = true;

@@ -132,7 +132,7 @@ public final class PlayerStateRulesListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerPortal(PlayerPortalEvent e) {
-        if (!configManager.globalConfig().world().enablePortals()) return;
+        if (configManager.globalConfig().world().portalsEnabled()) return;
 
         if (e.getTo().getWorld() != null && e.getTo().getWorld().getEnvironment() == World.Environment.NETHER) {
             e.setCancelled(true);

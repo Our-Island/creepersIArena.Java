@@ -2,13 +2,15 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.component.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.component.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.listener.RegenerationListener;
 import top.ourisland.creepersiarena.game.mutation.MutationService;
@@ -29,11 +31,12 @@ public final class RegenerationModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var service = new RegenerationService(
                     rt.log(),
-                    rt.requireService(ConfigManager.class),
                     rt.requireService(PlayerSessionStore.class),
-                    rt.requireService(GameManager.class)
+                    rt.requireService(GameManager.class),
+                    rt.requireService(IAbilityGate.class)
             );
             rt.putService(RegenerationService.class, service);
+            rt.requireService(IAbilityRegistry.class).registerAbility(RegisteredComponent.CORE_OWNER, service);
         }, "Loading resting regeneration...", "Resting regeneration loaded.");
     }
 

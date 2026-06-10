@@ -33,18 +33,6 @@ class StealArenaConfigTest {
     }
 
     @Test
-    void keepsLegacySpectatorTourSettingReadable() {
-        var yaml = new YamlConfiguration();
-        yaml.set("settings.spectator-tour", List.of(List.of(4, 67, 4)));
-
-        var config = StealArenaConfig.from(
-                new BukkitArenaConfigView(yaml.getConfigurationSection("settings"))
-        );
-
-        assertEquals(1, config.tourPoints().size());
-    }
-
-    @Test
     void missingSectionReturnsEmptyBlockList() {
         var config = StealArenaConfig.from(new BukkitArenaConfigView(null));
 

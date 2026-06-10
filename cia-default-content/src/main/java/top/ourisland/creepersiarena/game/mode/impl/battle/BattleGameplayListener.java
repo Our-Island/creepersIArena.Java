@@ -16,6 +16,8 @@ import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilityChecks;
 import top.ourisland.creepersiarena.game.GameManager;
 
 public final class BattleGameplayListener implements Listener {
@@ -100,7 +102,14 @@ public final class BattleGameplayListener implements Listener {
         if (!result.hasKiller()) return;
 
         var killer = result.killer();
-        if (state.recordKill(killer, victim)) {
+        if (state.recordKill(killer, victim) && DefaultContentAbilityChecks.enabled(
+                gameManager.runtime(),
+                gameManager.active(),
+                killer,
+                DefaultContentAbilities.BATTLE_PROGRESS_FEEDBACK,
+                "BATTLE",
+                "battle_progress_feedback"
+        )) {
             killer.sendActionBar(Component.text("Battle progress ", NamedTextColor.RED)
                     .append(Component.text(state.mapProgress(), NamedTextColor.WHITE))
                     .append(Component.text("/", NamedTextColor.GRAY))

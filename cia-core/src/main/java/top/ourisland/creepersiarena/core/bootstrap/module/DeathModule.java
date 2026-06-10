@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -30,12 +31,14 @@ public final class DeathModule implements IBootstrapModule {
             var gameManager = rt.requireService(GameManager.class);
             var flow = rt.requireService(GameFlow.class);
 
-            var registry = new DeathCauseRegistry();
+            var registry = new DeathResolutionRegistry();
             var attributionStore = new DamageAttributionStore();
+            var abilities = rt.requireService(IAbilityGate.class);
+
             var streakService = new DeathStreakService();
-            var statsService = new DeathStatsService(store);
-            var cleanupService = new DeathCleanupService(rt.log(), store, attributionStore, registry);
-            var messageService = new DeathMessageService(rt.log(), registry, gameManager);
+            var statsService = new DeathStatsService(store, abilities);
+            var cleanupService = new DeathCleanupService(rt.log(), store, attributionStore, registry, abilities);
+            var messageService = new DeathMessageService(rt.log(), registry, gameManager, abilities);
             var resolutionService = new DeathResolutionService(
                     rt.log(),
                     store,
@@ -45,11 +48,12 @@ public final class DeathModule implements IBootstrapModule {
                     statsService,
                     streakService,
                     messageService,
-                    flow
+                    flow,
+                    abilities
             );
 
             rt.putAllServices(Map.of(
-                    DeathCauseRegistry.class, registry,
+                    DeathResolutionRegistry.class, registry,
                     IDeathResolutionRegistry.class, registry,
                     DamageAttributionStore.class, attributionStore,
                     DeathStreakService.class, streakService,
@@ -64,7 +68,7 @@ public final class DeathModule implements IBootstrapModule {
     @Override
     public StageTask stop(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            var registry = rt.getService(DeathCauseRegistry.class);
+            var registry = rt.getService(DeathResolutionRegistry.class);
             if (registry != null) registry.clear();
 
             var attributions = rt.getService(DamageAttributionStore.class);
@@ -82,7 +86,7 @@ public final class DeathModule implements IBootstrapModule {
         binder.register("ArenaDamageAttributionListener", () -> new ArenaDamageAttributionListener(
                 rt.log(),
                 rt.requireService(PlayerSessionStore.class),
-                rt.requireService(DeathCauseRegistry.class),
+                rt.requireService(DeathResolutionRegistry.class),
                 rt.requireService(DamageAttributionStore.class),
                 rt.requireService(DeathStreakService.class)
         ));

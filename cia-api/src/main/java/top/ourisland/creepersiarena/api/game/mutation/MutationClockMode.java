@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation;
+package top.ourisland.creepersiarena.api.game.mutation;
 
 import java.util.Locale;
 
@@ -12,7 +12,7 @@ public enum MutationClockMode {
         if (raw == null || raw.isBlank()) return AUTO;
         try {
             return MutationClockMode.valueOf(raw.trim().toUpperCase(Locale.ROOT).replace('-', '_'));
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
             return AUTO;
         }
     }

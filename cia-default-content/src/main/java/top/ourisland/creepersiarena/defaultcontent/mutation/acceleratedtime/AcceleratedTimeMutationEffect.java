@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -8,7 +8,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.game.mutation.*;
+import top.ourisland.creepersiarena.api.game.mutation.IMutationEffect;
+import top.ourisland.creepersiarena.api.game.mutation.IMutationEffectContext;
+import top.ourisland.creepersiarena.api.game.mutation.MutationStartResult;
+import top.ourisland.creepersiarena.api.game.mutation.MutationType;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -57,7 +60,7 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
     @Override
     public MutationStartResult start(IMutationEffectContext context) {
         activeRate = randomRate(config.tickRateMin(), config.tickRateMax());
-        physicalTickRateApplied = switch (context.config().clockMode()) {
+        physicalTickRateApplied = switch (context.clockMode()) {
             case VANILLA_TICK_RATE, AUTO -> tickRateController.applyTickRate(activeRate);
             case LOGICAL -> false;
         };
@@ -86,7 +89,7 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
     @Override
     public void reset(
             IMutationEffectContext context,
-            MutationResetReason reason,
+            Object reason,
             boolean wasActive
     ) {
         if (wasActive) {

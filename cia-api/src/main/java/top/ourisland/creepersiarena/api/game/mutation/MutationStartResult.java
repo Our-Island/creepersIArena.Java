@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation;
+package top.ourisland.creepersiarena.api.game.mutation;
 
 public record MutationStartResult(
         int durationTicks

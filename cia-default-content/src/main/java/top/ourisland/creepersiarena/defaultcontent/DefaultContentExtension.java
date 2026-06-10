@@ -1,11 +1,16 @@
 package top.ourisland.creepersiarena.defaultcontent;
 
+import org.bukkit.World;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
+import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
+import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
+import top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.defaultcontent.death.*;
+import top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime.AcceleratedTimeMutationEffect;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.game.death.DamageAttributionStore;
 import top.ourisland.creepersiarena.game.mode.impl.battle.BattleGameplayListener;
@@ -56,13 +61,47 @@ public final class DefaultContentExtension implements ICiaExtension {
         var regeneration = context.getService(RegenerationService.class);
 
         BuiltinCombatUtils.installSessions(sessions);
+        registerDefaultAbilities(context);
+        registerMutationContent(context);
         registerDeathContent(context, sessions, runtime);
 
-        context.registerListener(new SkillImplementationListener(sessions, runtime, tickTask));
-        context.registerListener(new BuiltinKillFeedbackService());
-        context.registerListener(new BattleGameplayListener(gameManager, sessions));
-        context.registerListener(new BattleRespawnPresentation(context.plugin(), gameManager, sessions));
-        context.registerListener(new StealGameplayListener(gameManager, sessions, regeneration));
+        context.registerListener(
+                new SkillImplementationListener(sessions, runtime, tickTask),
+                new BuiltinKillFeedbackService(gameManager),
+                new BattleGameplayListener(gameManager, sessions),
+                new BattleRespawnPresentation(context.plugin(), gameManager, sessions),
+                new StealGameplayListener(gameManager, sessions, regeneration)
+        );
+    }
+
+    private void registerDefaultAbilities(ICiaExtensionContext context) {
+        context.registerAbility(
+                new SimpleAbility(DefaultContentAbilities.BATTLE_RESPAWN_PRESENTATION),
+                new SimpleAbility(DefaultContentAbilities.BATTLE_BOSSBAR),
+                new SimpleAbility(DefaultContentAbilities.BATTLE_MAP_ROTATION),
+                new SimpleAbility(DefaultContentAbilities.BATTLE_PROGRESS_FEEDBACK),
+                new SimpleAbility(DefaultContentAbilities.KILL_FEEDBACK),
+                new SimpleAbility(DefaultContentAbilities.STEAL_WAITING_BOSSBAR),
+                new SimpleAbility(DefaultContentAbilities.STEAL_SPECTATOR_TOUR),
+                new SimpleAbility(DefaultContentAbilities.STEAL_CHOOSE_JOB_PHASE),
+                new SimpleAbility(DefaultContentAbilities.STEAL_ROUND_BOSSBAR),
+                new SimpleAbility(DefaultContentAbilities.STEAL_CELEBRATION_BOSSBAR),
+                new SimpleAbility(DefaultContentAbilities.STEAL_SELECTION_BARRIERS),
+                new SimpleAbility(DefaultContentAbilities.STEAL_CELEBRATION_FIREWORKS)
+        );
+    }
+
+    private void registerMutationContent(ICiaExtensionContext context) {
+        var world = context.getService(World.class);
+        if (world == null) return;
+        context.requireService(IMutationRegistry.class).registerMutation(
+                context.extensionId(),
+                new AcceleratedTimeMutationEffect(
+                        context.plugin(),
+                        world,
+                        context.plugin().getSLF4JLogger()
+                )
+        );
     }
 
     private void registerDeathContent(
@@ -77,9 +116,10 @@ public final class DefaultContentExtension implements ICiaExtension {
                 getClass().getClassLoader()
         );
 
-        context.registerDeathCauseResolver(new BuiltinDeathCauseResolver(sessions, currentTick));
-        context.registerDeathMessageProvider(new BuiltinDeathMessageProvider(catalog));
-        context.registerDeathCleanupParticipant(new BuiltinDeathCleanupParticipant(runtime.store()));
+        var registry = context.requireService(IDeathResolutionRegistry.class);
+        registry.registerResolver(context.extensionId(), new BuiltinDeathCauseResolver(sessions, currentTick));
+        registry.registerMessageProvider(context.extensionId(), new BuiltinDeathMessageProvider(catalog));
+        registry.registerCleanupParticipant(context.extensionId(), new BuiltinDeathCleanupParticipant(runtime.store()));
     }
 
 }

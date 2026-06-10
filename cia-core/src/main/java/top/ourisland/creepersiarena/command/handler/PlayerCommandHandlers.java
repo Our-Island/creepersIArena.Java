@@ -44,8 +44,6 @@ public final class PlayerCommandHandlers {
         switch (plan) {
             case GameFlow.JoinFromHubPlan.NotPlayer _ -> Msg.send(p, "Only players can use this command.");
             case GameFlow.JoinFromHubPlan.NoActiveGame _ -> Msg.send(p, "There is no active game.");
-            case GameFlow.JoinFromHubPlan.ModeNotSupported(var mode) ->
-                    Msg.send(p, "Current mode does not support /join: " + mode);
             case GameFlow.JoinFromHubPlan.NotInHub(var state) ->
                     Msg.send(p, "You can only /join from HUB (current=" + state + ").");
             case GameFlow.JoinFromHubPlan.Joined _ -> Msg.send(p, "Joined game.");

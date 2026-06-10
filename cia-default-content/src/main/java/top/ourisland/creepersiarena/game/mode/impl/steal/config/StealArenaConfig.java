@@ -66,8 +66,6 @@ public record StealArenaConfig(
                 if (nested != null) return nested;
             }
 
-            Location legacy = parseLocation(world, section.get("spectator-fallback-location"));
-            if (legacy != null) return legacy;
         }
 
         if (arena == null) return null;
@@ -91,15 +89,6 @@ public record StealArenaConfig(
             if (!points.isEmpty()) return List.copyOf(points);
         }
 
-        List<?> legacy = config.getList("spectator-tour");
-        if (!legacy.isEmpty()) {
-            var points = new ArrayList<TourPoint>();
-            for (Object entry : legacy) {
-                TourPoint point = parseTourPoint(world, entry);
-                if (point != null) points.add(point);
-            }
-            if (!points.isEmpty()) return List.copyOf(points);
-        }
 
         return arena == null ? List.of() : defaultTour(arena);
     }

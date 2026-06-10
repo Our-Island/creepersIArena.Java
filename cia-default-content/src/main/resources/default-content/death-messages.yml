@@ -1,4 +1,7 @@
 labels:
+  kill:
+    text: 击杀
+    color: gray
   first_blood:
     text: 一破
     color: yellow

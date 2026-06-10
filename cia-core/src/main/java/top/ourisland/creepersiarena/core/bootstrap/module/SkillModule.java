@@ -2,6 +2,8 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
@@ -51,7 +53,13 @@ public final class SkillModule implements IBootstrapModule {
                 var runtimeState = rt.getService(AdminRuntimeState.class);
                 if (runtimeState == null) return 1.0;
                 return runtimeState.cooldownFactor();
-            }, () -> rt.requireService(ConfigManager.class).skillConfig());
+            }, () -> {
+                var abilities = rt.getService(IAbilityGate.class);
+                if (abilities == null) return true;
+                return abilities.isEnabledForGame(CoreAbilities.SKILL_COOLDOWN, "skill_cooldown");
+            },
+                    () -> rt.requireService(ConfigManager.class).skillConfig(),
+                    () -> rt.getService(IAbilityGate.class));
 
             var skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
             var tickTask = new SkillTickTask(
@@ -68,7 +76,8 @@ public final class SkillModule implements IBootstrapModule {
                     () -> {
                         var mutation = rt.getService(MutationService.class);
                         return mutation == null ? 1 : mutation.maxLogicalStepsPerRun();
-                    }
+                    },
+                    () -> rt.getService(IAbilityGate.class)
             );
 
             rt.putAllServices(Map.of(

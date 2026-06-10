@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation.effect.acceleratedtime;
+package top.ourisland.creepersiarena.defaultcontent.mutation.acceleratedtime;
 
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -19,36 +19,6 @@ public record AcceleratedTimeMessageSet(
                 : endMessages);
     }
 
-    public static AcceleratedTimeMessageSet defaults() {
-        return new AcceleratedTimeMessageSet(defaultStartMessages(), defaultEndMessages());
-    }
-
-    public static AcceleratedTimeMessageSet fromSection(ConfigurationSection section) {
-        if (section == null) return defaults();
-        var defaults = defaults();
-        return new AcceleratedTimeMessageSet(
-                stringListOrDefault(section, "start-messages", defaults.startMessages()),
-                stringListOrDefault(section, "end-messages", defaults.endMessages())
-        );
-    }
-
-    public String randomStart() {
-        return startMessages.get(ThreadLocalRandom.current().nextInt(startMessages.size()));
-    }
-
-    public String randomEnd() {
-        return endMessages.get(ThreadLocalRandom.current().nextInt(endMessages.size()));
-    }
-
-    private static List<String> stringListOrDefault(
-            ConfigurationSection section,
-            String path,
-            List<String> fallback
-    ) {
-        var list = section.getStringList(path);
-        return list.isEmpty() ? fallback : list;
-    }
-
     private static List<String> defaultStartMessages() {
         return List.of(
                 "🕸 神秘的力量开始操控魔法",
@@ -65,6 +35,36 @@ public record AcceleratedTimeMessageSet(
                 "🕸 你感觉身体变慢了...",
                 "🕸 好像世界变慢了？"
         );
+    }
+
+    public static AcceleratedTimeMessageSet fromSection(ConfigurationSection section) {
+        if (section == null) return defaults();
+        var defaults = defaults();
+        return new AcceleratedTimeMessageSet(
+                stringListOrDefault(section, "start-messages", defaults.startMessages()),
+                stringListOrDefault(section, "end-messages", defaults.endMessages())
+        );
+    }
+
+    public static AcceleratedTimeMessageSet defaults() {
+        return new AcceleratedTimeMessageSet(defaultStartMessages(), defaultEndMessages());
+    }
+
+    private static List<String> stringListOrDefault(
+            ConfigurationSection section,
+            String path,
+            List<String> fallback
+    ) {
+        var list = section.getStringList(path);
+        return list.isEmpty() ? fallback : list;
+    }
+
+    public String randomStart() {
+        return startMessages.get(ThreadLocalRandom.current().nextInt(startMessages.size()));
+    }
+
+    public String randomEnd() {
+        return endMessages.get(ThreadLocalRandom.current().nextInt(endMessages.size()));
     }
 
 }

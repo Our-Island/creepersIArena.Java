@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.game.mutation;
 
 import lombok.Getter;
+import top.ourisland.creepersiarena.api.game.mutation.MutationType;
 
 @Getter
 final class MutationState {
@@ -11,7 +12,9 @@ final class MutationState {
     private GameSessionMarker sessionMarker;
 
     public void activeType(MutationType activeType) {
-        this.activeType = activeType == null ? MutationType.NONE : activeType;
+        this.activeType = activeType == null
+                ? MutationType.NONE
+                : activeType;
     }
 
     public void idleCounterTicks(int idleCounterTicks) {

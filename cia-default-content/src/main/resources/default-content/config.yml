@@ -1,4 +1,222 @@
 game:
+  abilities:
+    core:
+      resting-regeneration:
+        enabled: true
+        default-active: false
+        modes:
+          battle:
+            enabled: true
+          steal:
+            enabled: true
+            phases: [ ROUND_PLAYING ]
+        settings:
+          require-in-game: true
+          require-team: true
+          valid-teams: [ 1, 2, 3, 4 ]
+          stationary-horizontal-epsilon: 0.003
+          max-vertical-delta: 0.08
+          require-on-ground: true
+          clear-effect-on-break: true
+          stages:
+            - tick: 20
+              duration-ticks: 40
+              amplifier: 0
+              sound: minecraft:block.note_block.chime
+              volume: 20.0
+              pitch: 0.2
+            - tick: 40
+              duration-ticks: 40
+              amplifier: 0
+              sound: minecraft:block.note_block.chime
+              volume: 20.0
+              pitch: 0.9
+            - tick: 60
+              duration-ticks: 40
+              amplifier: 1
+              sound: minecraft:block.note_block.chime
+              volume: 20.0
+              pitch: 1.2
+            - tick: 80
+              duration-ticks: 40
+              amplifier: 1
+              sound: minecraft:block.beacon.ambient
+              volume: 1.5
+              pitch: 2.0
+            - tick: 105
+              duration-ticks: 40
+              amplifier: 2
+              sound: minecraft:block.beacon.ambient
+              volume: 1.25
+              pitch: 2.0
+            - tick: 130
+              duration-ticks: 40
+              amplifier: 2
+              sound: minecraft:block.beacon.ambient
+              volume: 1.0
+              pitch: 2.0
+            - tick: 155
+              duration-ticks: 40
+              amplifier: 3
+              sound: minecraft:block.beacon.ambient
+              volume: 0.75
+              pitch: 2.0
+            - tick: 180
+              duration-ticks: 60
+              amplifier: 3
+              sound: minecraft:block.beacon.ambient
+              volume: 0.5
+              pitch: 2.0
+            - tick: 210
+              duration-ticks: 60
+              amplifier: 4
+              sound: minecraft:block.beacon.ambient
+              volume: 0.4
+              pitch: 2.0
+            - tick: 240
+              duration-ticks: 60
+              amplifier: 5
+              sound: minecraft:block.beacon.ambient
+              volume: 0.3
+              pitch: 2.0
+            - tick: 270
+              duration-ticks: 60
+              amplifier: 6
+              sound: minecraft:block.beacon.ambient
+              volume: 0.25
+              pitch: 2.0
+            - tick: 300
+              duration-ticks: 60
+              amplifier: 7
+              sound: minecraft:block.beacon.ambient
+              volume: 0.15
+              pitch: 2.0
+            - tick: 330
+              duration-ticks: 60
+              amplifier: 8
+              sound: minecraft:block.beacon.ambient
+              volume: 0.1
+              pitch: 2.0
+      mutation:
+        enabled: true
+        default-active: false
+        modes:
+          battle:
+            enabled: true
+        settings:
+          idle-attempt-ticks: 6000
+          failed-roll-counter-value: 500
+          death-nudge-ticks: 1
+          require-online-target: true
+          clock-mode: AUTO
+          max-logical-steps-per-run: 8
+          selection:
+            online-roll-min: -5
+            online-roll-max: 10
+            offline-roll-min: -5
+            offline-roll-max: 0
+            start-min-inclusive: 1
+          accelerated-time:
+            enabled: true
+            duration-ticks: 9000
+            tick-rate-min: 34.0
+            tick-rate-max: 58.0
+            movement-speed-add: 0.1
+            time-add-per-target-per-tick: 8
+            time-target-scope: ACTIVE_GAME_PLAYERS
+            start-daylight-cycle: true
+            reset-daylight-cycle: false
+            reset-time-enabled: true
+            reset-time: 6000
+            speed-target-scope: ACTIVE_GAME_PLAYERS
+            start-sound:
+              sound: minecraft:block.beacon.activate
+              volume: 1.0
+              pitch: 0.8
+            end-sound:
+              sound: minecraft:block.beacon.deactivate
+              volume: 1.0
+              pitch: 0.8
+            start-messages:
+              - "🕸 神秘的力量开始操控魔法"
+              - "🕸 一股神秘的力量..."
+              - "🕸 时间要开始加速了？还好，只加速了一部分...吗？"
+              - "🕸 快快快！太慢了太慢了！"
+            end-messages:
+              - "🕸 神秘的力量消失了..."
+              - "🕸 时间流速恢复正常..."
+              - "🕸 你感觉身体变慢了..."
+              - "🕸 好像世界变慢了？"
+    cia-default-content:
+      battle-respawn-presentation:
+        enabled: true
+        default-active: true
+        modes:
+          battle:
+            enabled: true
+      battle-bossbar:
+        enabled: true
+        default-active: true
+        modes:
+          battle:
+            enabled: true
+      battle-map-rotation:
+        enabled: true
+        default-active: true
+        modes:
+          battle:
+            enabled: true
+      battle-progress-feedback:
+        enabled: true
+        default-active: true
+        modes:
+          battle:
+            enabled: true
+      kill-feedback:
+        enabled: true
+        default-active: true
+      steal-waiting-bossbar:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-spectator-tour:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-choose-job-phase:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-round-bossbar:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-celebration-bossbar:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-selection-barriers:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-celebration-fireworks:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
   default-mode: battle
   modes:
     battle:

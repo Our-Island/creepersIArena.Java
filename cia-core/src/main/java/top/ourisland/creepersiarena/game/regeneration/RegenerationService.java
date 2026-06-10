@@ -8,14 +8,15 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbility;
+import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.GameSession;
-import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
-import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.utils.PlayerMotionChecks;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,32 +24,41 @@ import java.util.UUID;
 
 import static top.ourisland.creepersiarena.utils.PlayerMotionChecks.isServerSideGrounded;
 
-public final class RegenerationService {
+public final class RegenerationService implements IAbility {
 
     private final Logger logger;
-    private final ConfigManager configManager;
     private final PlayerSessionStore sessions;
     private final GameManager gameManager;
+    private final IAbilityGate abilities;
     private final Map<UUID, RegenerationState> states = new HashMap<>();
 
     private RegenerationConfig config = RegenerationConfig.defaults();
 
     public RegenerationService(
             Logger logger,
-            ConfigManager configManager,
             PlayerSessionStore sessions,
-            GameManager gameManager
+            GameManager gameManager,
+            IAbilityGate abilities
     ) {
         this.logger = logger;
-        this.configManager = configManager;
         this.sessions = sessions;
         this.gameManager = gameManager;
-        reloadConfig();
+        this.abilities = abilities;
+        reload(abilities.config(CoreAbilities.RESTING_REGENERATION));
+    }
+
+    @Override
+    public top.ourisland.creepersiarena.api.ability.AbilityId id() {
+        return CoreAbilities.RESTING_REGENERATION;
+    }
+
+    @Override
+    public void reload(IAbilityConfigView view) {
+        config = RegenerationConfig.load(view, logger);
     }
 
     public void reloadConfig() {
-        config = RegenerationConfig.load(configManager, logger);
-        if (!config.enabled()) clearAll();
+        reload(abilities.config(CoreAbilities.RESTING_REGENERATION));
     }
 
     public void clearAll() {
@@ -67,17 +77,17 @@ public final class RegenerationService {
 
     public void tick() {
         var currentConfig = config;
-        if (!currentConfig.enabled()) {
-            clearAll();
-            return;
-        }
-
         for (var player : Bukkit.getOnlinePlayers()) {
             tickPlayer(player, currentConfig);
         }
     }
 
     private void tickPlayer(Player player, RegenerationConfig currentConfig) {
+        if (!abilities.isEnabled(CoreAbilities.RESTING_REGENERATION, player, "regeneration_tick")) {
+            breakRest(player, RegenerationBreakReason.NO_LONGER_ELIGIBLE);
+            return;
+        }
+
         if (!canRegenerate(player, currentConfig)) {
             breakRest(player, RegenerationBreakReason.NO_LONGER_ELIGIBLE);
             return;
@@ -95,6 +105,20 @@ public final class RegenerationService {
         }
     }
 
+    public void breakRest(
+            @Nullable Player player,
+            @Nullable RegenerationBreakReason reason
+    ) {
+        if (player == null) return;
+        var removed = states.remove(player.getUniqueId());
+        if (removed == null) return;
+        if (removed.restingTicks() <= 0) return;
+
+        if (config.clearEffectOnBreak()) {
+            player.removePotionEffect(PotionEffectType.REGENERATION);
+        }
+    }
+
     private boolean canRegenerate(Player player, RegenerationConfig currentConfig) {
         PlayerSession session = sessions.get(player);
         if (session == null) return false;
@@ -108,27 +132,7 @@ public final class RegenerationService {
             if (selectedTeam == null || !currentConfig.validTeams().contains(selectedTeam)) return false;
         }
 
-        IModeTimeline timeline = gameManager.timeline();
-        if (timeline instanceof IRegenerationEligibility eligibility
-                && !eligibility.allowRegeneration(player)) {
-            return false;
-        }
-
         return player.isSneaking() && isRestingStill(player, currentConfig);
-    }
-
-    public void breakRest(
-            @Nullable Player player,
-            @Nullable RegenerationBreakReason reason
-    ) {
-        if (player == null) return;
-        var removed = states.remove(player.getUniqueId());
-        if (removed == null) return;
-        if (removed.restingTicks() <= 0) return;
-
-        if (config.clearEffectOnBreak()) {
-            player.removePotionEffect(PotionEffectType.REGENERATION);
-        }
     }
 
     private void applyStage(Player player, RegenerationStage stage) {

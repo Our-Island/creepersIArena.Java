@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.game.mutation;
+package top.ourisland.creepersiarena.api.game.mutation;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -19,7 +19,7 @@ public interface IMutationEffect {
 
     void tick(IMutationEffectContext context, int syntheticSteps);
 
-    void reset(IMutationEffectContext context, MutationResetReason reason, boolean wasActive);
+    void reset(IMutationEffectContext context, Object reason, boolean wasActive);
 
     default void clearPlayer(Player player) {
     }

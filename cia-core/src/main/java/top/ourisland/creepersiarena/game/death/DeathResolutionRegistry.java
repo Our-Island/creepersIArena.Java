@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class DeathCauseRegistry implements IDeathResolutionRegistry {
+public final class DeathResolutionRegistry implements IDeathResolutionRegistry {
 
     private final List<RegisteredDeathComponent<IDeathCauseResolver>> resolvers = new ArrayList<>();
     private final List<RegisteredDeathComponent<IDeathMessageProvider>> messageProviders = new ArrayList<>();

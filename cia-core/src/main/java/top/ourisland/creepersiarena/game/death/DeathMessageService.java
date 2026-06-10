@@ -3,7 +3,8 @@ package top.ourisland.creepersiarena.game.death;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.game.GameManager;
 import top.ourisland.creepersiarena.utils.Msg;
@@ -13,24 +14,29 @@ import java.util.Optional;
 public final class DeathMessageService {
 
     private final Logger log;
-    private final DeathCauseRegistry registry;
+    private final DeathResolutionRegistry registry;
     private final GameManager gameManager;
+    private final IAbilityGate abilities;
 
     public DeathMessageService(
             @lombok.NonNull Logger log,
-            @lombok.NonNull DeathCauseRegistry registry,
-            @lombok.NonNull GameManager gameManager
+            @lombok.NonNull DeathResolutionRegistry registry,
+            @lombok.NonNull GameManager gameManager,
+            @lombok.NonNull IAbilityGate abilities
     ) {
         this.log = log;
         this.registry = registry;
         this.gameManager = gameManager;
+        this.abilities = abilities;
     }
 
     public void broadcast(@lombok.NonNull DeathResult result) {
+        if (!abilities.isEnabled(CoreAbilities.DEATH_MESSAGES, result.victim(), "death_message")) return;
+
         Optional<Component> message = buildMessage(result);
         if (message.isEmpty()) return;
 
-        GameSession game = gameManager.active();
+        var game = gameManager.active();
         if (game == null) return;
 
         for (var playerId : game.players()) {

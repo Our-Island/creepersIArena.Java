@@ -1,6 +1,8 @@
 package top.ourisland.creepersiarena.game.death;
 
 import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 
@@ -11,12 +13,18 @@ public final class DeathStatsService {
     public static final String KILL_SCORE_KEY = "core.death.stats.kill_score";
 
     private final PlayerSessionStore store;
+    private final IAbilityGate abilities;
 
-    public DeathStatsService(@lombok.NonNull PlayerSessionStore store) {
+    public DeathStatsService(
+            @lombok.NonNull PlayerSessionStore store,
+            @lombok.NonNull IAbilityGate abilities
+    ) {
         this.store = store;
+        this.abilities = abilities;
     }
 
     public void record(@lombok.NonNull DeathResult result) {
+        if (!abilities.isEnabled(CoreAbilities.DEATH_STATS, result.victim(), "death_stats")) return;
         increment(result.victim(), DEATHS_KEY);
 
         if (!result.hasKiller()) return;
