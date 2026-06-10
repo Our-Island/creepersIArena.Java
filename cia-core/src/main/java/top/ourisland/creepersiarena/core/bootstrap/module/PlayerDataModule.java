@@ -7,9 +7,9 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.config.ConfigManager;
-import top.ourisland.creepersiarena.core.data.PlayerDataListener;
-import top.ourisland.creepersiarena.core.data.PlayerDataService;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
+import top.ourisland.creepersiarena.core.player.PlayerDataListener;
+import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
 @CiaBootstrapModule(name = "player-data", order = 625)
 public final class PlayerDataModule implements IBootstrapModule {
@@ -23,9 +23,8 @@ public final class PlayerDataModule implements IBootstrapModule {
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var service = new PlayerDataService(
-                    rt.plugin(),
                     rt.log(),
-                    rt.requireService(ConfigManager.class).dataDir()
+                    rt.requireService(JdbcDatabaseService.class)
             );
             rt.putService(PlayerDataService.class, service);
         }, "Loading player data runtime...", "Player data runtime loaded.");
@@ -35,7 +34,7 @@ public final class PlayerDataModule implements IBootstrapModule {
     public StageTask start(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var service = rt.requireService(PlayerDataService.class);
-            Bukkit.getOnlinePlayers().forEach(player -> service.loadAsync(player.getUniqueId()));
+            Bukkit.getOnlinePlayers().forEach(player -> service.loadAsync(player.getUniqueId(), player.getName()));
             ScheduledTask task = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
                     rt.plugin(),
                     _ -> service.flushDirtyAsync(),

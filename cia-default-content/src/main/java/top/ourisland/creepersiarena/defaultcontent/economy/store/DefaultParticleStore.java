@@ -13,6 +13,7 @@ import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.StoreDefinition;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
 import top.ourisland.creepersiarena.api.economy.store.StoreItemId;
+import top.ourisland.creepersiarena.core.economy.store.StorePurchaseRepository;
 
 import java.util.ArrayList;
 
@@ -30,6 +31,7 @@ public final class DefaultParticleStore {
         var wallet = context.requireService(IWalletService.class);
         var currencies = context.requireService(ICurrencyRegistry.class);
         var abilities = context.requireService(IAbilityGate.class);
+        var purchases = context.getService(StorePurchaseRepository.class);
         var yml = YamlConfiguration.loadConfiguration(context.plugin()
                 .getDataFolder()
                 .toPath()
@@ -65,6 +67,7 @@ public final class DefaultParticleStore {
                             cosmetics,
                             currencies,
                             abilities,
+                            purchases,
                             free
                     )
             );

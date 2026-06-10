@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.death.*;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
@@ -34,7 +35,8 @@ public final class DeathModule implements IBootstrapModule {
             var abilities = rt.requireService(IAbilityGate.class);
 
             var streakService = new DeathStreakService();
-            var statsService = new DeathStatsService(store, abilities);
+            var persistentStats = new PersistentStatsRepository(rt.requireService(JdbcDatabaseService.class));
+            var statsService = new DeathStatsService(store, abilities, gameManager, persistentStats);
             var cleanupService = new DeathCleanupService(rt.log(), store, attributionStore, registry, abilities);
             var messageService = new DeathMessageService(rt.log(), registry, gameManager, abilities);
             var resolutionService = new DeathResolutionService(
@@ -55,6 +57,7 @@ public final class DeathModule implements IBootstrapModule {
                     IDeathResolutionRegistry.class, registry,
                     DamageAttributionStore.class, attributionStore,
                     DeathStreakService.class, streakService,
+                    PersistentStatsRepository.class, persistentStats,
                     DeathStatsService.class, statsService,
                     DeathCleanupService.class, cleanupService,
                     DeathMessageService.class, messageService,

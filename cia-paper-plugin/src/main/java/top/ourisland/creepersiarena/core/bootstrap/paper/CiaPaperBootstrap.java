@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.CreepersIArena;
  *
  * @author Out-Island
  */
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class CiaPaperBootstrap implements PluginBootstrap {
 
     @Override

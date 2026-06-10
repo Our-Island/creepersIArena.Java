@@ -11,10 +11,7 @@ import org.jspecify.annotations.NonNull;
 /**
  * Paper Plugin loader entrypoint.
  * <p>
- * Currently, dynamic downloading/injection of runtime dependencies is not required; the implementation can remain
- * empty.
- * <p>
- * In the future, if libraries (JarLibrary / MavenLibraryResolver) need to be added at runtime, this will be done here.
+ * Runtime libraries that are not shaded into the plugin jar are resolved here before core classes need them.
  */
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class CiaPaperLoader implements PluginLoader {
@@ -24,22 +21,40 @@ public final class CiaPaperLoader implements PluginLoader {
         final var resolver = new MavenLibraryResolver();
 
         resolver.addRepository(new RemoteRepository.Builder(
-                "central", "default",
+                "central",
+                "default",
                 MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR
         ).build());
 
         // Kotlin Standard Library
         resolver.addDependency(new Dependency(
-                new DefaultArtifact("org.jetbrains.kotlin:kotlin-stdlib:2.3.10"), null)
-        );
+                new DefaultArtifact("org.jetbrains.kotlin:kotlin-stdlib:2.3.10"), null
+        ));
 
         // Reflect and Coroutine
-//         resolver.addDependency(new Dependency(
-//                 new DefaultArtifact("org.jetbrains.kotlin:kotlin-reflect:2.3.10"), null)
-//         );
-//         resolver.addDependency(new Dependency(
-//                 new DefaultArtifact("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"), null)
-//         );
+//        resolver.addDependency(new Dependency(
+//                new DefaultArtifact("org.jetbrains.kotlin:kotlin-reflect:2.3.10"), null
+//        ));
+//        resolver.addDependency(new Dependency(
+//                new DefaultArtifact("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"), null
+//        ));
+
+        // Database connection pool and JDBC drivers used by the database runtime.
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("com.zaxxer:HikariCP:6.3.2"), null
+        ));
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("org.xerial:sqlite-jdbc:3.50.3.0"), null
+        ));
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("com.h2database:h2:2.3.232"), null
+        ));
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("com.mysql:mysql-connector-j:9.4.0"), null
+        ));
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("org.postgresql:postgresql:42.7.8"), null
+        ));
 
         classpathBuilder.addLibrary(resolver);
     }

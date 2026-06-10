@@ -11,6 +11,7 @@ import top.ourisland.creepersiarena.api.economy.cosmetic.CosmeticSlot;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmetic;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
 import top.ourisland.creepersiarena.api.economy.store.*;
+import top.ourisland.creepersiarena.core.economy.store.StorePurchaseRepository;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
 import top.ourisland.creepersiarena.defaultcontent.economy.DefaultCurrencies;
 import top.ourisland.creepersiarena.defaultcontent.economy.cosmetic.particle.DefaultParticleCosmetics;
@@ -30,6 +31,7 @@ public final class DefaultParticleStoreItem implements IStoreItem {
     private final ICosmeticService cosmetics;
     private final ICurrencyRegistry currencies;
     private final IAbilityGate abilities;
+    private final StorePurchaseRepository purchases;
     private final boolean free;
 
     public DefaultParticleStoreItem(
@@ -41,6 +43,7 @@ public final class DefaultParticleStoreItem implements IStoreItem {
             ICosmeticService cosmetics,
             ICurrencyRegistry currencies,
             IAbilityGate abilities,
+            StorePurchaseRepository purchases,
             boolean free
     ) {
         this.id = id;
@@ -51,6 +54,7 @@ public final class DefaultParticleStoreItem implements IStoreItem {
         this.cosmetics = cosmetics;
         this.currencies = currencies;
         this.abilities = abilities;
+        this.purchases = purchases;
         this.free = free;
     }
 
@@ -143,6 +147,10 @@ public final class DefaultParticleStoreItem implements IStoreItem {
         cosmetics.select(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL, cosmeticId);
 
         playPurchase(player);
+        if (purchases != null) {
+            purchases.recordPurchaseAsync(player.getUniqueId(), DefaultParticleStore.STORE_ID, id, null, "PURCHASED");
+        }
+
         player.getServer().broadcast(Component.text(player.getName() + " 购买了 ").append(cosmetic.displayName()));
 
         return StoreClickResult.purchased(Component.text("再次点击选择 ").append(cosmetic.displayName()));

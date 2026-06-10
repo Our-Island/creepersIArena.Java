@@ -7,6 +7,8 @@ import top.ourisland.creepersiarena.api.ability.IAbility;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityPolicy;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
+import top.ourisland.creepersiarena.api.database.IDatabaseMigration;
+import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -138,6 +140,10 @@ public interface ICiaExtensionContext {
      * @return service instance, or null
      */
     <T> T getService(Class<T> type);
+
+    default void registerDatabaseMigration(IDatabaseMigration migration) {
+        requireService(IDatabaseMigrationRegistry.class).registerMigration(extensionId(), migration);
+    }
 
     default void registerAbilityPolicy(IAbilityPolicy... policies) {
         requireService(IAbilityRegistry.class).registerPolicy(extensionId(), policies);

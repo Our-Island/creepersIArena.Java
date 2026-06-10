@@ -11,9 +11,10 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.core.data.PlayerDataService;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.economy.CurrencyRegistry;
 import top.ourisland.creepersiarena.core.economy.WalletService;
+import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
 @CiaBootstrapModule(name = "economy", order = 670)
 public final class EconomyModule implements IBootstrapModule {
@@ -28,6 +29,8 @@ public final class EconomyModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var registry = new CurrencyRegistry(rt.log());
             var wallet = new WalletService(
+                    rt.log(),
+                    rt.requireService(JdbcDatabaseService.class),
                     rt.requireService(PlayerDataService.class),
                     registry,
                     rt.requireService(IAbilityGate.class)
@@ -41,6 +44,20 @@ public final class EconomyModule implements IBootstrapModule {
                     new SimpleAbility(CoreAbilities.CURRENCY)
             );
         }, "Loading economy runtime...", "Economy runtime loaded.");
+    }
+
+    @Override
+    public StageTask stop(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var wallet = rt.getService(WalletService.class);
+            if (wallet != null) {
+                try {
+                    wallet.flushAll();
+                } catch (Exception e) {
+                    rt.log().warn("[Economy] Failed to flush wallet data: {}", e.getMessage(), e);
+                }
+            }
+        }, "Saving wallet data...", "Wallet data saved.");
     }
 
 }

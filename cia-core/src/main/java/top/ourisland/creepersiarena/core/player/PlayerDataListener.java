@@ -1,4 +1,4 @@
-package top.ourisland.creepersiarena.core.data;
+package top.ourisland.creepersiarena.core.player;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,7 +15,8 @@ public final class PlayerDataListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        playerData.loadAsync(event.getPlayer().getUniqueId());
+        var player = event.getPlayer();
+        playerData.loadAsync(player.getUniqueId(), player.getName());
     }
 
     @EventHandler

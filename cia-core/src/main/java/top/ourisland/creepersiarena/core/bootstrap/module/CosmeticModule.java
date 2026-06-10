@@ -13,9 +13,10 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
-import top.ourisland.creepersiarena.core.data.PlayerDataService;
+import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticRegistry;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticService;
+import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
 @CiaBootstrapModule(name = "cosmetic", order = 690)
 public final class CosmeticModule implements IBootstrapModule {
@@ -30,6 +31,8 @@ public final class CosmeticModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var registry = new CosmeticRegistry(rt.log());
             var service = new CosmeticService(
+                    rt.log(),
+                    rt.requireService(JdbcDatabaseService.class),
                     rt.requireService(PlayerDataService.class),
                     registry,
                     rt.requireService(IAbilityGate.class)
@@ -57,6 +60,20 @@ public final class CosmeticModule implements IBootstrapModule {
             );
             rt.trackTask(task);
         }, "Starting cosmetic tick...", "Cosmetic tick started.");
+    }
+
+    @Override
+    public StageTask stop(BootstrapRuntime rt) {
+        return StageTask.of(() -> {
+            var service = rt.getService(CosmeticService.class);
+            if (service != null) {
+                try {
+                    service.flushAll();
+                } catch (Exception e) {
+                    rt.log().warn("[Cosmetic] Failed to flush cosmetic data: {}", e.getMessage(), e);
+                }
+            }
+        }, "Saving cosmetic data...", "Cosmetic data saved.");
     }
 
 }

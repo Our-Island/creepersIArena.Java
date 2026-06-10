@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.database.IDatabaseService;
 import top.ourisland.creepersiarena.api.economy.*;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
@@ -51,6 +52,7 @@ public final class AdminCommandHandlers {
                 /ciaa regen <factor>
                 /ciaa mutation [<bool>|trigger]
                 /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]
+                /ciaa database status
                 /ciaa economy <balance|give|take|set> ...
                 /ciaa store <list|open> ...
                 /ciaa entrance <bool>
@@ -547,6 +549,67 @@ public final class AdminCommandHandlers {
         Msg.send(sender, "Updated " + file + ".yml: " + node + " = " + value);
         Msg.send(sender, "Current value: " + currentValue);
         Msg.send(sender, "Run /ciaa reload to apply.");
+    }
+
+    public void database(CommandSender sender, String[] args) {
+        var database = rt.getService(IDatabaseService.class);
+        if (database == null) {
+            Msg.send(sender, "Database service is not available.");
+            return;
+        }
+
+        String action = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
+        switch (action) {
+            case "ping" -> databasePing(sender, database);
+            case "tables" -> databaseTables(sender, database);
+            default -> databaseStatus(sender, database);
+        }
+    }
+
+    private void databasePing(CommandSender sender, IDatabaseService database) {
+        database.read(connection -> {
+            try (var st = connection.createStatement()) {
+                st.execute("SELECT 1");
+            }
+            return true;
+        }).whenComplete((ok, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
+            if (error == null && Boolean.TRUE.equals(ok)) {
+                Msg.send(sender, "- connection: ok");
+            } else {
+                Msg.send(sender, "- connection: failed (" + (error == null ? "unknown" : error.getMessage()) + ")");
+            }
+        }));
+    }
+
+    private void databaseTables(CommandSender sender, IDatabaseService database) {
+        database.read(connection -> {
+            var names = new java.util.ArrayList<String>();
+            var metadata = connection.getMetaData();
+            try (var rs = metadata.getTables(null, null, database.tablePrefix() + "%", new String[]{"TABLE"})) {
+                while (rs.next()) {
+                    names.add(rs.getString("TABLE_NAME"));
+                }
+            }
+            java.util.Collections.sort(names);
+            return names;
+        }).whenComplete((tables, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
+            if (error != null) {
+                Msg.send(sender, "Database tables lookup failed: " + error.getMessage());
+                return;
+            }
+            Msg.send(sender, "Database tables (" + tables.size() + "):");
+            for (String table : tables) {
+                Msg.send(sender, "- " + table);
+            }
+        }));
+    }
+
+    private void databaseStatus(CommandSender sender, IDatabaseService database) {
+        Msg.send(sender, "Database:");
+        Msg.send(sender, "- type: " + database.type());
+        Msg.send(sender, "- table-prefix: " + database.tablePrefix());
+        Msg.send(sender, "- ready: " + database.ready());
+        databasePing(sender, database);
     }
 
 }
