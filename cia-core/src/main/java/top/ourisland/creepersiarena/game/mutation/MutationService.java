@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.game.mutation;
 
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -9,10 +10,7 @@ import top.ourisland.creepersiarena.api.ability.IAbility;
 import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.GameSession;
-import top.ourisland.creepersiarena.api.game.mutation.IMutationEffect;
-import top.ourisland.creepersiarena.api.game.mutation.IMutationEffectContext;
-import top.ourisland.creepersiarena.api.game.mutation.MutationClockMode;
-import top.ourisland.creepersiarena.api.game.mutation.MutationTargetScope;
+import top.ourisland.creepersiarena.api.game.mutation.*;
 import top.ourisland.creepersiarena.game.GameManager;
 
 import java.util.ArrayList;
@@ -182,7 +180,7 @@ public final class MutationService implements IAbility, IMutationEffectContext {
             return;
         }
 
-        var effect = pickEnabledEffect();
+        var effect = pickEnabledEffect(currentConfig);
         if (effect == null) {
             rollFailure(currentConfig);
             return;
@@ -213,13 +211,33 @@ public final class MutationService implements IAbility, IMutationEffectContext {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 
-    private IMutationEffect pickEnabledEffect() {
-        var candidates = new ArrayList<IMutationEffect>();
+    private IMutationEffect pickEnabledEffect(MutationConfig currentConfig) {
+        var context = candidateContext();
+        var candidates = new ArrayList<WeightedEffect>();
+        int totalWeight = 0;
+
         for (var effect : registry.effects()) {
-            if (effect.enabled()) candidates.add(effect);
+            if (effect == null || !effect.enabled()) continue;
+            try {
+                if (!effect.canStart(context)) continue;
+                int weight = Math.max(0, effect.weight(context));
+                if (weight == 0) continue;
+                candidates.add(new WeightedEffect(effect, weight));
+                totalWeight += weight;
+            } catch (Throwable t) {
+                logger.warn("[Mutation] Candidate evaluation failed for {}: {}", effect.type(), t.getMessage(), t);
+            }
         }
-        if (candidates.isEmpty()) return null;
-        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+
+        if (candidates.isEmpty() || totalWeight <= 0) return null;
+
+        int roll = ThreadLocalRandom.current().nextInt(totalWeight);
+        for (var candidate : candidates) {
+            roll -= candidate.weight();
+            if (roll < 0) return candidate.effect();
+        }
+
+        return candidates.getLast().effect();
     }
 
     private MutationTriggerResult startEffect(IMutationEffect effect) {
@@ -254,6 +272,20 @@ public final class MutationService implements IAbility, IMutationEffectContext {
         return abilities.isEnabled(CoreAbilities.MUTATION, player, "mutation_target");
     }
 
+    private MutationCandidateContext candidateContext() {
+        var active = gameManager.active();
+        String modeId = active == null || active.mode() == null ? "" : active.mode().id();
+        String arenaId = active == null || active.arena() == null ? "" : active.arena().id();
+
+        return new MutationCandidateContext(
+                active,
+                modeId,
+                arenaId,
+                state.idleCounterTicks(),
+                targets(MutationTargetScope.ACTIVE_GAME_PLAYERS)
+        );
+    }
+
     public MutationTriggerResult trigger() {
         if (state.active()) {
             var activeType = state.activeType();
@@ -269,7 +301,7 @@ public final class MutationService implements IAbility, IMutationEffectContext {
         if (marker == null) return MutationTriggerResult.noEligibleGame();
         state.sessionMarker(marker);
 
-        var effect = pickEnabledEffect();
+        var effect = pickEnabledEffect(currentConfig);
         if (effect == null) return MutationTriggerResult.noEffect();
         return startEffect(effect);
     }
@@ -299,6 +331,17 @@ public final class MutationService implements IAbility, IMutationEffectContext {
     }
 
     @Override
+    public World world() {
+        var active = gameManager.active();
+        return active == null || active.arena() == null ? null : active.arena().world();
+    }
+
+    @Override
+    public GameSession game() {
+        return gameManager.active();
+    }
+
+    @Override
     public MutationClockMode clockMode() {
         return config.clockMode();
     }
@@ -309,7 +352,7 @@ public final class MutationService implements IAbility, IMutationEffectContext {
             return List.copyOf(Bukkit.getOnlinePlayers());
         }
 
-        GameSession active = gameManager.active();
+        var active = gameManager.active();
         if (active == null) return List.of();
 
         var out = new ArrayList<Player>();
@@ -321,7 +364,6 @@ public final class MutationService implements IAbility, IMutationEffectContext {
         }
         return out;
     }
-
 
     public String statusLine(boolean adminEnabled) {
         var activeEffect = registry.get(state.activeType());
@@ -340,7 +382,6 @@ public final class MutationService implements IAbility, IMutationEffectContext {
                 detail
         );
     }
-
 
     public boolean effectiveEnabled() {
         return abilityEnabled();
@@ -364,6 +405,13 @@ public final class MutationService implements IAbility, IMutationEffectContext {
 
     public void clearPlayer(@Nullable Player player) {
         registry.clearPlayer(player);
+    }
+
+    private record WeightedEffect(
+            IMutationEffect effect,
+            int weight
+    ) {
+
     }
 
 }

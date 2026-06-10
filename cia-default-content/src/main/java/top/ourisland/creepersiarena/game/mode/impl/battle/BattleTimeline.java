@@ -41,8 +41,14 @@ public final class BattleTimeline implements IModeTimeline {
         } else {
             bossBars.hide();
         }
+
         if (!state.reachedMapTarget()) return List.of();
-        if (!abilityEnabled(DefaultContentAbilities.BATTLE_MAP_ROTATION, "battle_map_rotation")) return List.of();
+        if (!abilityEnabled(DefaultContentAbilities.BATTLE_MAP_PROGRESS_ROTATION, "battle_map_progress_rotation")) {
+            if (state.mapTargetReachedAnnounced()) return List.of();
+
+            state.mapTargetReachedAnnounced(true);
+            return List.of(new GameAction.Broadcast(state.mapRotationDisabledMessage()));
+        }
 
         state.rotationPending(true);
         bossBars.hide();

@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.job.skill.runtime;
 
+import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.config.ISkillConfigView;
@@ -90,9 +91,7 @@ public final class SkillRuntime {
     }
 
     private boolean skillRuntimeEnabled(SkillContext ctx) {
-        var gate = abilities.get();
-        if (gate == null) return true;
-        return gate.isEnabled(CoreAbilities.SKILL_RUNTIME, ctx.player(), "skill_runtime");
+        return isRuntimeEnabled(ctx.player(), "skill_runtime");
     }
 
     private boolean matchesAnyTrigger(ISkillDefinition def, SkillContext ctx) {
@@ -107,7 +106,6 @@ public final class SkillRuntime {
         return false;
     }
 
-
     public ISkillConfigView skillConfig() {
         try {
             ISkillConfigView c = skillConfig.get();
@@ -115,6 +113,15 @@ public final class SkillRuntime {
         } catch (Throwable _) {
             return SkillConfig.defaults();
         }
+    }
+
+    public boolean isRuntimeEnabled(
+            Player player,
+            String reason
+    ) {
+        var gate = abilities.get();
+        if (gate == null) return false;
+        return gate.isEnabled(CoreAbilities.SKILL_RUNTIME, player, reason == null ? "skill_runtime" : reason);
     }
 
     public ISkillStateStore store() {

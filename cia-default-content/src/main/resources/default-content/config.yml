@@ -12,8 +12,6 @@ game:
             phases: [ ROUND_PLAYING ]
         settings:
           require-in-game: true
-          require-team: true
-          valid-teams: [ 1, 2, 3, 4 ]
           stationary-horizontal-epsilon: 0.003
           max-vertical-delta: 0.08
           require-on-ground: true
@@ -116,51 +114,82 @@ game:
             offline-roll-min: -5
             offline-roll-max: 0
             start-min-inclusive: 1
-          accelerated-time:
-            enabled: true
-            duration-ticks: 9000
-            tick-rate-min: 34.0
-            tick-rate-max: 58.0
-            movement-speed-add: 0.1
-            time-add-per-target-per-tick: 8
-            time-target-scope: ACTIVE_GAME_PLAYERS
-            start-daylight-cycle: true
-            reset-daylight-cycle: false
-            reset-time-enabled: true
-            reset-time: 6000
-            speed-target-scope: ACTIVE_GAME_PLAYERS
-            start-sound:
-              sound: minecraft:block.beacon.activate
-              volume: 1.0
-              pitch: 0.8
-            end-sound:
-              sound: minecraft:block.beacon.deactivate
-              volume: 1.0
-              pitch: 0.8
-            start-messages:
-              - "🕸 神秘的力量开始操控魔法"
-              - "🕸 一股神秘的力量..."
-              - "🕸 时间要开始加速了？还好，只加速了一部分...吗？"
-              - "🕸 快快快！太慢了太慢了！"
-            end-messages:
-              - "🕸 神秘的力量消失了..."
-              - "🕸 时间流速恢复正常..."
-              - "🕸 你感觉身体变慢了..."
-              - "🕸 好像世界变慢了？"
+          effects:
+            accelerated-time:
+              enabled: true
+              weight: 1
+              duration-ticks: 9000
+              tick-rate-min: 34.0
+              tick-rate-max: 58.0
+              server-global-tick-rate-enabled: true
+              movement-speed-add: 0.1
+              time-add-per-target-per-tick: 8
+              time-target-scope: ACTIVE_GAME_PLAYERS
+              start-daylight-cycle: true
+              reset-daylight-cycle: false
+              reset-time-enabled: true
+              reset-time: 6000
+              speed-target-scope: ACTIVE_GAME_PLAYERS
+              start-sound:
+                sound: minecraft:block.beacon.activate
+                volume: 1.0
+                pitch: 0.8
+              end-sound:
+                sound: minecraft:block.beacon.deactivate
+                volume: 1.0
+                pitch: 0.8
+              start-messages:
+                - "🕸 神秘的力量开始操控魔法"
+                - "🕸 一股神秘的力量..."
+                - "🕸 时间要开始加速了？还好，只加速了一部分...吗？"
+                - "🕸 快快快！太慢了太慢了！"
+              end-messages:
+                - "🕸 神秘的力量消失了..."
+                - "🕸 时间流速恢复正常..."
+                - "🕸 你感觉身体变慢了..."
+                - "🕸 好像世界变慢了？"
     cia-default-content:
-      battle-respawn-presentation:
+      battle-respawn-recovery:
         enabled: true
         default-active: true
         modes:
           battle:
             enabled: true
+        settings:
+          start-health: 4.0
+          full-health: 20.0
+          health-step-per-second: 2.0
+          resistance:
+            duration-ticks: 40
+            amplifier: 5
+          instant-health:
+            amplifier: 0
+      battle-respawn-visuals:
+        enabled: true
+        default-active: true
+        modes:
+          battle:
+            enabled: true
+        settings:
+          start-sound:
+            sound: minecraft:entity.wither.spawn
+            volume: 1.0
+            pitch: 1.5
+          ambient-sound:
+            sound: minecraft:block.beacon.ambient
+            volume: 10.0
+            pitch: 0.1
+          step-sound:
+            sound: minecraft:item.lead.tied
+            volume: 1.0
+            pitch: 0.0
       battle-bossbar:
         enabled: true
         default-active: true
         modes:
           battle:
             enabled: true
-      battle-map-rotation:
+      battle-map-progress-rotation:
         enabled: true
         default-active: true
         modes:
@@ -173,6 +202,9 @@ game:
           battle:
             enabled: true
       kill-feedback:
+        enabled: true
+        default-active: true
+      builtin-death-cleanup:
         enabled: true
         default-active: true
       steal-waiting-bossbar:
@@ -206,6 +238,12 @@ game:
           steal:
             enabled: true
       steal-selection-barriers:
+        enabled: true
+        default-active: true
+        modes:
+          steal:
+            enabled: true
+      steal-objective-feedback:
         enabled: true
         default-active: true
         modes:

@@ -42,6 +42,11 @@ public final class DeathCleanupService {
 
         for (var registered : registry.cleanupParticipants()) {
             try {
+                var participantAbility = registered.value().abilityId();
+                if (participantAbility != null
+                        && !abilities.isEnabled(participantAbility, player, "death_cleanup_participant")) {
+                    continue;
+                }
                 registered.value().cleanupAfterDeath(player);
             } catch (Throwable throwable) {
                 log.warn(

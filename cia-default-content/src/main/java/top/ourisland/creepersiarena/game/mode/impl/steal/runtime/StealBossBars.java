@@ -4,22 +4,55 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class StealBossBars {
 
-    private final BossBar waiting = BossBar.bossBar(Component.empty(), 0.0f, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
-    private final BossBar spectator = BossBar.bossBar(Component.text("观察地图", NamedTextColor.GRAY), 1.0f, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS);
-    private final BossBar chooseJob = BossBar.bossBar(Component.text("选择职业", NamedTextColor.AQUA), 1.0f, BossBar.Color.BLUE, BossBar.Overlay.PROGRESS);
-    private final BossBar round = BossBar.bossBar(Component.empty(), 1.0f, BossBar.Color.GREEN, BossBar.Overlay.PROGRESS);
-    private final BossBar celebration = BossBar.bossBar(Component.text("庆祝时刻", NamedTextColor.GOLD), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+    private final BossBar waiting = BossBar.bossBar(
+            Component.empty(),
+            0.0f,
+            BossBar.Color.RED,
+            BossBar.Overlay.PROGRESS
+    );
+    private final BossBar spectator = BossBar.bossBar(
+            Component.text("观察地图", NamedTextColor.GRAY),
+            1.0f,
+            BossBar.Color.WHITE,
+            BossBar.Overlay.PROGRESS
+    );
+    private final BossBar chooseJob = BossBar.bossBar(
+            Component.text("选择职业", NamedTextColor.AQUA),
+            1.0f,
+            BossBar.Color.BLUE,
+            BossBar.Overlay.PROGRESS
+    );
+    private final BossBar round = BossBar.bossBar(
+            Component.empty(),
+            1.0f,
+            BossBar.Color.GREEN,
+            BossBar.Overlay.PROGRESS
+    );
+    private final BossBar celebration = BossBar.bossBar(
+            Component.text("庆祝时刻", NamedTextColor.GOLD),
+            1.0f,
+            BossBar.Color.YELLOW,
+            BossBar.Overlay.PROGRESS
+    );
 
     private final Map<BossBar, Set<UUID>> viewers = new IdentityHashMap<>();
 
     void showWaiting(
-            Collection<Player> players, int ready, int needed, int population, int countdownRemaining,
+            Collection<Player> players,
+            int ready,
+            int needed,
+            int population,
+            int countdownRemaining,
             int countdownMax
     ) {
         waiting.name(waitingName(ready, needed, countdownRemaining));
@@ -48,67 +81,80 @@ final class StealBossBars {
         return Math.clamp((float) value / (float) max, 0.0f, 1.0f);
     }
 
-    private void sync(BossBar bar, Collection<Player> players) {
-        Set<UUID> desired = new LinkedHashSet<>();
-        for (var p : players) {
-            if (p == null || !p.isOnline()) continue;
-            desired.add(p.getUniqueId());
-        }
+    private void sync(BossBar bar, @NonNull Collection<Player> players) {
+        Set<UUID> desired = players.stream()
+                .filter(p -> p != null && p.isOnline())
+                .map(Entity::getUniqueId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Set<UUID> current = viewers.computeIfAbsent(bar, ignored -> new LinkedHashSet<>());
-        for (UUID id : current.toArray(UUID[]::new)) {
-            if (desired.contains(id)) continue;
-            Player old = Bukkit.getPlayer(id);
-            if (old != null) old.hideBossBar(bar);
-            current.remove(id);
-        }
+        Set<UUID> current = viewers.computeIfAbsent(bar, _ -> new LinkedHashSet<>());
+        Arrays.stream(current.toArray(UUID[]::new))
+                .filter(id -> !desired.contains(id))
+                .forEach(id -> {
+                    var old = Bukkit.getPlayer(id);
+                    if (old != null) old.hideBossBar(bar);
+                    current.remove(id);
+                });
 
-        for (Player p : players) {
-            if (p == null || !p.isOnline()) continue;
-            if (current.add(p.getUniqueId())) {
-                p.showBossBar(bar);
-            }
-        }
+        players.stream()
+                .filter(p -> p != null && p.isOnline())
+                .filter(p -> current.add(p.getUniqueId()))
+                .forEach(p -> p.showBossBar(bar));
     }
 
     private void hideAllExcept(BossBar keep, Collection<Player> visiblePlayers) {
-        for (var bar : List.of(waiting, spectator, chooseJob, round, celebration)) {
-            if (bar != keep) hide(bar, visiblePlayers);
-        }
+        Stream.of(waiting, spectator, chooseJob, round, celebration)
+                .filter(bar -> bar != keep)
+                .forEach(bar -> hide(bar, visiblePlayers));
     }
 
     private void hide(BossBar bar, Collection<Player> visiblePlayers) {
-        Set<UUID> current = viewers.computeIfAbsent(bar, ignored -> new LinkedHashSet<>());
-        Set<UUID> visible = new LinkedHashSet<>();
-        for (var p : visiblePlayers) {
-            if (p != null) visible.add(p.getUniqueId());
-        }
+        Set<UUID> current = viewers.computeIfAbsent(bar, _ -> new LinkedHashSet<>());
+        Set<UUID> visible = visiblePlayers.stream()
+                .filter(Objects::nonNull)
+                .map(Entity::getUniqueId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        for (UUID id : current.toArray(UUID[]::new)) {
-            Player player = Bukkit.getPlayer(id);
-            if (player != null) player.hideBossBar(bar);
-            current.remove(id);
-        }
+        Arrays.stream(current.toArray(UUID[]::new))
+                .forEach(id -> {
+                    var player = Bukkit.getPlayer(id);
+                    if (player != null) player.hideBossBar(bar);
+                    current.remove(id);
+                });
 
-        for (UUID id : visible) {
-            Player player = Bukkit.getPlayer(id);
-            if (player != null) player.hideBossBar(bar);
-        }
+        visible.stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .forEach(player -> player.hideBossBar(bar));
     }
 
-    void showSpectator(Collection<Player> players, int remaining, int max) {
+    void showSpectator(
+            Collection<Player> players,
+            int remaining,
+            int max
+    ) {
         spectator.progress(ratio(remaining, max));
         sync(spectator, players);
         hideAllExcept(spectator, players);
     }
 
-    void showChooseJob(Collection<Player> players, int remaining, int max) {
+    void showChooseJob(
+            Collection<Player> players,
+            int remaining,
+            int max
+    ) {
         chooseJob.progress(ratio(remaining, max));
         sync(chooseJob, players);
         hideAllExcept(chooseJob, players);
     }
 
-    void showRound(Collection<Player> players, int remaining, int max, int mined, int target) {
+    void showRound(
+            Collection<Player> players,
+            int remaining,
+            int max,
+            int mined,
+            int target
+    ) {
         round.name(Component.text("已有 ", NamedTextColor.WHITE)
                 .append(Component.text(mined, NamedTextColor.RED))
                 .append(Component.text(" / ", NamedTextColor.WHITE))
@@ -121,32 +167,55 @@ final class StealBossBars {
         hideAllExcept(round, players);
     }
 
-    void showCelebration(Collection<Player> players, int remaining, int max, boolean finalGame) {
+    void showCelebration(
+            Collection<Player> players,
+            int remaining,
+            int max,
+            boolean finalGame
+    ) {
         celebration.name(Component.text(finalGame ? "最终庆祝" : "庆祝时刻", NamedTextColor.GOLD));
         celebration.progress(ratio(remaining, max));
         sync(celebration, players);
         hideAllExcept(celebration, players);
     }
 
+    void hideWaiting(Collection<Player> visiblePlayers) {
+        hide(waiting, visiblePlayers);
+    }
+
+    void hideSpectator(Collection<Player> visiblePlayers) {
+        hide(spectator, visiblePlayers);
+    }
+
+    void hideChooseJob(Collection<Player> visiblePlayers) {
+        hide(chooseJob, visiblePlayers);
+    }
+
+    void hideRound(Collection<Player> visiblePlayers) {
+        hide(round, visiblePlayers);
+    }
+
+    void hideCelebration(Collection<Player> visiblePlayers) {
+        hide(celebration, visiblePlayers);
+    }
+
     void hideAllTracked() {
-        var online = new ArrayList<Player>();
-        for (UUID id : allTrackedViewers()) {
-            Player player = Bukkit.getPlayer(id);
-            if (player != null) online.add(player);
-        }
+        var online = allTrackedViewers().stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
         hideAll(online);
     }
 
     private Set<UUID> allTrackedViewers() {
-        var out = new LinkedHashSet<UUID>();
-        for (Set<UUID> ids : viewers.values()) out.addAll(ids);
-        return out;
+        return viewers.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     void hideAll(Collection<Player> visiblePlayers) {
-        for (var bar : List.of(waiting, spectator, chooseJob, round, celebration)) {
-            hide(bar, visiblePlayers);
-        }
+        List.of(waiting, spectator, chooseJob, round, celebration)
+                .forEach(bar -> hide(bar, visiblePlayers));
     }
 
 }

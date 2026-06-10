@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
@@ -30,8 +31,13 @@ public final class BattleState {
 
     @Getter private int mapProgress;
     @Getter private boolean rotationPending;
+    @Getter private boolean mapTargetReachedAnnounced;
 
-    public BattleState(GameRuntime runtime, GameSession session, BattleModeConfig config) {
+    public BattleState(
+            GameRuntime runtime,
+            GameSession session,
+            BattleModeConfig config
+    ) {
         this.runtime = runtime;
         this.session = session;
         this.config = config;
@@ -47,6 +53,10 @@ public final class BattleState {
 
     public void rotationPending(boolean rotationPending) {
         this.rotationPending = rotationPending;
+    }
+
+    public void mapTargetReachedAnnounced(boolean mapTargetReachedAnnounced) {
+        this.mapTargetReachedAnnounced = mapTargetReachedAnnounced;
     }
 
     public void markFighter(PlayerSession player) {
@@ -100,7 +110,7 @@ public final class BattleState {
 
     public int onlineFighterCount() {
         int count = 0;
-        for (UUID uuid : session.players()) {
+        for (var uuid : session.players()) {
             Player player = Bukkit.getPlayer(uuid);
             if (isFighter(player)) count++;
         }
@@ -111,9 +121,9 @@ public final class BattleState {
         return mapProgress >= config.mapProgressTarget();
     }
 
-    public Component mapFinishedMessage() {
-        return Component.text("Battle map complete: ", NamedTextColor.GOLD)
-                .append(Component.text(session.arena().id(), NamedTextColor.YELLOW))
+    public Component mapRotationDisabledMessage() {
+        return Component.text("Battle map progress target reached, but automatic rotation is disabled: ", NamedTextColor.YELLOW)
+                .append(Component.text(session.arena().id(), NamedTextColor.GOLD))
                 .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
                 .append(scoreSummaryComponent());
     }
@@ -134,7 +144,14 @@ public final class BattleState {
         return first ? Component.text("no kills recorded", NamedTextColor.GRAY) : out;
     }
 
-    public String scoreSummary() {
+    public @NonNull Component mapFinishedMessage() {
+        return Component.text("Battle map complete: ", NamedTextColor.GOLD)
+                .append(Component.text(session.arena().id(), NamedTextColor.YELLOW))
+                .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
+                .append(scoreSummaryComponent());
+    }
+
+    public @NonNull String scoreSummary() {
         if (teamKills.isEmpty()) return "no kills recorded";
 
         var out = new StringBuilder();

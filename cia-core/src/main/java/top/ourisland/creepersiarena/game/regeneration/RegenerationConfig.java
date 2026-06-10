@@ -6,12 +6,13 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public record RegenerationConfig(
         boolean requireInGame,
-        boolean requireTeam,
-        Set<Integer> validTeams,
         double stationaryHorizontalEpsilon,
         double maxVerticalDelta,
         boolean requireOnGround,
@@ -19,7 +20,6 @@ public record RegenerationConfig(
         List<RegenerationStage> stages
 ) {
 
-    private static final Set<Integer> DEFAULT_VALID_TEAMS = Set.of(1, 2, 3, 4);
     private static final String DEFAULT_CHIME_SOUND = "minecraft:block.note_block.chime";
     private static final String DEFAULT_BEACON_SOUND = "minecraft:block.beacon.ambient";
 
@@ -42,8 +42,6 @@ public record RegenerationConfig(
     public static RegenerationConfig defaults() {
         return new RegenerationConfig(
                 true,
-                true,
-                DEFAULT_VALID_TEAMS,
                 0.003D,
                 0.08D,
                 true,
@@ -56,14 +54,11 @@ public record RegenerationConfig(
         RegenerationConfig defaults = defaults();
         if (section == null) return defaults;
 
-        Set<Integer> validTeams = readValidTeams(section);
         List<RegenerationStage> stages = readStages(section.getMapList("stages"));
         if (stages.isEmpty()) stages = defaults.stages();
 
         return new RegenerationConfig(
                 section.getBoolean("require-in-game", defaults.requireInGame()),
-                section.getBoolean("require-team", defaults.requireTeam()),
-                validTeams.isEmpty() ? defaults.validTeams() : Set.copyOf(validTeams),
                 Math.max(0.0D, section.getDouble("stationary-horizontal-epsilon", defaults.stationaryHorizontalEpsilon())),
                 Math.max(0.0D, section.getDouble("max-vertical-delta", defaults.maxVerticalDelta())),
                 section.getBoolean("require-on-ground", defaults.requireOnGround()),
@@ -88,20 +83,6 @@ public record RegenerationConfig(
                 new RegenerationStage(300, 60, 7, DEFAULT_BEACON_SOUND, 0.15F, 2.0F),
                 new RegenerationStage(330, 60, 8, DEFAULT_BEACON_SOUND, 0.1F, 2.0F)
         );
-    }
-
-    private static @NonNull Set<Integer> readValidTeams(@NonNull ConfigurationSection section) {
-        var out = new LinkedHashSet<Integer>();
-        for (var raw : section.getStringList("valid-teams")) {
-            try {
-                out.add(Integer.parseInt(raw.trim()));
-            } catch (NumberFormatException _) {
-            }
-        }
-        if (!out.isEmpty()) return out;
-
-        out.addAll(section.getIntegerList("valid-teams"));
-        return out;
     }
 
     private static @NonNull List<RegenerationStage> readStages(List<Map<?, ?>> rawStages) {

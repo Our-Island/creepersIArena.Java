@@ -48,6 +48,8 @@ game:
       respawn-countdown:
         enabled: true
         default-active: true
+        settings:
+          disabled-fallback: IMMEDIATE_RESPAWN
       skill-runtime:
         enabled: true
         default-active: true

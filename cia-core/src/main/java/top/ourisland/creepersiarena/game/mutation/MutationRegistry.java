@@ -44,10 +44,15 @@ public final class MutationRegistry implements IMutationRegistry {
 
     private void reloadEffect(
             IMutationEffect effect,
-            @Nullable ConfigurationSection section
+            @Nullable ConfigurationSection mutationSettings
     ) {
         try {
-            effect.reload(section, logger);
+            ConfigurationSection effectSection = null;
+            if (mutationSettings != null) {
+                var effectsSection = mutationSettings.getConfigurationSection("effects");
+                if (effectsSection != null) effectSection = effectsSection.getConfigurationSection(effect.configKey());
+            }
+            effect.reload(effectSection, logger);
         } catch (Throwable t) {
             logger.warn("[Mutation] Failed to reload {}: {}", effect.type(), t.getMessage(), t);
         }

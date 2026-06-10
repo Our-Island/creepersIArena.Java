@@ -131,7 +131,7 @@ public final class SkillTickTask {
             String reason
     ) {
         var gate = abilities.get();
-        if (gate == null) return true;
+        if (gate == null) return false;
         return gate.isEnabled(id, player, reason);
     }
 

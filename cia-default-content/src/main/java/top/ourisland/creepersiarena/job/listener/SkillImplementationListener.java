@@ -9,6 +9,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffectType;
+import top.ourisland.creepersiarena.api.ability.CoreAbilities;
+import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.event.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
@@ -18,6 +21,7 @@ import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 import top.ourisland.creepersiarena.utils.EntityStateUtils;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public final class SkillImplementationListener implements Listener {
 
@@ -27,19 +31,23 @@ public final class SkillImplementationListener implements Listener {
     private final PlayerSessionStore sessions;
     private final SkillRuntime runtime;
     private final SkillTickTask tickTask;
+    private final Supplier<IAbilityGate> abilities;
 
     public SkillImplementationListener(
             PlayerSessionStore sessions,
             SkillRuntime runtime,
-            SkillTickTask tickTask
+            SkillTickTask tickTask,
+            Supplier<IAbilityGate> abilities
     ) {
         this.sessions = sessions;
         this.runtime = runtime;
         this.tickTask = tickTask;
+        this.abilities = abilities == null ? () -> null : abilities;
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onCreeperExplosionDamage(EntityDamageByEntityEvent e) {
+        if (!skillRuntimeEnabled(null, "skill_implementation_creeper")) return;
         if (!(e.getDamager() instanceof Creeper c)) return;
         if (!c.getScoreboardTags().contains("cia_skill_creeper_boom")) return;
 
@@ -48,10 +56,17 @@ public final class SkillImplementationListener implements Listener {
         }
     }
 
+    private boolean skillRuntimeEnabled(Player player, String reason) {
+        var gate = abilities.get();
+        if (gate == null) return false;
+        return gate.isEnabled(CoreAbilities.SKILL_RUNTIME, player, reason);
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onCreeperFireworkDamage(EntityDamageByEntityEvent e) {
         if (!(e.getDamager() instanceof Firework fw)) return;
         if (!(e.getEntity() instanceof Player victim)) return;
+        if (!skillRuntimeEnabled(victim, "skill_implementation_firework")) return;
 
         if (!fw.getScoreboardTags().contains(TAG_CREEPER_FIREWORK)) return;
 
@@ -78,6 +93,7 @@ public final class SkillImplementationListener implements Listener {
         if (!(e.getDamager() instanceof AbstractArrow arrow)) return;
         if (!(e.getEntity() instanceof Player victim)) return;
         if (!(arrow.getShooter() instanceof Player owner)) return;
+        if (!skillRuntimeEnabled(owner, "skill_implementation_projectile")) return;
         if (owner.equals(victim)) return;
 
         String source = arrow.getPersistentDataContainer()
@@ -89,7 +105,7 @@ public final class SkillImplementationListener implements Listener {
         reduceCooldown(owner, "cia:moison.volley", now, 40L);
 
         if (arrow.getPersistentDataContainer().has(BuiltinKeys.key("moison_spectral"), PersistentDataType.BYTE)) {
-            EntityStateUtils.applyHiddenEffect(victim, org.bukkit.potion.PotionEffectType.GLOWING, 20);
+            EntityStateUtils.applyHiddenEffect(victim, PotionEffectType.GLOWING, 20);
         }
     }
 
@@ -103,27 +119,34 @@ public final class SkillImplementationListener implements Listener {
     public void onMeleeDamage(EntityDamageByEntityEvent e) {
         if (!(e.getDamager() instanceof Player attacker)) return;
         if (!(e.getEntity() instanceof Player victim)) return;
+        if (!skillRuntimeEnabled(attacker, "skill_implementation_melee")) return;
 
         var attackerSession = sessions.get(attacker);
         var victimSession = sessions.get(victim);
         if (attackerSession == null || victimSession == null) return;
         if (attackerSession.state() != PlayerState.IN_GAME || victimSession.state() != PlayerState.IN_GAME) return;
 
-        String jobId = attackerSession.selectedJob() == null ? null : attackerSession.selectedJob().id();
-        if (jobId == null) return;
-
-        if (jobId.equals("cia:bloodline")) {
-            EntityStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.SPEED, 20);
-        }
-        if (jobId.equals("cia:golem")) {
-            attacker.getPersistentDataContainer().set(
+        String jobId = attackerSession.selectedJob() == null
+                ? null
+                : attackerSession.selectedJob().id();
+        switch (jobId) {
+            case "cia:bloodline" -> EntityStateUtils.applyHiddenEffect(
+                    attacker,
+                    PotionEffectType.SPEED,
+                    20
+            );
+            case "cia:golem" -> attacker.getPersistentDataContainer().set(
                     BuiltinKeys.key("golem_last_target"),
                     PersistentDataType.STRING,
                     victim.getUniqueId().toString()
             );
-        }
-        if (jobId.equals("cia:ysahan")) {
-            EntityStateUtils.applyHiddenEffect(attacker, org.bukkit.potion.PotionEffectType.GLOWING, 20);
+            case "cia:ysahan" -> EntityStateUtils.applyHiddenEffect(
+                    attacker,
+                    PotionEffectType.GLOWING,
+                    20
+            );
+            case null, default -> {
+            }
         }
     }
 
@@ -131,6 +154,7 @@ public final class SkillImplementationListener implements Listener {
     public void onResolvedDeath(ArenaPlayerDeathResolvedEvent event) {
         var killer = event.result().killer();
         if (killer == null) return;
+        if (!skillRuntimeEnabled(killer, "skill_implementation_death")) return;
         var session = sessions.get(killer);
         if (session == null || session.selectedJob() == null) return;
         if (!session.selectedJob().id().equals("cia:ysahan")) return;

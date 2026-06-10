@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
 import top.ourisland.creepersiarena.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.config.ConfigManager;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -49,17 +50,22 @@ public final class SkillModule implements IBootstrapModule {
             var skillRegistry = new SkillRegistry(sessionStore);
             skillRegistry.replaceAllRegistered(catalog.registeredSkills());
 
-            var skillRuntime = new SkillRuntime(skillRegistry, skillStore, () -> {
-                var runtimeState = rt.getService(AdminRuntimeState.class);
-                if (runtimeState == null) return 1.0;
-                return runtimeState.cooldownFactor();
-            }, () -> {
-                var abilities = rt.getService(IAbilityGate.class);
-                if (abilities == null) return true;
-                return abilities.isEnabledForGame(CoreAbilities.SKILL_COOLDOWN, "skill_cooldown");
-            },
+            var skillRuntime = new SkillRuntime(
+                    skillRegistry,
+                    skillStore,
+                    () -> {
+                        var runtimeState = rt.getService(AdminRuntimeState.class);
+                        if (runtimeState == null) return 1.0;
+                        return runtimeState.cooldownFactor();
+                    },
+                    () -> {
+                        var abilities = rt.getService(IAbilityGate.class);
+                        if (abilities == null) return false;
+                        return abilities.isEnabledForGame(CoreAbilities.SKILL_COOLDOWN, "skill_cooldown");
+                    },
                     () -> rt.requireService(ConfigManager.class).skillConfig(),
-                    () -> rt.getService(IAbilityGate.class));
+                    () -> rt.getService(IAbilityGate.class)
+            );
 
             var skillRenderer = new SkillHotbarRenderer(skillCodec, skillStore);
             var tickTask = new SkillTickTask(
@@ -133,13 +139,13 @@ public final class SkillModule implements IBootstrapModule {
         var rt = binder.rt();
         var tickTask = rt.requireService(SkillTickTask.class);
 
-
         binder.register("SkillUiListener", () -> new SkillUiListener(
                 rt.requireService(PlayerSessionStore.class),
                 rt.requireService(SkillItemCodec.class),
                 rt.requireService(SkillRuntime.class),
                 rt.plugin(),
-                tickTask::nowTick
+                tickTask::nowTick,
+                rt.getService(IRestStateService.class)
         ));
 
         return true;

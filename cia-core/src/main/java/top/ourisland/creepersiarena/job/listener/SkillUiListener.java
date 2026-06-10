@@ -12,6 +12,7 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.event.impl.InteractEvent;
 import top.ourisland.creepersiarena.job.skill.runtime.SkillRuntime;
@@ -26,19 +27,22 @@ public final class SkillUiListener implements Listener {
     private final SkillRuntime runtime;
     private final org.bukkit.plugin.Plugin plugin;
     private final LongSupplier nowTick;
+    private final IRestStateService restState;
 
     public SkillUiListener(
             @lombok.NonNull PlayerSessionStore sessions,
             @lombok.NonNull SkillItemCodec codec,
             @lombok.NonNull SkillRuntime runtime,
             @lombok.NonNull org.bukkit.plugin.Plugin plugin,
-            @lombok.NonNull LongSupplier nowTick
+            @lombok.NonNull LongSupplier nowTick,
+            IRestStateService restState
     ) {
         this.sessions = sessions;
         this.codec = codec;
         this.runtime = runtime;
         this.plugin = plugin;
         this.nowTick = nowTick;
+        this.restState = restState;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -56,7 +60,10 @@ public final class SkillUiListener implements Listener {
         String skillId = codec.readSkillId(item);
         if (skillId == null) return;
 
+        if (!runtime.isRuntimeEnabled(p, "skill_interact")) return;
+
         e.setCancelled(true);
+        if (restState != null) restState.breakRest(p, "used_skill");
 
         long tick = nowTick.getAsLong();
         runtime.handle(new SkillContext(

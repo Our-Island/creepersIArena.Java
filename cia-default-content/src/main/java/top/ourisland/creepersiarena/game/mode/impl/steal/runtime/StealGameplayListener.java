@@ -27,25 +27,23 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
 import top.ourisland.creepersiarena.game.GameManager;
-import top.ourisland.creepersiarena.game.mode.impl.steal.model.StealTeam;
-import top.ourisland.creepersiarena.game.regeneration.RegenerationBreakReason;
-import top.ourisland.creepersiarena.game.regeneration.RegenerationService;
 
 public final class StealGameplayListener implements Listener {
 
     private final GameManager gameManager;
     private final PlayerSessionStore sessions;
-    private final RegenerationService regeneration;
+    private final IRestStateService restState;
 
     public StealGameplayListener(
             GameManager gameManager,
             PlayerSessionStore sessions,
-            RegenerationService regeneration
+            IRestStateService restState
     ) {
         this.gameManager = gameManager;
         this.sessions = sessions;
-        this.regeneration = regeneration;
+        this.restState = restState;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -63,7 +61,7 @@ public final class StealGameplayListener implements Listener {
         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
             var active = activeSteal();
             if (active == null || active.state().phase != StealPhase.ROUND_PLAYING) return;
-            Block block = event.getClickedBlock();
+            var block = event.getClickedBlock();
             if (block == null || !isRedstoneOre(block.getType()) || !active.state()
                     .arenaConfig()
                     .isRedstoneTarget(block)) {
@@ -76,7 +74,7 @@ public final class StealGameplayListener implements Listener {
     }
 
     private ActiveSteal activeSteal() {
-        GameSession session = gameManager.active();
+        var session = gameManager.active();
         if (session == null || !session.mode().equals(GameModeType.of("steal"))) return null;
         if (!(gameManager.timeline() instanceof StealTimeline timeline)) return null;
         return new ActiveSteal(session, timeline, timeline.state());
@@ -95,8 +93,8 @@ public final class StealGameplayListener implements Listener {
         boolean accepted = active.timeline().onMinedRedstone(player, active.state().modeConfig());
         if (!accepted) return false;
 
-        if (regeneration != null) {
-            regeneration.breakRest(player, RegenerationBreakReason.OBJECTIVE_ACTION);
+        if (restState != null) {
+            restState.breakRest(player, "objective_action");
         }
 
         block.setType(Material.AIR, false);
@@ -144,7 +142,7 @@ public final class StealGameplayListener implements Listener {
         var active = activeSteal();
         if (active == null) return;
 
-        PlayerSession session = sessions.get(player);
+        var session = sessions.get(player);
         if (session == null || session.state() != PlayerState.IN_GAME) return;
 
         if (active.state().phase != StealPhase.ROUND_PLAYING) {
@@ -162,8 +160,8 @@ public final class StealGameplayListener implements Listener {
         var active = activeSteal();
         if (active == null) return;
 
-        PlayerSession targetSession = sessions.get(target);
-        PlayerSession attackerSession = sessions.get(attacker);
+        var targetSession = sessions.get(target);
+        var attackerSession = sessions.get(attacker);
         if ((targetSession == null || targetSession.state() != PlayerState.IN_GAME)
                 && (attackerSession == null || attackerSession.state() != PlayerState.IN_GAME)) {
             return;
@@ -174,8 +172,8 @@ public final class StealGameplayListener implements Listener {
             return;
         }
 
-        StealTeam sourceTeam = active.state().team(attacker.getUniqueId());
-        StealTeam targetTeam = active.state().team(target.getUniqueId());
+        var sourceTeam = active.state().team(attacker.getUniqueId());
+        var targetTeam = active.state().team(target.getUniqueId());
         if (sourceTeam == null || targetTeam == null || sourceTeam == targetTeam) {
             event.setCancelled(true);
         }
@@ -195,8 +193,8 @@ public final class StealGameplayListener implements Listener {
         var active = activeSteal();
         if (active == null) return;
 
-        Player player = event.getPlayer();
-        PlayerSession playerSession = sessions.get(player);
+        var player = event.getPlayer();
+        var playerSession = sessions.get(player);
         if (playerSession == null || playerSession.state() != PlayerState.IN_GAME) return;
 
         if (active.state().phase != StealPhase.ROUND_PLAYING) {
@@ -223,7 +221,7 @@ public final class StealGameplayListener implements Listener {
         var active = activeSteal();
         if (active == null) return;
 
-        PlayerSession playerSession = sessions.get(event.getPlayer());
+        var playerSession = sessions.get(event.getPlayer());
         if (playerSession == null || playerSession.state() != PlayerState.IN_GAME) return;
 
         if (active.state().phase != StealPhase.LOBBY && active.state().phase != StealPhase.START_COUNTDOWN) {

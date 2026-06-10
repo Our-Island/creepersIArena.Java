@@ -4,8 +4,10 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
+import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
 import top.ourisland.creepersiarena.job.utils.BuiltinKeys;
 import top.ourisland.creepersiarena.utils.AttributeUtils;
 
@@ -14,10 +16,11 @@ import java.util.UUID;
 
 public final class BuiltinDeathCleanupParticipant implements IDeathCleanupParticipant {
 
-    private static final String CREEPER_EXPLOSION_TAG = "cia_skill_creeper_boom";
-    private static final String CREEPER_FIREWORK_TAG = "cia_skill3_fw";
-    private static final String CREEPER_FIREWORK_OWNER_TAG_PREFIX = "cia_skill3_owner:";
-    private static final String LEGACY_NO_PARTICLE_TAG = "no_particle";
+    private static final String
+            CREEPER_EXPLOSION_TAG = "cia_skill_creeper_boom",
+            CREEPER_FIREWORK_TAG = "cia_skill3_fw",
+            CREEPER_FIREWORK_OWNER_TAG_PREFIX = "cia_skill3_owner:",
+            LEGACY_NO_PARTICLE_TAG = "no_particle";
 
     private static final List<String> BUILTIN_SKILL_IDS = List.of(
             "cia:avenger.blood_blink",
@@ -45,12 +48,13 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
 
     private final ISkillStateStore skillStateStore;
 
-    public BuiltinDeathCleanupParticipant() {
-        this(null);
-    }
-
     public BuiltinDeathCleanupParticipant(ISkillStateStore skillStateStore) {
         this.skillStateStore = skillStateStore;
+    }
+
+    @Override
+    public AbilityId abilityId() {
+        return DefaultContentAbilities.BUILTIN_DEATH_CLEANUP;
     }
 
     @Override
@@ -86,9 +90,9 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
     }
 
     private void cleanupOwnedSkillEntities(Player player) {
-        UUID playerId = player.getUniqueId();
-        String playerIdRaw = playerId.toString();
-        for (Entity entity : player.getWorld().getEntities()) {
+        var playerId = player.getUniqueId();
+        var playerIdRaw = playerId.toString();
+        for (var entity : player.getWorld().getEntities()) {
             if (entity instanceof Player) continue;
             if (!isOwnedBuiltinSkillEntity(entity, playerIdRaw)) continue;
 
@@ -107,10 +111,8 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
         String moisonOwner = container.get(key("moison_owner"), PersistentDataType.STRING);
         if (playerIdRaw.equals(deathOwner) || playerIdRaw.equals(moisonOwner)) return true;
 
-        for (String tag : entity.getScoreboardTags()) {
-            if (tag.equals(CREEPER_FIREWORK_OWNER_TAG_PREFIX + playerIdRaw)) return true;
-        }
-        return false;
+        return entity.getScoreboardTags().stream()
+                .anyMatch(tag -> tag.equals(CREEPER_FIREWORK_OWNER_TAG_PREFIX + playerIdRaw));
     }
 
     private void clearEntityState(Entity entity, String playerIdRaw) {
