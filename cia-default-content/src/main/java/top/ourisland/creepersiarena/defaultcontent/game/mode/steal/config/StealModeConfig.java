@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.config;
 
 import org.bukkit.configuration.ConfigurationSection;
 import top.ourisland.creepersiarena.api.config.IGameConfigView;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 
 /**
  * Steal-owned global mode configuration. This type intentionally lives with default content, not core.
@@ -23,8 +24,10 @@ public record StealModeConfig(
         boolean allowRespawnJobSelection
 ) {
 
+    private static final GameModeId MODE = GameModeId.parse("cia:steal");
+
     public static StealModeConfig from(IGameConfigView config) {
-        ConfigurationSection section = config == null ? null : config.modeSection("steal");
+        var section = config == null ? null : config.modeSection(MODE);
         return new StealModeConfig(
                 Math.max(1, intValue(section, config, "min-player-to-start", 2)),
                 boolValue(section, config, "dynamic-ready-requirement", true),
@@ -43,9 +46,14 @@ public record StealModeConfig(
         );
     }
 
-    private static int intValue(ConfigurationSection section, IGameConfigView config, String key, int fallback) {
+    private static int intValue(
+            ConfigurationSection section,
+            IGameConfigView config,
+            String key,
+            int fallback
+    ) {
         if (section != null) return section.getInt(key, fallback);
-        return config == null ? fallback : config.modeInt("steal", key, fallback);
+        return config == null ? fallback : config.modeInt(MODE, key, fallback);
     }
 
     private static boolean boolValue(
@@ -55,7 +63,7 @@ public record StealModeConfig(
             boolean fallback
     ) {
         if (section != null) return section.getBoolean(key, fallback);
-        return config == null ? fallback : config.modeBoolean("steal", key, fallback);
+        return config == null ? fallback : config.modeBoolean(MODE, key, fallback);
     }
 
     public int requiredReadyPlayers(int population) {

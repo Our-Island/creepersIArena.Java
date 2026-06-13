@@ -6,7 +6,7 @@
 #       cooldown-seconds: <int>
 #       ... other skill-specific fields ...
 #
-# Skill id is "<job-id>.<skill-name>" (e.g. "creeper.fireworks").
+# Skill ids use the strict namespace:path form (for example "cia:creeper/fireworks").
 
 cia:
   creeper:

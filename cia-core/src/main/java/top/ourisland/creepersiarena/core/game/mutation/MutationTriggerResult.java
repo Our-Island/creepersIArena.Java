@@ -1,15 +1,15 @@
 package top.ourisland.creepersiarena.core.game.mutation;
 
 import org.jspecify.annotations.NonNull;
-import top.ourisland.creepersiarena.api.game.mutation.MutationType;
+import top.ourisland.creepersiarena.api.game.mutation.MutationId;
 
 public record MutationTriggerResult(
         MutationTriggerResult.Kind kind,
-        MutationType type,
+        MutationId type,
         String message
 ) {
 
-    public static @NonNull MutationTriggerResult started(MutationType type) {
+    public static @NonNull MutationTriggerResult started(MutationId type) {
         return new MutationTriggerResult(
                 Kind.STARTED,
                 type,
@@ -17,7 +17,7 @@ public record MutationTriggerResult(
         );
     }
 
-    public static @NonNull MutationTriggerResult cancelled(MutationType type) {
+    public static @NonNull MutationTriggerResult cancelled(MutationId type) {
         return new MutationTriggerResult(
                 Kind.CANCELLED,
                 type,
@@ -28,7 +28,7 @@ public record MutationTriggerResult(
     public static @NonNull MutationTriggerResult disabled() {
         return new MutationTriggerResult(
                 Kind.DISABLED,
-                MutationType.NONE,
+                MutationId.NONE,
                 "Mutation is disabled."
         );
     }
@@ -36,7 +36,7 @@ public record MutationTriggerResult(
     public static @NonNull MutationTriggerResult noEligibleGame() {
         return new MutationTriggerResult(
                 Kind.NO_ELIGIBLE_GAME,
-                MutationType.NONE,
+                MutationId.NONE,
                 "No eligible active game for mutation."
         );
     }
@@ -44,16 +44,16 @@ public record MutationTriggerResult(
     public static @NonNull MutationTriggerResult noEffect() {
         return new MutationTriggerResult(
                 Kind.NO_EFFECT,
-                MutationType.NONE,
+                MutationId.NONE,
                 "No enabled mutation effect is available."
         );
     }
 
-    public static @NonNull MutationTriggerResult failed(MutationType type, String message) {
+    public static @NonNull MutationTriggerResult failed(MutationId type, String message) {
         return new MutationTriggerResult(
                 Kind.FAILED,
                 type == null
-                        ? MutationType.NONE
+                        ? MutationId.NONE
                         : type,
                 message
         );

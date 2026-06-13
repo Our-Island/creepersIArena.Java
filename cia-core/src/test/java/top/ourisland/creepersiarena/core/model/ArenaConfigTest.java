@@ -14,7 +14,7 @@ class ArenaConfigTest {
     void readsGenericArenaEnvelopeWithNamedSpawnGroupsAndSettings() {
         var yaml = new YamlConfiguration();
         yaml.set("arena.hall.name", "cia.arena.hall");
-        yaml.set("arena.hall.mode", "steal");
+        yaml.set("arena.hall.mode", "cia:steal");
         yaml.set("arena.hall.location", List.of(10, 64, 20));
         yaml.set("arena.hall.range.from", List.of(100, 200));
         yaml.set("arena.hall.range.to", List.of(-50, -80));
@@ -26,7 +26,7 @@ class ArenaConfigTest {
         ArenaConfig.ArenaDef hall = config.get("hall");
 
         assertNotNull(hall);
-        assertEquals("steal", hall.mode());
+        assertEquals("cia:steal", hall.mode().asString());
         assertEquals(10, hall.location().x());
         assertEquals(-50, hall.range().minX());
         assertEquals(-80, hall.range().minZ());

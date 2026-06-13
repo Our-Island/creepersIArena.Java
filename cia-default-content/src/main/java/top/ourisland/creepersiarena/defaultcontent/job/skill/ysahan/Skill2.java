@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @CiaSkillDef(
-        id = "cia:ysahan.whale",
+        id = "cia:ysahan/whale",
         job = "cia:ysahan",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -63,10 +63,10 @@ public class Skill2 implements ISkillDefinition {
             startLoop(p, ctx.plugin());
 
             for (int i = 0; i < 10; i++) {
-                double angle = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
-                double dist = ThreadLocalRandom.current().nextDouble(1.5, 5.0);
-                long delay = ThreadLocalRandom.current().nextLong(20L, 50L);
-                Vector offset = new Vector(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+                var angle = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
+                var dist = ThreadLocalRandom.current().nextDouble(1.5, 5.0);
+                var delay = ThreadLocalRandom.current().nextLong(20L, 50L);
+                var offset = new Vector(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
 
                 p.getScheduler().runDelayed(
                         ctx.plugin(),
@@ -115,7 +115,7 @@ public class Skill2 implements ISkillDefinition {
         p.getScheduler().runAtFixedRate(
                 plugin,
                 task -> {
-                    Long until = EntityStateUtils.timedUntil(
+                    var until = EntityStateUtils.timedUntil(
                             p.getPersistentDataContainer(),
                             BuiltinKeys.key("ysahan_whale_until")
                     );
@@ -142,7 +142,8 @@ public class Skill2 implements ISkillDefinition {
                 },
                 null,
                 1L,
-                5L);
+                5L
+        );
     }
 
 }

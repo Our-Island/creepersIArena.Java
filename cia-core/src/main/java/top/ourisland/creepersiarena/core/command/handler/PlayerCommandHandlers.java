@@ -12,6 +12,9 @@ import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.service.LeaveService;
 import top.ourisland.creepersiarena.core.command.service.UserLanguageService;
@@ -22,9 +25,14 @@ import top.ourisland.creepersiarena.core.utils.Msg;
 import java.util.Locale;
 import java.util.Optional;
 
-import static top.ourisland.creepersiarena.core.command.CommandParsers.*;
+import static top.ourisland.creepersiarena.core.command.CommandParsers.asPlayer;
+import static top.ourisland.creepersiarena.core.command.CommandParsers.parseTeamId;
 
 public final class PlayerCommandHandlers {
+
+    private static final StoreId DEFAULT_PARTICLE_STORE = StoreId.of(
+            CiaKey.of(CiaNamespace.parse("cia"), "particle_store")
+    );
 
     private final BootstrapRuntime rt;
 
@@ -72,33 +80,28 @@ public final class PlayerCommandHandlers {
         leave.leave(p);
     }
 
-    public void job(CommandSender sender, String[] args) {
+    public void job(CommandSender sender, JobId jobId) {
         Optional<Player> playerOpt = asPlayer(sender);
         if (playerOpt.isEmpty()) return;
-        Player p = playerOpt.get();
+        Player player = playerOpt.get();
 
-        if (args.length < 1) {
-            Msg.send(sender, "Usage: /job <cia:job_id>");
-            return;
-        }
-
-        String raw = args[0];
-        String jobId = normalizeCiaId(raw);
-
-        var jm = rt.requireService(JobManager.class);
-        if (jm.getJob(jobId) == null) {
-            Msg.send(sender, "Unknown job: " + raw);
+        var jobs = rt.requireService(JobManager.class);
+        if (jobs.getJob(jobId) == null) {
+            Msg.send(sender, "Unknown job: " + jobId.asString());
             return;
         }
 
         var flow = rt.requireService(GameFlow.class);
-        boolean ok = flow.lobbySelectJob(p, jobId);
-        if (!ok) {
+        if (!flow.lobbySelectJob(player, jobId)) {
             Msg.send(sender, "You can only choose job in hub/respawn.");
             return;
         }
 
-        Msg.send(p, "Job selected: " + jobId);
+        Msg.send(player, "Job selected: " + jobId.asString());
+    }
+
+    public void jobUsage(CommandSender sender) {
+        Msg.send(sender, "Usage: /job <cia:job_id>");
     }
 
     public void team(CommandSender sender, String[] args) {
@@ -151,7 +154,7 @@ public final class PlayerCommandHandlers {
         Msg.send(sender, "TBI");
     }
 
-    public void balance(CommandSender sender, String[] args) {
+    public void balance(CommandSender sender, CurrencyId currencyId) {
         Optional<Player> playerOpt = asPlayer(sender);
         if (playerOpt.isEmpty()) return;
         var player = playerOpt.get();
@@ -168,24 +171,31 @@ public final class PlayerCommandHandlers {
             return;
         }
 
-        if (args.length >= 1) {
-            CurrencyId id = CurrencyId.of(args[0]);
-            if (currencies.currency(id) == null) {
-                Msg.send(sender, "Unknown currency: " + args[0]);
+        if (currencyId != null) {
+            if (currencies.currency(currencyId) == null) {
+                Msg.send(sender, "Unknown currency: " + currencyId.asString());
                 return;
             }
-            Msg.send(sender, id.asString() + ": " + wallet.balance(player.getUniqueId(), id));
+            Msg.send(sender, currencyId.asString() + ": " + wallet.balance(player.getUniqueId(), currencyId));
             return;
         }
 
         Msg.send(sender, "Your balance:");
         for (var currency : currencies.currencies()) {
-            Msg.send(sender, "- " + currency.id()
-                    .asString() + ": " + wallet.balance(player.getUniqueId(), currency.id()));
+            Msg.send(sender, "- " + currency.id().asString()
+                    + ": " + wallet.balance(player.getUniqueId(), currency.id()));
         }
     }
 
-    public void store(CommandSender sender, String[] args) {
+    public void openParticleStore(CommandSender sender) {
+        defaultStore(sender);
+    }
+
+    public void defaultStore(CommandSender sender) {
+        store(sender, DEFAULT_PARTICLE_STORE);
+    }
+
+    public void store(CommandSender sender, StoreId storeId) {
         Optional<Player> playerOpt = asPlayer(sender);
         if (playerOpt.isEmpty()) return;
         var player = playerOpt.get();
@@ -197,25 +207,20 @@ public final class PlayerCommandHandlers {
             return;
         }
 
-        var id = args.length >= 1
-                ? StoreId.of(args[0])
-                : StoreId.of("cia-default-content:particle-store");
-        if (registry.store(id) == null) {
-            Msg.send(sender, "Unknown store: " + id.asString());
+        if (registry.store(storeId) == null) {
+            Msg.send(sender, "Unknown store: " + storeId.asString());
             return;
         }
-        stores.openStore(player, id);
+        stores.openStore(player, storeId);
     }
 
-    public void particles(CommandSender sender, String[] args) {
+    public void disableParticles(CommandSender sender) {
         Optional<Player> playerOpt = asPlayer(sender);
         if (playerOpt.isEmpty()) return;
         var player = playerOpt.get();
 
         var cosmetics = rt.getService(ICosmeticService.class);
-        var registry = rt.getService(ICosmeticRegistry.class);
-        var stores = rt.getService(IStoreService.class);
-        if (cosmetics == null || registry == null) {
+        if (cosmetics == null) {
             Msg.send(sender, "Cosmetic service is not available.");
             return;
         }
@@ -224,36 +229,34 @@ public final class PlayerCommandHandlers {
             return;
         }
 
-        if (args.length < 1) {
-            if (stores != null) {
-                stores.openStore(player, StoreId.of("cia-default-content:particle-store"));
-            } else {
-                Msg.send(sender, "Usage: /cia particles <off|select <id>>");
-            }
+        cosmetics.clearSelection(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL);
+        Msg.send(sender, "Particle cosmetic disabled.");
+    }
+
+    public void selectParticle(CommandSender sender, CosmeticId cosmeticId) {
+        Optional<Player> playerOpt = asPlayer(sender);
+        if (playerOpt.isEmpty()) return;
+        var player = playerOpt.get();
+
+        var cosmetics = rt.getService(ICosmeticService.class);
+        var registry = rt.getService(ICosmeticRegistry.class);
+        if (cosmetics == null || registry == null) {
+            Msg.send(sender, "Cosmetic service is not available.");
             return;
         }
-
-        if ("off".equalsIgnoreCase(args[0])) {
-            cosmetics.clearSelection(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL);
-            Msg.send(sender, "Particle cosmetic disabled.");
+        if (!cosmetics.loaded(player.getUniqueId())) {
+            Msg.send(sender, "Your player data is still loading. Please try again soon.");
             return;
         }
-
-        if ("select".equalsIgnoreCase(args[0]) && args.length >= 2) {
-            var id = CosmeticId.of(args[1]);
-            if (registry.cosmetic(id) == null) {
-                Msg.send(sender, "Unknown cosmetic: " + args[1]);
-                return;
-            }
-            if (!cosmetics.select(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL, id)) {
-                Msg.send(sender, "Cosmetic is not unlocked: " + id.asString());
-                return;
-            }
-            Msg.send(sender, "Particle cosmetic selected: " + id.asString());
+        if (registry.cosmetic(cosmeticId) == null) {
+            Msg.send(sender, "Unknown cosmetic: " + cosmeticId.asString());
             return;
         }
-
-        Msg.send(sender, "Usage: /cia particles <off|select <id>>");
+        if (!cosmetics.select(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL, cosmeticId)) {
+            Msg.send(sender, "Cosmetic is not unlocked: " + cosmeticId.asString());
+            return;
+        }
+        Msg.send(sender, "Particle cosmetic selected: " + cosmeticId.asString());
     }
 
     public void chooseJob(CommandSender sender) {

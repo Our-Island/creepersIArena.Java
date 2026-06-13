@@ -20,7 +20,7 @@ import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeAbilityPolicy;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
@@ -29,6 +29,7 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.core.utils.Msg;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilityChecks;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.config.StealArenaConfig;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.config.StealModeConfig;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
@@ -57,8 +58,8 @@ final class StealTimeline implements IModeTimeline, IModeAbilityPolicy {
     }
 
     @Override
-    public GameModeType type() {
-        return GameModeType.of("steal");
+    public GameModeId type() {
+        return DefaultModeIds.STEAL;
     }
 
     @Override
@@ -538,9 +539,7 @@ final class StealTimeline implements IModeTimeline, IModeAbilityPolicy {
     }
 
     private void broadcast(Component message) {
-        for (var p : onlineAudiencePlayers()) {
-            Msg.send(p, message);
-        }
+        onlineAudiencePlayers().forEach(p -> Msg.send(p, message));
     }
 
     private List<Player> onlineAudiencePlayers() {
@@ -564,7 +563,7 @@ final class StealTimeline implements IModeTimeline, IModeAbilityPolicy {
             int required
     ) {
         for (var p : players) {
-            PlayerSession ps = runtime.sessionStore().get(p);
+            var ps = runtime.sessionStore().get(p);
             if (ps != null) lobbyUi.refreshWaiting(p, ps, ready, required);
         }
     }
@@ -775,9 +774,7 @@ final class StealTimeline implements IModeTimeline, IModeAbilityPolicy {
             Sound sound,
             float pitch
     ) {
-        for (var p : onlineAudiencePlayers()) {
-            p.playSound(p, sound, SoundCategory.PLAYERS, 1.0f, pitch);
-        }
+        onlineAudiencePlayers().forEach(p -> p.playSound(p, sound, SoundCategory.PLAYERS, 1.0f, pitch));
         broadcast(Component.text("还剩" + formatTime(remaining), color));
     }
 

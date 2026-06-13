@@ -13,13 +13,16 @@ import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.StoreDefinition;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
 import top.ourisland.creepersiarena.api.economy.store.StoreItemId;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.core.economy.store.StorePurchaseRepository;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
 import java.util.ArrayList;
 
 public final class DefaultParticleStore {
 
-    public static final StoreId STORE_ID = StoreId.of("cia-default-content:particle_store");
+    public static final StoreId STORE_ID = StoreId.of(DefaultContentIds.key("particle_store"));
 
     private DefaultParticleStore() {
     }
@@ -38,17 +41,17 @@ public final class DefaultParticleStore {
                 .resolve("config.yml")
                 .toFile());
 
-        String title = yml.getString("game.stores.particle-store.title", "粒子商店");
-        int rows = yml.getInt("game.stores.particle-store.rows", 6);
-        storeRegistry.registerStore(context.extensionId(), new StoreDefinition(STORE_ID, Component.text(title), rows));
+        var title = yml.getString("game.stores.cia.particle_store.title", "粒子商店");
+        int rows = yml.getInt("game.stores.cia.particle_store.rows", 6);
+        storeRegistry.registerStore(context.owner(), new StoreDefinition(STORE_ID, Component.text(title), rows));
 
-        var root = yml.getConfigurationSection("game.cosmetics.particle-trail.cosmetics");
+        var root = yml.getConfigurationSection("game.cosmetics.particle-trail.cosmetics.cia");
         if (root == null) return;
-        for (String key : root.getKeys(false)) {
+        for (var key : root.getKeys(false)) {
             var sec = root.getConfigurationSection(key);
             if (sec == null) continue;
 
-            var cosmeticId = CosmeticId.of("cia-default-content", key);
+            var cosmeticId = CosmeticId.of(DefaultContentIds.key(key));
             var cosmetic = cosmeticRegistry.cosmetic(cosmeticId);
             if (cosmetic == null) continue;
 
@@ -56,10 +59,10 @@ public final class DefaultParticleStore {
             var price = price(sec.getConfigurationSection("price"));
 
             storeRegistry.registerItem(
-                    context.extensionId(),
+                    context.owner(),
                     STORE_ID,
                     new DefaultParticleStoreItem(
-                            StoreItemId.of("cia-default-content", key),
+                            StoreItemId.of(DefaultContentIds.key(key)),
                             cosmeticId,
                             cosmetic,
                             price,
@@ -78,17 +81,21 @@ public final class DefaultParticleStore {
         if (sec == null) return CurrencyCost.free();
         var amounts = new ArrayList<CurrencyAmount>();
 
-        for (String namespace : sec.getKeys(false)) {
+        for (var namespace : sec.getKeys(false)) {
             var nsSec = sec.getConfigurationSection(namespace);
             if (nsSec != null) {
                 for (String value : nsSec.getKeys(false)) {
                     long amount = nsSec.getLong(value, 0L);
-                    if (amount > 0L) amounts.add(new CurrencyAmount(CurrencyId.of(namespace, value), amount));
+                    if (amount > 0L)
+                        amounts.add(new CurrencyAmount(CurrencyId.of(CiaKey.of(CiaNamespace.parse(namespace), value)), amount));
                 }
                 continue;
             }
-            long amount = sec.getLong(namespace, 0L);
-            if (amount > 0L) amounts.add(new CurrencyAmount(CurrencyId.of("cia-default-content", namespace), amount));
+            if (sec.contains(namespace)) {
+                throw new IllegalArgumentException(
+                        "Currency price must use a namespaced section, for example price.cia.gunpowder"
+                );
+            }
         }
 
         return new CurrencyCost(amounts);

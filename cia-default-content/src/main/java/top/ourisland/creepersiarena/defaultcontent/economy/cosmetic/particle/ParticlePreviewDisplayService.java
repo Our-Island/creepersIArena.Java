@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.cosmetic.IParticleCosmetic;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ParticleCosmeticContext;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -43,20 +44,20 @@ public final class ParticlePreviewDisplayService {
     private List<Display> load(Path configPath) {
         var out = new ArrayList<Display>();
         var yml = YamlConfiguration.loadConfiguration(configPath.toFile());
-        var root = yml.getConfigurationSection("game.abilities.cia-default-content.particle-preview-displays.settings.displays");
+        var root = yml.getConfigurationSection("game.abilities.cia.particle_preview_displays.settings.displays");
 
         if (root == null) return out;
 
-        for (String key : root.getKeys(false)) {
+        for (var key : root.getKeys(false)) {
             var sec = root.getConfigurationSection(key);
             if (sec == null) continue;
 
-            String cosmetic = sec.getString("cosmetic", "cia-default-content:" + key);
+            String cosmetic = sec.getString("cosmetic");
             String world = sec.getString("world", "world");
             var loc = sec.getList("location", List.of(0, 100, 0));
 
             out.add(new Display(
-                    CosmeticId.of(cosmetic),
+                    cosmetic == null ? CosmeticId.of(DefaultContentIds.key(key)) : CosmeticId.parse(cosmetic),
                     world,
                     number(loc, 0),
                     number(loc, 1),
@@ -75,7 +76,7 @@ public final class ParticlePreviewDisplayService {
     ) {
         if (values == null || values.size() <= index) return 0.0D;
 
-        Object value = values.get(index);
+        var value = values.get(index);
         if (value instanceof Number number) return number.doubleValue();
 
         try {
@@ -110,7 +111,7 @@ public final class ParticlePreviewDisplayService {
 
         if (!abilities.isEnabledForGame(DefaultContentAbilities.PARTICLE_PREVIEW_DISPLAYS, "particle_preview")) return;
 
-        for (Display display : displays) {
+        for (var display : displays) {
             var cosmetic = cosmetics.cosmetic(display.cosmeticId());
             if (!(cosmetic instanceof IParticleCosmetic particle)) continue;
             if (currentTick % Math.max(1, display.intervalTicks()) != 0L) continue;

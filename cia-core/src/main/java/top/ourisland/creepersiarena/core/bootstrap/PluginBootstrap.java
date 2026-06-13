@@ -3,15 +3,17 @@ package top.ourisland.creepersiarena.core.bootstrap;
 import lombok.Getter;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.slf4j.Logger;
+import org.jspecify.annotations.NonNull;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.AnnotationComponentScanner;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ModuleOrderResolver;
 import top.ourisland.creepersiarena.core.extension.loading.BundledExtensionExtractor;
 import top.ourisland.creepersiarena.core.extension.loading.CiaExtensionManager;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Main plugin bootstrap class.
@@ -31,7 +33,9 @@ public final class PluginBootstrap {
     public void enable(JavaPlugin plugin) {
         this.rt = new BootstrapRuntime(plugin, this::reload);
 
-        var catalog = new ComponentCatalog();
+        var namespaces = new NamespaceRegistry();
+        rt.putService(NamespaceRegistry.class, namespaces);
+        var catalog = new ComponentCatalog(namespaces);
         new AnnotationComponentScanner().scanInto(plugin, plugin.getClass().getPackageName(), catalog);
         rt.putService(ComponentCatalog.class, catalog);
 
@@ -50,9 +54,13 @@ public final class PluginBootstrap {
         int total = bootstrapModules.size();
         log.info("[Bootstrap] Installing {} modules...", total);
 
-        for (int i = 0; i < total; i++) {
-            runStage(StagePhase.LOAD, i + 1, total, bootstrapModules.get(i));
-        }
+        IntStream.range(0, total)
+                .forEach(i -> runStage(
+                        StagePhase.LOAD,
+                        i + 1,
+                        total,
+                        bootstrapModules.get(i)
+                ));
 
         extensionManager.enableAll();
 
@@ -68,9 +76,13 @@ public final class PluginBootstrap {
         log.info("[Bootstrap-Listener] done (modules={} listeners={})", usedModules, binder.registeredCount());
 
         log.info("[Bootstrap] Starting {} modules...", total);
-        for (int i = 0; i < total; i++) {
-            runStage(StagePhase.START, i + 1, total, bootstrapModules.get(i));
-        }
+        IntStream.range(0, total)
+                .forEach(i -> runStage(
+                        StagePhase.START,
+                        i + 1,
+                        total,
+                        bootstrapModules.get(i)
+                ));
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Enabled in {}ms.", ms);
@@ -83,15 +95,19 @@ public final class PluginBootstrap {
     public void reload() {
         if (rt == null) return;
 
-        Logger log = rt.log();
+        var log = rt.log();
         long t0 = System.nanoTime();
 
         int total = bootstrapModules.size();
         log.info("[Bootstrap] Reloading {} modules...", total);
 
-        for (int i = 0; i < total; i++) {
-            runStage(StagePhase.RELOAD, i + 1, total, bootstrapModules.get(i));
-        }
+        IntStream.range(0, total)
+                .forEach(i -> runStage(
+                        StagePhase.RELOAD,
+                        i + 1,
+                        total,
+                        bootstrapModules.get(i)
+                ));
 
         long ms = (System.nanoTime() - t0) / 1_000_000L;
         log.info("[Bootstrap] Reloaded in {}ms.", ms);
@@ -103,7 +119,7 @@ public final class PluginBootstrap {
     public void disable() {
         if (rt == null) return;
 
-        Logger log = rt.log();
+        var log = rt.log();
         long t0 = System.nanoTime();
 
         var extensionManager = rt.getService(CiaExtensionManager.class);
@@ -138,11 +154,16 @@ public final class PluginBootstrap {
      * @param total the total number of modules
      * @param m     the module to be executed
      */
-    private void runStage(StagePhase phase, int idx, int total, IBootstrapModule m) {
+    private void runStage(
+            @NonNull StagePhase phase,
+            int idx,
+            int total,
+            @NonNull IBootstrapModule m
+    ) {
         String logPrefix = String.format("[%s] (%d/%d) [%s]", phase.tag(), idx, total, m.name());
 
         try {
-            StageTask task = switch (phase) {
+            var task = switch (phase) {
                 case LOAD -> m.install(rt);
                 case START -> m.start(rt);
                 case STOP -> m.stop(rt);

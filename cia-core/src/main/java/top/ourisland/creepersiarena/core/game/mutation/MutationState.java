@@ -1,19 +1,21 @@
 package top.ourisland.creepersiarena.core.game.mutation;
 
 import lombok.Getter;
-import top.ourisland.creepersiarena.api.game.mutation.MutationType;
+import top.ourisland.creepersiarena.api.game.arena.ArenaId;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
+import top.ourisland.creepersiarena.api.game.mutation.MutationId;
 
 @Getter
 final class MutationState {
 
-    private MutationType activeType = MutationType.NONE;
+    private MutationId activeType = MutationId.NONE;
     private int idleCounterTicks;
     private int remainingTicks;
     private GameSessionMarker sessionMarker;
 
-    public void activeType(MutationType activeType) {
+    public void activeType(MutationId activeType) {
         this.activeType = activeType == null
-                ? MutationType.NONE
+                ? MutationId.NONE
                 : activeType;
     }
 
@@ -42,14 +44,14 @@ final class MutationState {
     }
 
     public void clear() {
-        activeType = MutationType.NONE;
+        activeType = MutationId.NONE;
         idleCounterTicks = 0;
         remainingTicks = 0;
     }
 
     record GameSessionMarker(
-            String modeId,
-            String arenaId
+            GameModeId modeId,
+            ArenaId arenaId
     ) {
 
     }

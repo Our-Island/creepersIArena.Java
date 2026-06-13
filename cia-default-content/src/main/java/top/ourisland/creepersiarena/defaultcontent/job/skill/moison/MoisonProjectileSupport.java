@@ -6,12 +6,15 @@ import org.bukkit.entity.SpectralArrow;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 final class MoisonProjectileSupport {
+
+    private static final SkillId VOLLEY = SkillId.parse("cia:moison/volley");
 
     private MoisonProjectileSupport() {
     }
@@ -30,7 +33,7 @@ final class MoisonProjectileSupport {
 
     static void shoot(
             Player player,
-            String sourceId,
+            SkillId sourceId,
             boolean spectral,
             Vector direction,
             double speed,
@@ -52,7 +55,7 @@ final class MoisonProjectileSupport {
                 spawned.getPersistentDataContainer().set(
                         BuiltinKeys.key("moison_source"),
                         PersistentDataType.STRING,
-                        sourceId
+                        sourceId.asString()
                 );
                 spawned.getPersistentDataContainer().set(
                         BuiltinKeys.key("moison_spectral"),
@@ -84,7 +87,7 @@ final class MoisonProjectileSupport {
             spawned.getPersistentDataContainer().set(
                     BuiltinKeys.key("moison_source"),
                     PersistentDataType.STRING,
-                    sourceId
+                    sourceId.asString()
             );
             BuiltinDamageAttributionMarker.markEntitySource(
                     spawned,
@@ -96,8 +99,8 @@ final class MoisonProjectileSupport {
         arrow.setDamage(damage);
     }
 
-    private static DeathCauseId causeIdFor(String sourceId) {
-        return "cia:moison.volley".equals(sourceId)
+    private static DeathCauseId causeIdFor(SkillId sourceId) {
+        return VOLLEY.equals(sourceId)
                 ? DefaultContentDeathCauses.moisonArrow2()
                 : DefaultContentDeathCauses.moisonArrow1();
     }

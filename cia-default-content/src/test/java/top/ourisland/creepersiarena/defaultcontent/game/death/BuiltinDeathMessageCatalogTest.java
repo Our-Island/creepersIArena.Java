@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.DeathMessageLabel;
 import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +32,7 @@ class BuiltinDeathMessageCatalogTest {
 
         assertEquals(
                 catalog.templates(StandardDeathCauses.GENERIC, true),
-                catalog.templates(DeathCauseId.custom("external-addon", "skill/example/custom"), true)
+                catalog.templates(DeathCauseId.custom(CiaNamespace.parse("external-addon"), "skill/example/custom"), true)
         );
     }
 
@@ -60,9 +61,7 @@ class BuiltinDeathMessageCatalogTest {
 
         var messages = yaml.getConfigurationSection("messages");
         assertNotNull(messages);
-        for (String key : messages.getKeys(false)) {
-            assertTrue(key.startsWith("cia:"), key);
-        }
+        messages.getKeys(false).forEach(key -> assertTrue(key.startsWith("cia:"), key));
     }
 
 }

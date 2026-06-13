@@ -3,6 +3,8 @@ package top.ourisland.creepersiarena.core.extension.metadata;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDependency;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,12 +25,13 @@ import java.util.regex.Pattern;
  */
 public final class CiaExtensionDescriptorReader {
 
-    private static final Pattern EXTENSION_ID_PATTERN = Pattern.compile("[a-z0-9_.-]+");
-    private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile(
-            "[A-Za-z_$][A-Za-z\\d_$]*(\\.[A-Za-z_$][A-Za-z\\d_$]*)+"
-    );
+    private static final Pattern
+            EXTENSION_ID_PATTERN = Pattern.compile("[a-z0-9_.-]+"),
+            KEY_VALUE_PATTERN = Pattern.compile("^([^:]+):(.*)$"),
+            JAVA_CLASS_PATTERN = Pattern.compile("[A-Za-z_$][A-Za-z\\d_$]*(\\.[A-Za-z_$][A-Za-z\\d_$]*)+");
     private static final Set<String> ROOT_KEYS = Set.of(
             "id",
+            "namespace",
             "name",
             "version",
             "main",
@@ -46,9 +49,7 @@ public final class CiaExtensionDescriptorReader {
      *
      * @return parsed descriptor
      */
-    public CiaExtensionDescriptor read(Path jarPath) {
-        Objects.requireNonNull(jarPath, "jarPath");
-
+    public CiaExtensionDescriptor read(@lombok.NonNull Path jarPath) {
         if (!Files.isRegularFile(jarPath)) {
             throw new CiaExtensionDescriptorException("Extension jar does not exist: " + jarPath);
         }
@@ -77,9 +78,10 @@ public final class CiaExtensionDescriptorReader {
      *
      * @return parsed descriptor
      */
-    public CiaExtensionDescriptor read(InputStream input, String sourceName) {
-        Objects.requireNonNull(input, "input");
-
+    public CiaExtensionDescriptor read(
+            @lombok.NonNull InputStream input,
+            String sourceName
+    ) {
         var source = sourceName == null || sourceName.isBlank()
                 ? CiaExtensionDescriptor.DESCRIPTOR_ENTRY
                 : sourceName;
@@ -142,15 +144,10 @@ public final class CiaExtensionDescriptorReader {
                     dependencySection = "";
 
                     switch (key) {
-                        case "id" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
-                        case "name" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
-                        case "version" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
-                        case "main" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
-                        case "api-version" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
-                        case "cia-version" -> raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
+                        case "id", "namespace", "name", "version", "main", "api-version", "cia-version" ->
+                                raw.scalars.put(key, requiredInlineValue(value, source, lineNumber, key));
                         case "authors" -> raw.authors.addAll(parseInlineList(value, source, lineNumber, key));
-                        case "dependencies" -> requireEmptyOrMap(value, source, lineNumber, key);
-                        case "load" -> requireEmptyOrMap(value, source, lineNumber, key);
+                        case "dependencies", "load" -> requireEmptyOrMap(value, source, lineNumber, key);
                         default -> throw invalid(source, lineNumber, "Unsupported root key: " + key);
                     }
                     continue;
@@ -200,6 +197,7 @@ public final class CiaExtensionDescriptorReader {
 
     private CiaExtensionDescriptor toDescriptor(RawDescriptor raw, String source) {
         var id = requireScalar(raw, source, "id");
+        var namespace = requireScalar(raw, source, "namespace");
         var name = requireScalar(raw, source, "name");
         var version = requireScalar(raw, source, "version");
         var main = requireScalar(raw, source, "main");
@@ -213,15 +211,26 @@ public final class CiaExtensionDescriptorReader {
         var dependencies = new ArrayList<CiaExtensionDependency>();
         for (var dependency : raw.requiredDependencies) {
             validateExtensionId(dependency, source, "required dependency");
-            dependencies.add(CiaExtensionDependency.required(dependency));
+            dependencies.add(CiaExtensionDependency.required(ExtensionId.parse(dependency)));
         }
         for (var dependency : raw.optionalDependencies) {
             validateExtensionId(dependency, source, "optional dependency");
-            dependencies.add(CiaExtensionDependency.optional(dependency));
+            dependencies.add(CiaExtensionDependency.optional(ExtensionId.parse(dependency)));
+        }
+
+        CiaNamespace parsedNamespace;
+        try {
+            parsedNamespace = CiaNamespace.parse(namespace);
+        } catch (IllegalArgumentException exception) {
+            throw new CiaExtensionDescriptorException(source + ": invalid namespace: " + namespace, exception);
+        }
+        if ("core".equals(namespace) || "minecraft".equals(namespace)) {
+            throw new CiaExtensionDescriptorException(source + ": reserved namespace: " + namespace);
         }
 
         return new CiaExtensionDescriptor(
-                id,
+                ExtensionId.parse(id),
+                parsedNamespace,
                 name,
                 version,
                 main,
@@ -286,13 +295,13 @@ public final class CiaExtensionDescriptorReader {
             String source,
             int lineNumber
     ) {
-        var index = trimmed.indexOf(':');
-        if (index < 0) {
+        var matcher = KEY_VALUE_PATTERN.matcher(trimmed);
+        if (!matcher.matches()) {
             throw invalid(source, lineNumber, "Expected key: value");
         }
 
-        var key = trimmed.substring(0, index).trim();
-        var value = trimmed.substring(index + 1).trim();
+        var key = matcher.group(1).trim();
+        var value = matcher.group(2).trim();
         if (key.isBlank()) {
             throw invalid(source, lineNumber, "Key must not be blank");
         }
@@ -334,13 +343,14 @@ public final class CiaExtensionDescriptorReader {
         }
 
         var values = new ArrayList<String>();
-        for (var part : body.split(",")) {
-            var item = unquote(part.trim());
-            if (item.isBlank()) {
-                throw invalid(source, lineNumber, key + " contains a blank item");
-            }
-            values.add(item);
-        }
+        Arrays.stream(body.split(","))
+                .map(part -> unquote(part.trim()))
+                .forEach(item -> {
+                    if (item.isBlank()) {
+                        throw invalid(source, lineNumber, key + " contains a blank item");
+                    }
+                    values.add(item);
+                });
         return values;
     }
 

@@ -2,7 +2,6 @@ package top.ourisland.creepersiarena.core.command;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.core.utils.Msg;
 
 import java.util.Locale;
@@ -13,23 +12,19 @@ public final class CommandParsers {
     private CommandParsers() {
     }
 
-    public static GameModeType parseMode(String s) {
-        return GameModeType.fromId(s);
-    }
-
     public static Object parseValue(String s) {
         if (s == null) return null;
         String v = s.trim();
 
         if (v.equalsIgnoreCase("null")) return null;
 
-        Boolean b = parseBoolean(v);
+        var b = parseBoolean(v);
         if (b != null) return b;
 
-        Integer i = parseInt(v);
+        var i = parseInt(v);
         if (i != null) return i;
 
-        Double d = parseDouble(v);
+        var d = parseDouble(v);
         if (d != null) return d;
 
         if ((v.startsWith("\"") && v.endsWith("\"")) || (v.startsWith("'") && v.endsWith("'"))) {
@@ -62,15 +57,11 @@ public final class CommandParsers {
         }
     }
 
-    public static String normalizeCiaId(String raw) {
-        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
-    }
-
     public static Integer parseTeamId(String token) {
         if (token == null) return null;
         if (token.equalsIgnoreCase("random")) return null;
 
-        Integer n = parseInt(token);
+        var n = parseInt(token);
         if (n != null) return n;
 
         return switch (token.toLowerCase(Locale.ROOT)) {
@@ -94,7 +85,11 @@ public final class CommandParsers {
         return Optional.empty();
     }
 
-    public static void asHelp(CommandSender sender, String[] args, String help) {
+    public static void asHelp(
+            CommandSender sender,
+            String[] args,
+            String help
+    ) {
         if (args.length == 0) {
             Msg.send(sender, help);
         }

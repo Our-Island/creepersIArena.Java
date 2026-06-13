@@ -14,18 +14,22 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
+import top.ourisland.creepersiarena.api.economy.CurrencyId;
 import top.ourisland.creepersiarena.api.economy.ICurrencyRegistry;
+import top.ourisland.creepersiarena.api.economy.cosmetic.CosmeticId;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
-import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
+import top.ourisland.creepersiarena.api.economy.store.StoreId;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.command.argument.CiaKeyArgument;
 import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
 import top.ourisland.creepersiarena.core.command.handler.PlayerCommandHandlers;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
@@ -96,14 +100,14 @@ public final class CiaCommand {
 
         root.then(Commands.literal("job")
                 .requires(src -> hasPerm(src, P_BASE + ".job"))
-                .then(argNamespacedKey("job_id")
+                .then(argCiaKey("job_id")
                         .suggests((c, b) -> suggestJobIds(rt, b))
                         .executes(ctx -> {
-                            player.job(sender(ctx), new String[]{keyString(ctx, "job_id")});
+                            player.job(sender(ctx), jobId(ctx, "job_id"));
                             return 1;
                         }))
                 .executes(ctx -> {
-                    player.job(sender(ctx), new String[0]);
+                    player.jobUsage(sender(ctx));
                     return 1;
                 }));
 
@@ -159,27 +163,27 @@ public final class CiaCommand {
 
         root.then(Commands.literal("balance")
                 .requires(src -> hasPerm(src, P_BASE + ".balance"))
-                .then(argNamespacedKey("currency")
+                .then(argCiaKey("currency")
                         .suggests((_, b) -> suggestCurrencyIds(rt, b))
                         .executes(ctx -> {
-                            player.balance(sender(ctx), new String[]{keyString(ctx, "currency")});
+                            player.balance(sender(ctx), currencyId(ctx, "currency"));
                             return 1;
                         }))
                 .executes(ctx -> {
-                    player.balance(sender(ctx), new String[0]);
+                    player.balance(sender(ctx), null);
                     return 1;
                 }));
 
         root.then(Commands.literal("store")
                 .requires(src -> hasPerm(src, P_BASE + ".store"))
-                .then(argNamespacedKey("store_id")
+                .then(argCiaKey("store_id")
                         .suggests((_, b) -> suggestStoreIds(rt, b))
                         .executes(ctx -> {
-                            player.store(sender(ctx), new String[]{keyString(ctx, "store_id")});
+                            player.store(sender(ctx), storeId(ctx, "store_id"));
                             return 1;
                         }))
                 .executes(ctx -> {
-                    player.store(sender(ctx), new String[0]);
+                    player.defaultStore(sender(ctx));
                     return 1;
                 }));
 
@@ -187,21 +191,18 @@ public final class CiaCommand {
                 .requires(src -> hasPerm(src, P_BASE + ".particles"))
                 .then(Commands.literal("off")
                         .executes(ctx -> {
-                            player.particles(sender(ctx), new String[]{"off"});
+                            player.disableParticles(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("select")
-                        .then(argNamespacedKey("cosmetic_id")
+                        .then(argCiaKey("cosmetic_id")
                                 .suggests((_, b) -> suggestCosmeticIds(rt, b))
                                 .executes(ctx -> {
-                                    player.particles(sender(ctx), new String[]{
-                                            "select",
-                                            keyString(ctx, "cosmetic_id")
-                                    });
+                                    player.selectParticle(sender(ctx), cosmeticId(ctx, "cosmetic_id"));
                                     return 1;
                                 })))
                 .executes(ctx -> {
-                    player.particles(sender(ctx), new String[0]);
+                    player.openParticleStore(sender(ctx));
                     return 1;
                 }));
 
@@ -243,18 +244,32 @@ public final class CiaCommand {
         return RequiredArgumentBuilder.argument(name, StringArgumentType.word());
     }
 
-    private static RequiredArgumentBuilder<CommandSourceStack, NamespacedKey> argNamespacedKey(String name) {
-        return RequiredArgumentBuilder.argument(name, ArgumentTypes.namespacedKey());
+    private static RequiredArgumentBuilder<CommandSourceStack, CiaKey> argCiaKey(String name) {
+        return RequiredArgumentBuilder.argument(name, CiaKeyArgument.ciaKey());
     }
 
-    private static String keyString(
-            CommandContext<CommandSourceStack> ctx,
-            String name
-    ) {
-        NamespacedKey key = ctx.getArgument(name, NamespacedKey.class);
-        if (key == null) return "";
-        if ("minecraft".equals(key.getNamespace())) return key.getKey();
-        return key.getNamespace() + ":" + key.getKey();
+    private static JobId jobId(CommandContext<CommandSourceStack> ctx, String name) {
+        return JobId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    private static CurrencyId currencyId(CommandContext<CommandSourceStack> ctx, String name) {
+        return CurrencyId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    private static StoreId storeId(CommandContext<CommandSourceStack> ctx, String name) {
+        return StoreId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    private static CosmeticId cosmeticId(CommandContext<CommandSourceStack> ctx, String name) {
+        return CosmeticId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    private static GameModeId modeId(CommandContext<CommandSourceStack> ctx, String name) {
+        return GameModeId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    private static AbilityId abilityId(CommandContext<CommandSourceStack> ctx, String name) {
+        return AbilityId.of(CiaKeyArgument.get(ctx, name));
     }
 
     private static CompletableFuture<Suggestions> suggestJobIds(
@@ -262,9 +277,7 @@ public final class CiaCommand {
             SuggestionsBuilder b
     ) {
         var jm = rt.requireService(JobManager.class);
-        List<String> raw = jm.getAllJobIds();
-        List<String> out = new ArrayList<>(raw.size());
-        out.addAll(raw);
+        List<String> out = jm.getAllJobIds().stream().map(id -> id.asString()).toList();
         return suggestWithPrefix(b, out);
     }
 
@@ -289,14 +302,14 @@ public final class CiaCommand {
 
         adm.then(Commands.literal("mode")
                 .requires(src -> hasPerm(src, P_ADMIN + ".mode"))
-                .then(argNamespacedKey("mode_id")
+                .then(argCiaKey("mode_id")
                         .suggests((_, b) -> suggestModeIds(rt, b))
                         .executes(ctx -> {
-                            admin.mode(sender(ctx), new String[]{keyString(ctx, "mode_id")});
+                            admin.mode(sender(ctx), modeId(ctx, "mode_id"));
                             return 1;
                         }))
                 .executes(ctx -> {
-                    admin.mode(sender(ctx), new String[0]);
+                    admin.modeUsage(sender(ctx));
                     return 1;
                 }));
 
@@ -472,17 +485,14 @@ public final class CiaCommand {
         return Commands.literal(literalName)
                 .requires(src -> hasPerm(src, P_ADMIN + ".economy"))
                 .executes(ctx -> {
-                    admin.economy(sender(ctx), new String[]{"help"});
+                    admin.economyHelp(sender(ctx));
                     return 1;
                 })
                 .then(Commands.literal("balance")
                         .then(argWord("player")
                                 .suggests((_, b) -> suggestOnlinePlayers(b))
                                 .executes(ctx -> {
-                                    admin.economy(sender(ctx), new String[]{
-                                            "balance",
-                                            StringArgumentType.getString(ctx, "player")
-                                    });
+                                    admin.economyBalance(sender(ctx), StringArgumentType.getString(ctx, "player"));
                                     return 1;
                                 })))
                 .then(economyAmountAction(rt, admin, "give"))
@@ -498,16 +508,17 @@ public final class CiaCommand {
         return Commands.literal(action)
                 .then(argWord("player")
                         .suggests((_, b) -> suggestOnlinePlayers(b))
-                        .then(argNamespacedKey("currency")
+                        .then(argCiaKey("currency")
                                 .suggests((_, b) -> suggestCurrencyIds(rt, b))
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, Long>argument("amount", LongArgumentType.longArg(0L))
                                         .executes(ctx -> {
-                                            admin.economy(sender(ctx), new String[]{
+                                            admin.economyAmount(
+                                                    sender(ctx),
                                                     action,
                                                     StringArgumentType.getString(ctx, "player"),
-                                                    keyString(ctx, "currency"),
-                                                    String.valueOf(LongArgumentType.getLong(ctx, "amount"))
-                                            });
+                                                    currencyId(ctx, "currency"),
+                                                    LongArgumentType.getLong(ctx, "amount")
+                                            );
                                             return 1;
                                         }))));
     }
@@ -520,25 +531,25 @@ public final class CiaCommand {
         return Commands.literal(literalName)
                 .requires(src -> hasPerm(src, P_ADMIN + ".store"))
                 .executes(ctx -> {
-                    admin.store(sender(ctx), new String[]{"list"});
+                    admin.storeList(sender(ctx));
                     return 1;
                 })
                 .then(Commands.literal("list")
                         .executes(ctx -> {
-                            admin.store(sender(ctx), new String[]{"list"});
+                            admin.storeList(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("open")
                         .then(argWord("player")
                                 .suggests((_, b) -> suggestOnlinePlayers(b))
-                                .then(argNamespacedKey("store_id")
+                                .then(argCiaKey("store_id")
                                         .suggests((_, b) -> suggestStoreIds(rt, b))
                                         .executes(ctx -> {
-                                            admin.store(sender(ctx), new String[]{
-                                                    "open",
+                                            admin.openStore(
+                                                    sender(ctx),
                                                     StringArgumentType.getString(ctx, "player"),
-                                                    keyString(ctx, "store_id")
-                                            });
+                                                    storeId(ctx, "store_id")
+                                            );
                                             return 1;
                                         }))));
     }
@@ -551,73 +562,61 @@ public final class CiaCommand {
         return Commands.literal(literalName)
                 .requires(src -> hasPerm(src, P_ADMIN + ".ability"))
                 .executes(ctx -> {
-                    admin.ability(sender(ctx), new String[]{"list"});
+                    admin.abilityList(sender(ctx));
                     return 1;
                 })
                 .then(Commands.literal("list")
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"list"});
+                            admin.abilityList(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("reload")
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"reload"});
+                            admin.abilityReload(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("info")
-                        .then(argNamespacedKey("ability_id")
+                        .then(argCiaKey("ability_id")
                                 .suggests((_, b) -> suggestAbilityIds(rt, b))
                                 .executes(ctx -> {
-                                    admin.ability(sender(ctx), new String[]{
-                                            "info",
-                                            keyString(ctx, "ability_id")
-                                    });
+                                    admin.abilityAction(sender(ctx), "info", abilityId(ctx, "ability_id"));
                                     return 1;
                                 }))
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"info"});
+                            admin.abilityUsage(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("status")
-                        .then(argNamespacedKey("ability_id")
+                        .then(argCiaKey("ability_id")
                                 .suggests((_, b) -> suggestAbilityIds(rt, b))
                                 .executes(ctx -> {
-                                    admin.ability(sender(ctx), new String[]{
-                                            "status",
-                                            keyString(ctx, "ability_id")
-                                    });
+                                    admin.abilityAction(sender(ctx), "status", abilityId(ctx, "ability_id"));
                                     return 1;
                                 }))
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"status"});
+                            admin.abilityUsage(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("enable")
-                        .then(argNamespacedKey("ability_id")
+                        .then(argCiaKey("ability_id")
                                 .suggests((_, b) -> suggestAbilityIds(rt, b))
                                 .executes(ctx -> {
-                                    admin.ability(sender(ctx), new String[]{
-                                            "enable",
-                                            keyString(ctx, "ability_id")
-                                    });
+                                    admin.abilityAction(sender(ctx), "enable", abilityId(ctx, "ability_id"));
                                     return 1;
                                 }))
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"enable"});
+                            admin.abilityUsage(sender(ctx));
                             return 1;
                         }))
                 .then(Commands.literal("disable")
-                        .then(argNamespacedKey("ability_id")
+                        .then(argCiaKey("ability_id")
                                 .suggests((_, b) -> suggestAbilityIds(rt, b))
                                 .executes(ctx -> {
-                                    admin.ability(sender(ctx), new String[]{
-                                            "disable",
-                                            keyString(ctx, "ability_id")
-                                    });
+                                    admin.abilityAction(sender(ctx), "disable", abilityId(ctx, "ability_id"));
                                     return 1;
                                 }))
                         .executes(ctx -> {
-                            admin.ability(sender(ctx), new String[]{"disable"});
+                            admin.abilityUsage(sender(ctx));
                             return 1;
                         }));
     }
@@ -684,7 +683,7 @@ public final class CiaCommand {
             SuggestionsBuilder b
     ) {
         var am = rt.requireService(ArenaManager.class);
-        List<String> ids = am.arenas().stream().map(ArenaInstance::id).toList();
+        List<String> ids = am.arenas().stream().map(arena -> arena.id().value()).toList();
         return suggestWithPrefix(b, ids);
     }
 
@@ -756,10 +755,10 @@ public final class CiaCommand {
         if (manager == null) return b.buildFuture();
         var ids = new ArrayList<String>();
         for (var loaded : manager.loadedExtensions()) {
-            ids.add(loaded.descriptor().id());
+            ids.add(loaded.descriptor().id().value());
         }
         for (var failure : manager.loadFailures()) {
-            ids.add(failure.id());
+            ids.add(failure.id().value());
         }
         ids.sort(String::compareToIgnoreCase);
         return suggestWithPrefix(b, ids);

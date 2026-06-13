@@ -79,45 +79,45 @@ game:
 
   abilities:
     core:
-      resting-regeneration:
+      resting_regeneration:
         enabled: false
         default-active: false
       mutation:
         enabled: false
         default-active: false
-      death-messages:
+      death_messages:
         enabled: true
         default-active: true
-      death-stats:
+      death_stats:
         enabled: true
         default-active: true
-      kill-streak:
+      kill_streak:
         enabled: true
         default-active: true
-      death-cleanup-participants:
+      death_cleanup_participants:
         enabled: true
         default-active: true
-      respawn-countdown:
+      respawn_countdown:
         enabled: true
         default-active: true
         settings:
           disabled-fallback: IMMEDIATE_RESPAWN
-      skill-runtime:
+      skill_runtime:
         enabled: true
         default-active: true
-      skill-hotbar:
+      skill_hotbar:
         enabled: true
         default-active: true
-      skill-cooldown:
+      skill_cooldown:
         enabled: true
         default-active: true
       currency:
         enabled: true
         default-active: true
-      store-ui:
+      store_ui:
         enabled: true
         default-active: true
-      cosmetic-runtime:
+      cosmetic_runtime:
         enabled: true
         default-active: true
 

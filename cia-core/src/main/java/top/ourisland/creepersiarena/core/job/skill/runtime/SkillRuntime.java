@@ -47,10 +47,10 @@ public final class SkillRuntime {
         if (!skillRuntimeEnabled(ctx)) return;
 
         var p = ctx.player();
-        List<ISkillDefinition> skills = registry.skillsOf(p);
+        var skills = registry.skillsOf(p);
         if (skills.isEmpty()) return;
 
-        UUID pid = p.getUniqueId();
+        var pid = p.getUniqueId();
         long now = ctx.nowTick();
 
         double f = cooldownFactor.getAsDouble();
@@ -60,7 +60,7 @@ public final class SkillRuntime {
             if (def == null) continue;
 
             if (def.type() == SkillType.ACTIVE) {
-                String src = ctx.sourceSkillId();
+                var src = ctx.sourceSkillId();
                 if (src == null || !src.equals(def.id())) {
                     continue;
                 }
@@ -95,9 +95,9 @@ public final class SkillRuntime {
     }
 
     private boolean matchesAnyTrigger(ISkillDefinition def, SkillContext ctx) {
-        List<ITrigger> triggers = def.triggers();
+        var triggers = def.triggers();
         if (triggers == null || triggers.isEmpty()) return false;
-        for (ITrigger t : triggers) {
+        for (var t : triggers) {
             try {
                 if (t != null && t.matches(ctx)) return true;
             } catch (Throwable _) {
@@ -108,7 +108,7 @@ public final class SkillRuntime {
 
     public ISkillConfigView skillConfig() {
         try {
-            ISkillConfigView c = skillConfig.get();
+            var c = skillConfig.get();
             return c == null ? SkillConfig.defaults() : c;
         } catch (Throwable _) {
             return SkillConfig.defaults();

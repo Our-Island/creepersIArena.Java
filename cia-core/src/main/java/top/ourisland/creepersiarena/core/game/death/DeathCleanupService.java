@@ -51,7 +51,7 @@ public final class DeathCleanupService {
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] cleanup participant failed: owner={} player={} err={}",
-                        registered.ownerId(),
+                        registered.owner(),
                         player.getName(),
                         throwable.getMessage(),
                         throwable

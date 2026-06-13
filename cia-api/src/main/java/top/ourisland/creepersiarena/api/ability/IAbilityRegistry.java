@@ -1,6 +1,9 @@
 package top.ourisland.creepersiarena.api.ability;
 
 import org.jspecify.annotations.NonNull;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+
+import java.util.Arrays;
 
 /**
  * Public ability registration surface.
@@ -11,25 +14,21 @@ import org.jspecify.annotations.NonNull;
 public interface IAbilityRegistry {
 
     default void registerAbility(
-            String ownerId,
+            RegistrationOwner owner,
             IAbility @NonNull ... abilities
     ) {
-        for (IAbility ability : abilities) {
-            registerAbility(ownerId, ability);
-        }
+        Arrays.stream(abilities).forEach(ability -> registerAbility(owner, ability));
     }
 
-    void registerAbility(String ownerId, IAbility ability);
+    void registerAbility(RegistrationOwner owner, IAbility ability);
 
     default void registerPolicy(
-            String ownerId,
+            RegistrationOwner owner,
             IAbilityPolicy @NonNull ... policies
     ) {
-        for (IAbilityPolicy policy : policies) {
-            registerPolicy(ownerId, policy);
-        }
+        Arrays.stream(policies).forEach(policy -> registerPolicy(owner, policy));
     }
 
-    void registerPolicy(String ownerId, IAbilityPolicy policy);
+    void registerPolicy(RegistrationOwner owner, IAbilityPolicy policy);
 
 }

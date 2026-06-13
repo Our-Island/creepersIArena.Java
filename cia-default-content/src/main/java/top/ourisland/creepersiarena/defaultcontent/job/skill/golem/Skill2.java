@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @CiaSkillDef(
-        id = "cia:golem.rift_fangs",
+        id = "cia:golem/rift_fangs",
         job = "cia:golem",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -57,7 +57,7 @@ public class Skill2 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            String raw = p.getPersistentDataContainer()
+            var raw = p.getPersistentDataContainer()
                     .get(BuiltinKeys.key("golem_last_target"), PersistentDataType.STRING);
             if (raw == null) {
                 p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 1f, 0.75f);
@@ -70,8 +70,11 @@ public class Skill2 implements ISkillDefinition {
             } catch (IllegalArgumentException _) {
                 target = null;
             }
-            if (target == null || !target.isOnline() || target.getWorld() != p.getWorld() || target.getLocation()
-                    .distanceSquared(p.getLocation()) > 225) {
+            if (target == null
+                    || !target.isOnline()
+                    || target.getWorld() != p.getWorld()
+                    || target.getLocation().distanceSquared(p.getLocation()) > 225
+            ) {
                 p.playSound(p, Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 1f, 0.75f);
                 throw SkillActivationRejectedException.reject();
             }

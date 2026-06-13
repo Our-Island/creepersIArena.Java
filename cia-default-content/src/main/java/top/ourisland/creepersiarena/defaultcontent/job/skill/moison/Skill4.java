@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:moison.spectral_reserve",
+        id = "cia:moison/spectral_reserve",
         job = "cia:moison",
         type = SkillType.PASSIVE,
         slot = 8,

@@ -4,17 +4,18 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.mutation.MutationListener;
 import top.ourisland.creepersiarena.core.game.mutation.MutationRegistry;
 import top.ourisland.creepersiarena.core.game.mutation.MutationResetReason;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 @CiaBootstrapModule(name = "mutation", order = 1120)
 public final class MutationModule implements IBootstrapModule {
@@ -28,7 +29,7 @@ public final class MutationModule implements IBootstrapModule {
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
             var gate = rt.requireService(IAbilityGate.class);
-            var registry = new MutationRegistry(rt.log(), gate);
+            var registry = new MutationRegistry(rt.log(), gate, rt.requireService(NamespaceRegistry.class));
             var service = new MutationService(
                     rt.log(),
                     rt.requireService(GameManager.class),
@@ -38,7 +39,7 @@ public final class MutationModule implements IBootstrapModule {
             rt.putService(MutationRegistry.class, registry);
             rt.putService(MutationService.class, service);
             rt.putService(top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry.class, registry);
-            rt.requireService(IAbilityRegistry.class).registerAbility(RegisteredComponent.CORE_OWNER, service);
+            rt.requireService(IAbilityRegistry.class).registerAbility(RegistrationOwner.CORE, service);
         }, "Loading mutation runtime...", "Mutation runtime loaded.");
     }
 

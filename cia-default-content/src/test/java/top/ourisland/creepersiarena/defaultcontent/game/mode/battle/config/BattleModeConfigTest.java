@@ -2,25 +2,25 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
-import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static top.ourisland.creepersiarena.api.testsupport.TestGameConfigViews.fromYaml;
 
 class BattleModeConfigTest {
 
+    @SuppressWarnings("ExtractMethodRecommender")
     @Test
     void readsBattleConfigFromModeSection() {
         var yaml = new YamlConfiguration();
-        yaml.set("game.modes.battle.single-game-time", 300);
-        yaml.set("game.modes.battle.respawn-time", 12);
-        yaml.set("game.modes.battle.max-team", 6);
-        yaml.set("game.modes.battle.team-auto-balancing", false);
-        yaml.set("game.modes.battle.force-balancing", true);
-        yaml.set("game.modes.battle.map-progress-target", 2500);
-        yaml.set("game.modes.battle.entrance-enabled", false);
-        yaml.set("game.modes.battle.kill-progress.1-2", 50);
-        yaml.set("game.modes.battle.kill-progress.3-4", 25);
+        yaml.set("game.modes.cia.battle.single-game-time", 300);
+        yaml.set("game.modes.cia.battle.respawn-time", 12);
+        yaml.set("game.modes.cia.battle.max-team", 6);
+        yaml.set("game.modes.cia.battle.team-auto-balancing", false);
+        yaml.set("game.modes.cia.battle.force-balancing", true);
+        yaml.set("game.modes.cia.battle.map-progress-target", 2500);
+        yaml.set("game.modes.cia.battle.entrance-enabled", false);
+        yaml.set("game.modes.cia.battle.kill-progress.1-2", 50);
+        yaml.set("game.modes.cia.battle.kill-progress.3-4", 25);
 
         var config = BattleModeConfig.from(fromYaml(yaml));
 
@@ -38,7 +38,7 @@ class BattleModeConfigTest {
     @Test
     void usesDefaultsAndClampsInvalidTeamCount() {
         var yaml = new YamlConfiguration();
-        yaml.set("game.modes.battle.max-team", 0);
+        yaml.set("game.modes.cia.battle.max-team", 0);
 
         var config = BattleModeConfig.from(fromYaml(yaml));
 

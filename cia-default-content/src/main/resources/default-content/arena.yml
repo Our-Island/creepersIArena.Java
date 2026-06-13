@@ -1,7 +1,7 @@
 arena:
   swamp:
     name: "cia.arena.swamp"
-    mode: battle
+    mode: cia:battle
     location: [ 10000, 100, 10000 ]
     range:
       from: [ 10050, 10050 ]
@@ -14,7 +14,7 @@ arena:
 
   hall:
     name: "cia.arena.hall"
-    mode: steal
+    mode: cia:steal
     location: [ -20000, 72, -20000 ]
     range:
       from: [ -20060, -20060 ]

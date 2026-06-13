@@ -12,15 +12,14 @@ import top.ourisland.creepersiarena.api.economy.cosmetic.CosmeticId;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ParticleSchedule;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticService;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public final class DefaultParticleCosmetics {
 
-    public static final CosmeticId NONE = CosmeticId.of("cia-default-content:none");
+    public static final CosmeticId NONE = CosmeticId.of(DefaultContentIds.key("none"));
 
     private DefaultParticleCosmetics() {
     }
@@ -28,25 +27,27 @@ public final class DefaultParticleCosmetics {
     public static void register(ICiaExtensionContext context) {
         var registry = context.requireService(ICosmeticRegistry.class);
         var gate = context.requireService(IAbilityGate.class);
-        var yml = YamlConfiguration.loadConfiguration(context.plugin()
-                .getDataFolder()
-                .toPath()
-                .resolve("config.yml")
-                .toFile());
+        var yml = YamlConfiguration.loadConfiguration(
+                context.plugin()
+                        .getDataFolder()
+                        .toPath()
+                        .resolve("config.yml")
+                        .toFile()
+        );
 
         var runtime = context.getService(CosmeticService.class);
         if (runtime != null) {
             runtime.viewerRadius(yml.getDouble("game.cosmetics.particle-trail.viewer-radius", 15.0D));
         }
 
-        var root = yml.getConfigurationSection("game.cosmetics.particle-trail.cosmetics");
+        var root = yml.getConfigurationSection("game.cosmetics.particle-trail.cosmetics.cia");
         if (root == null) return;
 
-        for (String key : root.getKeys(false)) {
+        for (var key : root.getKeys(false)) {
             var sec = root.getConfigurationSection(key);
             if (sec == null) continue;
             var cosmetic = fromSection(key, sec, gate);
-            registry.registerCosmetic(context.extensionId(), cosmetic);
+            registry.registerCosmetic(context.owner(), cosmetic);
         }
     }
 
@@ -55,13 +56,13 @@ public final class DefaultParticleCosmetics {
             ConfigurationSection sec,
             IAbilityGate gate
     ) {
-        var id = CosmeticId.of("cia-default-content", key);
-        String name = sec.getString("display-name", key);
+        var id = CosmeticId.of(DefaultContentIds.key(key));
+        var name = sec.getString("display-name", key);
         var material = material(sec.getString("icon"), Material.FIREWORK_STAR);
         int interval = Math.max(1, sec.getInt("interval-ticks", 20));
-        ArrayList<ParticleEmission> emissions = sec.getMapList("emissions").stream()
+        var emissions = sec.getMapList("emissions").stream()
                 .map(DefaultParticleCosmetics::emission)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .toList();
 
         return new ConfiguredParticleCosmetic(
                 id,
@@ -78,18 +79,15 @@ public final class DefaultParticleCosmetics {
             Material fallback
     ) {
         if (raw == null || raw.isBlank()) return fallback;
-        String name = raw.trim();
-        int colon = name.indexOf(':');
-        if (colon >= 0) name = name.substring(colon + 1);
-        Material material = Material.matchMaterial(name);
+        var material = Material.matchMaterial(raw.trim());
         return material == null ? fallback : material;
     }
 
     private static ParticleEmission emission(Map<?, ?> map) {
         var particle = ParticleEmission.particle(asString(map.get("particle")));
-        List<?> rel = asList(map.get("relative-location"));
-        List<?> offset = asList(map.get("offset"));
-        List<?> dust = asList(map.get("dust-color"));
+        var rel = asList(map.get("relative-location"));
+        var offset = asList(map.get("offset"));
+        var dust = asList(map.get("dust-color"));
         return new ParticleEmission(
                 particle,
                 asDouble(rel, 0, 0.0D),

@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -27,11 +26,11 @@ public final class DefaultStartModule implements IBootstrapModule {
             var gameManager = rt.requireService(GameManager.class);
             var cfg = rt.requireService(ConfigManager.class).globalConfig();
             var defaultMode = cfg.game().defaultMode();
-            if (defaultMode.isBlank()) {
+            if (defaultMode == null) {
                 rt.log().info("[Game] No default mode configured; skipping automatic game start.");
                 return;
             }
-            gameManager.startAuto(GameModeType.of(defaultMode));
+            gameManager.startAuto(defaultMode);
         }, "Starting configured default mode if possible...", "Default mode started or queued.");
     }
 

@@ -3,10 +3,13 @@ package top.ourisland.creepersiarena.core.config.model
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import top.ourisland.creepersiarena.api.config.ISkillConfigView
+import top.ourisland.creepersiarena.api.identity.CiaKey
+import top.ourisland.creepersiarena.api.identity.CiaNamespace
+import top.ourisland.creepersiarena.api.skill.SkillId
 import java.util.*
 
 class SkillConfig private constructor(
-    private val byId: Map<String, ConfigurationSection>,
+    private val byId: Map<SkillId, ConfigurationSection>,
 ) : ISkillConfigView {
 
     companion object {
@@ -18,43 +21,49 @@ class SkillConfig private constructor(
         fun fromYaml(yml: YamlConfiguration?): SkillConfig {
             if (yml == null) return defaults()
 
-            val map = HashMap<String, ConfigurationSection>()
+            val map = HashMap<SkillId, ConfigurationSection>()
             for (rootKey in yml.getKeys(false)) {
                 val root = yml.getConfigurationSection(rootKey) ?: continue
-                collectSections(rootKey.lowercase(), root, "", map)
+                collectSections(CiaNamespace.parse(rootKey), root, "", map)
             }
             return SkillConfig(map)
         }
 
         private fun collectSections(
-            namespace: String,
+            namespace: CiaNamespace,
             sec: ConfigurationSection,
             path: String,
-            out: MutableMap<String, ConfigurationSection>
+            out: MutableMap<SkillId, ConfigurationSection>
         ) {
             for (key in sec.getKeys(false)) {
                 val child = sec.getConfigurationSection(key) ?: continue
-                val nextPath = if (path.isEmpty()) key.lowercase() else "$path.${key.lowercase()}"
-                out.putIfAbsent("$namespace:$nextPath", child)
-                if (namespace == "cia") {
-                    out.putIfAbsent(nextPath, child)
+                val nextPath = if (path.isEmpty()) key else "$path/$key"
+                val id = try {
+                    SkillId.of(CiaKey.of(namespace, nextPath))
+                } catch (exception: IllegalArgumentException) {
+                    throw IllegalArgumentException(
+                        "Invalid skill config path ${namespace.value()}:$nextPath",
+                        exception
+                    )
                 }
+                out.putIfAbsent(id, child)
                 collectSections(namespace, child, nextPath, out)
             }
         }
 
     }
 
-    private fun sectionOf(skillId: String?): ConfigurationSection? {
-        if (skillId.isNullOrEmpty()) return null
-        val normalized = skillId.trim().lowercase()
-        return byId[normalized]
-            ?: byId[normalized.substringAfter(':', normalized)]
-    }
+    private fun sectionOf(skillId: SkillId?): ConfigurationSection? =
+        skillId?.let(byId::get)
 
-    override fun cooldownSeconds(skillId: String, def: Int): Int = getInt(skillId, "cooldown-seconds", def)
+    override fun cooldownSeconds(skillId: SkillId, def: Int): Int =
+        getInt(skillId, "cooldown-seconds", def)
 
-    override fun getInt(skillId: String?, key: String?, def: Int): Int {
+    override fun getInt(
+        skillId: SkillId?,
+        key: String?,
+        def: Int
+    ): Int {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -64,7 +73,11 @@ class SkillConfig private constructor(
         }
     }
 
-    override fun getLong(skillId: String?, key: String?, def: Long): Long {
+    override fun getLong(
+        skillId: SkillId?,
+        key: String?,
+        def: Long
+    ): Long {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -74,7 +87,11 @@ class SkillConfig private constructor(
         }
     }
 
-    override fun getDouble(skillId: String?, key: String?, def: Double): Double {
+    override fun getDouble(
+        skillId: SkillId?,
+        key: String?,
+        def: Double
+    ): Double {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {
@@ -84,7 +101,11 @@ class SkillConfig private constructor(
         }
     }
 
-    override fun getBoolean(skillId: String?, key: String?, def: Boolean): Boolean {
+    override fun getBoolean(
+        skillId: SkillId?,
+        key: String?,
+        def: Boolean
+    ): Boolean {
         val sec = sectionOf(skillId)
         if (sec == null || key == null) return def
         return try {

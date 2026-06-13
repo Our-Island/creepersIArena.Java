@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
-import top.ourisland.creepersiarena.core.game.death.DamageAttributionStore;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 
 import java.util.UUID;
 
@@ -69,12 +69,12 @@ class DamageAttributionStoreTest {
         var attackerId = UUID.randomUUID();
 
         store.recordDamage(victimId, new DeathAttribution(
-                DeathCauseId.skill("creeper", "explosion_enemy"),
+                DeathCauseId.skill(SkillId.parse("cia:creeper/explosion_enemy")),
                 attackerId,
                 victimId,
                 false,
                 false,
-                "cia:creeper.explode",
+                SkillId.parse("cia:creeper/explode"),
                 EntityDamageEvent.DamageCause.ENTITY_EXPLOSION,
                 10L
         ));
@@ -101,12 +101,12 @@ class DamageAttributionStoreTest {
         var victimId = UUID.randomUUID();
 
         store.recordDamage(victimId, new DeathAttribution(
-                DeathCauseId.skill("creeper", "explosion_self"),
+                DeathCauseId.skill(SkillId.parse("cia:creeper/explosion_self")),
                 victimId,
                 victimId,
                 true,
                 true,
-                "cia:creeper.explode",
+                SkillId.parse("cia:creeper/explode"),
                 EntityDamageEvent.DamageCause.ENTITY_EXPLOSION,
                 10L
         ));
@@ -134,12 +134,12 @@ class DamageAttributionStoreTest {
         var attackerId = UUID.randomUUID();
 
         store.recordDamage(victimId, new DeathAttribution(
-                DeathCauseId.skill("creeper", "explosion_enemy"),
+                DeathCauseId.skill(SkillId.parse("cia:creeper/explosion_enemy")),
                 attackerId,
                 victimId,
                 false,
                 false,
-                "cia:creeper.explode",
+                SkillId.parse("cia:creeper/explode"),
                 EntityDamageEvent.DamageCause.ENTITY_EXPLOSION,
                 10L
         ));

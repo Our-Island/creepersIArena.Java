@@ -5,10 +5,7 @@ import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.api.skill.ISkillIcon;
-import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
@@ -16,7 +13,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:moison.blowgun",
+        id = "cia:moison/blowgun",
         job = "cia:moison",
         type = SkillType.ACTIVE,
         slot = 0,
@@ -24,7 +21,7 @@ import java.util.List;
 )
 public class Skill1 implements ISkillDefinition {
 
-    static final String PASSIVE_ID = "cia:moison.spectral_reserve";
+    static final SkillId PASSIVE_ID = SkillId.parse("cia:moison/spectral_reserve");
 
     @Override
     public List<ITrigger> triggers() {
@@ -49,8 +46,9 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, store) -> {
             var p = ctx.player();
-            boolean spectral = MoisonProjectileSupport.consumeSpectralReserve(store, p, ctx.nowTick());
-            Vector dir = p.getEyeLocation().getDirection().normalize();
+            var spectral = MoisonProjectileSupport.consumeSpectralReserve(store, p, ctx.nowTick());
+            var dir = p.getEyeLocation().getDirection().normalize();
+
             MoisonProjectileSupport.shoot(p, id(), spectral, dir, 2.6, 1.2);
             p.playSound(p, Sound.BLOCK_DISPENSER_DISPENSE, SoundCategory.PLAYERS, 1f, 1.25f);
         };

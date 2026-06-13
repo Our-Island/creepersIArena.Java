@@ -37,30 +37,17 @@ final class PlayerLobbyTransitions {
         this.lobbyHooks = lobbyHooks;
     }
 
-    void selectJob(Player p, String jobIdRaw) {
-        var s = sessions.ensureSession(p);
-        if (!allowJobSelection(p, s)) return;
-
-        var jobId = JobId.fromId(jobIdRaw);
-        if (jobId == null && jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
-            jobId = JobId.fromId("cia:" + jobIdRaw);
-        }
-        if (jobId == null) {
-            log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
+    void selectJob(Player player, JobId jobId) {
+        var session = sessions.ensureSession(player);
+        if (!allowJobSelection(player, session)) return;
+        if (!lobbyItemService.hasJobId(jobId)) {
+            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", player.getName(), jobId);
             return;
         }
-
-        if (!lobbyItemService.hasJobId(jobId.toString())) {
-            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", p.getName(), jobIdRaw);
-            return;
-        }
-
-        s.selectedJob(jobId);
-        sessions.persistSelectedJob(p, jobId);
-
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
+        session.selectedJob(jobId);
+        sessions.persistSelectedJob(player, jobId);
+        refreshLobbyKit(player);
+        log.info("[Lobby] {} selected job={}", player.getName(), jobId);
     }
 
     private boolean allowJobSelection(Player p, PlayerSession session) {

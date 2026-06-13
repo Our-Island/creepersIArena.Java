@@ -6,7 +6,6 @@ import org.bukkit.entity.Firework;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -21,7 +20,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.crossbow",
+        id = "cia:creeper/crossbow",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 1,
@@ -99,12 +98,12 @@ public class Skill2 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var cfg = ctx.skillConfig();
-            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
-            double speed = cfg.getDouble(id(), "speed", SPEED);
+            var flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
+            var speed = cfg.getDouble(id(), "speed", SPEED);
             var w = p.getWorld();
 
-            Vector dir = p.getEyeLocation().getDirection().normalize();
-            Location spawnPosition = p.getEyeLocation().add(dir.clone().multiply(0.6));
+            var dir = p.getEyeLocation().getDirection().normalize();
+            var spawnPosition = p.getEyeLocation().add(dir.clone().multiply(0.6));
 
             w.spawn(spawnPosition, Firework.class, f -> {
                 f.setShooter(p);

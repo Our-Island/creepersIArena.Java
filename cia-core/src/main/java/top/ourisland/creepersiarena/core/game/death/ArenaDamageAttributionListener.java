@@ -45,7 +45,7 @@ public final class ArenaDamageAttributionListener implements Listener {
         if (!(event.getEntity() instanceof Player victim)) return;
         if (!isInGame(victim)) return;
 
-        DeathAttribution attribution = resolveAttribution(event, victim)
+        var attribution = resolveAttribution(event, victim)
                 .orElseGet(() -> fallbackAttribution(event, victim));
         attributionStore.recordDamage(victim.getUniqueId(), attribution);
     }
@@ -63,7 +63,7 @@ public final class ArenaDamageAttributionListener implements Listener {
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] cause resolver failed on damage: owner={} player={} err={}",
-                        registered.ownerId(),
+                        registered.owner(),
                         victim.getName(),
                         throwable.getMessage(),
                         throwable
@@ -75,7 +75,7 @@ public final class ArenaDamageAttributionListener implements Listener {
 
     private DeathAttribution fallbackAttribution(EntityDamageEvent event, Player victim) {
         var attacker = attackerFrom(event);
-        DeathCauseId causeId = CoreDeathCauseMapper.fromDamageCause(event.getCause());
+        var causeId = CoreDeathCauseMapper.fromDamageCause(event.getCause());
         if (attacker != null && StandardDeathCauses.GENERIC.equals(causeId)) {
             causeId = StandardDeathCauses.DIRECT_HIT;
         }

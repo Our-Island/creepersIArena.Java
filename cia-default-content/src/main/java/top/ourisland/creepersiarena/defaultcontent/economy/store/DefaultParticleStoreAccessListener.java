@@ -38,17 +38,16 @@ public final class DefaultParticleStoreAccessListener implements Listener {
     private List<BlockSource> loadSources(Path configPath) {
         var out = new ArrayList<BlockSource>();
         var yml = YamlConfiguration.loadConfiguration(configPath.toFile());
-        var root = yml.getConfigurationSection("game.abilities.cia-default-content.particle-store.settings.sources");
+        var root = yml.getConfigurationSection("game.abilities.cia.particle_store.settings.sources");
         if (root == null) return List.of();
 
-        root.getKeys(false)
-                .stream()
+        root.getKeys(false).stream()
                 .map(root::getConfigurationSection)
                 .filter(sec -> sec != null && "block".equalsIgnoreCase(sec.getString("type", "")))
                 .forEach(sec -> {
                     var world = sec.getString("world", "world");
                     var loc = sec.getList("location", List.of(0, 0, 0));
-                    double radius = Math.max(0.0D, sec.getDouble("radius", 1.5D));
+                    var radius = Math.max(0.0D, sec.getDouble("radius", 1.5D));
                     var storeId = id(sec.getString("store"), DefaultParticleStore.STORE_ID);
                     var itemId = itemId(sec.getString("item"));
 
@@ -71,18 +70,12 @@ public final class DefaultParticleStoreAccessListener implements Listener {
             StoreId fallback
     ) {
         if (raw == null || raw.isBlank()) return fallback;
-        String text = raw.trim();
-        return text.indexOf(':') >= 0
-                ? StoreId.of(text)
-                : StoreId.of("cia-default-content", text);
+        return StoreId.parse(raw.trim());
     }
 
     private static StoreItemId itemId(String raw) {
         if (raw == null || raw.isBlank()) return null;
-        String text = raw.trim();
-        return text.indexOf(':') >= 0
-                ? StoreItemId.of(text)
-                : StoreItemId.of("cia-default-content", text);
+        return StoreItemId.parse(raw.trim());
     }
 
     private static double number(
@@ -91,7 +84,7 @@ public final class DefaultParticleStoreAccessListener implements Listener {
     ) {
         if (values == null || values.size() <= index) return 0.0D;
 
-        Object value = values.get(index);
+        var value = values.get(index);
         if (value instanceof Number number) return number.doubleValue();
 
         try {

@@ -2,6 +2,10 @@ package top.ourisland.creepersiarena.api.game.player;
 
 import lombok.Data;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
 import top.ourisland.creepersiarena.api.job.JobId;
 
 import java.util.HashMap;
@@ -12,46 +16,62 @@ import java.util.UUID;
 public final class PlayerSession {
 
     private final UUID playerId;
-    private final Map<String, Object> modeData = new HashMap<>();
+    private final Map<SessionDataKey<?>, Object> modeData = new HashMap<>();
     private PlayerState state = PlayerState.HUB;
     private JobId selectedJob;
     private Integer selectedTeam;
     private String selectedTeamKey;
-    private int lobbyJobPage = 0;
-    private int respawnSecondsRemaining = 0;
+    private int lobbyJobPage;
+    private int respawnSecondsRemaining;
 
-    public PlayerSession(Player player) {
+    public PlayerSession(@NonNull Player player) {
         this.playerId = player.getUniqueId();
     }
 
-    public boolean modeBoolean(String key, boolean defaultValue) {
-        Object value = modeData(key);
-        if (value instanceof Boolean bool) return bool;
-        if (value instanceof String string) return Boolean.parseBoolean(string);
-        return defaultValue;
+    public <T> T getOrDefault(SessionDataKey<T> key, T defaultValue) {
+        T value = get(key);
+        return value == null ? defaultValue : value;
     }
 
-    public Object modeData(String key) {
-        if (key == null || key.isBlank()) return null;
-        return modeData.get(key);
+    public <T> @Nullable T get(
+            @lombok.NonNull SessionDataKey<T> key
+    ) {
+        Object value = modeData.get(key);
+        if (value == null) return null;
+
+        if (!key.type().isInstance(value)) {
+            throw new IllegalStateException("Session data %s contains %s, expected %s".formatted(
+                    key.asString(),
+                    value.getClass().getName(),
+                    key.type().getName()
+            ));
+        }
+        return key.type().cast(value);
     }
 
-    public void setModeBoolean(String key, boolean value) {
-        modeData(key, value);
-    }
-
-    public void modeData(String key, Object value) {
-        if (key == null || key.isBlank()) return;
+    public <T> void set(
+            @lombok.NonNull SessionDataKey<T> key,
+            @Nullable T value
+    ) {
         if (value == null) {
             modeData.remove(key);
             return;
         }
+        if (!key.type().isInstance(value)) {
+            throw new IllegalArgumentException("Value for %s must be %s".formatted(
+                    key.asString(),
+                    key.type().getName()
+            ));
+        }
         modeData.put(key, value);
     }
 
-    public void clearModeData(String prefix) {
-        if (prefix == null || prefix.isBlank()) return;
-        modeData.keySet().removeIf(key -> key.startsWith(prefix));
+    public void remove(@lombok.NonNull SessionDataKey<?> key) {
+        modeData.remove(key);
+    }
+
+    public void clearNamespace(@lombok.NonNull CiaNamespace namespace) {
+        modeData.keySet().removeIf(key -> key.namespace().equals(namespace));
     }
 
 }

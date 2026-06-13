@@ -42,7 +42,7 @@ public interface IGameMode {
      *
      * @return namespaced runtime mode id
      */
-    default GameModeType mode() {
+    default GameModeId mode() {
         return ModeMetadata.of(getClass()).id();
     }
 

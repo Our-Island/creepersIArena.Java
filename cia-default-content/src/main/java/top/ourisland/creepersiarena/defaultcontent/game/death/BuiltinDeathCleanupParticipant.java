@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.core.utils.AttributeUtils;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
@@ -13,6 +14,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public final class BuiltinDeathCleanupParticipant implements IDeathCleanupParticipant {
 
@@ -22,29 +24,31 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
             CREEPER_FIREWORK_OWNER_TAG_PREFIX = "cia_skill3_owner:",
             LEGACY_NO_PARTICLE_TAG = "no_particle";
 
-    private static final List<String> BUILTIN_SKILL_IDS = List.of(
-            "cia:avenger.blood_blink",
-            "cia:avenger.revenge_grasp",
-            "cia:bloodline.blood_orb",
-            "cia:bloodline.leap",
-            "cia:bloodline.sprint",
-            "cia:creeper.creeper",
-            "cia:creeper.crossbow",
-            "cia:creeper.fireworks",
-            "cia:golem.stoneform",
-            "cia:golem.rift_fangs",
-            "cia:moison.blowgun",
-            "cia:moison.volley",
-            "cia:moison.shadowstep",
-            "cia:moison.spectral_reserve",
-            "cia:wolong.fan_dash",
-            "cia:wolong.sky_lantern",
-            "cia:wolong.repeating_crossbow",
-            "cia:wolong.empty_fort",
-            "cia:ysahan.pumpkin_trick",
-            "cia:ysahan.whale",
-            "cia:ysahan.it_was_me"
-    );
+    private static final List<SkillId> BUILTIN_SKILL_IDS = Stream.of(
+                    "cia:avenger/blood_blink",
+                    "cia:avenger/revenge_grasp",
+                    "cia:bloodline/blood_orb",
+                    "cia:bloodline/leap",
+                    "cia:bloodline/sprint",
+                    "cia:creeper/creeper",
+                    "cia:creeper/crossbow",
+                    "cia:creeper/fireworks",
+                    "cia:golem/stoneform",
+                    "cia:golem/rift_fangs",
+                    "cia:moison/blowgun",
+                    "cia:moison/volley",
+                    "cia:moison/shadowstep",
+                    "cia:moison/spectral_reserve",
+                    "cia:wolong/fan_dash",
+                    "cia:wolong/sky_lantern",
+                    "cia:wolong/repeating_crossbow",
+                    "cia:wolong/empty_fort",
+                    "cia:ysahan/pumpkin_trick",
+                    "cia:ysahan/whale",
+                    "cia:ysahan/it_was_me"
+            )
+            .map(SkillId::parse)
+            .toList();
 
     private final ISkillStateStore skillStateStore;
 
@@ -84,21 +88,21 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
     private void clearBuiltinSkillCooldowns(UUID playerId) {
         if (skillStateStore == null || playerId == null) return;
 
-        for (String skillId : BUILTIN_SKILL_IDS) {
-            skillStateStore.cooldownEndsAtTick(playerId, skillId, 0L);
-        }
+        BUILTIN_SKILL_IDS.forEach(skillId ->
+                skillStateStore.cooldownEndsAtTick(playerId, skillId, 0L)
+        );
     }
 
     private void cleanupOwnedSkillEntities(Player player) {
         var playerId = player.getUniqueId();
         var playerIdRaw = playerId.toString();
-        for (var entity : player.getWorld().getEntities()) {
-            if (entity instanceof Player) continue;
-            if (!isOwnedBuiltinSkillEntity(entity, playerIdRaw)) continue;
-
-            clearEntityState(entity, playerIdRaw);
-            entity.remove();
-        }
+        player.getWorld().getEntities().stream()
+                .filter(entity -> !(entity instanceof Player))
+                .filter(entity -> isOwnedBuiltinSkillEntity(entity, playerIdRaw))
+                .forEach(entity -> {
+                    clearEntityState(entity, playerIdRaw);
+                    entity.remove();
+                });
     }
 
     private static NamespacedKey key(String value) {
@@ -107,8 +111,8 @@ public final class BuiltinDeathCleanupParticipant implements IDeathCleanupPartic
 
     private boolean isOwnedBuiltinSkillEntity(Entity entity, String playerIdRaw) {
         var container = entity.getPersistentDataContainer();
-        String deathOwner = container.get(key("death_source_owner"), PersistentDataType.STRING);
-        String moisonOwner = container.get(key("moison_owner"), PersistentDataType.STRING);
+        var deathOwner = container.get(key("death_source_owner"), PersistentDataType.STRING);
+        var moisonOwner = container.get(key("moison_owner"), PersistentDataType.STRING);
         if (playerIdRaw.equals(deathOwner) || playerIdRaw.equals(moisonOwner)) return true;
 
         return entity.getScoreboardTags().stream()

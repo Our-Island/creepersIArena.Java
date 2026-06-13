@@ -2,82 +2,90 @@ package top.ourisland.creepersiarena.core.job.skill.runtime;
 
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 public final class SkillRegistry {
 
     private final PlayerSessionStore sessions;
-    private final Map<JobId, List<RegisteredComponent<ISkillDefinition>>> skillsByJob = new LinkedHashMap<>();
+    private final OwnedRegistry<SkillId, ISkillDefinition> skills;
 
-    public SkillRegistry(@lombok.NonNull PlayerSessionStore sessions) {
-        this.sessions = sessions;
+    public SkillRegistry(PlayerSessionStore sessions) {
+        this(sessions, new NamespaceRegistry());
     }
 
-    public synchronized void replaceAll(@lombok.NonNull Collection<ISkillDefinition> skills) {
-        clear();
-        for (ISkillDefinition skill : skills) {
-            register(skill);
-        }
+    public SkillRegistry(
+            PlayerSessionStore sessions,
+            NamespaceRegistry namespaces
+    ) {
+        this.sessions = sessions;
+        this.skills = new OwnedRegistry<>(namespaces);
+    }
+
+    public synchronized void replaceAll(Collection<ISkillDefinition> values) {
+        skills.clear();
+        for (ISkillDefinition skill : values) register(skill);
+    }
+
+    public synchronized void register(ISkillDefinition skill) {
+        register(RegistrationOwner.CORE, skill);
+    }
+
+    public synchronized void register(
+            RegistrationOwner owner,
+            ISkillDefinition skill
+    ) {
+        skills.register(owner, skill.id(), skill);
     }
 
     public synchronized void clear() {
-        skillsByJob.clear();
-    }
-
-    public synchronized void register(@lombok.NonNull ISkillDefinition skill) {
-        register(RegisteredComponent.CORE_OWNER, skill);
-    }
-
-    public synchronized void register(String ownerId, @lombok.NonNull ISkillDefinition skill) {
-        var jobId = JobId.of(skill.jobId());
-        List<RegisteredComponent<ISkillDefinition>> current = new ArrayList<>(skillsByJob.getOrDefault(jobId, List.of()));
-        current.removeIf(existing -> existing.value().id().equalsIgnoreCase(skill.id()));
-        current.add(new RegisteredComponent<>(ownerId, skill.id(), skill));
-        current.sort(Comparator
-                .comparingInt((RegisteredComponent<ISkillDefinition> registered) -> registered.value().uiSlot())
-                .thenComparing(registered -> registered.value().id()));
-        skillsByJob.put(jobId, List.copyOf(current));
+        skills.clear();
     }
 
     public synchronized void replaceAllRegistered(
-            @lombok.NonNull Collection<RegisteredComponent<ISkillDefinition>> skills
+            Collection<RegisteredComponent<SkillId, ISkillDefinition>> values
     ) {
-        clear();
-        for (var skill : skills) {
-            register(skill.ownerId(), skill.value());
-        }
+        skills.clear();
+        values.forEach(value -> register(value.owner(), value.value()));
     }
 
-    public List<ISkillDefinition> skillsOf(Player p) {
-        var s = sessions.get(p);
-        if (s == null) return Collections.emptyList();
-        return skillsOf(s.selectedJob());
+    public synchronized void clearOwner(RegistrationOwner owner) {
+        skills.clearOwner(owner);
+    }
+
+    public List<ISkillDefinition> skillsOf(Player player) {
+        var session = sessions.get(player);
+        if (session == null) return List.of();
+        return skillsOf(session.selectedJob());
     }
 
     public synchronized List<ISkillDefinition> skillsOf(JobId jobId) {
         if (jobId == null) return List.of();
-        return skillsByJob.getOrDefault(jobId, List.of()).stream()
+        return skills.entries().stream()
                 .map(RegisteredComponent::value)
+                .filter(skill -> jobId.equals(skill.jobId()))
+                .sorted(Comparator.comparingInt(ISkillDefinition::uiSlot)
+                        .thenComparing(skill -> skill.id().asString())
+                )
                 .toList();
     }
 
-    public synchronized String ownerOf(String skillId) {
-        if (skillId == null) return null;
-        return registeredSkills().stream()
-                .filter(registered -> registered.key().equalsIgnoreCase(skillId))
-                .map(RegisteredComponent::ownerId)
-                .findFirst()
-                .orElse(null);
+    public synchronized RegistrationOwner ownerOf(SkillId skillId) {
+        var registered = skills.get(skillId);
+        return registered == null ? null : registered.owner();
     }
 
-    public synchronized List<RegisteredComponent<ISkillDefinition>> registeredSkills() {
-        return skillsByJob.values().stream()
-                .flatMap(Collection::stream)
-                .toList();
+    public synchronized List<RegisteredComponent<SkillId, ISkillDefinition>> registeredSkills() {
+        return skills.entries();
     }
 
 }

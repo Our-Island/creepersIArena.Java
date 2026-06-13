@@ -1,17 +1,19 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+
 import java.nio.file.Path;
 import java.time.Instant;
 
 public record CiaExtensionLoadFailure(
-        String id,
+        ExtensionId id,
         Path jarPath,
         String message,
         Instant failedAt
 ) {
 
     public CiaExtensionLoadFailure(
-            String id,
+            ExtensionId id,
             Path jarPath,
             String message
     ) {

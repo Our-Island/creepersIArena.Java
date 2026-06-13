@@ -1,17 +1,23 @@
 package top.ourisland.creepersiarena.api.extension.processor;
 
+import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
+import top.ourisland.creepersiarena.api.annotation.CiaModeDef;
+import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
 
-import javax.annotation.processing.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -21,15 +27,27 @@ import java.util.regex.Pattern;
  * The processor lives in {@code cia-api} intentionally: extension projects can use the same dependency as both
  * {@code compileOnly} API and {@code annotationProcessor} metadata generator.
  */
-@SupportedAnnotationTypes("top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo")
+@SupportedAnnotationTypes(
+        {
+                "top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo",
+                "top.ourisland.creepersiarena.api.annotation.CiaJobDef",
+                "top.ourisland.creepersiarena.api.annotation.CiaModeDef",
+                "top.ourisland.creepersiarena.api.annotation.CiaSkillDef"
+        }
+)
 @SupportedOptions(CiaExtensionInfoProcessor.OPTION_EXTENSION_VERSION)
 public final class CiaExtensionInfoProcessor extends AbstractProcessor {
 
     public static final String OPTION_EXTENSION_VERSION = "cia.extension.version";
+
     private static final String EXTENSION_TYPE = "top.ourisland.creepersiarena.api.extension.ICiaExtension";
     private static final String SERVICE_FILE = "META-INF/services/" + EXTENSION_TYPE;
     private static final String DESCRIPTOR_FILE = "cia-extension.yml";
-    private static final Pattern ID_PATTERN = Pattern.compile("[a-z0-9_.-]+");
+    private static final Pattern ID_PATTERN = Pattern.compile("[a-z0-9][a-z0-9._-]*");
+    private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-z0-9][a-z0-9_-]*");
+    private static final Pattern RESOURCE_ID_PATTERN = Pattern.compile(
+            "([a-z0-9][a-z0-9_-]*):([a-z0-9][a-z0-9_-]*(/[a-z0-9][a-z0-9_-]*)*)"
+    );
 
     private boolean generated;
 
@@ -39,13 +57,16 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    public boolean process(
+            Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv
+    ) {
         if (roundEnv.processingOver() || generated) {
             return false;
         }
 
         var annotated = new ArrayList<TypeElement>();
-        for (Element element : roundEnv.getElementsAnnotatedWith(CiaExtensionInfo.class)) {
+        for (var element : roundEnv.getElementsAnnotatedWith(CiaExtensionInfo.class)) {
             if (element instanceof TypeElement typeElement) {
                 annotated.add(typeElement);
             } else {
@@ -58,19 +79,22 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
         }
 
         if (annotated.size() > 1) {
-            for (TypeElement element : annotated) {
+            for (var element : annotated) {
                 error(element, "Only one @CiaExtensionInfo entry point is allowed per extension module");
             }
             return true;
         }
 
-        TypeElement mainType = annotated.getFirst();
+        var mainType = annotated.getFirst();
         if (!validateMainType(mainType)) {
             return true;
         }
 
-        CiaExtensionInfo info = mainType.getAnnotation(CiaExtensionInfo.class);
+        var info = mainType.getAnnotation(CiaExtensionInfo.class);
         if (!validateInfo(mainType, info)) {
+            return true;
+        }
+        if (!validateComponentIds(roundEnv, info.namespace())) {
             return true;
         }
 
@@ -113,13 +137,13 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
             valid = false;
         }
 
-        TypeElement extensionType = processingEnv.getElementUtils().getTypeElement(EXTENSION_TYPE);
+        var extensionType = processingEnv.getElementUtils().getTypeElement(EXTENSION_TYPE);
         if (extensionType == null) {
             error(mainType, "Cannot resolve " + EXTENSION_TYPE);
             return false;
         }
 
-        TypeMirror extensionMirror = extensionType.asType();
+        var extensionMirror = extensionType.asType();
         if (!processingEnv.getTypeUtils().isAssignable(mainType.asType(), extensionMirror)) {
             error(mainType, "CIA extension entry point must implement " + EXTENSION_TYPE);
             valid = false;
@@ -136,6 +160,17 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
             valid = false;
         } else if (!ID_PATTERN.matcher(info.id()).matches()) {
             error(mainType, "CIA extension id must match [a-z0-9_.-]+: " + info.id());
+            valid = false;
+        }
+
+        if (info.namespace().isBlank()) {
+            error(mainType, "CIA extension namespace must not be blank");
+            valid = false;
+        } else if (!NAMESPACE_PATTERN.matcher(info.namespace()).matches()) {
+            error(mainType, "CIA extension namespace must match [a-z0-9][a-z0-9_-]*: " + info.namespace());
+            valid = false;
+        } else if ("core".equals(info.namespace()) || "minecraft".equals(info.namespace())) {
+            error(mainType, "CIA extension namespace is reserved: " + info.namespace());
             valid = false;
         }
 
@@ -156,6 +191,37 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
             valid &= validateDependency(mainType, dependency, "optionalDependencies");
         }
 
+        return valid;
+    }
+
+    private boolean validateComponentIds(RoundEnvironment roundEnv, String namespace) {
+        boolean valid = true;
+        Set<String> seenIds = new HashSet<>();
+
+        for (var element : roundEnv.getElementsAnnotatedWith(CiaJobDef.class)) {
+            var annotation = element.getAnnotation(CiaJobDef.class);
+            valid &= validateResourceId(element, annotation.id(), namespace, "job", seenIds);
+        }
+        for (var element : roundEnv.getElementsAnnotatedWith(CiaModeDef.class)) {
+            var annotation = element.getAnnotation(CiaModeDef.class);
+            valid &= validateResourceId(element, annotation.id(), namespace, "mode", seenIds);
+        }
+        for (var element : roundEnv.getElementsAnnotatedWith(CiaSkillDef.class)) {
+            var annotation = element.getAnnotation(CiaSkillDef.class);
+            boolean skillValid = validateResourceId(element, annotation.id(), namespace, "skill", seenIds);
+            boolean jobValid = validateResourceId(element, annotation.job(), namespace, "skill job", null);
+            valid &= skillValid && jobValid;
+
+            if (skillValid && jobValid) {
+                String skillPath = resourcePath(annotation.id());
+                String jobPath = resourcePath(annotation.job());
+                if (!skillPath.startsWith(jobPath + "/")) {
+                    error(element, "Skill id must be nested below its owning job path: "
+                            + annotation.id() + " is not below " + annotation.job());
+                    valid = false;
+                }
+            }
+        }
         return valid;
     }
 
@@ -192,7 +258,7 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
 
     private boolean hasUsableServiceLoaderConstructor(TypeElement mainType) {
         boolean hasExplicitConstructor = false;
-        for (Element enclosed : mainType.getEnclosedElements()) {
+        for (var enclosed : mainType.getEnclosedElements()) {
             if (enclosed.getKind() != ElementKind.CONSTRUCTOR) {
                 continue;
             }
@@ -223,6 +289,43 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
         return true;
     }
 
+    private boolean validateResourceId(
+            Element element,
+            String raw,
+            String expectedNamespace,
+            String kind,
+            Set<String> seenIds
+    ) {
+        if (raw == null) {
+            error(element, "Invalid " + kind + " id; expected strict namespace:path form: null");
+            return false;
+        }
+        var matcher = RESOURCE_ID_PATTERN.matcher(raw);
+        if (!matcher.matches()) {
+            error(element, "Invalid " + kind + " id; expected strict namespace:path form: " + raw);
+            return false;
+        }
+        String namespace = matcher.group(1);
+        if (!namespace.equals(expectedNamespace)) {
+            error(element, kind + " id namespace must equal extension namespace '"
+                    + expectedNamespace + "': " + raw);
+            return false;
+        }
+        if (seenIds != null && !seenIds.add(raw)) {
+            error(element, "Duplicate extension resource id: " + raw);
+            return false;
+        }
+        return true;
+    }
+
+    private String resourcePath(String raw) {
+        var matcher = RESOURCE_ID_PATTERN.matcher(raw);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid resource id: " + raw);
+        }
+        return matcher.group(2);
+    }
+
     private String descriptorYaml(
             String mainClass,
             CiaExtensionInfo info,
@@ -231,6 +334,7 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
     ) {
         StringBuilder builder = new StringBuilder();
         builder.append("id: ").append(quote(info.id())).append('\n');
+        builder.append("namespace: ").append(quote(info.namespace())).append('\n');
         builder.append("name: ").append(quote(info.name())).append('\n');
         builder.append("version: ").append(quote(version)).append('\n');
         builder.append("main: ").append(quote(mainClass)).append('\n');
@@ -246,7 +350,7 @@ public final class CiaExtensionInfoProcessor extends AbstractProcessor {
     }
 
     private void writeResource(String path, String content) throws IOException {
-        Filer filer = processingEnv.getFiler();
+        var filer = processingEnv.getFiler();
         var resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", path);
         try (Writer writer = resource.openWriter()) {
             writer.write(content);

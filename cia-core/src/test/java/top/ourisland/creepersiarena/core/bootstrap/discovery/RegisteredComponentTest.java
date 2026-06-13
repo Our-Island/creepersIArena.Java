@@ -1,35 +1,36 @@
 package top.ourisland.creepersiarena.core.bootstrap.discovery;
 
 import org.junit.jupiter.api.Test;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.api.job.JobId;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RegisteredComponentTest {
 
+    private static final RegistrationOwner OWNER = new RegistrationOwner(
+            ExtensionId.parse("custom-extension"),
+            CiaNamespace.parse("custom")
+    );
+
     @Test
-    void normalizesOwnerIdsAndDefaultsBlankOwnersToCore() {
-        assertEquals("core", RegisteredComponent.normalizeOwnerId(null));
-        assertEquals("core", RegisteredComponent.normalizeOwnerId("   "));
-        assertEquals("custom-extension", RegisteredComponent.normalizeOwnerId(" Custom-Extension "));
+    void retainsTypedOwnerAndId() {
+        var id = JobId.parse("custom:job");
+        var component = new RegisteredComponent<>(OWNER, id, "value");
 
-        var component = new RegisteredComponent<>(" My.Extension ", "key", "value");
-
-        assertEquals("my.extension", component.ownerId());
-        assertEquals("key", component.key());
+        assertEquals(OWNER, component.owner());
+        assertEquals(id, component.id());
         assertEquals("value", component.value());
     }
 
     @Test
-    void rejectsNullKeyAndValue() {
-        assertThrows(
-                NullPointerException.class,
-                () -> new RegisteredComponent<>("owner", null, "value")
-        );
-        assertThrows(
-                NullPointerException.class,
-                () -> new RegisteredComponent<>("owner", "key", null)
+    void rejectsNullOwnerIdAndValue() {
+        assertAll(
+                () -> assertThrows(NullPointerException.class, () -> new RegisteredComponent<>(null, JobId.parse("custom:job"), "value")),
+                () -> assertThrows(NullPointerException.class, () -> new RegisteredComponent<>(OWNER, null, "value")),
+                () -> assertThrows(NullPointerException.class, () -> new RegisteredComponent<>(OWNER, JobId.parse("custom:job"), null))
         );
     }
 

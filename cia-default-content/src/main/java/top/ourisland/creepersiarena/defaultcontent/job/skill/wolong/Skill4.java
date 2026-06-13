@@ -2,10 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.wolong;
 
 import org.bukkit.Material;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.api.skill.ISkillIcon;
-import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
@@ -14,7 +11,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:wolong.empty_fort",
+        id = "cia:wolong/empty_fort",
         job = "cia:wolong",
         type = SkillType.PASSIVE,
         slot = 8,
@@ -23,9 +20,9 @@ import java.util.List;
 public class Skill4 implements ISkillDefinition {
 
     private static final List<String> TARGETS = List.of(
-            "cia:wolong.fan_dash",
-            "cia:wolong.sky_lantern",
-            "cia:wolong.repeating_crossbow"
+            "cia:wolong/fan_dash",
+            "cia:wolong/sky_lantern",
+            "cia:wolong/repeating_crossbow"
     );
 
     @Override
@@ -53,12 +50,12 @@ public class Skill4 implements ISkillDefinition {
             var p = ctx.player();
             long now = ctx.nowTick();
             boolean allCooling = TARGETS.stream()
-                    .allMatch(id -> store.isCoolingDown(p.getUniqueId(), id, now));
+                    .allMatch(id -> store.isCoolingDown(p.getUniqueId(), SkillId.parse(id), now));
 
             if (!allCooling) throw SkillActivationRejectedException.reject();
-            for (String id : TARGETS) {
-                long end = store.cooldownEndsAtTick(p.getUniqueId(), id);
-                store.cooldownEndsAtTick(p.getUniqueId(), id, Math.max(now, end - 80L));
+            for (var id : TARGETS) {
+                long end = store.cooldownEndsAtTick(p.getUniqueId(), SkillId.parse(id));
+                store.cooldownEndsAtTick(p.getUniqueId(), SkillId.parse(id), Math.max(now, end - 80L));
             }
         };
     }

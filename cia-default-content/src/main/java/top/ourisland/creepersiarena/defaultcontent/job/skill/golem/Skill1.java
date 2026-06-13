@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job.skill.golem;
 
 import org.bukkit.Material;
+import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -15,7 +16,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:golem.stoneform",
+        id = "cia:golem/stoneform",
         job = "cia:golem",
         type = SkillType.ACTIVE,
         slot = 1,
@@ -46,12 +47,12 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            Double previous = AttributeUtils.baseValue(p, "generic.knockback_resistance");
+            var previous = AttributeUtils.baseValue(p, "generic.knockback_resistance");
             if (previous != null) {
                 AttributeUtils.setBaseValue(p, 1.0, "generic.knockback_resistance");
             }
 
-            EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.JUMP_BOOST, 60, 4);
+            EntityStateUtils.applyHiddenEffect(p, PotionEffectType.JUMP_BOOST, 60, 4);
 
             var plugin = ctx.plugin();
             p.getScheduler().runDelayed(

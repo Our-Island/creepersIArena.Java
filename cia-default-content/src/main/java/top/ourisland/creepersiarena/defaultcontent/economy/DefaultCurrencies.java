@@ -10,12 +10,13 @@ import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.economy.CurrencyId;
 import top.ourisland.creepersiarena.api.economy.ICurrency;
 import top.ourisland.creepersiarena.api.economy.ICurrencyRegistry;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
 public final class DefaultCurrencies {
 
     public static final CurrencyId
-            GUNPOWDER = CurrencyId.of("cia-default-content:gunpowder"),
-            TNT = CurrencyId.of("cia-default-content:tnt");
+            GUNPOWDER = CurrencyId.of(DefaultContentIds.key("gunpowder")),
+            TNT = CurrencyId.of(DefaultContentIds.key("tnt"));
 
     private DefaultCurrencies() {
     }
@@ -27,7 +28,7 @@ public final class DefaultCurrencies {
                 .toPath()
                 .resolve("config.yml")
                 .toFile());
-        var root = yml.getConfigurationSection("game.economy.currencies");
+        var root = yml.getConfigurationSection("game.economy.currencies.cia");
 
         registerCurrency(
                 context,
@@ -72,7 +73,7 @@ public final class DefaultCurrencies {
         );
 
         registry.registerCurrency(
-                context.extensionId(),
+                context.owner(),
                 new ConfiguredCurrency(id, Component.text(displayName), new ItemStack(material))
         );
     }
@@ -83,11 +84,7 @@ public final class DefaultCurrencies {
     ) {
         if (raw == null || raw.isBlank()) return fallback;
 
-        String name = raw.trim();
-        int colon = name.indexOf(':');
-        if (colon >= 0) name = name.substring(colon + 1);
-
-        var material = Material.matchMaterial(name);
+        var material = Material.matchMaterial(raw.trim());
         return material == null ? fallback : material;
     }
 

@@ -6,16 +6,18 @@ import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
 import top.ourisland.creepersiarena.api.annotation.CiaModeDef;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.mode.ModeLogic;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
-import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.api.skill.ISkillIcon;
-import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.List;
 
@@ -25,21 +27,24 @@ class ComponentCatalogTest {
 
     @Test
     void tracksOwnersForRegisteredJobsSkillsAndModes() {
-        var catalog = new ComponentCatalog();
+        var namespaces = new NamespaceRegistry();
+        var owner = new RegistrationOwner(ExtensionId.parse("ext-one"), CiaNamespace.parse("test"));
+        namespaces.claim(owner);
+        var catalog = new ComponentCatalog(namespaces);
         var job = new TestJob();
         var skill = new TestSkill();
         var mode = new TestMode();
 
-        catalog.registerJob(" Ext-One ", job);
-        catalog.registerSkill(" Ext-One ", skill);
-        catalog.registerMode(" Ext-One ", mode);
+        catalog.registerJob(owner, job);
+        catalog.registerSkill(owner, skill);
+        catalog.registerMode(owner, mode);
 
         assertEquals(List.of(job), catalog.jobs());
         assertEquals(List.of(skill), catalog.skills());
         assertEquals(List.of(mode), catalog.modes());
-        assertEquals("ext-one", catalog.ownerOfJob("test:job"));
-        assertEquals("ext-one", catalog.ownerOfSkill("test:job.primary"));
-        assertEquals("ext-one", catalog.ownerOfMode("test:mode"));
+        assertEquals(owner, catalog.ownerOfJob(JobId.parse("test:job")));
+        assertEquals(owner, catalog.ownerOfSkill(SkillId.parse("test:job/primary")));
+        assertEquals(owner, catalog.ownerOfMode(GameModeId.parse("test:mode")));
     }
 
     @CiaJobDef(id = "test:job")
@@ -58,7 +63,7 @@ class ComponentCatalogTest {
     }
 
     @CiaSkillDef(
-            id = "test:job.primary",
+            id = "test:job/primary",
             job = "test:job",
             type = SkillType.ACTIVE,
             slot = 0

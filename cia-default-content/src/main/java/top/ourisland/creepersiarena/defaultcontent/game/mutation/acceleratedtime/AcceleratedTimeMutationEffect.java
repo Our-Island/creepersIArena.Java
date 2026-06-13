@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.mutation.*;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -15,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class AcceleratedTimeMutationEffect implements IMutationEffect {
 
-    public static final MutationType TYPE = MutationType.of("accelerated_time");
+    public static final MutationId TYPE = MutationId.of(DefaultContentIds.key("accelerated_time"));
 
     private final AcceleratedTimeTickRateController tickRateController;
     private final AcceleratedTimeWorldController worldController;
@@ -40,7 +41,7 @@ public final class AcceleratedTimeMutationEffect implements IMutationEffect {
     }
 
     @Override
-    public MutationType type() {
+    public MutationId type() {
         return TYPE;
     }
 

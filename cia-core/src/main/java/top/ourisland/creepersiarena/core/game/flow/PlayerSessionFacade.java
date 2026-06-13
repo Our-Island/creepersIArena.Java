@@ -2,13 +2,13 @@ package top.ourisland.creepersiarena.core.game.flow;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
+import top.ourisland.creepersiarena.core.identity.CiaIdPdcCodec;
 
 import java.util.Optional;
 
@@ -57,32 +57,30 @@ final class PlayerSessionFacade {
         return s;
     }
 
-    void ensureSelectedJob(Player p, PlayerSession s) {
-        Optional.ofNullable(s.selectedJob())
+    void ensureSelectedJob(Player player, PlayerSession session) {
+        Optional.ofNullable(session.selectedJob())
 
                 .or(() -> Optional.ofNullable(
-                                p.getPersistentDataContainer().get(selectedJobKey, PersistentDataType.STRING)
-                        ).filter(lobbyItemService::hasJobId)
-                        .map(JobId::fromId))
+                        CiaIdPdcCodec.read(player.getPersistentDataContainer(), selectedJobKey, JobId::of)
+                ).filter(lobbyItemService::hasJobId))
 
-                .or(() -> Optional.ofNullable(
-                                lobbyItemService.firstJobIdOrNull()
-                        ).filter(lobbyItemService::hasJobId)
-                        .map(JobId::fromId)
-                        .map(jid -> {
-                            persistSelectedJob(p, jid);
-                            return jid;
-                        }))
+                .or(() -> Optional.ofNullable(lobbyItemService.firstJobIdOrNull())
+                        .filter(lobbyItemService::hasJobId)
+                        .map(jobId -> {
+                            persistSelectedJob(player, jobId);
+                            return jobId;
+                        })
+                )
 
                 .ifPresentOrElse(
-                        s::selectedJob,
-                        () -> log.warn("[Lobby] No available job to select for {}", p.getName())
+                        session::selectedJob,
+                        () -> log.warn("[Lobby] No available job to select for {}", player.getName())
                 );
     }
 
     void persistSelectedJob(Player p, JobId jobId) {
         if (jobId == null) return;
-        p.getPersistentDataContainer().set(selectedJobKey, PersistentDataType.STRING, jobId.toString());
+        CiaIdPdcCodec.write(p.getPersistentDataContainer(), selectedJobKey, jobId);
     }
 
 }

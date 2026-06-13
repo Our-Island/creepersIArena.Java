@@ -5,10 +5,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.api.ability.CoreAbilities;
-import top.ourisland.creepersiarena.api.ability.IAbility;
-import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
-import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.ability.*;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.mutation.*;
 import top.ourisland.creepersiarena.core.game.GameManager;
@@ -17,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public final class MutationService implements IAbility, IMutationEffectContext {
 
@@ -64,7 +62,7 @@ public final class MutationService implements IAbility, IMutationEffectContext {
     }
 
     @Override
-    public top.ourisland.creepersiarena.api.ability.AbilityId id() {
+    public AbilityId id() {
         return CoreAbilities.MUTATION;
     }
 
@@ -124,15 +122,15 @@ public final class MutationService implements IAbility, IMutationEffectContext {
     }
 
     private boolean hasEligibleActiveGame() {
-        GameSession active = gameManager.active();
+        var active = gameManager.active();
         if (active == null) return false;
         return abilities.isEnabledForGame(CoreAbilities.MUTATION, "mutation_eligible_game");
     }
 
     private MutationState.GameSessionMarker currentMarker() {
-        GameSession active = gameManager.active();
+        var active = gameManager.active();
         if (active == null || active.arena() == null || active.mode() == null) return null;
-        return new MutationState.GameSessionMarker(active.mode().id(), active.arena().id());
+        return new MutationState.GameSessionMarker(active.mode(), active.arena().id());
     }
 
     private void tickIdle(MutationConfig currentConfig) {
@@ -274,8 +272,12 @@ public final class MutationService implements IAbility, IMutationEffectContext {
 
     private MutationCandidateContext candidateContext() {
         var active = gameManager.active();
-        String modeId = active == null || active.mode() == null ? "" : active.mode().id();
-        String arenaId = active == null || active.arena() == null ? "" : active.arena().id();
+        var modeId = active == null
+                ? null
+                : active.mode();
+        var arenaId = active == null || active.arena() == null
+                ? null
+                : active.arena().id();
 
         return new MutationCandidateContext(
                 active,
@@ -355,19 +357,16 @@ public final class MutationService implements IAbility, IMutationEffectContext {
         var active = gameManager.active();
         if (active == null) return List.of();
 
-        var out = new ArrayList<Player>();
-        for (var playerId : active.players()) {
-            var player = Bukkit.getPlayer(playerId);
-            if (player == null || !player.isOnline()) continue;
-            if (!allowMutationTarget(player)) continue;
-            out.add(player);
-        }
-        return out;
+        return active.players().stream()
+                .map(Bukkit::getPlayer)
+                .filter(player -> player != null && player.isOnline())
+                .filter(this::allowMutationTarget)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public String statusLine(boolean adminEnabled) {
         var activeEffect = registry.get(state.activeType());
-        String detail = activeEffect == null ? "" : activeEffect.status(this);
+        var detail = activeEffect == null ? "" : activeEffect.status(this);
         if (!detail.isBlank()) detail = " " + detail;
         var view = abilities.config(CoreAbilities.MUTATION);
         return "Mutation: enabled=%s configEnabled=%s adminEnabled=%s active=%s idle=%d remaining=%d mode=%s effects=%d%s".formatted(

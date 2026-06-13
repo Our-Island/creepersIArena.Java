@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.api.game.arena;
 import org.bukkit.Location;
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.config.IArenaConfigView;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
 import top.ourisland.creepersiarena.api.testsupport.TestBukkit;
@@ -26,9 +26,9 @@ class ArenaInstanceTest {
         groups.put("BLUE", List.of(blueSpawn));
 
         var arena = new ArenaInstance(
-                "arena-one",
+                ArenaId.parse("arena-one"),
                 "cia.arena.one",
-                GameModeType.of("battle"),
+                GameModeId.parse("cia:battle"),
                 anchor,
                 new Region2D(TestBukkit.world(), Bounds2D.of(0, 0, 10, 10)),
                 List.of(),
@@ -42,7 +42,7 @@ class ArenaInstanceTest {
         assertTrue(arena.spawnGroup("missing").isEmpty());
         assertNotSame(anchor, arena.anchor());
 
-        Location fallback = arena.firstSpawnOrAnchor("missing");
+        var fallback = arena.firstSpawnOrAnchor("missing");
         assertNotSame(anchor, fallback);
         assertEquals(anchor, fallback);
     }

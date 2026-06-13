@@ -15,9 +15,11 @@ import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.core.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.core.utils.EntityStateUtils;
+import top.ourisland.creepersiarena.defaultcontent.DefaultJobIds;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 import java.util.UUID;
@@ -101,15 +103,15 @@ public final class SkillImplementationListener implements Listener {
         if (source == null) return;
 
         long now = tickTask.nowTick();
-        reduceCooldown(owner, "cia:moison.blowgun", now, 40L);
-        reduceCooldown(owner, "cia:moison.volley", now, 40L);
+        reduceCooldown(owner, SkillId.parse("cia:moison/blowgun"), now, 40L);
+        reduceCooldown(owner, SkillId.parse("cia:moison/volley"), now, 40L);
 
         if (arrow.getPersistentDataContainer().has(BuiltinKeys.key("moison_spectral"), PersistentDataType.BYTE)) {
             EntityStateUtils.applyHiddenEffect(victim, PotionEffectType.GLOWING, 20);
         }
     }
 
-    private void reduceCooldown(Player owner, String skillId, long now, long ticks) {
+    private void reduceCooldown(Player owner, SkillId skillId, long now, long ticks) {
         long end = runtime.store().cooldownEndsAtTick(owner.getUniqueId(), skillId);
         if (end <= now) return;
         runtime.store().cooldownEndsAtTick(owner.getUniqueId(), skillId, Math.max(now, end - ticks));
@@ -126,27 +128,17 @@ public final class SkillImplementationListener implements Listener {
         if (attackerSession == null || victimSession == null) return;
         if (attackerSession.state() != PlayerState.IN_GAME || victimSession.state() != PlayerState.IN_GAME) return;
 
-        String jobId = attackerSession.selectedJob() == null
-                ? null
-                : attackerSession.selectedJob().id();
-        switch (jobId) {
-            case "cia:bloodline" -> EntityStateUtils.applyHiddenEffect(
-                    attacker,
-                    PotionEffectType.SPEED,
-                    20
-            );
-            case "cia:golem" -> attacker.getPersistentDataContainer().set(
+        var jobId = attackerSession.selectedJob();
+        if (DefaultJobIds.BLOODLINE.equals(jobId)) {
+            EntityStateUtils.applyHiddenEffect(attacker, PotionEffectType.SPEED, 20);
+        } else if (DefaultJobIds.GOLEM.equals(jobId)) {
+            attacker.getPersistentDataContainer().set(
                     BuiltinKeys.key("golem_last_target"),
                     PersistentDataType.STRING,
                     victim.getUniqueId().toString()
             );
-            case "cia:ysahan" -> EntityStateUtils.applyHiddenEffect(
-                    attacker,
-                    PotionEffectType.GLOWING,
-                    20
-            );
-            case null, default -> {
-            }
+        } else if (DefaultJobIds.YSAHAN.equals(jobId)) {
+            EntityStateUtils.applyHiddenEffect(attacker, PotionEffectType.GLOWING, 20);
         }
     }
 
@@ -157,7 +149,7 @@ public final class SkillImplementationListener implements Listener {
         if (!skillRuntimeEnabled(killer, "skill_implementation_death")) return;
         var session = sessions.get(killer);
         if (session == null || session.selectedJob() == null) return;
-        if (!session.selectedJob().id().equals("cia:ysahan")) return;
+        if (!DefaultJobIds.YSAHAN.equals(session.selectedJob())) return;
 
         EntityStateUtils.extendTimedIfActive(
                 killer.getPersistentDataContainer(),

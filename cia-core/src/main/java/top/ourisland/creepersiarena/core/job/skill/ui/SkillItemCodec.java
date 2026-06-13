@@ -5,6 +5,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.skill.SkillId;
+import top.ourisland.creepersiarena.core.identity.CiaIdPdcCodec;
 
 public final class SkillItemCodec {
 
@@ -16,34 +18,40 @@ public final class SkillItemCodec {
         this.slotKey = new NamespacedKey(plugin, "skill_slot");
     }
 
-    public void markSkill(ItemStack it, String skillId, int uiSlot) {
-        if (it == null) return;
-        var meta = it.getItemMeta();
+    public void markSkill(
+            ItemStack item,
+            SkillId skillId,
+            int uiSlot
+    ) {
+        if (item == null || skillId == null) return;
+        var meta = item.getItemMeta();
         if (meta == null) return;
-
-        meta.getPersistentDataContainer().set(skillIdKey, PersistentDataType.STRING, skillId);
+        CiaIdPdcCodec.write(meta.getPersistentDataContainer(), skillIdKey, skillId);
         meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, uiSlot);
-
-        it.setItemMeta(meta);
+        item.setItemMeta(meta);
     }
 
-    public int readUiSlot(ItemStack it) {
-        if (it == null) return -1;
-        var meta = it.getItemMeta();
+    public int readUiSlot(ItemStack item) {
+        if (item == null) return -1;
+        var meta = item.getItemMeta();
         if (meta == null) return -1;
-        Integer v = meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
-        return v == null ? -1 : v;
+        Integer value = meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
+        return value == null ? -1 : value;
     }
 
-    public boolean isSkillItem(ItemStack it) {
-        return readSkillId(it) != null;
+    public boolean isSkillItem(ItemStack item) {
+        return readSkillId(item) != null;
     }
 
-    public @Nullable String readSkillId(ItemStack it) {
-        if (it == null) return null;
-        var meta = it.getItemMeta();
+    public @Nullable SkillId readSkillId(ItemStack item) {
+        if (item == null) return null;
+        var meta = item.getItemMeta();
         if (meta == null) return null;
-        return meta.getPersistentDataContainer().get(skillIdKey, PersistentDataType.STRING);
+        try {
+            return CiaIdPdcCodec.read(meta.getPersistentDataContainer(), skillIdKey, SkillId::of);
+        } catch (IllegalArgumentException _) {
+            return null;
+        }
     }
 
 }

@@ -13,8 +13,9 @@ import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
  */
 @CiaExtensionInfo(
         id = "cia-example-extension",
+        namespace = "example",
         name = "CreepersIArena Example Extension",
-        apiVersion = 1,
+        apiVersion = 2,
         authors = {"Our Island"}
 )
 public final class ExampleCiaExtension implements ICiaExtension {

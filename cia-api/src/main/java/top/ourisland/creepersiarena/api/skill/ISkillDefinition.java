@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.api.skill;
 
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.metadata.SkillMetadata;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 
@@ -65,7 +66,7 @@ public interface ISkillDefinition {
      *
      * @return namespaced skill id resolved from {@link SkillMetadata}
      */
-    default String id() {
+    default SkillId id() {
         return SkillMetadata.of(getClass()).id();
     }
 
@@ -77,8 +78,8 @@ public interface ISkillDefinition {
      *
      * @return namespaced owning job id resolved from {@link SkillMetadata}
      */
-    default String jobId() {
-        return SkillMetadata.of(getClass()).job().id();
+    default JobId jobId() {
+        return SkillMetadata.of(getClass()).job();
     }
 
     /**

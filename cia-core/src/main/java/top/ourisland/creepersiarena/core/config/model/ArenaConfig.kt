@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.config.model
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
+import top.ourisland.creepersiarena.api.game.mode.GameModeId
 import java.util.*
 
 /**
@@ -53,7 +54,7 @@ data class ArenaConfig(
     data class ArenaDef(
         @get:JvmName("id") val id: String,
         @get:JvmName("nameKey") val nameKey: String,
-        @get:JvmName("type") val type: String,
+        @get:JvmName("type") val type: GameModeId,
         @get:JvmName("location") val location: Vec3,
         @get:JvmName("range") val range: Range2D,
         @get:JvmName("spawnGroups") val spawnGroups: Map<String, List<Vec3>>,
@@ -64,7 +65,13 @@ data class ArenaConfig(
 
             internal fun fromSection(id: String, sec: ConfigurationSection): ArenaDef {
                 val nameKey = sec.getString("name", "cia.arena.$id") ?: "cia.arena.$id"
-                val type = sec.getString("mode", "battle") ?: "battle"
+                val rawMode = sec.getString("mode")
+                    ?: throw IllegalArgumentException("Arena arena.$id.mode must contain a namespaced mode id")
+                val type = try {
+                    GameModeId.parse(rawMode)
+                } catch (exception: IllegalArgumentException) {
+                    throw IllegalArgumentException("Invalid mode id at arena.$id.mode: $rawMode", exception)
+                }
                 val loc = Vec3.fromList(sec.getList("location"))
                 val range = Range2D.fromSection(sec.getConfigurationSection("range"))
                 val spawnGroups = parseSpawnGroups(sec)
@@ -109,7 +116,7 @@ data class ArenaConfig(
 
         }
 
-        fun mode(): String = type
+        fun mode(): GameModeId = type
 
         fun spawnpoints(): List<Vec3> = spawnGroups["default"] ?: listOf()
 

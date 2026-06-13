@@ -10,6 +10,9 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigration;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 
@@ -100,7 +103,7 @@ public interface ICiaExtensionContext {
     void registerMode(IGameMode mode);
 
     default void registerAbility(IAbility... abilities) {
-        requireService(IAbilityRegistry.class).registerAbility(extensionId(), abilities);
+        requireService(IAbilityRegistry.class).registerAbility(owner(), abilities);
     }
 
     /**
@@ -120,13 +123,11 @@ public interface ICiaExtensionContext {
     }
 
     /**
-     * Returns the stable owner id for the current extension context.
-     * <p>
-     * For jar-based CIA extensions this is the descriptor id.
+     * Returns the registration owner for this extension context.
      *
-     * @return extension owner id
+     * @return extension identity and exclusive content namespace
      */
-    String extensionId();
+    RegistrationOwner owner();
 
     /**
      * Returns a runtime service by type, or {@code null} when that service is unavailable.
@@ -141,12 +142,20 @@ public interface ICiaExtensionContext {
      */
     <T> T getService(Class<T> type);
 
+    default ExtensionId extensionId() {
+        return owner().extensionId();
+    }
+
+    default CiaNamespace namespace() {
+        return owner().namespace();
+    }
+
     default void registerDatabaseMigration(IDatabaseMigration migration) {
-        requireService(IDatabaseMigrationRegistry.class).registerMigration(extensionId(), migration);
+        requireService(IDatabaseMigrationRegistry.class).registerMigration(owner(), migration);
     }
 
     default void registerAbilityPolicy(IAbilityPolicy... policies) {
-        requireService(IAbilityRegistry.class).registerPolicy(extensionId(), policies);
+        requireService(IAbilityRegistry.class).registerPolicy(owner(), policies);
     }
 
     default IAbilityGate abilityGate() {

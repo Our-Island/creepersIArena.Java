@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.api.game.mode.context.*;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
@@ -161,9 +162,9 @@ public final class GameFlow {
                     transitions.enterGame(p, g, gameManager.runtime(), gameManager.playerFlow());
                 }
             }
-            case JoinDecision.ToSpectate(Location where) -> {
+            case JoinDecision.ToSpectate(var where) -> {
                 attachToActiveGame(p, g);
-                Location loc = (where != null)
+                var loc = (where != null)
                         ? where
                         : (g != null ? g.arena().anchor().clone().add(0, 8, 0) : transitions.hubAnchor());
                 transitions.toSpectate(p, loc);
@@ -253,7 +254,7 @@ public final class GameFlow {
             Player p,
             LobbyAction action,
             Integer jobPage,
-            String jobId
+            JobId jobId
     ) {
         if (p == null || action == null) return;
 
@@ -290,19 +291,19 @@ public final class GameFlow {
     /**
      * Job selection from lobby UI.
      */
-    public void onLobbySelectJob(Player p, String jobIdRaw) {
-        lobbySelectJob(p, jobIdRaw);
+    public void onLobbySelectJob(Player p, JobId jobId) {
+        lobbySelectJob(p, jobId);
     }
 
     /**
      * Commands: select a job when the active mode allows core job selection.
      */
-    public boolean lobbySelectJob(Player p, String jobIdRaw) {
+    public boolean lobbySelectJob(Player p, JobId jobId) {
         if (p == null) return false;
         var s = store.get(p);
         if (s == null || !transitions.allowJobSelection(p)) return false;
 
-        transitions.selectJob(p, jobIdRaw);
+        transitions.selectJob(p, jobId);
         return true;
     }
 
@@ -330,7 +331,7 @@ public final class GameFlow {
      */
     public boolean refreshLobbyKit(Player p) {
         if (p == null) return false;
-        PlayerSession s = store.get(p);
+        var s = store.get(p);
         if (s == null || !transitions.acceptsLobbyUiInput(p)) return false;
 
         transitions.refreshLobbyKit(p);
@@ -344,7 +345,7 @@ public final class GameFlow {
 
     public boolean allowsHubEntrance(Player p) {
         if (p == null) return false;
-        PlayerSession session = store.get(p);
+        var session = store.get(p);
         if (session == null || session.state() != PlayerState.HUB) return false;
 
         var active = gameManager.active();
@@ -459,9 +460,9 @@ public final class GameFlow {
                     }
                     if (fallback == RespawnCountdownDisabledFallback.SPECTATE) {
                         respawns.cancel(p);
-                        Location loc = g.arena().anchor().clone().add(0, 8, 0);
+                        var loc = g.arena().anchor().clone().add(0, 8, 0);
                         handle.setRespawnLocation(loc);
-                        p.getScheduler().run(plugin, task -> {
+                        p.getScheduler().run(plugin, _ -> {
                             if (p.isOnline()) transitions.toSpectate(p, loc);
                         }, null);
                         return;
@@ -472,13 +473,13 @@ public final class GameFlow {
                 if (wait == 0) {
                     respawns.cancel(p);
 
-                    Location spawn = transitions.gameSpawn(g, gameManager.runtime(), gameManager.playerFlow(), p);
+                    var spawn = transitions.gameSpawn(g, gameManager.runtime(), gameManager.playerFlow(), p);
                     handle.setRespawnLocation(spawn);
 
-                    p.getScheduler().run(plugin, task -> {
+                    p.getScheduler().run(plugin, _ -> {
                         if (!p.isOnline()) return;
 
-                        GameSession active = gameManager.active();
+                        var active = gameManager.active();
                         if (active == null) {
                             transitions.toHub(p);
                             return;
@@ -495,10 +496,10 @@ public final class GameFlow {
                 handle.setRespawnLocation(transitions.deathAnchor());
             }
 
-            case RespawnDecision.Spectate(Location where) -> {
+            case RespawnDecision.Spectate(var where) -> {
                 respawns.cancel(p);
 
-                Location loc = (where != null) ? where : transitions.deathAnchor();
+                var loc = (where != null) ? where : transitions.deathAnchor();
                 transitions.toSpectate(p, loc);
                 handle.setRespawnLocation(loc);
             }
@@ -666,9 +667,7 @@ public final class GameFlow {
      */
     public void tick1s() {
         List<GameAction> actions = gameManager.tick1s();
-        for (GameAction a : actions) {
-            applyGameAction(a);
-        }
+        actions.forEach(this::applyGameAction);
 
         respawns.tick1s();
         tickPendingLeaveToHub();

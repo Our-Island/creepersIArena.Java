@@ -18,7 +18,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:wolong.sky_lantern",
+        id = "cia:wolong/sky_lantern",
         job = "cia:wolong",
         type = SkillType.ACTIVE,
         slot = 1,

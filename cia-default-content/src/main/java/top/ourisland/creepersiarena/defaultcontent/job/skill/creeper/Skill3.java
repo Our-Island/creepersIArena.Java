@@ -2,7 +2,6 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.creeper;
 
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Firework;
 import org.bukkit.potion.PotionEffect;
@@ -22,7 +21,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.fireworks",
+        id = "cia:creeper/fireworks",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -61,13 +60,13 @@ public class Skill3 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var cfg = ctx.skillConfig();
-            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
-            int rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
-            double forward = cfg.getDouble(id(), "forward", FORWARD);
-            double up = cfg.getDouble(id(), "up", UP);
-            int slowFallingTicks = Math.max(0, cfg.getInt(id(), "slow-falling-ticks", 20));
-            double spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
-            double spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
+            var flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
+            var rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
+            var forward = cfg.getDouble(id(), "forward", FORWARD);
+            var up = cfg.getDouble(id(), "up", UP);
+            var slowFallingTicks = Math.max(0, cfg.getInt(id(), "slow-falling-ticks", 20));
+            var spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
+            var spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
 
             p.addPotionEffect(new PotionEffect(
                     PotionEffectType.SLOW_FALLING,
@@ -78,8 +77,8 @@ public class Skill3 implements ISkillDefinition {
                     false
             ));
             var w = p.getWorld();
-            Vector dir = p.getLocation().getDirection().normalize();
-            Location spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
+            var dir = p.getLocation().getDirection().normalize();
+            var spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
             var fw = w.spawn(spawn, Firework.class, f -> {
                 var m = f.getFireworkMeta();
                 m.clearEffects();

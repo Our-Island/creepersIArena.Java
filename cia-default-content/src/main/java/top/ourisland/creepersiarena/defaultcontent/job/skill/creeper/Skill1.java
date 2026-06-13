@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.creeper;
 import org.bukkit.Material;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -18,7 +17,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.creeper",
+        id = "cia:creeper/creeper",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 0,
@@ -55,11 +54,11 @@ public class Skill1 implements ISkillDefinition {
             var world = caster.getWorld();
 
             var cfg = ctx.skillConfig();
-            long fuseTicks = cfg.getLong(id(), "fuse-ticks", FUSE_TICKS);
-            double speed = cfg.getDouble(id(), "speed", SPEED);
-            float explosionPower = (float) cfg.getDouble(id(), "explosion-power", 2.0);
+            var fuseTicks = cfg.getLong(id(), "fuse-ticks", FUSE_TICKS);
+            var speed = cfg.getDouble(id(), "speed", SPEED);
+            var explosionPower = (float) cfg.getDouble(id(), "explosion-power", 2.0);
 
-            Vector dir = caster.getLocation().getDirection().normalize();
+            var dir = caster.getLocation().getDirection().normalize();
             var spawnLoc = caster.getLocation().add(dir.clone().multiply(1.2)).add(0, 0.2, 0);
 
             var creeper = (Creeper) world.spawnEntity(spawnLoc, EntityType.CREEPER);

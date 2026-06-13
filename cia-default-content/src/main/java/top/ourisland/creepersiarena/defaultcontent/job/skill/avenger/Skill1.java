@@ -17,7 +17,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:avenger.blood_blink",
+        id = "cia:avenger/blood_blink",
         job = "cia:avenger",
         type = SkillType.ACTIVE,
         slot = 1,

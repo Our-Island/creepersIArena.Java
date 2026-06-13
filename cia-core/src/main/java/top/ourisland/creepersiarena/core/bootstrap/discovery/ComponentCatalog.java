@@ -1,9 +1,18 @@
 package top.ourisland.creepersiarena.core.bootstrap.discovery;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
+import top.ourisland.creepersiarena.core.identity.DuplicateRegistrationException;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,88 +20,133 @@ import java.util.Map;
 
 public final class ComponentCatalog {
 
-    private final Map<String, RegisteredComponent<IBootstrapModule>> modules = new LinkedHashMap<>();
-    private final Map<String, RegisteredComponent<IJob>> jobs = new LinkedHashMap<>();
-    private final Map<String, RegisteredComponent<ISkillDefinition>> skills = new LinkedHashMap<>();
-    private final Map<String, RegisteredComponent<IGameMode>> modes = new LinkedHashMap<>();
+    private final NamespaceRegistry namespaces;
+    private final Map<String, RegisteredComponent<String, IBootstrapModule>> modules = new LinkedHashMap<>();
+    private final OwnedRegistry<JobId, IJob> jobs;
+    private final OwnedRegistry<SkillId, ISkillDefinition> skills;
+    private final OwnedRegistry<GameModeId, IGameMode> modes;
+
+    public ComponentCatalog() {
+        this(new NamespaceRegistry());
+    }
+
+    public ComponentCatalog(
+            @lombok.NonNull NamespaceRegistry namespaces
+    ) {
+        this.namespaces = namespaces;
+        this.jobs = new OwnedRegistry<>(namespaces);
+        this.skills = new OwnedRegistry<>(namespaces);
+        this.modes = new OwnedRegistry<>(namespaces);
+    }
+
+    public NamespaceRegistry namespaces() {
+        return namespaces;
+    }
 
     public synchronized void registerModule(@lombok.NonNull IBootstrapModule module) {
-        registerModule(RegisteredComponent.CORE_OWNER, module);
+        var entry = new RegisteredComponent<>(
+                RegistrationOwner.CORE,
+                module.name(),
+                module
+        );
+        var existing = modules.putIfAbsent(module.name(), entry);
+        if (existing != null) {
+            throw new DuplicateRegistrationException(
+                    module.name(),
+                    existing.owner(),
+                    RegistrationOwner.CORE
+            );
+        }
     }
 
-    public synchronized void registerModule(String ownerId, @lombok.NonNull IBootstrapModule module) {
-        modules.put(module.name(), new RegisteredComponent<>(ownerId, module.name(), module));
+    public void registerJob(IJob job) {
+        registerJob(RegistrationOwner.CORE, job);
     }
 
-    public synchronized void registerJob(@lombok.NonNull IJob job) {
-        registerJob(RegisteredComponent.CORE_OWNER, job);
+    public void registerJob(
+            RegistrationOwner owner,
+            @lombok.NonNull IJob job
+    ) {
+        jobs.register(owner, job.id(), job);
     }
 
-    public synchronized void registerJob(String ownerId, @lombok.NonNull IJob job) {
-        jobs.put(job.id().id(), new RegisteredComponent<>(ownerId, job.id().id(), job));
+    public void registerSkill(ISkillDefinition skill) {
+        registerSkill(RegistrationOwner.CORE, skill);
     }
 
-    public synchronized void registerSkill(@lombok.NonNull ISkillDefinition skill) {
-        registerSkill(RegisteredComponent.CORE_OWNER, skill);
+    public void registerSkill(
+            RegistrationOwner owner,
+            @lombok.NonNull ISkillDefinition skill
+    ) {
+        skills.register(owner, skill.id(), skill);
     }
 
-    public synchronized void registerSkill(String ownerId, @lombok.NonNull ISkillDefinition skill) {
-        skills.put(skill.id(), new RegisteredComponent<>(ownerId, skill.id(), skill));
+    public void registerMode(IGameMode mode) {
+        registerMode(RegistrationOwner.CORE, mode);
     }
 
-    public synchronized void registerMode(@lombok.NonNull IGameMode mode) {
-        registerMode(RegisteredComponent.CORE_OWNER, mode);
+    public void registerMode(
+            RegistrationOwner owner,
+            @lombok.NonNull IGameMode mode
+    ) {
+        modes.register(owner, mode.mode(), mode);
     }
 
-    public synchronized void registerMode(String ownerId, @lombok.NonNull IGameMode mode) {
-        modes.put(mode.mode().id(), new RegisteredComponent<>(ownerId, mode.mode().id(), mode));
+    public synchronized @NonNull List<IBootstrapModule> modules() {
+        return modules.values().stream()
+                .map(RegisteredComponent::value)
+                .toList();
     }
 
-    public synchronized List<IBootstrapModule> modules() {
-        return modules.values().stream().map(RegisteredComponent::value).toList();
-    }
-
-    public synchronized List<IJob> jobs() {
-        return jobs.values().stream().map(RegisteredComponent::value).toList();
-    }
-
-    public synchronized List<ISkillDefinition> skills() {
-        return skills.values().stream().map(RegisteredComponent::value).toList();
-    }
-
-    public synchronized List<IGameMode> modes() {
-        return modes.values().stream().map(RegisteredComponent::value).toList();
-    }
-
-    public synchronized List<RegisteredComponent<IBootstrapModule>> registeredModules() {
-        return List.copyOf(modules.values());
-    }
-
-    public synchronized List<RegisteredComponent<IJob>> registeredJobs() {
+    public @NonNull List<IJob> jobs() {
         return List.copyOf(jobs.values());
     }
 
-    public synchronized List<RegisteredComponent<ISkillDefinition>> registeredSkills() {
+    public @NonNull List<ISkillDefinition> skills() {
         return List.copyOf(skills.values());
     }
 
-    public synchronized List<RegisteredComponent<IGameMode>> registeredModes() {
+    public @NonNull List<IGameMode> modes() {
         return List.copyOf(modes.values());
     }
 
-    public synchronized String ownerOfJob(String jobId) {
+    public synchronized @NonNull List<RegisteredComponent<String, IBootstrapModule>> registeredModules() {
+        return List.copyOf(modules.values());
+    }
+
+    public @NonNull List<RegisteredComponent<JobId, IJob>> registeredJobs() {
+        return jobs.entries();
+    }
+
+    public @NonNull List<RegisteredComponent<SkillId, ISkillDefinition>> registeredSkills() {
+        return skills.entries();
+    }
+
+    public @NonNull List<RegisteredComponent<GameModeId, IGameMode>> registeredModes() {
+        return modes.entries();
+    }
+
+    public void clearOwner(
+            @lombok.NonNull RegistrationOwner owner
+    ) {
+        jobs.clearOwner(owner);
+        skills.clearOwner(owner);
+        modes.clearOwner(owner);
+    }
+
+    public @Nullable RegistrationOwner ownerOfJob(JobId jobId) {
         var registered = jobs.get(jobId);
-        return registered == null ? null : registered.ownerId();
+        return registered == null ? null : registered.owner();
     }
 
-    public synchronized String ownerOfSkill(String skillId) {
+    public @Nullable RegistrationOwner ownerOfSkill(SkillId skillId) {
         var registered = skills.get(skillId);
-        return registered == null ? null : registered.ownerId();
+        return registered == null ? null : registered.owner();
     }
 
-    public synchronized String ownerOfMode(String modeId) {
+    public @Nullable RegistrationOwner ownerOfMode(GameModeId modeId) {
         var registered = modes.get(modeId);
-        return registered == null ? null : registered.ownerId();
+        return registered == null ? null : registered.owner();
     }
 
 }

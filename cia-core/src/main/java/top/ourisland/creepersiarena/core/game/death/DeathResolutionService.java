@@ -66,7 +66,7 @@ public final class DeathResolutionService {
         boolean hasKiller = killer != null;
         boolean selfKill = !hasKiller;
 
-        DeathStreakService.StreakOutcome streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
+        var streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
                 ? streakService.apply(victim, killer, currentTick)
                 : DeathStreakService.StreakOutcome.none(hasKiller);
         var result = new DeathResult(
@@ -95,12 +95,12 @@ public final class DeathResolutionService {
     ) {
         for (var registered : registry.resolvers()) {
             try {
-                Optional<DeathCauseId> causeId = registered.value().resolveDeath(event, victim, lastAttribution);
+                var causeId = registered.value().resolveDeath(event, victim, lastAttribution);
                 if (causeId.isPresent()) return causeId.get();
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] cause resolver failed on death: owner={} player={} err={}",
-                        registered.ownerId(),
+                        registered.owner(),
                         victim.getName(),
                         throwable.getMessage(),
                         throwable

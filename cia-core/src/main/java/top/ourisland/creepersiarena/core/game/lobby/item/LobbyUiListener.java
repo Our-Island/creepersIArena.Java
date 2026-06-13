@@ -21,7 +21,11 @@ public final class LobbyUiListener implements Listener {
     private final PlayerSessionStore store;
     private final GameFlow flow;
 
-    public LobbyUiListener(LobbyItemCodec codec, PlayerSessionStore store, GameFlow flow) {
+    public LobbyUiListener(
+            LobbyItemCodec codec,
+            PlayerSessionStore store,
+            GameFlow flow
+    ) {
         this.codec = codec;
         this.store = store;
         this.flow = flow;
@@ -38,7 +42,7 @@ public final class LobbyUiListener implements Listener {
                         a == Action.LEFT_CLICK_AIR || a == Action.LEFT_CLICK_BLOCK;
         if (!isClick) return;
 
-        Player p = e.getPlayer();
+        var p = e.getPlayer();
         if (store.get(p) == null) return;
 
         var item = e.getItem();
@@ -63,7 +67,7 @@ public final class LobbyUiListener implements Listener {
             return;
         }
 
-        String jobId = codec.readJobId(item);
+        var jobId = codec.readJobId(item);
         if (jobId != null) {
             flow.onLobbySelectJob(p, jobId);
         }
@@ -94,7 +98,7 @@ public final class LobbyUiListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onSwap(PlayerSwapHandItemsEvent e) {
-        Player p = e.getPlayer();
+        var p = e.getPlayer();
 
         if (store.get(p) == null) return;
         if (!flow.acceptsLobbyUiInput(p)) return;

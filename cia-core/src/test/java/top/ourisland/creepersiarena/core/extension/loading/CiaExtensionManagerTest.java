@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.core.extension.loading;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 
 import javax.tools.ToolProvider;
@@ -159,6 +160,7 @@ class CiaExtensionManagerTest {
     ) throws IOException {
         writeEntry(output, CiaExtensionDescriptor.DESCRIPTOR_ENTRY, """
                 id: %s
+                namespace: %s
                 name: %s
                 version: 1.0.0
                 main: %s
@@ -168,7 +170,7 @@ class CiaExtensionManagerTest {
                 dependencies:
                   required: []
                   optional: []
-                """.formatted(id, id, mainClass));
+                """.formatted(id, id, id, mainClass));
     }
 
     private void writeEntry(
@@ -211,8 +213,8 @@ class CiaExtensionManagerTest {
         try {
             manager.loadAll();
 
-            assertNotNull(manager.loadedExtension("good-extension"));
-            assertNotNull(manager.loadFailure("bad-extension"));
+            assertNotNull(manager.loadedExtension(ExtensionId.parse("good-extension")));
+            assertNotNull(manager.loadFailure(ExtensionId.parse("bad-extension")));
             assertTrue(Files.exists(tempDir.resolve("extension-data/good-extension/loaded.txt")));
         } finally {
             manager.disableAll();
@@ -228,6 +230,7 @@ class CiaExtensionManagerTest {
         try (var output = new JarOutputStream(Files.newOutputStream(jar))) {
             writeEntry(output, CiaExtensionDescriptor.DESCRIPTOR_ENTRY, """
                     id: %s
+                    namespace: %s
                     name: %s
                     version: 1.0.0
                     main: %s
@@ -235,7 +238,7 @@ class CiaExtensionManagerTest {
                     cia-version: 0.1.0
                     authors: []
                     %s
-                    """.formatted(id, id, mainClass, dependencyBlock));
+                    """.formatted(id, id, id, mainClass, dependencyBlock));
         }
         return jar;
     }

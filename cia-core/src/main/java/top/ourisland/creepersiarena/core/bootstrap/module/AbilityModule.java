@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.api.ability.*;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.core.ability.AbilityContextFactory;
 import top.ourisland.creepersiarena.core.ability.AbilityGate;
 import top.ourisland.creepersiarena.core.ability.AbilityService;
@@ -8,9 +9,9 @@ import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.Map;
 
@@ -28,7 +29,8 @@ public final class AbilityModule implements IBootstrapModule {
             var service = new AbilityService(
                     rt.log(),
                     rt.requireService(ConfigManager.class),
-                    () -> rt.getService(GameManager.class)
+                    () -> rt.getService(GameManager.class),
+                    rt.requireService(NamespaceRegistry.class)
             );
             var contexts = new AbilityContextFactory(rt.log(), () -> rt.getService(GameManager.class));
             var gate = new AbilityGate(service, contexts);
@@ -56,7 +58,7 @@ public final class AbilityModule implements IBootstrapModule {
 
     private void registerCore(AbilityService service) {
         service.registerAbility(
-                RegisteredComponent.CORE_OWNER,
+                RegistrationOwner.CORE,
                 new SimpleAbility(CoreAbilities.RESTING_REGENERATION),
                 new SimpleAbility(CoreAbilities.MUTATION),
                 new SimpleAbility(CoreAbilities.DEATH_MESSAGES),

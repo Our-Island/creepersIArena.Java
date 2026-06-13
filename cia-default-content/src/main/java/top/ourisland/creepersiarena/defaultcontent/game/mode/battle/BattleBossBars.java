@@ -4,7 +4,6 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,9 +17,9 @@ public final class BattleBossBars {
     public void update(BattleState state) {
         if (state == null) return;
 
-        Component title = Component.text("Battle", NamedTextColor.RED)
+        var title = Component.text("Battle", NamedTextColor.RED)
                 .append(separator())
-                .append(Component.text(state.session().arena().id(), NamedTextColor.YELLOW))
+                .append(Component.text(state.session().arena().id().value(), NamedTextColor.YELLOW))
                 .append(separator())
                 .append(Component.text(state.mapProgress(), NamedTextColor.WHITE))
                 .append(Component.text("/", NamedTextColor.GRAY))
@@ -37,17 +36,17 @@ public final class BattleBossBars {
         }
 
         Set<UUID> desired = new HashSet<>();
-        for (UUID uuid : state.players()) {
-            Player player = Bukkit.getPlayer(uuid);
+        for (var uuid : state.players()) {
+            var player = Bukkit.getPlayer(uuid);
             if (state.isFighter(player)) {
                 desired.add(uuid);
                 player.showBossBar(mapProgress);
             }
         }
 
-        for (UUID uuid : Set.copyOf(viewers)) {
+        for (var uuid : Set.copyOf(viewers)) {
             if (desired.contains(uuid)) continue;
-            Player player = Bukkit.getPlayer(uuid);
+            var player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline() && mapProgress != null) {
                 player.hideBossBar(mapProgress);
             }
@@ -62,12 +61,10 @@ public final class BattleBossBars {
 
     public void hide() {
         if (mapProgress == null) return;
-        for (UUID uuid : Set.copyOf(viewers)) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null && player.isOnline()) {
-                player.hideBossBar(mapProgress);
-            }
-        }
+        Set.copyOf(viewers).stream()
+                .map(Bukkit::getPlayer)
+                .filter(player -> player != null && player.isOnline())
+                .forEach(player -> player.hideBossBar(mapProgress));
         viewers.clear();
         mapProgress = null;
     }

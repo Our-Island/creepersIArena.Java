@@ -1,101 +1,55 @@
 package top.ourisland.creepersiarena.api.game.death;
 
-import org.bukkit.NamespacedKey;
 import org.jspecify.annotations.NonNull;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.CiaResourceId;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 
-import java.util.Objects;
-
+/**
+ * Stable, globally namespaced death cause identifier.
+ */
 public record DeathCauseId(
-        NamespacedKey key
-) {
+        @lombok.NonNull CiaKey key
+) implements CiaResourceId {
 
-    public static final String DEFAULT_NAMESPACE = "cia";
-
-    public DeathCauseId {
-        Objects.requireNonNull(key, "key");
+    public static @NonNull DeathCauseId parse(String raw) {
+        return new DeathCauseId(CiaKey.parse(raw));
     }
 
-    public static DeathCauseId of(String path) {
-        return of(DEFAULT_NAMESPACE, path);
+    public static @NonNull DeathCauseId of(CiaKey key) {
+        return new DeathCauseId(key);
     }
 
-    public static DeathCauseId accident(String path) {
-        return of("accident/" + normalizePath(path));
+    public static @NonNull DeathCauseId accident(String path) {
+        return of(CiaNamespace.CORE, "accident/" + path);
     }
 
-    public static DeathCauseId combat(String path) {
-        return of("combat/" + normalizePath(path));
+    public static @NonNull DeathCauseId of(
+            CiaNamespace namespace,
+            String path
+    ) {
+        return new DeathCauseId(CiaKey.of(namespace, path));
     }
 
-    public static DeathCauseId skill(String jobId, String skillId) {
-        return skill(DEFAULT_NAMESPACE, jobId, skillId);
+    public static @NonNull DeathCauseId combat(String path) {
+        return of(CiaNamespace.CORE, "combat/" + path);
     }
 
-    public static DeathCauseId skill(String namespace, String jobId, String skillId) {
-        return of(
-                normalizeNamespace(namespace),
-                "skill/" + stripNamespace(jobId) + "/" + normalizePath(skillId)
-        );
+    public static @NonNull DeathCauseId skill(@lombok.NonNull SkillId skillId) {
+        return of(skillId.namespace(), "skill/" + skillId.path().value());
     }
 
-    public static DeathCauseId custom(String namespace, String path) {
+    public static @NonNull DeathCauseId custom(
+            CiaNamespace namespace,
+            String path
+    ) {
         return of(namespace, path);
-    }
-
-    public static DeathCauseId of(String namespace, String path) {
-        return new DeathCauseId(new NamespacedKey(
-                normalizeNamespace(namespace),
-                normalizePath(path)
-        ));
-    }
-
-    private static String normalizeNamespace(String namespace) {
-        if (namespace == null || namespace.isBlank()) return DEFAULT_NAMESPACE;
-        return namespace.trim();
-    }
-
-    private static String normalizePath(String path) {
-        if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("Death cause path must not be blank");
-        }
-        return stripNamespace(path.trim());
-    }
-
-    private static String stripNamespace(String value) {
-        int separator = value.indexOf(':');
-        if (separator < 0) return value;
-        if (separator >= value.length() - 1) {
-            throw new IllegalArgumentException("Namespaced value must include a path: " + value);
-        }
-        return value.substring(separator + 1);
-    }
-
-    public static DeathCauseId parse(String raw) {
-        if (raw == null || raw.isBlank()) return StandardDeathCauses.GENERIC;
-
-        String trimmed = raw.trim();
-        int separator = trimmed.indexOf(':');
-        if (separator < 0) return of(trimmed);
-        if (separator == 0 || separator >= trimmed.length() - 1) return StandardDeathCauses.GENERIC;
-
-        try {
-            return of(trimmed.substring(0, separator), trimmed.substring(separator + 1));
-        } catch (IllegalArgumentException ignored) {
-            return StandardDeathCauses.GENERIC;
-        }
-    }
-
-    public String namespace() {
-        return key.getNamespace();
-    }
-
-    public String value() {
-        return key.getKey();
     }
 
     @Override
     public @NonNull String toString() {
-        return key.asString();
+        return asString();
     }
 
 }

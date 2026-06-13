@@ -25,6 +25,13 @@ public @interface CiaExtensionInfo {
     String id();
 
     /**
+     * Exclusive namespace owned by this extension for globally registered content.
+     *
+     * @return content namespace using {@code [a-z0-9_-]}
+     */
+    String namespace();
+
+    /**
      * Human-readable extension name.
      *
      * @return display name
@@ -43,7 +50,7 @@ public @interface CiaExtensionInfo {
      *
      * @return descriptor API version
      */
-    int apiVersion() default 1;
+    int apiVersion() default 2;
 
     /**
      * Supported CreepersIArena version or version range. When empty, the generated descriptor uses the extension

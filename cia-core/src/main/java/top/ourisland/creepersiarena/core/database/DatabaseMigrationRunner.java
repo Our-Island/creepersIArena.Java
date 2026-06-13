@@ -7,7 +7,6 @@ import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Locale;
 
 public final class DatabaseMigrationRunner {
 
@@ -72,7 +71,7 @@ public final class DatabaseMigrationRunner {
             Connection connection,
             IDatabaseMigration migration
     ) throws Exception {
-        String owner = normalize(migration.ownerId());
+        String owner = migration.ownerId().value();
         MigrationRecord record = find(connection, owner, migration.version());
 
         if (record != null) {
@@ -102,11 +101,6 @@ public final class DatabaseMigrationRunner {
         } finally {
             connection.setAutoCommit(autoCommit);
         }
-    }
-
-    private String normalize(String raw) {
-        if (raw == null || raw.isBlank()) return "unknown";
-        return raw.trim().toLowerCase(Locale.ROOT);
     }
 
     private MigrationRecord find(

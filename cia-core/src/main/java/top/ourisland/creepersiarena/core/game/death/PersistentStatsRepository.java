@@ -1,11 +1,10 @@
 package top.ourisland.creepersiarena.core.game.death;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
+import top.ourisland.creepersiarena.core.identity.CiaKeySql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -14,9 +13,13 @@ import java.util.UUID;
 
 public final class PersistentStatsRepository {
 
+    private static final GameModeId UNKNOWN_MODE = GameModeId.parse("core:unknown");
+
     private final JdbcDatabaseService database;
 
-    public PersistentStatsRepository(JdbcDatabaseService database) {
+    public PersistentStatsRepository(
+            JdbcDatabaseService database
+    ) {
         this.database = database;
     }
 
@@ -35,18 +38,24 @@ public final class PersistentStatsRepository {
         });
     }
 
-    private void insertDeath(Connection connection, GameSession match, DeathResult result) throws SQLException {
-        String table = database.names().matchDeaths();
-        Player victim = result.victim();
-        Location loc = victim.getLocation();
-
-        try (var st = connection.prepareStatement("INSERT INTO " + table + " (death_id, match_id, victim_uuid, killer_uuid, cause_namespace, cause_value, label, world_name, x, y, z, occurred_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+    private void insertDeath(
+            Connection connection,
+            GameSession match,
+            DeathResult result
+    ) throws SQLException {
+        var table = database.names().matchDeaths();
+        var victim = result.victim();
+        var loc = victim.getLocation();
+        try (
+                var st = connection.prepareStatement(
+                        "INSERT INTO " + table + " (death_id, match_id, victim_uuid, killer_uuid, cause_namespace, cause_path, label, world_name, x, y, z, occurred_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+        ) {
             st.setString(1, UUID.randomUUID().toString());
             st.setString(2, null);
             st.setString(3, victim.getUniqueId().toString());
             st.setString(4, result.killer() == null ? null : result.killer().getUniqueId().toString());
-            st.setString(5, result.causeId().namespace());
-            st.setString(6, result.causeId().value());
+            CiaKeySql.bind(st, 5, 6, result.causeId().key());
             st.setString(7, result.label().name());
             st.setString(8, loc.getWorld() == null ? null : loc.getWorld().getName());
             st.setDouble(9, loc.getX());
@@ -59,7 +68,7 @@ public final class PersistentStatsRepository {
 
     private void incrementTotals(
             Connection connection,
-            GameModeType mode,
+            GameModeId mode,
             UUID playerId,
             boolean kill,
             boolean death,
@@ -67,29 +76,27 @@ public final class PersistentStatsRepository {
     ) throws SQLException {
         if (playerId == null) return;
 
-        String modeId = mode == null ? "core:unknown" : mode.id();
-        int colon = modeId.indexOf(':');
+        var actualMode = mode == null ? UNKNOWN_MODE : mode;
+        var table = database.names().playerStatTotals();
+        var now = Instant.now().toEpochMilli();
 
-        String namespace = colon < 0 ? "core" : modeId.substring(0, colon);
-        String value = colon < 0 ? modeId : modeId.substring(colon + 1);
-        String table = database.names().playerStatTotals();
-
-        long now = Instant.now().toEpochMilli();
-
-        ensureTotalsRow(connection, table, playerId, namespace, value, now);
-        try (var st = connection.prepareStatement("UPDATE " + table + " SET kills = kills + ?, deaths = deaths + ?, kill_score = kill_score + ?, updated_at = ? WHERE player_uuid = ? AND mode_namespace = ? AND mode_value = ?")) {
+        ensureTotalsRow(connection, table, playerId, actualMode, now);
+        try (
+                var st = connection.prepareStatement(
+                        "UPDATE " + table + " SET kills = kills + ?, deaths = deaths + ?, kill_score = kill_score + ?, updated_at = ? WHERE player_uuid = ? AND mode_namespace = ? AND mode_path = ?"
+                )
+        ) {
             st.setLong(1, kill ? 1L : 0L);
             st.setLong(2, death ? 1L : 0L);
             st.setLong(3, killScore ? 1L : 0L);
             st.setLong(4, now);
             st.setString(5, playerId.toString());
-            st.setString(6, namespace);
-            st.setString(7, value);
+            CiaKeySql.bind(st, 6, 7, actualMode.key());
             st.executeUpdate();
         }
     }
 
-    private GameModeType mode(GameSession match) {
+    private GameModeId mode(GameSession match) {
         return match == null ? null : match.mode();
     }
 
@@ -97,23 +104,28 @@ public final class PersistentStatsRepository {
             Connection connection,
             String table,
             UUID playerId,
-            String namespace,
-            String value,
+            GameModeId mode,
             long now
     ) throws SQLException {
-        try (var st = connection.prepareStatement("SELECT player_uuid FROM " + table + " WHERE player_uuid = ? AND mode_namespace = ? AND mode_value = ?")) {
+        try (
+                var st = connection.prepareStatement(
+                        "SELECT player_uuid FROM " + table + " WHERE player_uuid = ? AND mode_namespace = ? AND mode_path = ?"
+                )
+        ) {
             st.setString(1, playerId.toString());
-            st.setString(2, namespace);
-            st.setString(3, value);
+            CiaKeySql.bind(st, 2, 3, mode.key());
             try (var rs = st.executeQuery()) {
                 if (rs.next()) return;
             }
         }
 
-        try (var st = connection.prepareStatement("INSERT INTO " + table + " (player_uuid, mode_namespace, mode_value, games_played, wins, losses, kills, deaths, kill_score, updated_at) VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, ?)")) {
+        try (
+                var st = connection.prepareStatement(
+                        "INSERT INTO " + table + " (player_uuid, mode_namespace, mode_path, games_played, wins, losses, kills, deaths, kill_score, updated_at) VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, ?)"
+                )
+        ) {
             st.setString(1, playerId.toString());
-            st.setString(2, namespace);
-            st.setString(3, value);
+            CiaKeySql.bind(st, 2, 3, mode.key());
             st.setLong(4, now);
             st.executeUpdate();
         }

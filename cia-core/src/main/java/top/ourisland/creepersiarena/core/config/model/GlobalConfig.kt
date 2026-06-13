@@ -5,6 +5,10 @@ import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
 import top.ourisland.creepersiarena.api.config.IGameConfigView
 import top.ourisland.creepersiarena.api.database.DatabaseType
+import top.ourisland.creepersiarena.api.game.mode.GameModeId
+import top.ourisland.creepersiarena.api.identity.CiaKey
+import top.ourisland.creepersiarena.api.identity.CiaNamespace
+import top.ourisland.creepersiarena.api.job.JobId
 import java.util.*
 
 /**
@@ -15,13 +19,13 @@ import java.util.*
  */
 data class GlobalConfig(
     @get:JvmName("lang") val lang: String,
-    @get:JvmName("disabledJobs") val disabledJobs: Set<String>,
+    @get:JvmName("disabledJobs") val disabledJobs: Set<JobId>,
     @get:JvmName("lobbies") val lobbies: Map<String, Lobby>,
     @get:JvmName("game") val game: Game,
     @get:JvmName("ui") val ui: Ui,
     @get:JvmName("world") val world: World,
     @get:JvmName("database") val database: Database,
-    private val modeSections: Map<String, ConfigurationSection>,
+    private val modeSections: Map<GameModeId, ConfigurationSection>,
 ) : IGameConfigView {
 
     companion object {
@@ -40,7 +44,7 @@ data class GlobalConfig(
         @JvmStatic
         fun fromYaml(yml: YamlConfiguration): GlobalConfig {
             val lang = yml.getString("lang", "en_us") ?: "en_us"
-            val disabledJobs = HashSet(yml.getStringList("disabled-jobs"))
+            val disabledJobs = parseIds(yml.getStringList("disabled-jobs"), "disabled-jobs", JobId::parse)
 
             val lobbies = HashMap<String, Lobby>()
             val lobbiesSec = yml.getConfigurationSection("lobbies")
@@ -71,34 +75,70 @@ data class GlobalConfig(
             )
         }
 
-        private fun collectModeSections(gameSec: ConfigurationSection?): Map<String, ConfigurationSection> {
+        private fun collectModeSections(
+            gameSec: ConfigurationSection?
+        ): Map<GameModeId, ConfigurationSection> {
             if (gameSec == null) return mapOf()
-
-            val out = LinkedHashMap<String, ConfigurationSection>()
-
-            val modesSec = gameSec.getConfigurationSection("modes")
-            if (modesSec != null) {
-                for (key in modesSec.getKeys(false)) {
-                    val sec = modesSec.getConfigurationSection(key) ?: continue
-                    putModeSection(out, key, sec)
-                }
+            val modesSec = gameSec.getConfigurationSection("modes") ?: return mapOf()
+            val out = LinkedHashMap<GameModeId, ConfigurationSection>()
+            for (namespace in modesSec.getKeys(false)) {
+                val namespaceSection = modesSec.getConfigurationSection(namespace) ?: continue
+                collectModeSections(namespace, namespaceSection, "", out)
             }
-
             return out
         }
 
-        private fun putModeSection(
-            out: MutableMap<String, ConfigurationSection>,
-            key: String,
-            sec: ConfigurationSection
+        private fun collectModeSections(
+            namespace: String,
+            section: ConfigurationSection,
+            path: String,
+            out: MutableMap<GameModeId, ConfigurationSection>
         ) {
-            val normalized = key.trim().lowercase(Locale.ROOT)
-            if (normalized.isEmpty()) return
-            out[normalized] = sec
-            out[normalized.substringAfter(':', normalized)] = sec
+            // A mode section is a leaf from the identity perspective; its children are mode-owned settings.
+            if (path.isNotEmpty()) {
+                val id = try {
+                    GameModeId.of(
+                        CiaKey.of(
+                            CiaNamespace.parse(namespace),
+                            path.replace('.', '/')
+                        )
+                    )
+                } catch (exception: IllegalArgumentException) {
+                    throw IllegalArgumentException(
+                        "Invalid game mode config path game.modes.$namespace.$path",
+                        exception
+                    )
+                }
+                out[id] = section
+                return
+            }
+            for (key in section.getKeys(false)) {
+                val child = section.getConfigurationSection(key) ?: continue
+                collectModeSections(namespace, child, key, out)
+            }
         }
 
-        internal fun asDouble(list: List<*>?, idx: Int, def: Double): Double {
+        private fun <T> parseIds(
+            values: List<String>,
+            path: String,
+            parser: (String) -> T
+        ): Set<T> {
+            val out = LinkedHashSet<T>()
+            for (value in values) {
+                try {
+                    out.add(parser(value))
+                } catch (exception: IllegalArgumentException) {
+                    throw IllegalArgumentException("Invalid namespaced id at $path: $value", exception)
+                }
+            }
+            return out
+        }
+
+        internal fun asDouble(
+            list: List<*>?,
+            idx: Int,
+            def: Double
+        ): Double {
             if (list == null || list.size <= idx) return def
             val o = list[idx]
             if (o is Number) return o.toDouble()
@@ -120,23 +160,14 @@ data class GlobalConfig(
 
     }
 
-    override fun isModeDisabled(modeId: String): Boolean {
-        val normalized = modeId.trim().lowercase(Locale.ROOT)
-        val plain = normalized.substringAfter(':', normalized)
-        return game.disabledModes.any { disabled ->
-            val d = disabled.trim().lowercase(Locale.ROOT)
-            d == normalized || d == plain || d.substringAfter(':', d) == plain
-        }
-    }
+    override fun isModeDisabled(modeId: GameModeId): Boolean = game.disabledModes.contains(modeId)
 
     override fun leaveDelaySeconds(): Int = game.leaveDelaySeconds
 
-    override fun modeSection(modeId: String): ConfigurationSection? {
-        val normalized = modeId.trim().lowercase(Locale.ROOT)
-        return modeSections[normalized] ?: modeSections[normalized.substringAfter(':', normalized)]
-    }
+    override fun modeSection(modeId: GameModeId): ConfigurationSection? = modeSections[modeId]
 
     enum class JobSelectMode {
+
         HOTBAR,
         INVENTORY;
 
@@ -225,9 +256,9 @@ data class GlobalConfig(
     }
 
     data class Game(
-        @get:JvmName("disabledModes") val disabledModes: Set<String>,
+        @get:JvmName("disabledModes") val disabledModes: Set<GameModeId>,
         @get:JvmName("leaveDelaySeconds") val leaveDelaySeconds: Int,
-        @get:JvmName("defaultMode") val defaultMode: String,
+        @get:JvmName("defaultMode") val defaultMode: @Nullable GameModeId?,
     ) {
 
         companion object {
@@ -235,13 +266,37 @@ data class GlobalConfig(
             fun fromSection(sec: ConfigurationSection?): Game {
                 if (sec == null) return defaults()
                 return Game(
-                    disabledModes = Collections.unmodifiableSet(HashSet(sec.getStringList("disabled-modes"))),
-                    leaveDelaySeconds = sec.getInt("leave-delay-seconds", 5).coerceAtLeast(0),
-                    defaultMode = sec.getString("default-mode", "") ?: "",
+                    disabledModes = Collections.unmodifiableSet(
+                        parseIds(
+                            sec.getStringList("disabled-modes"),
+                            "game.disabled-modes",
+                            GameModeId::parse
+                        )
+                    ),
+                    leaveDelaySeconds = sec.getInt("leave-delay-seconds", 5)
+                        .coerceAtLeast(0),
+                    defaultMode = sec.getString("default-mode")
+                        ?.takeIf {
+                            it.isNotBlank()
+                        }
+                        ?.let { raw ->
+                            try {
+                                GameModeId.parse(raw)
+                            } catch (exception: IllegalArgumentException) {
+                                throw IllegalArgumentException(
+                                    "Invalid namespaced id at game.default-mode: $raw",
+                                    exception
+                                )
+                            }
+                        },
                 )
             }
 
-            fun defaults(): Game = Game(disabledModes = setOf(), leaveDelaySeconds = 5, defaultMode = "")
+            fun defaults(): Game = Game(
+                disabledModes = setOf(),
+                leaveDelaySeconds = 5,
+                defaultMode = null
+            )
 
         }
 

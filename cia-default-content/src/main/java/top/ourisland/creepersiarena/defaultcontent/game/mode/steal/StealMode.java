@@ -7,7 +7,7 @@ import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.mode.ModeLogic;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime.StealLogicFactory;
 
-@CiaModeDef(id = "steal")
+@CiaModeDef(id = "cia:steal")
 public final class StealMode implements IGameMode {
 
     @Override

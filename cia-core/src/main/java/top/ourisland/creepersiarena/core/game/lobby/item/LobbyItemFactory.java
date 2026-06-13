@@ -26,11 +26,13 @@ public final class LobbyItemFactory {
         this.jobs = jobs;
     }
 
-    public @Nullable ItemStack jobSelectButton(@lombok.NonNull String jobId, @lombok.NonNull PlayerSession s) {
-        boolean selected = s.selectedJob() != null && s.selectedJob().id().equals(jobId);
+    public @Nullable ItemStack jobSelectButton(
+            @lombok.NonNull JobId jobId,
+            @lombok.NonNull PlayerSession s
+    ) {
+        boolean selected = s.selectedJob() != null && s.selectedJob().equals(jobId);
 
-        var jid = JobId.fromId(jobId);
-        var job = (jid == null) ? null : jobs.getJob(jid);
+        var job = jobs.getJob(jobId);
         if (job == null) return null;
 
         var item = job.display().clone();
@@ -38,7 +40,7 @@ public final class LobbyItemFactory {
 
         var meta = item.getItemMeta();
         if (meta != null) {
-            var baseName = resolveJobName(meta, jid, jobId);
+            var baseName = resolveJobName(meta, jobId, jobId.asString());
 
             meta.displayName(selected
                     ? Component.text("[选择中] ").append(baseName)
@@ -54,7 +56,11 @@ public final class LobbyItemFactory {
         return item;
     }
 
-    private Component resolveJobName(ItemMeta meta, JobId jid, String fallback) {
+    private Component resolveJobName(
+            ItemMeta meta,
+            JobId jid,
+            String fallback
+    ) {
         String key = LangKeyResolver.jobName(jid);
         if (I18n.has(key)) return I18n.langNP(key);
         var itemName = meta.displayName();

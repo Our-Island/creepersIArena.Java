@@ -3,6 +3,8 @@ package top.ourisland.creepersiarena.api.game.mutation;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.game.GameSession;
+import top.ourisland.creepersiarena.api.game.arena.ArenaId;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,19 +14,13 @@ import java.util.List;
  */
 public record MutationCandidateContext(
         @Nullable GameSession game,
-        String modeId,
-        String arenaId,
+        @Nullable GameModeId modeId,
+        @Nullable ArenaId arenaId,
         int idleTicks,
         Collection<Player> activeTargets
 ) {
 
     public MutationCandidateContext {
-        modeId = modeId == null
-                ? ""
-                : modeId;
-        arenaId = arenaId == null
-                ? ""
-                : arenaId;
         activeTargets = activeTargets == null
                 ? List.of()
                 : List.copyOf(activeTargets);

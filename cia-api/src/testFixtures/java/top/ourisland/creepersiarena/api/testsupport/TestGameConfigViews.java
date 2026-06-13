@@ -3,6 +3,8 @@ package top.ourisland.creepersiarena.api.testsupport;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import top.ourisland.creepersiarena.api.config.IGameConfigView;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 
 /**
  * Shared config-view fixtures for mode/config tests.
@@ -19,8 +21,8 @@ public final class TestGameConfigViews {
     public static IGameConfigView fromYaml(YamlConfiguration yaml) {
         return new IGameConfigView() {
             @Override
-            public boolean isModeDisabled(String modeId) {
-                return yaml.getBoolean("game.modes." + normalizeModeId(modeId) + ".disabled", false);
+            public boolean isModeDisabled(GameModeId modeId) {
+                return yaml.getBoolean("game.modes.%s.disabled".formatted(CiaConfigPaths.section(modeId)), false);
             }
 
             @Override
@@ -29,16 +31,10 @@ public final class TestGameConfigViews {
             }
 
             @Override
-            public ConfigurationSection modeSection(String modeId) {
-                return yaml.getConfigurationSection("game.modes." + normalizeModeId(modeId));
+            public ConfigurationSection modeSection(GameModeId modeId) {
+                return yaml.getConfigurationSection("game.modes." + CiaConfigPaths.section(modeId));
             }
         };
-    }
-
-    public static String normalizeModeId(String modeId) {
-        if (modeId == null || modeId.isBlank()) return "";
-        int separator = modeId.indexOf(':');
-        return separator >= 0 ? modeId.substring(separator + 1) : modeId;
     }
 
 }

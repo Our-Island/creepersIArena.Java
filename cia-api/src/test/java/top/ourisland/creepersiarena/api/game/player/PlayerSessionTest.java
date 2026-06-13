@@ -1,6 +1,9 @@
 package top.ourisland.creepersiarena.api.game.player;
 
 import org.junit.jupiter.api.Test;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
 
 import java.util.UUID;
 
@@ -8,6 +11,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static top.ourisland.creepersiarena.api.testsupport.TestBukkit.player;
 
 class PlayerSessionTest {
+
+    private static final CiaNamespace
+            CIA = CiaNamespace.parse("cia"),
+            OTHER = CiaNamespace.parse("other");
+    private static final SessionDataKey<Boolean>
+            READY = SessionDataKey.of(CiaKey.of(CIA, "steal/ready"), Boolean.class),
+            ALIVE = SessionDataKey.of(CiaKey.of(CIA, "steal/alive"), Boolean.class);
+    private static final SessionDataKey<Integer>
+            OTHER_VALUE = SessionDataKey.of(CiaKey.of(OTHER, "value"), Integer.class);
 
     @Test
     void initializesFromPlayerUuid() {
@@ -18,36 +30,35 @@ class PlayerSessionTest {
         assertEquals(PlayerState.HUB, session.state());
     }
 
-
     @Test
-    void storesReadsAndClearsModeData() {
+    void storesReadsAndClearsNamespaceData() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
-        session.modeData("cia.steal.ready", "true");
-        session.setModeBoolean("cia.steal.alive", false);
-        session.modeData("other.value", 42);
+        session.set(READY, true);
+        session.set(ALIVE, false);
+        session.set(OTHER_VALUE, 42);
 
-        assertTrue(session.modeBoolean("cia.steal.ready", false));
-        assertFalse(session.modeBoolean("cia.steal.alive", true));
-        assertEquals(42, session.modeData("other.value"));
+        assertTrue(session.getOrDefault(READY, false));
+        assertFalse(session.getOrDefault(ALIVE, true));
+        assertEquals(42, session.get(OTHER_VALUE));
 
-        session.clearModeData("cia.steal.");
+        session.clearNamespace(CIA);
 
-        assertNull(session.modeData("cia.steal.ready"));
-        assertNull(session.modeData("cia.steal.alive"));
-        assertEquals(42, session.modeData("other.value"));
+        assertNull(session.get(READY));
+        assertNull(session.get(ALIVE));
+        assertEquals(42, session.get(OTHER_VALUE));
     }
 
     @Test
-    void nullModeDataRemovesValueAndBlankKeysAreIgnored() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void nullRemovesAndTypeMismatchFailsFast() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
-        session.modeData("custom.flag", true);
-        session.modeData("custom.flag", null);
-        session.modeData(" ", true);
+        session.set(READY, true);
+        session.set(READY, null);
+        assertNull(session.get(READY));
 
-        assertNull(session.modeData("custom.flag"));
-        assertTrue(session.modeData().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> session.set((SessionDataKey) READY, "not-a-boolean"));
     }
 
 }

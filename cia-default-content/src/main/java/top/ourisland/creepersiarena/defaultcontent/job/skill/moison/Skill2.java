@@ -17,7 +17,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:moison.volley",
+        id = "cia:moison/volley",
         job = "cia:moison",
         type = SkillType.ACTIVE,
         slot = 1,
@@ -48,7 +48,7 @@ public class Skill2 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, store) -> {
             var p = ctx.player();
-            boolean spectral = MoisonProjectileSupport.consumeSpectralReserve(store, p, ctx.nowTick());
+            var spectral = MoisonProjectileSupport.consumeSpectralReserve(store, p, ctx.nowTick());
             var plugin = ctx.plugin();
             final int[] wave = {0};
 
@@ -73,9 +73,9 @@ public class Skill2 implements ISkillDefinition {
     }
 
     private void shootSpread(Player p, boolean spectral, double yawOffset) {
-        Vector dir = p.getEyeLocation().getDirection().normalize();
-        Vector side = dir.clone().crossProduct(new Vector(0, 1, 0)).normalize().multiply(yawOffset);
-        Vector finalDir = dir.clone().add(side).normalize();
+        var dir = p.getEyeLocation().getDirection().normalize();
+        var side = dir.clone().crossProduct(new Vector(0, 1, 0)).normalize().multiply(yawOffset);
+        var finalDir = dir.clone().add(side).normalize();
         MoisonProjectileSupport.shoot(p, id(), spectral, finalDir, 2.35, 0.6);
     }
 

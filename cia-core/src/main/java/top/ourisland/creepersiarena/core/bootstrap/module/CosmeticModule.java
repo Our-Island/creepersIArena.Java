@@ -8,14 +8,15 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticRegistry;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticService;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
 @CiaBootstrapModule(name = "cosmetic", order = 690)
@@ -29,7 +30,7 @@ public final class CosmeticModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            var registry = new CosmeticRegistry(rt.log());
+            var registry = new CosmeticRegistry(rt.log(), rt.requireService(NamespaceRegistry.class));
             var service = new CosmeticService(
                     rt.log(),
                     rt.requireService(JdbcDatabaseService.class),
@@ -42,7 +43,7 @@ public final class CosmeticModule implements IBootstrapModule {
             rt.putService(CosmeticService.class, service);
             rt.putService(ICosmeticService.class, service);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegisteredComponent.CORE_OWNER,
+                    RegistrationOwner.CORE,
                     new SimpleAbility(CoreAbilities.COSMETIC_RUNTIME)
             );
         }, "Loading cosmetic runtime...", "Cosmetic runtime loaded.");

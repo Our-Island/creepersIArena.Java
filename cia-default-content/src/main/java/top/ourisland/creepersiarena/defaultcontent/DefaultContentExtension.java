@@ -39,8 +39,9 @@ import java.util.function.LongSupplier;
  */
 @CiaExtensionInfo(
         id = "cia-default-content",
+        namespace = "cia",
         name = "CreepersIArena Default Content",
-        apiVersion = 1,
+        apiVersion = 2,
         authors = {"Our Island", "Chiloven945", "xqysp"},
         loadOrder = CiaExtensionLoadOrder.EARLY
 )
@@ -126,7 +127,7 @@ public final class DefaultContentExtension implements ICiaExtension {
 
     private void registerMutationContent(ICiaExtensionContext context) {
         context.requireService(IMutationRegistry.class).registerMutation(
-                context.extensionId(),
+                context.owner(),
                 new AcceleratedTimeMutationEffect(
                         context.plugin(),
                         context.plugin().getSLF4JLogger()
@@ -147,9 +148,9 @@ public final class DefaultContentExtension implements ICiaExtension {
         );
 
         var registry = context.requireService(IDeathResolutionRegistry.class);
-        registry.registerResolver(context.extensionId(), new BuiltinDeathCauseResolver(sessions, currentTick));
-        registry.registerMessageProvider(context.extensionId(), new BuiltinDeathMessageProvider(catalog));
-        registry.registerCleanupParticipant(context.extensionId(), new BuiltinDeathCleanupParticipant(runtime.store()));
+        registry.registerResolver(context.owner(), new BuiltinDeathCauseResolver(sessions, currentTick));
+        registry.registerMessageProvider(context.owner(), new BuiltinDeathMessageProvider(catalog));
+        registry.registerCleanupParticipant(context.owner(), new BuiltinDeathCleanupParticipant(runtime.store()));
     }
 
     private void registerEconomyStoreAndCosmetics(ICiaExtensionContext context) {

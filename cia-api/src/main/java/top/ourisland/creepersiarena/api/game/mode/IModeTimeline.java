@@ -37,7 +37,7 @@ public interface IModeTimeline {
      *
      * @return namespaced mode id handled by this timeline
      */
-    GameModeType type();
+    GameModeId type();
 
     /**
      * Advances the mode timeline for the supplied tick context.

@@ -7,15 +7,15 @@ import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.mode.ModeLogic;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
-@CiaModeDef(id = "battle")
+@CiaModeDef(id = "cia:battle")
 public final class BattleMode implements IGameMode {
 
     @Override
     public ModeLogic createLogic(GameSession session, GameRuntime runtime) {
-        BattleModeConfig config = BattleModeConfig.from(runtime.cfg());
-        BattleState state = new BattleState(runtime, session, config);
-        BattleTeamBalancer teams = new BattleTeamBalancer(config, runtime.sessionStore());
-        BattleBossBars bossBars = new BattleBossBars();
+        var config = BattleModeConfig.from(runtime.cfg());
+        var state = new BattleState(runtime, session, config);
+        var teams = new BattleTeamBalancer(config, runtime.sessionStore());
+        var bossBars = new BattleBossBars();
 
         return new ModeLogic(
                 new BattleRules(state),

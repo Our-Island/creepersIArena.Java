@@ -1,15 +1,17 @@
 game:
   abilities:
     core:
-      resting-regeneration:
+      resting_regeneration:
         enabled: true
         default-active: false
         modes:
-          battle:
-            enabled: true
-          steal:
-            enabled: true
-            phases: [ ROUND_PLAYING ]
+          cia:
+            battle:
+              enabled: true
+            steal:
+              enabled: true
+              phases:
+                - ROUND_PLAYING
         settings:
           require-in-game: true
           stationary-horizontal-epsilon: 0.003
@@ -99,8 +101,9 @@ game:
         enabled: true
         default-active: false
         modes:
-          battle:
-            enabled: true
+          cia:
+            battle:
+              enabled: true
         settings:
           idle-attempt-ticks: 6000
           failed-roll-counter-value: 500
@@ -139,22 +142,23 @@ game:
                 volume: 1.0
                 pitch: 0.8
               start-messages:
-                - "🕸 神秘的力量开始操控魔法"
-                - "🕸 一股神秘的力量..."
-                - "🕸 时间要开始加速了？还好，只加速了一部分...吗？"
-                - "🕸 快快快！太慢了太慢了！"
+                - 🕸 神秘的力量开始操控魔法
+                - 🕸 一股神秘的力量...
+                - 🕸 时间要开始加速了？还好，只加速了一部分...吗？
+                - 🕸 快快快！太慢了太慢了！
               end-messages:
-                - "🕸 神秘的力量消失了..."
-                - "🕸 时间流速恢复正常..."
-                - "🕸 你感觉身体变慢了..."
-                - "🕸 好像世界变慢了？"
-    cia-default-content:
-      battle-respawn-recovery:
+                - 🕸 神秘的力量消失了...
+                - 🕸 时间流速恢复正常...
+                - 🕸 你感觉身体变慢了...
+                - 🕸 好像世界变慢了？
+    cia:
+      battle_respawn_recovery:
         enabled: true
         default-active: true
         modes:
-          battle:
-            enabled: true
+          cia:
+            battle:
+              enabled: true
         settings:
           start-health: 4.0
           full-health: 20.0
@@ -164,12 +168,13 @@ game:
             amplifier: 5
           instant-health:
             amplifier: 0
-      battle-respawn-visuals:
+      battle_respawn_visuals:
         enabled: true
         default-active: true
         modes:
-          battle:
-            enabled: true
+          cia:
+            battle:
+              enabled: true
         settings:
           start-sound:
             sound: minecraft:entity.wither.spawn
@@ -183,307 +188,410 @@ game:
             sound: minecraft:item.lead.tied
             volume: 1.0
             pitch: 0.0
-      battle-bossbar:
+      battle_bossbar:
         enabled: true
         default-active: true
         modes:
-          battle:
-            enabled: true
-      battle-map-progress-rotation:
+          cia:
+            battle:
+              enabled: true
+      battle_map_progress_rotation:
         enabled: true
         default-active: true
         modes:
-          battle:
-            enabled: true
-      battle-progress-feedback:
+          cia:
+            battle:
+              enabled: true
+      battle_progress_feedback:
         enabled: true
         default-active: true
         modes:
-          battle:
-            enabled: true
-      kill-feedback:
+          cia:
+            battle:
+              enabled: true
+      kill_feedback:
         enabled: true
         default-active: true
-      builtin-death-cleanup:
+      builtin_death_cleanup:
         enabled: true
         default-active: true
-      steal-waiting-bossbar:
-        enabled: true
-        default-active: true
-        modes:
-          steal:
-            enabled: true
-      steal-spectator-tour:
+      steal_waiting_bossbar:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-choose-job-phase:
+          cia:
+            steal:
+              enabled: true
+      steal_spectator_tour:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-round-bossbar:
+          cia:
+            steal:
+              enabled: true
+      steal_choose_job_phase:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-celebration-bossbar:
+          cia:
+            steal:
+              enabled: true
+      steal_round_bossbar:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-selection-barriers:
+          cia:
+            steal:
+              enabled: true
+      steal_celebration_bossbar:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-objective-feedback:
+          cia:
+            steal:
+              enabled: true
+      steal_selection_barriers:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      steal-celebration-fireworks:
+          cia:
+            steal:
+              enabled: true
+      steal_objective_feedback:
         enabled: true
         default-active: true
         modes:
-          steal:
-            enabled: true
-      particle-store:
+          cia:
+            steal:
+              enabled: true
+      steal_celebration_fireworks:
+        enabled: true
+        default-active: true
+        modes:
+          cia:
+            steal:
+              enabled: true
+      particle_store:
         enabled: true
         default-active: true
         settings:
           command-enabled: true
           sources: { }
-      particle-cosmetics:
+      particle_cosmetics:
         enabled: true
         default-active: true
-      particle-preview-displays:
+      particle_preview_displays:
         enabled: true
         default-active: true
         settings:
           displays: { }
-  default-mode: battle
+  default-mode: cia:battle
   modes:
-    battle:
-      respawn-time: 8
-      leave-in-game-time: 5
-      max-team: 4
-      team-auto-balancing: true
-      force-balancing: false
-      entrance-enabled: true
-      map-progress-target: 4000
-      kill-progress:
-        "1-2": 100
-        "3-4": 75
-        "5-7": 60
-        "8-10": 45
-        "11-14": 30
-        "15+": 20
-
-    steal:
-      min-player-to-start: 2
-      dynamic-ready-requirement: true
-      start-countdown: 15
-      spectator-tour-time: 11
-      choose-job-time: 10
-      total-round: 7
-      time-per-round: 180
-      target-mine-count: 10
-      mine-cooldown-seconds: 3
-      allow-lobby-job-selection: false
-      allow-respawn-job-selection: false
-      score-to-win: 4
-      round-celebration-time: 5
-      game-end-celebration-time: 10
-
-
+    cia:
+      battle:
+        respawn-time: 8
+        leave-in-game-time: 5
+        max-team: 4
+        team-auto-balancing: true
+        force-balancing: false
+        entrance-enabled: true
+        map-progress-target: 4000
+        kill-progress:
+          1-2: 100
+          3-4: 75
+          5-7: 60
+          8-10: 45
+          11-14: 30
+          15+: 20
+      steal:
+        min-player-to-start: 2
+        dynamic-ready-requirement: true
+        start-countdown: 15
+        spectator-tour-time: 11
+        choose-job-time: 10
+        total-round: 7
+        time-per-round: 180
+        target-mine-count: 10
+        mine-cooldown-seconds: 3
+        allow-lobby-job-selection: false
+        allow-respawn-job-selection: false
+        score-to-win: 4
+        round-celebration-time: 5
+        game-end-celebration-time: 10
   economy:
     currencies:
-      gunpowder:
-        display-name: "火药"
-        icon: minecraft:gunpowder
-      tnt:
-        display-name: "TNT"
-        icon: minecraft:tnt
-
+      cia:
+        gunpowder:
+          display-name: 火药
+          icon: minecraft:gunpowder
+        tnt:
+          display-name: TNT
+          icon: minecraft:tnt
   stores:
-    particle-store:
-      title: "粒子商店"
-      rows: 6
-      command-enabled: true
-
+    cia:
+      particle_store:
+        title: 粒子商店
+        rows: 6
+        command-enabled: true
   cosmetics:
     particle-trail:
       viewer-radius: 15.0
       cosmetics:
-        none:
-          display-name: "无粒子"
-          icon: minecraft:barrier
-          free: true
-          interval-ticks: 20
-          emissions: [ ]
-        heart:
-          display-name: "爱心粒子"
-          icon: minecraft:red_dye
-          price:
-            cia-default-content:
-              gunpowder: 10
-          interval-ticks: 20
-          emissions:
-            - particle: minecraft:heart
-              relative-location: [ 0.0, 1.9, 0.0 ]
-              offset: [ 0.2, 0.0, 0.2 ]
-              speed: 0.002
-              count: 1
-              force: true
-        water:
-          display-name: "水滴粒子"
-          icon: minecraft:ghast_tear
-          price:
-            cia-default-content:
-              gunpowder: 10
-          interval-ticks: 40
-          emissions:
-            - particle: minecraft:dripping_water
-              relative-location: [ 0.0, 1.9, 0.0 ]
-              offset: [ 0.2, 0.0, 0.2 ]
-              speed: 0.4
-              count: 4
-              force: true
-        soul:
-          display-name: "灵魂粒子"
-          icon: minecraft:soul_campfire
-          price:
-            cia-default-content:
-              gunpowder: 5
-              tnt: 1
-          interval-ticks: 20
-          emissions:
-            - particle: minecraft:soul
-              relative-location: [ 0.0, 0.4, 0.0 ]
-              offset: [ 0.3, 0.0, 0.3 ]
-              speed: 0.05
-              count: 4
-              force: true
-            - particle: minecraft:soul_fire_flame
-              relative-location: [ 0.0, 0.2, 0.0 ]
-              offset: [ 0.3, 0.0, 0.3 ]
-              speed: 0.05
-              count: 3
-              force: true
-        potion:
-          display-name: "彩色药水粒子"
-          icon: minecraft:light_blue_stained_glass_pane
-          price:
-            cia-default-content:
-              gunpowder: 5
-              tnt: 1
-          interval-ticks: 40
-          emissions:
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-            - particle: minecraft:entity_effect
-              relative-location: [ 0.0, 0.0, 0.0 ]
-              offset: [ 0.1, 0.0, 0.1 ]
-              speed: 0.4
-              count: 3
-              force: true
-              random-color: true
-        green-crystal:
-          display-name: "绿晶粒子"
-          icon: minecraft:turtle_scute
-          price:
-            cia-default-content:
-              gunpowder: 5
-              tnt: 1
-          interval-ticks: 40
-          emissions:
-            - particle: minecraft:composter
-              relative-location: [ 0.0, 0.2, 0.0 ]
-              offset: [ 0.2, 0.02, 0.2 ]
-              speed: 0.001
-              count: 5
-              force: true
-            - particle: minecraft:glow
-              relative-location: [ 0.0, 0.2, 0.0 ]
-              offset: [ 0.2, 0.02, 0.2 ]
-              speed: 0.001
-              count: 5
-              force: true
-        black-heart:
-          display-name: "黑化心粒子"
-          icon: minecraft:black_glazed_terracotta
-          price:
-            cia-default-content:
-              gunpowder: 5
-              tnt: 1
-          interval-ticks: 20
-          emissions:
-            - particle: minecraft:dust
-              relative-location: [ 0.0, 0.05, 0.0 ]
-              offset: [ 0.35, 0.1, 0.35 ]
-              speed: 0.01
-              count: 10
-              force: true
-              dust-color: [ 0.0, 0.0, 0.0 ]
-              dust-scale: 1.0
-            - particle: minecraft:damage_indicator
-              relative-location: [ 0.0, 0.1, 0.0 ]
-              offset: [ 0.5, 0.4, 0.5 ]
-              speed: 0.001
-              count: 2
-              force: true
-        spore:
-          display-name: "孢子粒子"
-          icon: minecraft:spore_blossom
-          price:
-            cia-default-content:
-              gunpowder: 5
-          interval-ticks: 1
-          emissions:
-            - particle: minecraft:spore_blossom_air
-              relative-location: [ 0.0, 2.0, 0.0 ]
-              offset: [ 0.0, 0.0, 0.0 ]
-              speed: 0.1
-              count: 1
-              force: false
+        cia:
+          none:
+            display-name: 无粒子
+            icon: minecraft:barrier
+            free: true
+            interval-ticks: 20
+            emissions: [ ]
+          heart:
+            display-name: 爱心粒子
+            icon: minecraft:red_dye
+            price:
+              cia:
+                gunpowder: 10
+            interval-ticks: 20
+            emissions:
+              - particle: minecraft:heart
+                relative-location:
+                  - 0.0
+                  - 1.9
+                  - 0.0
+                offset:
+                  - 0.2
+                  - 0.0
+                  - 0.2
+                speed: 0.002
+                count: 1
+                force: true
+          water:
+            display-name: 水滴粒子
+            icon: minecraft:ghast_tear
+            price:
+              cia:
+                gunpowder: 10
+            interval-ticks: 40
+            emissions:
+              - particle: minecraft:dripping_water
+                relative-location:
+                  - 0.0
+                  - 1.9
+                  - 0.0
+                offset:
+                  - 0.2
+                  - 0.0
+                  - 0.2
+                speed: 0.4
+                count: 4
+                force: true
+          soul:
+            display-name: 灵魂粒子
+            icon: minecraft:soul_campfire
+            price:
+              cia:
+                gunpowder: 5
+                tnt: 1
+            interval-ticks: 20
+            emissions:
+              - particle: minecraft:soul
+                relative-location:
+                  - 0.0
+                  - 0.4
+                  - 0.0
+                offset:
+                  - 0.3
+                  - 0.0
+                  - 0.3
+                speed: 0.05
+                count: 4
+                force: true
+              - particle: minecraft:soul_fire_flame
+                relative-location:
+                  - 0.0
+                  - 0.2
+                  - 0.0
+                offset:
+                  - 0.3
+                  - 0.0
+                  - 0.3
+                speed: 0.05
+                count: 3
+                force: true
+          potion:
+            display-name: 彩色药水粒子
+            icon: minecraft:light_blue_stained_glass_pane
+            price:
+              cia:
+                gunpowder: 5
+                tnt: 1
+            interval-ticks: 40
+            emissions:
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+              - particle: minecraft:entity_effect
+                relative-location:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                offset:
+                  - 0.1
+                  - 0.0
+                  - 0.1
+                speed: 0.4
+                count: 3
+                force: true
+                random-color: true
+          green-crystal:
+            display-name: 绿晶粒子
+            icon: minecraft:turtle_scute
+            price:
+              cia:
+                gunpowder: 5
+                tnt: 1
+            interval-ticks: 40
+            emissions:
+              - particle: minecraft:composter
+                relative-location:
+                  - 0.0
+                  - 0.2
+                  - 0.0
+                offset:
+                  - 0.2
+                  - 0.02
+                  - 0.2
+                speed: 0.001
+                count: 5
+                force: true
+              - particle: minecraft:glow
+                relative-location:
+                  - 0.0
+                  - 0.2
+                  - 0.0
+                offset:
+                  - 0.2
+                  - 0.02
+                  - 0.2
+                speed: 0.001
+                count: 5
+                force: true
+          black-heart:
+            display-name: 黑化心粒子
+            icon: minecraft:black_glazed_terracotta
+            price:
+              cia:
+                gunpowder: 5
+                tnt: 1
+            interval-ticks: 20
+            emissions:
+              - particle: minecraft:dust
+                relative-location:
+                  - 0.0
+                  - 0.05
+                  - 0.0
+                offset:
+                  - 0.35
+                  - 0.1
+                  - 0.35
+                speed: 0.01
+                count: 10
+                force: true
+                dust-color:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                dust-scale: 1.0
+              - particle: minecraft:damage_indicator
+                relative-location:
+                  - 0.0
+                  - 0.1
+                  - 0.0
+                offset:
+                  - 0.5
+                  - 0.4
+                  - 0.5
+                speed: 0.001
+                count: 2
+                force: true
+          spore:
+            display-name: 孢子粒子
+            icon: minecraft:spore_blossom
+            price:
+              cia:
+                gunpowder: 5
+            interval-ticks: 1
+            emissions:
+              - particle: minecraft:spore_blossom_air
+                relative-location:
+                  - 0.0
+                  - 2.0
+                  - 0.0
+                offset:
+                  - 0.0
+                  - 0.0
+                  - 0.0
+                speed: 0.1
+                count: 1
+                force: false

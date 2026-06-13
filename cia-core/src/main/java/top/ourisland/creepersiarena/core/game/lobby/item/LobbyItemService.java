@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.job.JobManager;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 public final class LobbyItemService {
 
@@ -76,7 +77,7 @@ public final class LobbyItemService {
         inv.setItem(0, null);
         inv.setItem(7, null);
 
-        List<String> jobIds = jobs.getAllJobIds();
+        var jobIds = jobs.getAllJobIds();
         int per = Math.max(1, cfg.ui().lobby().jobsPerPage());
         int page = Math.max(0, s.lobbyJobPage());
         int from = page * per;
@@ -98,17 +99,15 @@ public final class LobbyItemService {
             PlayerSession s,
             GlobalConfig cfg
     ) {
-        List<String> jobIds = jobs.getAllJobIds();
+        List<JobId> jobIds = jobs.getAllJobIds();
         int base = 9;
         int max = Math.min(jobIds.size(), 27);
 
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(base + i, null);
-        }
+        IntStream.range(0, 27)
+                .forEach(i -> inv.setItem(base + i, null));
 
-        for (int i = 0; i < max; i++) {
-            inv.setItem(base + i, items.jobSelectButton(jobIds.get(i), s));
-        }
+        IntStream.range(0, max)
+                .forEach(i -> inv.setItem(base + i, items.jobSelectButton(jobIds.get(i), s)));
 
         inv.setItem(6, items.jobPageNextButton(1));
     }
@@ -149,19 +148,13 @@ public final class LobbyItemService {
         return jobs.getAllJobIds().size();
     }
 
-    public String firstJobIdOrNull() {
-        List<String> ids = jobs.getAllJobIds();
+    public JobId firstJobIdOrNull() {
+        var ids = jobs.getAllJobIds();
         return ids.isEmpty() ? null : ids.getFirst();
     }
 
-    public boolean hasJobId(String jobIdRaw) {
-        var jid = JobId.fromId(jobIdRaw);
-        if (jid != null && jobs.getJob(jid) != null) return true;
-        if (jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
-            jid = JobId.fromId("cia:" + jobIdRaw);
-            return jid != null && jobs.getJob(jid) != null;
-        }
-        return false;
+    public boolean hasJobId(JobId jobId) {
+        return jobId != null && jobs.getJob(jobId) != null;
     }
 
 }

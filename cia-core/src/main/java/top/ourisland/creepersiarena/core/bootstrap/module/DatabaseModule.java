@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
 import top.ourisland.creepersiarena.api.database.IDatabaseService;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -26,7 +27,7 @@ public final class DatabaseModule implements IBootstrapModule {
             var cfg = rt.requireService(ConfigManager.class).globalConfig().database();
             var service = new JdbcDatabaseService(rt.plugin(), rt.log(), cfg);
             var migrations = new DatabaseMigrationRegistry();
-            migrations.registerMigration("core", new CoreSchemaMigration());
+            migrations.registerMigration(RegistrationOwner.CORE, new CoreSchemaMigration());
 
             rt.putService(JdbcDatabaseService.class, service);
             rt.putService(IDatabaseService.class, service);

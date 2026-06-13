@@ -15,7 +15,6 @@ import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.core.utils.Msg;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
@@ -58,7 +57,7 @@ final class PlayerStageTransitions {
 
         p.setGameMode(GameMode.ADVENTURE);
 
-        Location to = hubAnchor();
+        var to = hubAnchor();
         teleportAsync(p, to, "HUB");
 
         lobbyItemService.applyHubKit(
@@ -72,7 +71,7 @@ final class PlayerStageTransitions {
 
         log.debug("[Transitions] {} -> HUB (job={}, team={}, page={})",
                 p.getName(),
-                session.selectedJob() == null ? "null" : session.selectedJob().id(),
+                session.selectedJob() == null ? "null" : session.selectedJob().asString(),
                 session.selectedTeam(),
                 session.lobbyJobPage()
         );
@@ -82,10 +81,14 @@ final class PlayerStageTransitions {
         return lobbyService.lobbyAnchor("hub");
     }
 
-    private void teleportAsync(Player p, Location to, String reason) {
+    private void teleportAsync(
+            Player p,
+            Location to,
+            String reason
+    ) {
         if (p == null || to == null) return;
 
-        CompletableFuture<Boolean> f = p.teleportAsync(to);
+        var f = p.teleportAsync(to);
         f.thenAccept(success -> {
             if (!success) {
                 log.warn("[Transitions] teleportAsync failed: player={} reason={} to={}", p.getName(), reason, to);
@@ -135,16 +138,21 @@ final class PlayerStageTransitions {
         log.debug("[Transitions] {} -> SPECTATE", p.getName());
     }
 
-    void enterGame(Player p, GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow) {
+    void enterGame(
+            Player p,
+            GameSession g,
+            GameRuntime runtime,
+            IModePlayerFlow playerFlow
+    ) {
         var session = sessions.ensureSession(p);
         session.state(PlayerState.IN_GAME);
         session.respawnSecondsRemaining(0);
 
-        IModePlayerFlow flow = playerFlow == null ? IModePlayerFlow.DEFAULT : playerFlow;
-        Location fallback = hubAnchor();
+        var flow = playerFlow == null ? IModePlayerFlow.DEFAULT : playerFlow;
+        var fallback = hubAnchor();
         var ctx = new ModePlayerContext(runtime, g, p, session, fallback);
 
-        Location loc = flow.spawnLocation(ctx);
+        var loc = flow.spawnLocation(ctx);
         if (loc == null) loc = fallback;
         teleportAsync(p, loc, "ENTER_GAME(mode=" + (g == null ? "null" : g.mode()) + ")");
 
@@ -166,12 +174,19 @@ final class PlayerStageTransitions {
         );
     }
 
-    Location gameSpawn(GameSession g, GameRuntime runtime, IModePlayerFlow playerFlow, Player p) {
+    Location gameSpawn(
+            GameSession g,
+            GameRuntime runtime,
+            IModePlayerFlow playerFlow,
+            Player p
+    ) {
         if (g == null || p == null) return hubAnchor();
+
         var session = sessions.ensureSession(p);
         var flow = playerFlow == null ? IModePlayerFlow.DEFAULT : playerFlow;
         var ctx = new ModePlayerContext(runtime, g, p, session, hubAnchor());
-        Location loc = flow.spawnLocation(ctx);
+        var loc = flow.spawnLocation(ctx);
+
         return loc == null ? hubAnchor() : loc;
     }
 

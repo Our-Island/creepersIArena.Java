@@ -19,7 +19,7 @@ class CiaExtensionInfoProcessorTest {
 
     @Test
     void generatesDescriptorAndServiceProvider() throws Exception {
-        CompilationResult result = compile("com.example.SampleExtension", """
+        var result = compile("com.example.SampleExtension", """
                 package com.example;
                 
                 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
@@ -28,8 +28,9 @@ class CiaExtensionInfoProcessorTest {
                 
                 @CiaExtensionInfo(
                         id = "sample-extension",
+                        namespace = "sample",
                         name = "Sample Extension",
-                        apiVersion = 1,
+                        apiVersion = 2,
                         ciaVersion = "[0.1.0,0.2.0)",
                         authors = {"Alice", "Bob"},
                         requiredDependencies = {"base-extension"},
@@ -48,6 +49,8 @@ class CiaExtensionInfoProcessorTest {
 
         String descriptor = Files.readString(result.classesRoot().resolve("cia-extension.yml"), StandardCharsets.UTF_8);
         assertTrue(descriptor.contains("id: \"sample-extension\""));
+        assertTrue(descriptor.contains("namespace: \"sample\""));
+        assertTrue(descriptor.contains("api-version: 2"));
         assertTrue(descriptor.contains("name: \"Sample Extension\""));
         assertTrue(descriptor.contains("version: \"1.2.3\""));
         assertTrue(descriptor.contains("main: \"com.example.SampleExtension\""));
@@ -68,9 +71,9 @@ class CiaExtensionInfoProcessorTest {
     }
 
     private CompilationResult compile(String mainClass, String source) throws Exception {
-        Path sourceRoot = tempDir.resolve("source-" + mainClass.substring(mainClass.lastIndexOf('.') + 1));
-        Path classesRoot = tempDir.resolve("classes-" + mainClass.substring(mainClass.lastIndexOf('.') + 1));
-        Path sourcePath = sourceRoot.resolve(mainClass.replace('.', '/') + ".java");
+        var sourceRoot = tempDir.resolve("source-" + mainClass.substring(mainClass.lastIndexOf('.') + 1));
+        var classesRoot = tempDir.resolve("classes-" + mainClass.substring(mainClass.lastIndexOf('.') + 1));
+        var sourcePath = sourceRoot.resolve(mainClass.replace('.', '/') + ".java");
         Files.createDirectories(sourcePath.getParent());
         Files.createDirectories(classesRoot);
         Files.writeString(sourcePath, source, StandardCharsets.UTF_8);
@@ -103,13 +106,13 @@ class CiaExtensionInfoProcessorTest {
 
     @Test
     void fallsBackToVersionOptionWhenAnnotationVersionIsBlank() throws Exception {
-        CompilationResult result = compile("com.example.VersionedExtension", """
+        var result = compile("com.example.VersionedExtension", """
                 package com.example;
                 
                 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
                 
-                @CiaExtensionInfo(id = "versioned", name = "Versioned")
+                @CiaExtensionInfo(id = "versioned", namespace = "versioned", name = "Versioned")
                 public final class VersionedExtension implements ICiaExtension {
                 
                 }
@@ -124,13 +127,13 @@ class CiaExtensionInfoProcessorTest {
 
     @Test
     void rejectsInvalidExtensionId() throws Exception {
-        CompilationResult result = compile("com.example.InvalidExtension", """
+        var result = compile("com.example.InvalidExtension", """
                 package com.example;
                 
                 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
                 
-                @CiaExtensionInfo(id = "Invalid Extension", name = "Invalid Extension")
+                @CiaExtensionInfo(id = "Invalid Extension", namespace = "invalid", name = "Invalid Extension")
                 public final class InvalidExtension implements ICiaExtension {
                 
                 }
@@ -142,8 +145,8 @@ class CiaExtensionInfoProcessorTest {
 
     @Test
     void rejectsMultipleAnnotatedEntryPoints() throws Exception {
-        Path sourceRoot = tempDir.resolve("multi-source");
-        Path classesRoot = tempDir.resolve("multi-classes");
+        var sourceRoot = tempDir.resolve("multi-source");
+        var classesRoot = tempDir.resolve("multi-classes");
         Files.createDirectories(sourceRoot.resolve("com/example"));
         Files.createDirectories(classesRoot);
 
@@ -153,7 +156,7 @@ class CiaExtensionInfoProcessorTest {
                 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
                 
-                @CiaExtensionInfo(id = "first", name = "First")
+                @CiaExtensionInfo(id = "first", namespace = "first", name = "First")
                 public final class FirstExtension implements ICiaExtension {
                 
                 }
@@ -164,13 +167,13 @@ class CiaExtensionInfoProcessorTest {
                 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
                 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
                 
-                @CiaExtensionInfo(id = "second", name = "Second")
+                @CiaExtensionInfo(id = "second", namespace = "second", name = "Second")
                 public final class SecondExtension implements ICiaExtension {
                 
                 }
                 """, StandardCharsets.UTF_8);
 
-        CompilationResult result = compileSources(classesRoot, List.of(
+        var result = compileSources(classesRoot, List.of(
                 sourceRoot.resolve("com/example/FirstExtension.java"),
                 sourceRoot.resolve("com/example/SecondExtension.java")
         ));

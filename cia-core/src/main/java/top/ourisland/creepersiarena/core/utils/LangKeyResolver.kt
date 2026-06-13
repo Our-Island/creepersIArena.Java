@@ -1,9 +1,10 @@
 package top.ourisland.creepersiarena.core.utils
 
 import net.kyori.adventure.text.Component
+import top.ourisland.creepersiarena.api.identity.CiaKey
 import top.ourisland.creepersiarena.api.job.JobId
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition
-import top.ourisland.creepersiarena.core.utils.LangKeyResolver.normalizeLangSegment
+import top.ourisland.creepersiarena.api.skill.SkillId
 import top.ourisland.creepersiarena.core.utils.LangKeyResolver.skillBase
 import java.util.function.IntFunction
 import java.util.stream.Collectors
@@ -24,17 +25,6 @@ import java.util.stream.IntStream
  * - **Skill** keys:
  *   - `cia.job.<job>.skill.<skill>.name`
  *   - `cia.job.<job>.skill.<skill>.lore.<line>`
- *
- * ## Runtime id normalization
- * Runtime ids are not inserted into translation keys verbatim.
- * [normalizeLangSegment] converts namespaced ids into dot-safe segments:
- * - built-in ids in the `cia` namespace drop the leading namespace to avoid redundant `cia.job.cia.*` keys
- * - third-party namespaces are preserved, so extension content remains distinct
- *
- * Examples:
- * - `cia:creeper` -> `creeper`
- * - `cia:creeper.crossbow` -> `creeper.crossbow` when used as a raw segment
- * - `extension:mage` -> `extension.mage`
  *
  * ## Skill id parsing
  * Skill ids are currently expected to follow the convention `<jobId>.<skillPath>`, where `<jobId>` itself may be
@@ -77,37 +67,27 @@ object LangKeyResolver {
      */
     @JvmStatic
     fun skillBase(skill: ISkillDefinition): String =
-        skillBase(skill.id())
+        skillBase(skill.id(), skill.jobId())
 
     /**
-     * Builds the base translation prefix for a raw skill id.
-     *
-     * Expected input format is `<jobId>.<skillPath>`, where `<jobId>` may itself be namespaced. Examples:
-     * - `cia:creeper.crossbow`
-     * - `cia:moison.shadowstep`
-     * - `extension:mage.fireball`
-     *
-     * Parsing uses the **last** dot in the string. Everything before that dot is treated as the runtime job id and
-     * normalized via [normalizeLangSegment]; everything after the dot becomes the skill-local segment.
-     *
-     * Resulting key format:
-     * ```text
-     * cia.job.<job>.skill.<skill>
-     * ```
-     *
-     * @param skillId runtime skill id in `<jobId>.<skillPath>` form
-     * @return base skill translation-key prefix
-     * @throws IllegalArgumentException if [skillId] does not contain a usable dot separator
+     * Maps a namespaced skill and its owning job to
+     * `cia.job.<job>.skill.<skill-local-path>`.
      */
     @JvmStatic
-    fun skillBase(skillId: String): String {
-        val dot = skillId.lastIndexOf('.')
-        if (dot <= 0 || dot == skillId.length - 1) {
-            throw IllegalArgumentException("Invalid skill id (expected <jobId>.<skillPath>): $skillId")
+    fun skillBase(skillId: SkillId, jobId: JobId): String {
+        require(skillId.namespace() == jobId.namespace()) {
+            "Skill ${skillId.asString()} and job ${jobId.asString()} must share a namespace"
         }
-        val job = normalizeLangSegment(skillId.substring(0, dot))
-        val sk = normalizeLangSegment(skillId.substring(dot + 1))
-        return "cia.job.$job.skill.$sk"
+
+        val skillPath = skillId.path().value()
+        val jobPath = jobId.path().value()
+        val prefix = "$jobPath/"
+        require(skillPath.startsWith(prefix) && skillPath.length > prefix.length) {
+            "Skill ${skillId.asString()} must be nested below job ${jobId.asString()}"
+        }
+
+        val localPath = skillPath.removePrefix(prefix).replace('/', '.')
+        return "cia.job.${translationSegment(jobId.key())}.skill.$localPath"
     }
 
     /**
@@ -189,7 +169,7 @@ object LangKeyResolver {
      */
     @JvmStatic
     fun jobBase(jobId: JobId): String =
-        "cia.job.${normalizeLangSegment(jobId.id())}"
+        "cia.job.${translationSegment(jobId.key())}"
 
     /**
      * Resolves all translated lore lines for a job, using a default maximum of 20 lines.
@@ -213,28 +193,9 @@ object LangKeyResolver {
     fun jobLore(jobId: JobId, line: Int): String =
         "${jobBase(jobId)}.lore.$line"
 
-    /**
-     * Converts a runtime id segment into a translation-safe segment.
-     *
-     * Built-in `cia:` ids drop their namespace so built-in keys stay concise, while third-party namespaces are preserved
-     * to avoid collisions between extension content.
-     *
-     * Examples:
-     * - `cia:creeper` -> `creeper`
-     * - `cia:creeper.crossbow` -> `creeper.crossbow`
-     * - `extension:mage` -> `extension.mage`
-     *
-     * @param raw raw runtime id or segment
-     * @return normalized segment ready to be embedded in a translation key
-     */
-    @JvmStatic
-    fun normalizeLangSegment(raw: String): String {
-        val trimmed = raw.trim().lowercase()
-        val colon = trimmed.indexOf(':')
-        if (colon <= 0) return trimmed.replace(':', '.')
-        val namespace = trimmed.substring(0, colon)
-        val path = trimmed.substring(colon + 1)
-        return if (namespace == "cia") path.replace(':', '.') else "$namespace.${path.replace(':', '.')}"
+    private fun translationSegment(key: CiaKey): String {
+        val path = key.path().value().replace('/', '.')
+        return if (key.namespace().value() == "cia") path else "${key.namespace().value()}.$path"
     }
 
 }

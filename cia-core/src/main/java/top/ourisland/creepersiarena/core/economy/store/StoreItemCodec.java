@@ -2,10 +2,10 @@ package top.ourisland.creepersiarena.core.economy.store;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
 import top.ourisland.creepersiarena.api.economy.store.StoreItemId;
+import top.ourisland.creepersiarena.core.identity.CiaIdPdcCodec;
 
 public final class StoreItemCodec {
 
@@ -26,21 +26,19 @@ public final class StoreItemCodec {
         var meta = item.getItemMeta();
         if (meta == null) return;
         var pdc = meta.getPersistentDataContainer();
-        pdc.set(storeIdKey, PersistentDataType.STRING, storeId.asString());
-        pdc.set(itemIdKey, PersistentDataType.STRING, itemId.asString());
+        CiaIdPdcCodec.write(pdc, storeIdKey, storeId);
+        CiaIdPdcCodec.write(pdc, itemIdKey, itemId);
         item.setItemMeta(meta);
     }
 
     public StoreId readStoreId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
-        var value = item.getItemMeta().getPersistentDataContainer().get(storeIdKey, PersistentDataType.STRING);
-        return value == null || value.isBlank() ? null : StoreId.of(value);
+        return CiaIdPdcCodec.read(item.getItemMeta().getPersistentDataContainer(), storeIdKey, StoreId::of);
     }
 
     public StoreItemId readItemId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
-        var value = item.getItemMeta().getPersistentDataContainer().get(itemIdKey, PersistentDataType.STRING);
-        return value == null || value.isBlank() ? null : StoreItemId.of(value);
+        return CiaIdPdcCodec.read(item.getItemMeta().getPersistentDataContainer(), itemIdKey, StoreItemId::of);
     }
 
 }
