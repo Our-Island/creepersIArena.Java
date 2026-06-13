@@ -11,9 +11,10 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
-import top.ourisland.creepersiarena.api.identity.CiaKey;
-import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
 import java.util.LinkedHashMap;
@@ -23,10 +24,11 @@ import java.util.UUID;
 
 public final class BattleState {
 
-    static final GameModeId TYPE = GameModeId.parse("cia:battle");
-    private static final CiaNamespace NAMESPACE = new CiaNamespace("cia");
-    static final SessionDataKey<Boolean> PARTICIPANT_KEY = SessionDataKey.of(
-            CiaKey.of(NAMESPACE, "battle/participant"), Boolean.class
+    static final GameModeId TYPE = DefaultModeIds.BATTLE;
+    private static final ExtensionSessionData SESSION_DATA = new ExtensionSessionData(DefaultContentIds.OWNER);
+    static final SessionDataKey<Boolean> PARTICIPANT_KEY = SESSION_DATA.key(
+            "battle/participant",
+            Boolean.class
     );
 
     @Getter private final GameRuntime runtime;
@@ -71,7 +73,7 @@ public final class BattleState {
 
     public void clearFighter(PlayerSession player) {
         if (player == null) return;
-        player.clearNamespace(NAMESPACE);
+        player.remove(PARTICIPANT_KEY);
     }
 
     public Set<UUID> players() {
@@ -110,7 +112,7 @@ public final class BattleState {
 
     private int teamOf(PlayerSession session) {
         if (session == null || session.selectedTeam() == null) return 0;
-        return Math.clamp(session.selectedTeam(), 1, config.maxTeam());
+        return Math.clamp(session.selectedTeam().number().orElse(0), 1, config.maxTeam());
     }
 
     public int onlineFighterCount() {

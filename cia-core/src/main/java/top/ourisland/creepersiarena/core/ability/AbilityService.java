@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.*;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.mode.IModeAbilityPolicy;
 import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
@@ -53,15 +54,17 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     @Override
     public void registerAbility(
             RegistrationOwner owner,
+            IAbility @NonNull ... abilityProviders
+    ) {
+        registerAbilities(owner, List.of(abilityProviders));
+    }
+
+    @Override
+    public void registerAbility(
+            RegistrationOwner owner,
             @lombok.NonNull IAbility ability
     ) {
-        abilities.register(owner, ability.id(), ability);
-        try {
-            ability.reload(config(ability.id()));
-        } catch (Throwable throwable) {
-            logger.warn("[Ability] reload failed while registering {}: {}", ability.id(), throwable.getMessage(), throwable);
-        }
-        logger.info("[Ability] Registered {} by {}.", ability.id(), owner.extensionId());
+        registerAbilities(owner, List.of(ability));
     }
 
     @Override
@@ -71,6 +74,27 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     ) {
         policies.add(new RegisteredAbilityPolicy(owner, policy));
         logger.info("[Ability] Registered policy {} by {}.", policy.getClass().getSimpleName(), owner.extensionId());
+    }
+
+    private void registerAbilities(
+            RegistrationOwner owner,
+            Collection<IAbility> abilityProviders
+    ) {
+        var requested = List.copyOf(abilityProviders);
+        var registrations = requested.stream()
+                .map(ability -> new OwnedRegistry.Registration<>(ability.id(), ability))
+                .toList();
+
+        abilities.registerAllInitialized(
+                owner,
+                registrations,
+                ability -> ability.reload(config(ability.id()))
+        );
+        requested.forEach(ability -> logger.info(
+                "[Ability] Registered {} by {}.",
+                ability.id(),
+                owner.extensionId()
+        ));
     }
 
     public void clearOwner(RegistrationOwner owner) {
@@ -102,12 +126,19 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         var out = abilities.entries().stream()
                 .map(RegisteredComponent::id)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        var root = configSnapshot.getConfigurationSection("game.abilities");
+        var root = StrictConfig.section(configSnapshot, "game.abilities", "game.abilities");
 
         if (root != null) {
             for (var namespaceValue : root.getKeys(false)) {
-                var namespaceSection = root.getConfigurationSection(namespaceValue);
-                if (namespaceSection == null) continue;
+                var namespaceSection = StrictConfig.section(
+                        root,
+                        namespaceValue,
+                        "game.abilities." + namespaceValue
+                );
+                if (namespaceSection == null) {
+                    throw new IllegalArgumentException("Missing ability namespace section game.abilities." + namespaceValue);
+                }
+
                 CiaNamespace namespace;
                 try {
                     namespace = CiaNamespace.parse(namespaceValue);
@@ -128,7 +159,7 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     @Override
     public @NonNull IAbilityConfigView config(@lombok.NonNull AbilityId abilityId) {
         String path = "game.abilities." + CiaConfigPaths.section(abilityId);
-        return new BukkitAbilityConfigView(abilityId, configSnapshot.getConfigurationSection(path));
+        return new BukkitAbilityConfigView(abilityId, StrictConfig.section(configSnapshot, path, path));
     }
 
     @Override
@@ -136,11 +167,11 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         if (id == null) return false;
 
         var view = config(id);
-        boolean registered = abilities.get(id) != null;
+        var registered = abilities.get(id) != null;
         if (!registered && !view.exists()) return false;
 
         var section = view.section();
-        if (section == null || !section.getBoolean("enabled", false) || !adminEnabled(id)) return false;
+        if (section == null || !view.enabled(false) || !adminEnabled(id)) return false;
 
         var state = DecisionState.active(view.defaultActive(false));
         state = applyConfigOverrides(state, section, context);
@@ -163,7 +194,11 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         if (context.modeId() != null) {
             state = applyOverride(
                     state,
-                    section.getConfigurationSection("modes." + CiaConfigPaths.section(context.modeId())),
+                    StrictConfig.section(
+                            section,
+                            "modes." + CiaConfigPaths.section(context.modeId()),
+                            section.getCurrentPath() + ".modes." + CiaConfigPaths.section(context.modeId())
+                    ),
                     context.phase()
             );
         }
@@ -172,7 +207,11 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         if (context.arenaId() != null) {
             state = applyOverride(
                     state,
-                    section.getConfigurationSection("arenas." + context.arenaId().value()),
+                    StrictConfig.section(
+                            section,
+                            "arenas." + context.arenaId().value(),
+                            section.getCurrentPath() + ".arenas." + context.arenaId().value()
+                    ),
                     context.phase()
             );
         }
@@ -219,13 +258,19 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
             @Nullable String phase
     ) {
         if (override == null) return state;
-        if (override.contains("enabled") && !override.getBoolean("enabled", false)) return DecisionState.denied();
+        var enabled = override.contains("enabled")
+                ? StrictConfig.bool(override, "enabled", false, override.getCurrentPath() + ".enabled")
+                : null;
+        if (Boolean.FALSE.equals(enabled)) return DecisionState.denied();
 
-        List<String> phases = override.getStringList("phases");
+        var phases = StrictConfig.stringList(
+                override,
+                "phases",
+                List.of(),
+                override.getCurrentPath() + ".phases"
+        );
         if (!phases.isEmpty() && (phase == null || !phases.contains(phase))) return DecisionState.denied();
-        return override.contains("enabled") && override.getBoolean("enabled", false)
-                ? state.withActive(true)
-                : state;
+        return Boolean.TRUE.equals(enabled) ? state.withActive(true) : state;
     }
 
     private DecisionState applyPolicyDecision(DecisionState state, AbilityDecision decision) {
@@ -267,11 +312,7 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     public void reload() {
         reloadSnapshot();
         for (var registered : abilities.entries()) {
-            try {
-                registered.value().reload(config(registered.id()));
-            } catch (Throwable throwable) {
-                logger.warn("[Ability] reload failed for {}: {}", registered.id(), throwable.getMessage(), throwable);
-            }
+            registered.value().reload(config(registered.id()));
         }
     }
 
@@ -294,9 +335,15 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
             return;
         }
         for (var key : section.getKeys(false)) {
-            var child = section.getConfigurationSection(key);
-            if (child == null) continue;
-            String childPath = resourcePath.isEmpty() ? key : resourcePath + "/" + key;
+            var child = StrictConfig.section(
+                    section,
+                    key,
+                    section.getCurrentPath() + "." + key
+            );
+            if (child == null) {
+                throw new IllegalArgumentException("Missing ability section at " + section.getCurrentPath() + "." + key);
+            }
+            var childPath = resourcePath.isEmpty() ? key : resourcePath + "/" + key;
             collectConfiguredIds(namespace, child, childPath, out);
         }
     }

@@ -1,19 +1,17 @@
 package top.ourisland.creepersiarena.core.job.skill.runtime;
 
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.config.ISkillConfigView;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.SkillType;
-import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
 import top.ourisland.creepersiarena.core.config.model.SkillConfig;
 
-import java.util.List;
-import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -21,7 +19,7 @@ import java.util.function.Supplier;
 public final class SkillRuntime {
 
     private final SkillRegistry registry;
-    private final ISkillStateStore store;
+    @Getter private final ISkillStateStore store;
     private final DoubleSupplier cooldownFactor;
     private final BooleanSupplier cooldownEnabled;
     private final Supplier<? extends ISkillConfigView> skillConfig;
@@ -107,12 +105,8 @@ public final class SkillRuntime {
     }
 
     public ISkillConfigView skillConfig() {
-        try {
-            var c = skillConfig.get();
-            return c == null ? SkillConfig.defaults() : c;
-        } catch (Throwable _) {
-            return SkillConfig.defaults();
-        }
+        var config = skillConfig.get();
+        return config == null ? SkillConfig.defaults() : config;
     }
 
     public boolean isRuntimeEnabled(
@@ -122,10 +116,6 @@ public final class SkillRuntime {
         var gate = abilities.get();
         if (gate == null) return false;
         return gate.isEnabled(CoreAbilities.SKILL_RUNTIME, player, reason == null ? "skill_runtime" : reason);
-    }
-
-    public ISkillStateStore store() {
-        return store;
     }
 
 }

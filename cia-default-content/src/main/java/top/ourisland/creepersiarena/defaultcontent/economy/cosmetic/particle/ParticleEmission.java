@@ -23,15 +23,21 @@ public record ParticleEmission(
 ) {
 
     public static Particle particle(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        String name = raw.trim().toUpperCase(Locale.ROOT)
-                .replace("MINECRAFT:", "")
-                .replace('-', '_')
-                .replace(' ', '_');
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("Particle id must be a non-blank minecraft namespaced id");
+        }
+        if (!raw.startsWith("minecraft:")) {
+            throw new IllegalArgumentException("Particle id must use the minecraft namespace: " + raw);
+        }
+
+        var path = raw.substring("minecraft:".length());
+        if (!path.matches("[a-z0-9_]+")) {
+            throw new IllegalArgumentException("Invalid particle id: " + raw);
+        }
         try {
-            return Particle.valueOf(name);
-        } catch (IllegalArgumentException _) {
-            return null;
+            return Particle.valueOf(path.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Unknown particle id: " + raw, exception);
         }
     }
 

@@ -1,73 +1,74 @@
 package top.ourisland.creepersiarena.core.game.death;
 
-import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
-import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
-import top.ourisland.creepersiarena.api.game.death.IDeathMessageProvider;
-import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
+import top.ourisland.creepersiarena.api.game.death.*;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class DeathResolutionRegistry implements IDeathResolutionRegistry {
 
-    private final List<RegisteredDeathComponent<IDeathCauseResolver>> resolvers = new ArrayList<>();
-    private final List<RegisteredDeathComponent<IDeathMessageProvider>> messageProviders = new ArrayList<>();
-    private final List<RegisteredDeathComponent<IDeathCleanupParticipant>> cleanupParticipants = new ArrayList<>();
+    private final OwnedRegistry<DeathResolverId, IDeathCauseResolver> resolvers;
+    private final OwnedRegistry<DeathMessageProviderId, IDeathMessageProvider> messageProviders;
+    private final OwnedRegistry<DeathCleanupParticipantId, IDeathCleanupParticipant> cleanupParticipants;
+
+    public DeathResolutionRegistry(@lombok.NonNull NamespaceRegistry namespaces) {
+        this.resolvers = new OwnedRegistry<>(namespaces);
+        this.messageProviders = new OwnedRegistry<>(namespaces);
+        this.cleanupParticipants = new OwnedRegistry<>(namespaces);
+    }
 
     @Override
-    public synchronized void registerResolver(
+    public void registerResolver(
             RegistrationOwner owner,
+            DeathResolverId id,
             @lombok.NonNull IDeathCauseResolver resolver
     ) {
-        resolvers.add(new RegisteredDeathComponent<>(owner, resolver));
+        resolvers.register(owner, id, resolver);
     }
 
     @Override
-    public synchronized void registerMessageProvider(
+    public void registerMessageProvider(
             RegistrationOwner owner,
+            DeathMessageProviderId id,
             @lombok.NonNull IDeathMessageProvider provider
     ) {
-        messageProviders.add(new RegisteredDeathComponent<>(owner, provider));
+        messageProviders.register(owner, id, provider);
     }
 
     @Override
-    public synchronized void registerCleanupParticipant(
+    public void registerCleanupParticipant(
             RegistrationOwner owner,
+            DeathCleanupParticipantId id,
             @lombok.NonNull IDeathCleanupParticipant participant
     ) {
-        cleanupParticipants.add(new RegisteredDeathComponent<>(owner, participant));
+        cleanupParticipants.register(owner, id, participant);
     }
 
-    public synchronized List<RegisteredDeathComponent<IDeathCauseResolver>> resolvers() {
-        return List.copyOf(resolvers);
+    public List<RegisteredComponent<DeathResolverId, IDeathCauseResolver>> resolvers() {
+        return resolvers.entries();
     }
 
-    public synchronized List<RegisteredDeathComponent<IDeathMessageProvider>> messageProviders() {
-        return List.copyOf(messageProviders);
+    public List<RegisteredComponent<DeathMessageProviderId, IDeathMessageProvider>> messageProviders() {
+        return messageProviders.entries();
     }
 
-    public synchronized List<RegisteredDeathComponent<IDeathCleanupParticipant>> cleanupParticipants() {
-        return List.copyOf(cleanupParticipants);
+    public List<RegisteredComponent<DeathCleanupParticipantId, IDeathCleanupParticipant>> cleanupParticipants() {
+        return cleanupParticipants.entries();
     }
 
-    public synchronized void clearOwner(@lombok.NonNull RegistrationOwner owner) {
-        resolvers.removeIf(component -> component.owner().equals(owner));
-        messageProviders.removeIf(component -> component.owner().equals(owner));
-        cleanupParticipants.removeIf(component -> component.owner().equals(owner));
+    public void clearOwner(@lombok.NonNull RegistrationOwner owner) {
+        resolvers.clearOwner(owner);
+        messageProviders.clearOwner(owner);
+        cleanupParticipants.clearOwner(owner);
     }
 
-    public synchronized void clear() {
+    public void clear() {
         resolvers.clear();
         messageProviders.clear();
         cleanupParticipants.clear();
-    }
-
-    public record RegisteredDeathComponent<T>(
-            @lombok.NonNull RegistrationOwner owner,
-            @lombok.NonNull T value
-    ) {
-
     }
 
 }

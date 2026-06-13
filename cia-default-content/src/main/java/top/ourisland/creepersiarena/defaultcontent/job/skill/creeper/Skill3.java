@@ -8,12 +8,14 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
@@ -60,11 +62,14 @@ public class Skill3 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var cfg = ctx.skillConfig();
-            var flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
-            var rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
+            var flight = nonNegative(cfg.getInt(id(), "flight", FLIGHT), "flight");
+            var rideTicks = positive(cfg.getInt(id(), "ride-ticks", RIDE_TICKS), "ride-ticks");
             var forward = cfg.getDouble(id(), "forward", FORWARD);
             var up = cfg.getDouble(id(), "up", UP);
-            var slowFallingTicks = Math.max(0, cfg.getInt(id(), "slow-falling-ticks", 20));
+            var slowFallingTicks = nonNegative(
+                    cfg.getInt(id(), "slow-falling-ticks", 20),
+                    "slow-falling-ticks"
+            );
             var spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
             var spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
 
@@ -126,6 +131,16 @@ public class Skill3 implements ISkillDefinition {
         };
     }
 
+    private static int nonNegative(int value, String key) {
+        if (value >= 0) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be >= 0, got " + value);
+    }
+
+    private static int positive(int value, String key) {
+        if (value > 0) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be positive, got " + value);
+    }
+
     private static FireworkEffect buildEffect() {
         return FireworkEffect.builder()
                 .with(FireworkEffect.Type.CREEPER)
@@ -142,6 +157,10 @@ public class Skill3 implements ISkillDefinition {
                 .trail(false)
                 .flicker(false)
                 .build();
+    }
+
+    private static String idPath(String key) {
+        return "skills." + CiaConfigPaths.section(DefaultSkillIds.CREEPER_FIREWORKS) + "." + key;
     }
 
 }

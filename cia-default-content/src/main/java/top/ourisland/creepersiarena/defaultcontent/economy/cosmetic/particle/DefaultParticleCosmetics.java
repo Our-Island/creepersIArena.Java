@@ -8,18 +8,23 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.economy.cosmetic.CosmeticId;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ParticleSchedule;
 import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticService;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public final class DefaultParticleCosmetics {
 
     public static final CosmeticId NONE = CosmeticId.of(DefaultContentIds.key("none"));
+    private static final String TRAIL_PATH = "game.cosmetics.particle-trail";
+    private static final String COSMETICS_PATH = TRAIL_PATH + ".cosmetics.cia";
 
     private DefaultParticleCosmetics() {
     }
@@ -28,129 +33,199 @@ public final class DefaultParticleCosmetics {
         var registry = context.requireService(ICosmeticRegistry.class);
         var gate = context.requireService(IAbilityGate.class);
         var yml = YamlConfiguration.loadConfiguration(
-                context.plugin()
-                        .getDataFolder()
-                        .toPath()
-                        .resolve("config.yml")
-                        .toFile()
+                context.plugin().getDataFolder().toPath().resolve("config.yml").toFile()
         );
 
-        var runtime = context.getService(CosmeticService.class);
-        if (runtime != null) {
-            runtime.viewerRadius(yml.getDouble("game.cosmetics.particle-trail.viewer-radius", 15.0D));
-        }
+        var trail = StrictConfig.section(yml, TRAIL_PATH, TRAIL_PATH);
+        var viewerRadius = StrictConfig.decimal(trail, "viewer-radius", 15.0D, TRAIL_PATH + ".viewer-radius");
+        requirePositive(viewerRadius, TRAIL_PATH + ".viewer-radius");
 
-        var root = yml.getConfigurationSection("game.cosmetics.particle-trail.cosmetics.cia");
+        var runtime = context.getService(CosmeticService.class);
+        if (runtime != null) runtime.viewerRadius(viewerRadius);
+
+        var cosmeticsRoot = StrictConfig.section(trail, "cosmetics", TRAIL_PATH + ".cosmetics");
+        var root = StrictConfig.section(cosmeticsRoot, "cia", COSMETICS_PATH);
         if (root == null) return;
 
         for (var key : root.getKeys(false)) {
-            var sec = root.getConfigurationSection(key);
-            if (sec == null) continue;
-            var cosmetic = fromSection(key, sec, gate);
-            registry.registerCosmetic(context.owner(), cosmetic);
+            String path = COSMETICS_PATH + "." + key;
+            var section = StrictConfig.section(root, key, path);
+            if (section == null) {
+                throw new IllegalArgumentException("Missing cosmetic section at " + path);
+            }
+            registry.registerCosmetic(context.owner(), fromSection(key, section, gate, path));
         }
     }
 
     private static ConfiguredParticleCosmetic fromSection(
             String key,
-            ConfigurationSection sec,
-            IAbilityGate gate
+            ConfigurationSection section,
+            IAbilityGate gate,
+            String path
     ) {
         var id = CosmeticId.of(DefaultContentIds.key(key));
-        var name = sec.getString("display-name", key);
-        var material = material(sec.getString("icon"), Material.FIREWORK_STAR);
-        int interval = Math.max(1, sec.getInt("interval-ticks", 20));
-        var emissions = sec.getMapList("emissions").stream()
-                .map(DefaultParticleCosmetics::emission)
-                .toList();
+        var name = StrictConfig.string(section, "display-name", key, path + ".display-name");
+        var material = material(
+                StrictConfig.string(section, "icon", null, path + ".icon"),
+                Material.FIREWORK_STAR,
+                path + ".icon"
+        );
+        int interval = StrictConfig.integer(section, "interval-ticks", 20, path + ".interval-ticks");
+        if (interval <= 0)
+            throw new IllegalArgumentException("Invalid value at " + path + ".interval-ticks: expected > 0");
+
+        var rawEmissions = StrictConfig.list(section, "emissions", List.of(), path + ".emissions");
+        var emissions = new ArrayList<ParticleEmission>(rawEmissions.size());
+        for (int index = 0; index < rawEmissions.size(); index++) {
+            Object raw = rawEmissions.get(index);
+            if (!(raw instanceof Map<?, ?> map)) {
+                throw invalid(path + ".emissions[" + index + "]", "mapping", raw);
+            }
+            emissions.add(emission(map, path + ".emissions[" + index + "]"));
+        }
 
         return new ConfiguredParticleCosmetic(
                 id,
                 Component.text(name),
                 new ItemStack(material),
                 new ParticleSchedule(interval),
-                emissions,
+                List.copyOf(emissions),
                 gate
         );
     }
 
     private static Material material(
             String raw,
-            Material fallback
+            Material fallback,
+            String path
     ) {
-        if (raw == null || raw.isBlank()) return fallback;
-        var material = Material.matchMaterial(raw.trim());
-        return material == null ? fallback : material;
+        if (raw == null) return fallback;
+        if (raw.isBlank())
+            throw new IllegalArgumentException("Invalid value at " + path + ": material id cannot be blank");
+        var material = Material.matchMaterial(raw, false);
+        if (material == null)
+            throw new IllegalArgumentException("Invalid value at " + path + ": unknown material id " + raw);
+        return material;
     }
 
-    private static ParticleEmission emission(Map<?, ?> map) {
-        var particle = ParticleEmission.particle(asString(map.get("particle")));
-        var rel = asList(map.get("relative-location"));
-        var offset = asList(map.get("offset"));
-        var dust = asList(map.get("dust-color"));
+    private static ParticleEmission emission(Map<?, ?> map, String path) {
+        var particleId = requiredString(map, "particle", path + ".particle");
+        var relative = vector(map, "relative-location", path + ".relative-location", 0.0D, 0.0D, 0.0D);
+        var offset = vector(map, "offset", path + ".offset", 0.0D, 0.0D, 0.0D);
+        var dust = vector(map, "dust-color", path + ".dust-color", 0.0D, 0.0D, 0.0D);
+        IntStream.range(0, dust.length)
+                .filter(index -> dust[index] < 0.0D || dust[index] > 1.0D)
+                .forEach(index -> {
+                    throw new IllegalArgumentException("Invalid value at " + path + ".dust-color[" + index + "]: expected 0.0..1.0");
+                });
+
+        double speed = optionalNumber(map, "speed", 0.0D, path + ".speed");
+        if (speed < 0.0D)
+            throw new IllegalArgumentException("Invalid value at " + path + ".speed: expected >= 0");
+
+        int count = optionalInteger(map, "count", 1, path + ".count");
+        if (count <= 0)
+            throw new IllegalArgumentException("Invalid value at " + path + ".count: expected > 0");
+
+        float dustScale = (float) optionalNumber(map, "dust-scale", 1.0D, path + ".dust-scale");
+        if (!(dustScale > 0.0F))
+            throw new IllegalArgumentException("Invalid value at " + path + ".dust-scale: expected > 0");
+
         return new ParticleEmission(
-                particle,
-                asDouble(rel, 0, 0.0D),
-                asDouble(rel, 1, 0.0D),
-                asDouble(rel, 2, 0.0D),
-                asDouble(offset, 0, 0.0D),
-                asDouble(offset, 1, 0.0D),
-                asDouble(offset, 2, 0.0D),
-                asDouble(map.get("speed"), 0.0D),
-                Math.max(1, (int) asDouble(map.get("count"), 1.0D)),
-                asBoolean(map.get("force"), true),
-                asBoolean(map.get("random-color"), false),
-                Color.fromRGB(
-                        clampColor(asDouble(dust, 0, 0.0D)),
-                        clampColor(asDouble(dust, 1, 0.0D)),
-                        clampColor(asDouble(dust, 2, 0.0D))
-                ),
-                (float) asDouble(map.get("dust-scale"), 1.0D)
+                ParticleEmission.particle(particleId),
+                relative[0], relative[1], relative[2],
+                offset[0], offset[1], offset[2],
+                speed,
+                count,
+                optionalBoolean(map, "force", true, path + ".force"),
+                optionalBoolean(map, "random-color", false, path + ".random-color"),
+                Color.fromRGB(color(dust[0]), color(dust[1]), color(dust[2])),
+                dustScale
         );
     }
 
-    private static String asString(Object value) {
-        return value == null ? "" : String.valueOf(value);
-    }
-
-    private static List<?> asList(Object value) {
-        return value instanceof List<?> list ? list : List.of();
-    }
-
-    private static double asDouble(
-            List<?> values,
-            int index,
-            double fallback
+    private static double[] vector(
+            Map<?, ?> map,
+            String key,
+            String path,
+            double defaultX,
+            double defaultY,
+            double defaultZ
     ) {
-        if (values == null || values.size() <= index) return fallback;
-        return asDouble(values.get(index), fallback);
+        Object raw = map.get(key);
+        if (raw == null) return new double[]{defaultX, defaultY, defaultZ};
+        if (!(raw instanceof List<?> list)) throw invalid(path, "three-number list", raw);
+        if (list.size() != 3)
+            throw new IllegalArgumentException("Invalid value at " + path + ": expected exactly 3 numbers");
+        return new double[]{number(list.get(0), path + "[0]"), number(list.get(1), path + "[1]"), number(list.get(2), path + "[2]")};
     }
 
-    private static double asDouble(
-            Object value,
-            double fallback
+    private static String requiredString(
+            Map<?, ?> map,
+            String key,
+            String path
     ) {
-        if (value instanceof Number number) return number.doubleValue();
-        if (value == null) return fallback;
-        try {
-            return Double.parseDouble(String.valueOf(value));
-        } catch (NumberFormatException _) {
-            return fallback;
-        }
+        Object raw = map.get(key);
+        if (!(raw instanceof String text) || text.isBlank()) throw invalid(path, "non-blank string", raw);
+        return text;
     }
 
-    private static boolean asBoolean(
-            Object value,
-            boolean fallback
+    private static double optionalNumber(
+            Map<?, ?> map,
+            String key,
+            double fallback,
+            String path
     ) {
-        if (value instanceof Boolean b) return b;
-        if (value == null) return fallback;
-        return Boolean.parseBoolean(String.valueOf(value));
+        Object raw = map.get(key);
+        return raw == null ? fallback : number(raw, path);
     }
 
-    private static int clampColor(double value) {
-        if (value <= 1.0D) value = value * 255.0D;
-        return Math.clamp((int) Math.round(value), 0, 255);
+    private static int optionalInteger(
+            Map<?, ?> map,
+            String key,
+            int fallback,
+            String path
+    ) {
+        Object raw = map.get(key);
+        if (raw == null) return fallback;
+        if (raw instanceof Byte || raw instanceof Short || raw instanceof Integer) return ((Number) raw).intValue();
+        if (raw instanceof Long value && value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE)
+            return value.intValue();
+        throw invalid(path, "integer", raw);
+    }
+
+    private static boolean optionalBoolean(
+            Map<?, ?> map,
+            String key,
+            boolean fallback,
+            String path
+    ) {
+        Object raw = map.get(key);
+        if (raw == null) return fallback;
+        if (raw instanceof Boolean value) return value;
+        throw invalid(path, "boolean", raw);
+    }
+
+    private static double number(Object raw, String path) {
+        if (raw instanceof Number value && Double.isFinite(value.doubleValue())) return value.doubleValue();
+        throw invalid(path, "finite number", raw);
+    }
+
+    private static int color(double component) {
+        return (int) Math.round(component * 255.0D);
+    }
+
+    private static void requirePositive(double value, String path) {
+        if (!(value > 0.0D)) throw new IllegalArgumentException("Invalid value at " + path + ": expected > 0");
+    }
+
+    private static IllegalArgumentException invalid(
+            String path,
+            String expected,
+            Object raw
+    ) {
+        String actual = raw == null ? "null" : raw.getClass().getSimpleName() + " (" + raw + ")";
+        return new IllegalArgumentException("Invalid value at " + path + ": expected " + expected + ", got " + actual);
     }
 
 }

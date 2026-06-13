@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -23,7 +24,7 @@ public class MoisonJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 null,
                 null,
@@ -36,14 +37,14 @@ public class MoisonJob implements IJob {
                         null,
                         List.of(
                                 BuiltinItemFactory.mod(
-                                        new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                        Attribute.ARMOR,
                                         0.0,
                                         AttributeModifier.Operation.ADD_NUMBER,
                                         EquipmentSlot.CHEST,
                                         "cia_moison_chest_armor"
                                 ),
                                 BuiltinItemFactory.mod(
-                                        new String[]{"KNOCKBACK_RESISTANCE", "GENERIC_KNOCKBACK_RESISTANCE"},
+                                        Attribute.KNOCKBACK_RESISTANCE,
                                         0.0,
                                         AttributeModifier.Operation.ADD_NUMBER,
                                         EquipmentSlot.CHEST,

@@ -8,13 +8,13 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
+import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.core.job.JobManager;
@@ -37,7 +37,11 @@ final class StealPlayerFlow implements IModePlayerFlow {
     private final ConfigManager configManager;
     private final StealState state;
 
-    StealPlayerFlow(GameRuntime runtime, StealState state, StealLobbyUi lobbyUi) {
+    StealPlayerFlow(
+            GameRuntime runtime,
+            StealState state,
+            StealLobbyUi lobbyUi
+    ) {
         this.kit = new DefaultLoadoutService(
                 runtime.requireService(JobManager.class),
                 runtime.requireService(SkillRegistry.class),
@@ -51,22 +55,19 @@ final class StealPlayerFlow implements IModePlayerFlow {
 
     @Override
     public Location spawnLocation(ModePlayerContext ctx) {
-        ArenaInstance arena = ctx.game().arena();
-        StealTeam team = state.team(ctx.player().getUniqueId());
-        String teamKey = team == null ? ctx.session().selectedTeamKey() : team.key();
+        var arena = ctx.game().arena();
+        var team = state.team(ctx.player().getUniqueId());
+        var teamKey = team == null || ctx.session().selectedTeam() == null
+                ? null
+                : ctx.session().selectedTeam().value();
         if (teamKey != null) {
-            List<Location> group = arena.spawnGroup(teamKey);
+            var group = arena.spawnGroup(teamKey);
             if (!group.isEmpty()) {
                 int index = Math.floorMod(ctx.player().getUniqueId().hashCode(), group.size());
                 return group.get(index).clone();
             }
         }
         return arena.firstSpawnOrAnchor("default");
-    }
-
-    @Override
-    public boolean allowHubEntrance(ModeLobbyContext ctx) {
-        return false;
     }
 
     @Override
@@ -88,13 +89,15 @@ final class StealPlayerFlow implements IModePlayerFlow {
     }
 
     @Override
-    public int selectableTeamCount(ModeLobbyContext ctx) {
-        if (state.phase == StealPhase.LOBBY || state.phase == StealPhase.START_COUNTDOWN) return 2;
-        return 0;
+    public List<TeamId> selectableTeams(ModeLobbyContext ctx) {
+        if (state.phase == StealPhase.LOBBY || state.phase == StealPhase.START_COUNTDOWN) {
+            return List.of(StealTeam.RED.id(), StealTeam.BLUE.id());
+        }
+        return List.of();
     }
 
     @Override
-    public void decorateLobbyInventory(ModeLobbyContext ctx, org.bukkit.inventory.PlayerInventory inventory) {
+    public void decorateLobbyInventory(ModeLobbyContext ctx, PlayerInventory inventory) {
         lobbyUi.decorate(ctx, inventory);
     }
 
@@ -137,7 +140,7 @@ final class StealPlayerFlow implements IModePlayerFlow {
         player.setGameMode(GameMode.ADVENTURE);
         kit.apply(player, ctx.session());
 
-        StealTeam team = state.team(player.getUniqueId());
+        var team = state.team(player.getUniqueId());
         if (team == StealTeam.BLUE) {
             player.getInventory().setItem(6, bluePickaxe(state.modeConfig().mineCooldownSeconds()));
         }
@@ -157,8 +160,8 @@ final class StealPlayerFlow implements IModePlayerFlow {
     }
 
     private ItemStack bluePickaxe(int cooldownSeconds) {
-        ItemStack pickaxe = new ItemStack(Material.IRON_PICKAXE);
-        ItemMeta meta = pickaxe.getItemMeta();
+        var pickaxe = new ItemStack(Material.IRON_PICKAXE);
+        var meta = pickaxe.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("铁镐", NamedTextColor.WHITE));
             meta.lore(List.of(

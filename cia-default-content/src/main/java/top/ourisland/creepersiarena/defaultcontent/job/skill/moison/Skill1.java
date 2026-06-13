@@ -3,11 +3,11 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.moison;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.List;
 )
 public class Skill1 implements ISkillDefinition {
 
-    static final SkillId PASSIVE_ID = SkillId.parse("cia:moison/spectral_reserve");
+    static final SkillId PASSIVE_ID = DefaultSkillIds.MOISON_SPECTRAL_RESERVE;
 
     @Override
     public List<ITrigger> triggers() {

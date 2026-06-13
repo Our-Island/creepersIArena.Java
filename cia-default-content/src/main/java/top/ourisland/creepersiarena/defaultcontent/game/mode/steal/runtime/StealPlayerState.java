@@ -1,18 +1,26 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime;
 
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
-import top.ourisland.creepersiarena.api.identity.CiaKey;
-import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
 
 final class StealPlayerState {
 
-    private static final CiaNamespace NAMESPACE = new CiaNamespace("cia");
-    private static final SessionDataKey<Boolean> READY = SessionDataKey.of(CiaKey.of(NAMESPACE, "steal/ready"), Boolean.class);
-    private static final SessionDataKey<Boolean> PARTICIPANT = SessionDataKey.of(CiaKey.of(NAMESPACE, "steal/participant"), Boolean.class);
-    private static final SessionDataKey<Boolean> ALIVE = SessionDataKey.of(CiaKey.of(NAMESPACE, "steal/alive"), Boolean.class);
-    private static final SessionDataKey<String> TEAM = SessionDataKey.of(CiaKey.of(NAMESPACE, "steal/team"), String.class);
+    private static final ExtensionSessionData SESSION_DATA = new ExtensionSessionData(DefaultContentIds.OWNER);
+    private static final SessionDataKey<Boolean> READY = SESSION_DATA.key(
+            "steal/ready",
+            Boolean.class
+    );
+    private static final SessionDataKey<Boolean> PARTICIPANT = SESSION_DATA.key(
+            "steal/participant",
+            Boolean.class
+    );
+    private static final SessionDataKey<Boolean> ALIVE = SESSION_DATA.key(
+            "steal/alive",
+            Boolean.class
+    );
 
     private StealPlayerState() {
     }
@@ -42,34 +50,19 @@ final class StealPlayerState {
     }
 
     static StealTeam team(PlayerSession session) {
-        if (session == null) return null;
-        var stored = session.get(TEAM);
-        if (stored != null) {
-            StealTeam team = StealTeam.fromKey(stored);
-            if (team != null) return team;
-        }
-        var keyed = StealTeam.fromKey(session.selectedTeamKey());
-        return keyed == null ? StealTeam.fromNumericId(session.selectedTeam()) : keyed;
+        return session == null ? null : StealTeam.fromId(session.selectedTeam());
     }
 
     static void team(PlayerSession session, StealTeam team) {
-        if (session == null) return;
-        if (team == null) {
-            session.remove(TEAM);
-            session.selectedTeam(null);
-            session.selectedTeamKey(null);
-            return;
-        }
-        session.set(TEAM, team.key());
-        session.selectedTeam(team.numericId());
-        session.selectedTeamKey(team.key());
+        if (session != null) session.selectedTeam(team == null ? null : team.id());
     }
 
     static void clear(PlayerSession session) {
         if (session == null) return;
-        session.clearNamespace(NAMESPACE);
+        session.remove(READY);
+        session.remove(PARTICIPANT);
+        session.remove(ALIVE);
         session.selectedTeam(null);
-        session.selectedTeamKey(null);
     }
 
 }

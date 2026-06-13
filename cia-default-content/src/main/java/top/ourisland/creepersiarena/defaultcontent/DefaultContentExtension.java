@@ -8,6 +8,9 @@ import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
+import top.ourisland.creepersiarena.api.game.death.DeathCleanupParticipantId;
+import top.ourisland.creepersiarena.api.game.death.DeathMessageProviderId;
+import top.ourisland.creepersiarena.api.game.death.DeathResolverId;
 import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
 import top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -41,7 +44,7 @@ import java.util.function.LongSupplier;
         id = "cia-default-content",
         namespace = "cia",
         name = "CreepersIArena Default Content",
-        apiVersion = 2,
+        apiVersion = 1,
         authors = {"Our Island", "Chiloven945", "xqysp"},
         loadOrder = CiaExtensionLoadOrder.EARLY
 )
@@ -148,9 +151,21 @@ public final class DefaultContentExtension implements ICiaExtension {
         );
 
         var registry = context.requireService(IDeathResolutionRegistry.class);
-        registry.registerResolver(context.owner(), new BuiltinDeathCauseResolver(sessions, currentTick));
-        registry.registerMessageProvider(context.owner(), new BuiltinDeathMessageProvider(catalog));
-        registry.registerCleanupParticipant(context.owner(), new BuiltinDeathCleanupParticipant(runtime.store()));
+        registry.registerResolver(
+                context.owner(),
+                DeathResolverId.parse("cia:builtin_death_causes"),
+                new BuiltinDeathCauseResolver(sessions, currentTick)
+        );
+        registry.registerMessageProvider(
+                context.owner(),
+                DeathMessageProviderId.parse("cia:builtin_death_messages"),
+                new BuiltinDeathMessageProvider(catalog)
+        );
+        registry.registerCleanupParticipant(
+                context.owner(),
+                DeathCleanupParticipantId.parse("cia:builtin_death_cleanup"),
+                new BuiltinDeathCleanupParticipant(runtime.store())
+        );
     }
 
     private void registerEconomyStoreAndCosmetics(ICiaExtensionContext context) {

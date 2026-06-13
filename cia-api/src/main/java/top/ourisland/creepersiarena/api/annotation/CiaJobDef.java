@@ -37,8 +37,8 @@ public @interface CiaJobDef {
      * Returns the stable namespaced registry id of the job.
      * <p>
      * Built-in content uses the {@code cia} namespace, for example {@code cia:creeper}. Extensions should use their own
-     * namespace to avoid collisions. The id is later normalized by the i18n helpers when language keys are built, but
-     * the original value remains the runtime identity.
+     * namespace to avoid collisions. Metadata creation parses the value immediately into a typed job id and rejects
+     * malformed or non-namespaced values.
      *
      * @return globally unique job id
      */

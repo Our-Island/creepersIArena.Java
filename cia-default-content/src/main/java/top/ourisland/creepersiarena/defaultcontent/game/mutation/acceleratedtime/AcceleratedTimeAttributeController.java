@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.game.mutation.acceleratedtim
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
@@ -9,7 +10,6 @@ import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import top.ourisland.creepersiarena.core.utils.AttributeUtils;
 
 import java.util.*;
 
@@ -75,7 +75,7 @@ final class AcceleratedTimeAttributeController {
     }
 
     private void remove(Player player) {
-        AttributeInstance instance = movementSpeedInstance(player);
+        var instance = movementSpeedInstance(player);
         if (instance == null) return;
         Set.copyOf(instance.getModifiers()).stream()
                 .filter(modifier -> movementSpeedKey.equals(modifier.getKey()))
@@ -83,9 +83,7 @@ final class AcceleratedTimeAttributeController {
     }
 
     private AttributeInstance movementSpeedInstance(Player player) {
-        var attribute = AttributeUtils.attributeOrNull("movement_speed", "generic_movement_speed");
-        if (attribute == null) return null;
-        return player.getAttribute(attribute);
+        return player.getAttribute(Attribute.MOVEMENT_SPEED);
     }
 
     public void clearAll() {
@@ -102,7 +100,7 @@ final class AcceleratedTimeAttributeController {
             Player player,
             double amount
     ) {
-        AttributeInstance instance = movementSpeedInstance(player);
+        var instance = movementSpeedInstance(player);
         if (instance == null) return;
 
         boolean correct = false;

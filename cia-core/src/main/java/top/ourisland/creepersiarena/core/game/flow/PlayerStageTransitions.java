@@ -64,7 +64,7 @@ final class PlayerStageTransitions {
                 p,
                 session,
                 cfg.get(),
-                lobbyHooks.selectableTeamCount(p, session),
+                lobbyHooks.selectableTeams(p, session),
                 lobbyHooks.showJobSelector(p, session)
         );
         lobbyHooks.decorateLobbyInventory(p, session, p.getInventory());
@@ -107,7 +107,7 @@ final class PlayerStageTransitions {
 
         p.setGameMode(GameMode.ADVENTURE);
 
-        Location to = deathAnchor();
+        var to = deathAnchor();
         teleportAsync(p, to, "RESPAWN");
 
         lobbyItemService.applyDeathKit(p, session, cfg.get(), lobbyHooks.showJobSelector(p, session));

@@ -50,7 +50,7 @@ public @interface CiaExtensionInfo {
      *
      * @return descriptor API version
      */
-    int apiVersion() default 2;
+    int apiVersion() default 1;
 
     /**
      * Supported CreepersIArena version or version range. When empty, the generated descriptor uses the extension

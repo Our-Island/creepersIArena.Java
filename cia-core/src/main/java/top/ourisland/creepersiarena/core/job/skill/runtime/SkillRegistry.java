@@ -32,8 +32,9 @@ public final class SkillRegistry {
     }
 
     public synchronized void replaceAll(Collection<ISkillDefinition> values) {
-        skills.clear();
-        for (ISkillDefinition skill : values) register(skill);
+        skills.replaceAllValidated(values.stream()
+                .map(skill -> new RegisteredComponent<>(RegistrationOwner.CORE, skill.id(), skill))
+                .toList());
     }
 
     public synchronized void register(ISkillDefinition skill) {
@@ -54,8 +55,7 @@ public final class SkillRegistry {
     public synchronized void replaceAllRegistered(
             Collection<RegisteredComponent<SkillId, ISkillDefinition>> values
     ) {
-        skills.clear();
-        values.forEach(value -> register(value.owner(), value.value()));
+        skills.replaceAllValidated(values);
     }
 
     public synchronized void clearOwner(RegistrationOwner owner) {

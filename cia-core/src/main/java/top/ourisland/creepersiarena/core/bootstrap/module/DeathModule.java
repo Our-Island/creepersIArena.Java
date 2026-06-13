@@ -12,6 +12,7 @@ import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.death.*;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.Map;
 
@@ -30,7 +31,8 @@ public final class DeathModule implements IBootstrapModule {
             var gameManager = rt.requireService(GameManager.class);
             var flow = rt.requireService(GameFlow.class);
 
-            var registry = new DeathResolutionRegistry();
+            var namespaces = rt.requireService(NamespaceRegistry.class);
+            var registry = new DeathResolutionRegistry(namespaces);
             var attributionStore = new DamageAttributionStore();
             var abilities = rt.requireService(IAbilityGate.class);
 
@@ -49,7 +51,8 @@ public final class DeathModule implements IBootstrapModule {
                     streakService,
                     messageService,
                     flow,
-                    abilities
+                    abilities,
+                    namespaces
             );
 
             rt.putAllServices(Map.of(
@@ -89,7 +92,8 @@ public final class DeathModule implements IBootstrapModule {
                 rt.requireService(PlayerSessionStore.class),
                 rt.requireService(DeathResolutionRegistry.class),
                 rt.requireService(DamageAttributionStore.class),
-                rt.requireService(DeathStreakService.class)
+                rt.requireService(DeathStreakService.class),
+                rt.requireService(NamespaceRegistry.class)
         ));
         binder.register("ArenaDeathListener", () -> new ArenaDeathListener(
                 rt.requireService(PlayerSessionStore.class),

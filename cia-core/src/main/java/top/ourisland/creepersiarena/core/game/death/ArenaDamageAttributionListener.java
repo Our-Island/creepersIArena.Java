@@ -11,10 +11,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.projectiles.ProjectileSource;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
-import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.StandardDeathCauses;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.Optional;
 
@@ -25,19 +25,22 @@ public final class ArenaDamageAttributionListener implements Listener {
     private final DeathResolutionRegistry registry;
     private final DamageAttributionStore attributionStore;
     private final DeathStreakService streakService;
+    private final NamespaceRegistry namespaces;
 
     public ArenaDamageAttributionListener(
             @lombok.NonNull Logger log,
             @lombok.NonNull PlayerSessionStore store,
             @lombok.NonNull DeathResolutionRegistry registry,
             @lombok.NonNull DamageAttributionStore attributionStore,
-            @lombok.NonNull DeathStreakService streakService
+            @lombok.NonNull DeathStreakService streakService,
+            @lombok.NonNull NamespaceRegistry namespaces
     ) {
         this.log = log;
         this.store = store;
         this.registry = registry;
         this.attributionStore = attributionStore;
         this.streakService = streakService;
+        this.namespaces = namespaces;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -59,7 +62,13 @@ public final class ArenaDamageAttributionListener implements Listener {
         for (var registered : registry.resolvers()) {
             try {
                 Optional<DeathAttribution> attribution = registered.value().resolveDamage(event, victim);
-                if (attribution.isPresent()) return attribution;
+                if (attribution.isPresent()) {
+                    namespaces.requireOwnership(
+                            registered.owner(),
+                            attribution.get().causeId().namespace()
+                    );
+                    return attribution;
+                }
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] cause resolver failed on damage: owner={} player={} err={}",

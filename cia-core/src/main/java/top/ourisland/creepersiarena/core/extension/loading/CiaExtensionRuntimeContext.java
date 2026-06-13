@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.identity.ExtensionContextAttributes;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -46,6 +48,9 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     private final BootstrapRuntime rt;
     private final ComponentCatalog catalog;
     private final CiaExtensionDescriptor descriptor;
+    @Getter(onMethod_ = {@Override}) private final RegistrationOwner owner;
+    @Getter(onMethod_ = {@Override}) private final ExtensionSessionData sessionData;
+    @Getter(onMethod_ = {@Override}) private final ExtensionContextAttributes contextAttributes;
     private final ClassLoader classLoader;
     private final Path jarPath;
     @Getter private final Path dataFolder;
@@ -71,6 +76,9 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         this.rt = rt;
         this.catalog = catalog;
         this.descriptor = descriptor;
+        this.owner = descriptor.owner();
+        this.sessionData = new ExtensionSessionData(owner);
+        this.contextAttributes = new ExtensionContextAttributes(owner);
         this.classLoader = classLoader;
         this.jarPath = jarPath;
         this.dataFolder = dataFolder;
@@ -204,11 +212,6 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
                 : rt.getService(GameManager.class);
         if (gm != null) gm.registerMode(owner(), mode);
         logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode());
-    }
-
-    @Override
-    public RegistrationOwner owner() {
-        return descriptor.owner();
     }
 
     @Override

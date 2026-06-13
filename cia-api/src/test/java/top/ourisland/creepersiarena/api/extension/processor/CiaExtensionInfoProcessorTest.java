@@ -30,7 +30,7 @@ class CiaExtensionInfoProcessorTest {
                         id = "sample-extension",
                         namespace = "sample",
                         name = "Sample Extension",
-                        apiVersion = 2,
+                        apiVersion = 1,
                         ciaVersion = "[0.1.0,0.2.0)",
                         authors = {"Alice", "Bob"},
                         requiredDependencies = {"base-extension"},
@@ -50,7 +50,7 @@ class CiaExtensionInfoProcessorTest {
         String descriptor = Files.readString(result.classesRoot().resolve("cia-extension.yml"), StandardCharsets.UTF_8);
         assertTrue(descriptor.contains("id: \"sample-extension\""));
         assertTrue(descriptor.contains("namespace: \"sample\""));
-        assertTrue(descriptor.contains("api-version: 2"));
+        assertTrue(descriptor.contains("api-version: 1"));
         assertTrue(descriptor.contains("name: \"Sample Extension\""));
         assertTrue(descriptor.contains("version: \"1.2.3\""));
         assertTrue(descriptor.contains("main: \"com.example.SampleExtension\""));
@@ -102,6 +102,29 @@ class CiaExtensionInfoProcessorTest {
             task.setProcessors(List.of(new CiaExtensionInfoProcessor()));
             return new CompilationResult(task.call(), diagnostics.getDiagnostics(), classesRoot);
         }
+    }
+
+    @Test
+    void rejectsUnsupportedApiVersion() throws Exception {
+        var result = compile("com.example.FutureExtension", """
+                package com.example;
+                
+                import top.ourisland.creepersiarena.api.extension.ICiaExtension;
+                import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
+                
+                @CiaExtensionInfo(
+                        id = "future-extension",
+                        namespace = "future",
+                        name = "Future Extension",
+                        apiVersion = 2
+                )
+                public final class FutureExtension implements ICiaExtension {
+                
+                }
+                """);
+
+        assertFalse(result.success());
+        assertTrue(result.diagnosticsText().contains("apiVersion must be 1"), result.diagnosticsText());
     }
 
     @Test

@@ -4,6 +4,9 @@ import org.bukkit.Location;
 import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
+
+import java.util.List;
 
 /**
  * Mode-owned player transition hooks.
@@ -30,16 +33,10 @@ public interface IModePlayerFlow {
         }
 
         var session = ctx.session();
-        if (session != null) {
-            String key = session.selectedTeamKey();
-            if (key == null && session.selectedTeam() != null) {
-                key = String.valueOf(session.selectedTeam());
-            }
-            if (key != null) {
-                var group = ctx.game().arena().spawnGroup(key);
-                if (!group.isEmpty()) {
-                    return group.getFirst().clone();
-                }
+        if (session != null && session.selectedTeam() != null) {
+            var group = ctx.game().arena().spawnGroup(session.selectedTeam().value());
+            if (!group.isEmpty()) {
+                return group.getFirst().clone();
             }
         }
 
@@ -63,8 +60,8 @@ public interface IModePlayerFlow {
     /**
      * Returns whether the generic lobby listener should protect and route lobby inventory input for this player.
      * <p>
-     * Modes with custom lobby items can override this without exposing their item semantics to core. The default keeps
-     * the previous core behaviour for lobby states and enabled core selectors.
+     * Modes with custom lobby items can override this without exposing their item semantics to core. The default
+     * accepts input while a player is in a lobby state or a core selector is visible.
      *
      * @param ctx lobby/player context
      *
@@ -73,15 +70,14 @@ public interface IModePlayerFlow {
     default boolean acceptsLobbyUiInput(ModeLobbyContext ctx) {
         return ctx != null
                 && ctx.session() != null
-                && (ctx.session().state().isLobbyState() || showJobSelector(ctx) || selectableTeamCount(ctx) > 0);
+                && (ctx.session().state().isLobbyState() || showJobSelector(ctx) || !selectableTeams(ctx).isEmpty());
     }
 
     /**
      * Returns whether the core-provided job selector should be shown for the supplied player state.
      * <p>
-     * The default preserves the historical behaviour: jobs can be picked in normal lobby states. Modes with their own
-     * round flow can move this UI into a mode phase, for example a pre-round job-selection phase, and keep HUB/RESPAWN
-     * inventories clean.
+     * By default, jobs can be picked in normal lobby states. Modes with their own round flow can move this UI into a
+     * mode phase, for example a pre-round job-selection phase, and keep HUB/RESPAWN inventories clean.
      *
      * @param ctx lobby/player context
      *
@@ -92,17 +88,17 @@ public interface IModePlayerFlow {
     }
 
     /**
-     * Returns how many teams this mode allows players to select from in the generic lobby UI.
+     * Returns the canonical local team identifiers exposed by this mode in the generic lobby UI.
      * <p>
-     * Returning {@code 0} hides the core-provided team selector. Modes with custom lobby/team selection flows can keep
-     * this disabled and expose their own controls through their extension.
+     * Returning an empty list hides the core-provided team selector. Core stores and routes these exact identifiers; it
+     * never remaps them to numeric aliases.
      *
      * @param ctx lobby context
      *
-     * @return selectable team count; {@code 0} means no generic team selector
+     * @return immutable or caller-owned list of selectable team identifiers
      */
-    default int selectableTeamCount(ModeLobbyContext ctx) {
-        return 0;
+    default List<TeamId> selectableTeams(ModeLobbyContext ctx) {
+        return List.of();
     }
 
     /**
@@ -136,7 +132,7 @@ public interface IModePlayerFlow {
      * <p>
      * Some modes move players into the generic {@code IN_GAME} stage for pre-round UI such as job selection. Those
      * phases should not receive loadout skill items, otherwise mode-owned selector items can be overwritten by the
-     * global skill hotbar renderer. The default preserves historical behaviour for always-live combat modes.
+     * global skill hotbar renderer. The default enables the runtime for always-live combat modes.
      *
      * @param ctx player-flow context
      *

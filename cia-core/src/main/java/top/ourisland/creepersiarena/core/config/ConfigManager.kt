@@ -154,37 +154,20 @@ class ConfigManager(
 
     private fun loadGlobal(): GlobalConfig {
         logger.info("[Config] Loading global config...")
-        val p = dataDir.resolve("config.yml")
-        return try {
-            val yml = YamlConfiguration.loadConfiguration(p.toFile())
-            GlobalConfig.fromYaml(yml)
-        } catch (e: Exception) {
-            logger.error("[Config] Failed to load config.yml, using defaults.", e)
-            GlobalConfig.defaults()
-        }
+        val path = dataDir.resolve("config.yml")
+        return GlobalConfig.fromYaml(YamlConfiguration.loadConfiguration(path.toFile()))
     }
 
     private fun loadArena(): ArenaConfig {
         logger.info("[Config] Loading arena config...")
-        val p = dataDir.resolve("arena.yml")
-        return try {
-            val yml = YamlConfiguration.loadConfiguration(p.toFile())
-            ArenaConfig.fromYaml(yml)
-        } catch (e: Exception) {
-            logger.error("[Config] Failed to load arena.yml, using empty config.", e)
-            ArenaConfig.empty()
-        }
+        val path = dataDir.resolve("arena.yml")
+        return ArenaConfig.fromYaml(YamlConfiguration.loadConfiguration(path.toFile()))
     }
 
     private fun loadSkill(): SkillConfig {
-        val p = dataDir.resolve("skill.yml")
-        return try {
-            val yml = YamlConfiguration.loadConfiguration(p.toFile())
-            SkillConfig.fromYaml(yml)
-        } catch (e: Exception) {
-            logger.warn("[Config] Failed to load skill.yml: {}", e.message, e)
-            SkillConfig.defaults()
-        }
+        logger.info("[Config] Loading skill config...")
+        val path = dataDir.resolve("skill.yml")
+        return SkillConfig.fromYaml(YamlConfiguration.loadConfiguration(path.toFile()))
     }
 
 }

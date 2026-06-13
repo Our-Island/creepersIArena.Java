@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -24,7 +25,7 @@ public class BloodlineJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 BuiltinItemFactory.armor(
                         Material.NETHERITE_BOOTS,
@@ -38,14 +39,14 @@ public class BloodlineJob implements IJob {
                         null,
                         List.of(
                                 BuiltinItemFactory.mod(
-                                        new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                        Attribute.ARMOR,
                                         0.0,
                                         AttributeModifier.Operation.ADD_NUMBER,
                                         EquipmentSlot.FEET,
                                         "cia_bloodline_boots_armor"
                                 ),
                                 BuiltinItemFactory.mod(
-                                        new String[]{"MOVEMENT_SPEED", "GENERIC_MOVEMENT_SPEED"},
+                                        Attribute.MOVEMENT_SPEED,
                                         0.05,
                                         AttributeModifier.Operation.ADD_SCALAR,
                                         EquipmentSlot.FEET,
@@ -63,7 +64,7 @@ public class BloodlineJob implements IJob {
                         TrimPattern.WARD,
                         5247232,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 0.0,
                                 AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.HEAD,

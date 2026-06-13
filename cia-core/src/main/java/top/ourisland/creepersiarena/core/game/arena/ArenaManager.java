@@ -94,7 +94,7 @@ public final class ArenaManager {
                 ));
 
         return new ArenaInstance(
-                ArenaId.parse(def.id()),
+                def.id(),
                 def.nameKey(),
                 type,
                 anchor,

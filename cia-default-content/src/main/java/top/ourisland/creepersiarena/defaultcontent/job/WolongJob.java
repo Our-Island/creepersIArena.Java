@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
@@ -47,7 +48,7 @@ public class WolongJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 null,
                 null,
@@ -59,7 +60,7 @@ public class WolongJob implements IJob {
                         TrimPattern.SILENCE,
                         0,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 0.0,
                                 AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.CHEST,
@@ -75,7 +76,7 @@ public class WolongJob implements IJob {
                         TrimPattern.SILENCE,
                         16777215,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 0.0,
                                 AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.HEAD,

@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.core.game.lobby.item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.job.JobManager;
@@ -15,7 +16,10 @@ public final class LobbyItemService {
     private final LobbyItemFactory items;
     private final JobManager jobs;
 
-    public LobbyItemService(LobbyItemFactory items, JobManager jobs) {
+    public LobbyItemService(
+            LobbyItemFactory items,
+            JobManager jobs
+    ) {
         this.items = items;
         this.jobs = jobs;
     }
@@ -24,16 +28,7 @@ public final class LobbyItemService {
             Player p,
             PlayerSession s,
             GlobalConfig cfg,
-            int selectableTeamCount
-    ) {
-        applyHubKit(p, s, cfg, selectableTeamCount, true);
-    }
-
-    public void applyHubKit(
-            Player p,
-            PlayerSession s,
-            GlobalConfig cfg,
-            int selectableTeamCount,
+            List<TeamId> selectableTeams,
             boolean showJobSelector
     ) {
         clear(p);
@@ -44,8 +39,8 @@ public final class LobbyItemService {
             fillJobSelector(inv, s, cfg);
         }
 
-        if (selectableTeamCount > 0) {
-            inv.setItem(8, items.teamCycleButton(s.selectedTeam(), selectableTeamCount));
+        if (!selectableTeams.isEmpty()) {
+            inv.setItem(8, items.teamCycleButton(s.selectedTeam(), selectableTeams));
         } else {
             inv.setItem(8, null);
         }

@@ -15,6 +15,9 @@ import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
 import top.ourisland.creepersiarena.core.utils.Msg;
+import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
+
+import java.util.List;
 
 /**
  * Owns steal's waiting ready control: state transitions, item detection, and inventory rendering.
@@ -27,7 +30,10 @@ final class StealReadyController {
     private final ConfigManager configManager;
     private final StealReadyItemCodec readyItems = new StealReadyItemCodec();
 
-    StealReadyController(GameRuntime runtime, StealState state) {
+    StealReadyController(
+            GameRuntime runtime,
+            StealState state
+    ) {
         this.runtime = runtime;
         this.state = state;
         this.lobbyItems = runtime.requireService(LobbyItemService.class);
@@ -51,10 +57,10 @@ final class StealReadyController {
         if (player == null || session == null || session.state() != PlayerState.HUB) return;
         if (!isWaitingPhase()) return;
 
-        PlayerInventory inventory = player.getInventory();
-        ItemStack desired = readyItems.readyButton(StealPlayerState.ready(session), ready, required);
+        var inventory = player.getInventory();
+        var desired = readyItems.readyButton(StealPlayerState.ready(session), ready, required);
         if (!readyItems.isReadyButton(inventory.getItem(0))) {
-            lobbyItems.applyHubKit(player, session, configManager.globalConfig(), 2, false);
+            lobbyItems.applyHubKit(player, session, configManager.globalConfig(), List.of(StealTeam.RED.id(), StealTeam.BLUE.id()), false);
         }
         if (!desired.isSimilar(inventory.getItem(0))) {
             inventory.setItem(0, desired);
@@ -94,7 +100,7 @@ final class StealReadyController {
 
     boolean toggleReady(Player player, GameSession game) {
         if (player == null || game == null) return false;
-        PlayerSession session = runtime.sessionStore().getOrCreate(player);
+        var session = runtime.sessionStore().getOrCreate(player);
         if (!canToggleReady(session)) {
             Msg.actionBar(player, Component.text("当前阶段不能切换准备", NamedTextColor.RED));
             return false;

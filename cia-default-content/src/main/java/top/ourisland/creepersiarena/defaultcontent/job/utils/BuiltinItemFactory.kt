@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta
 import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.inventory.meta.trim.TrimMaterial
 import org.bukkit.inventory.meta.trim.TrimPattern
+import top.ourisland.creepersiarena.api.game.team.TeamId
 import top.ourisland.creepersiarena.core.utils.AttributeUtils
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory.armor
 
@@ -65,7 +66,7 @@ object BuiltinItemFactory {
         meta.isUnbreakable = true
         addModifier(
             meta,
-            AttributeUtils.attribute("attack_damage", "generic_attack_damage"),
+            Attribute.ATTACK_DAMAGE,
             attackDamageAmount,
             AttributeModifier.Operation.ADD_NUMBER,
             EquipmentSlot.HAND,
@@ -73,7 +74,7 @@ object BuiltinItemFactory {
         )
         addModifier(
             meta,
-            AttributeUtils.attribute("attack_speed", "generic_attack_speed"),
+            Attribute.ATTACK_SPEED,
             attackSpeedAmount,
             AttributeModifier.Operation.ADD_NUMBER,
             EquipmentSlot.HAND,
@@ -210,34 +211,6 @@ object BuiltinItemFactory {
     }
 
     /**
-     * Builds a [ModifierSpec] from one or more attribute aliases.
-     *
-     * This overload is useful when call sites want to stay close to legacy attribute names while still benefiting from
-     * the registry-based resolution performed by [AttributeUtils].
-     *
-     * @param attributeNames candidate attribute aliases
-     * @param amount modifier amount
-     * @param operation arithmetic operation
-     * @param slot equipment slot
-     * @param name local modifier path used for the generated key
-     * @return immutable modifier specification
-     */
-    @JvmStatic
-    fun mod(
-        attributeNames: Array<String>,
-        amount: Double,
-        operation: AttributeModifier.Operation,
-        slot: EquipmentSlot,
-        name: String
-    ): ModifierSpec = ModifierSpec(
-        AttributeUtils.attribute(*attributeNames),
-        amount,
-        operation,
-        slot,
-        name
-    )
-
-    /**
      * Builds a [ModifierSpec] from an already-resolved attribute.
      *
      * @param attribute target attribute
@@ -272,7 +245,7 @@ object BuiltinItemFactory {
      * @return preferred trim material for the supplied team
      */
     @JvmStatic
-    fun trimMaterialForTeam(team: Int?): TrimMaterial = when (maxOf(1, team ?: 1)) {
+    fun trimMaterialForTeam(team: TeamId?): TrimMaterial = when (teamNumber(team)) {
         1 -> TrimMaterial.REDSTONE
         2 -> TrimMaterial.LAPIS
         3 -> TrimMaterial.GOLD
@@ -295,17 +268,28 @@ object BuiltinItemFactory {
      */
     @JvmStatic
     fun teamLeatherColor(
-        team: Int?,
+        team: TeamId?,
         c1: Int,
         c2: Int,
         c3: Int,
         c4: Int
-    ): Int = when (maxOf(1, team ?: 1)) {
+    ): Int = when (teamNumber(team)) {
         1 -> c1
         2 -> c2
         3 -> c3
         4 -> c4
         else -> c1
+    }
+
+    private fun teamNumber(team: TeamId?): Int {
+        if (team == null) return 1
+        val numbered = team.number().orElse(0)
+        if (numbered > 0) return numbered
+        return when (team.value()) {
+            "red" -> 1
+            "blue" -> 2
+            else -> 1
+        }
     }
 
     /**

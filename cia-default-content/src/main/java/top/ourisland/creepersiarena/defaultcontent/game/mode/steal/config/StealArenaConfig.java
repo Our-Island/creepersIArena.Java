@@ -2,14 +2,13 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.config;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.config.IArenaConfigView;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 
 import java.util.ArrayList;
@@ -27,88 +26,83 @@ public record StealArenaConfig(
         Location spectatorFallback
 ) {
 
+    private static final String ROOT_PATH = "arena.settings";
+
+    public StealArenaConfig {
+        redstoneBlocks = List.copyOf(redstoneBlocks);
+        selectionBarriers = List.copyOf(selectionBarriers);
+        tourPoints = List.copyOf(tourPoints);
+    }
+
     public static StealArenaConfig from(ArenaInstance arena) {
         if (arena == null) return from(IArenaConfigView.EMPTY);
-        var config = arena.config();
-        var world = arena.world();
-        return new StealArenaConfig(
-                parseCuboids(world, config.getList("redstone-blocks")),
-                parseCuboids(world, config.getList("selection-barriers")),
-                parseTourPoints(arena),
-                parseSpectatorFallback(arena)
-        );
+        return parse(arena, arena.config(), arena.world());
     }
 
     public static StealArenaConfig from(IArenaConfigView config) {
-        IArenaConfigView view = config == null ? IArenaConfigView.EMPTY : config;
+        return parse(null, config == null ? IArenaConfigView.EMPTY : config, null);
+    }
+
+    private static StealArenaConfig parse(
+            ArenaInstance arena,
+            IArenaConfigView config,
+            World world
+    ) {
+        var section = config.section();
         return new StealArenaConfig(
-                parseCuboids(null, view.getList("redstone-blocks")),
-                parseCuboids(null, view.getList("selection-barriers")),
-                parseTourPoints(null, view),
-                parseSpectatorFallback(null, view)
+                parseCuboids(
+                        world,
+                        StrictConfig.list(section, "redstone-blocks", List.of(), ROOT_PATH + ".redstone-blocks"),
+                        ROOT_PATH + ".redstone-blocks"
+                ),
+                parseCuboids(
+                        world,
+                        StrictConfig.list(section, "selection-barriers", List.of(), ROOT_PATH + ".selection-barriers"),
+                        ROOT_PATH + ".selection-barriers"
+                ),
+                parseTourPoints(arena, world, section),
+                parseSpectatorFallback(arena, world, section)
         );
     }
 
-    private static Location parseSpectatorFallback(ArenaInstance arena) {
-        return parseSpectatorFallback(arena, arena == null ? IArenaConfigView.EMPTY : arena.config());
-    }
-
-    private static Location parseSpectatorFallback(ArenaInstance arena, IArenaConfigView config) {
-        var world = arena == null ? null : arena.world();
-        var section = config.section();
-        if (section != null) {
-            Location direct = parseLocation(world, section.get("spectator-fallback"));
-            if (direct != null) return direct;
-
-            var fallback = section.getConfigurationSection("spectator-fallback");
-            if (fallback != null) {
-                Location nested = parseLocation(world, fallback.get("location"));
-                if (nested != null) return nested;
-            }
-
-        }
-
+    private static Location parseSpectatorFallback(
+            ArenaInstance arena,
+            World world,
+            ConfigurationSection section
+    ) {
+        Object raw = section == null || !section.contains("spectator-fallback")
+                ? null
+                : section.get("spectator-fallback");
+        if (raw != null) return parseLocation(world, raw, ROOT_PATH + ".spectator-fallback", true);
         if (arena == null) return null;
         return arena.anchor().clone().add(0, 8, 0);
     }
 
-    private static List<TourPoint> parseTourPoints(ArenaInstance arena) {
-        return parseTourPoints(arena, arena == null ? IArenaConfigView.EMPTY : arena.config());
-    }
+    private static List<TourPoint> parseTourPoints(
+            ArenaInstance arena,
+            World world,
+            ConfigurationSection root
+    ) {
+        var section = StrictConfig.section(root, "tour", ROOT_PATH + ".tour");
+        if (section == null) return arena == null ? List.of() : defaultTour(arena);
 
-    private static List<TourPoint> parseTourPoints(ArenaInstance arena, IArenaConfigView config) {
-        var world = arena == null ? null : arena.world();
-        var section = config.getSection("tour");
-        if (section != null) {
-            var points = new ArrayList<TourPoint>();
-            List<?> list = section.getList("points", List.of());
-            for (Object entry : list) {
-                TourPoint point = parseTourPoint(world, entry);
-                if (point != null) points.add(point);
-            }
-            if (!points.isEmpty()) return List.copyOf(points);
+        List<?> entries = StrictConfig.list(section, "points", List.of(), ROOT_PATH + ".tour.points");
+        if (entries.isEmpty()) return arena == null ? List.of() : defaultTour(arena);
+
+        var points = new ArrayList<TourPoint>(entries.size());
+        for (int index = 0; index < entries.size(); index++) {
+            var path = ROOT_PATH + ".tour.points[" + index + "]";
+            Object entry = entries.get(index);
+            if (!(entry instanceof Map<?, ?> map)) throw invalid(path, "mapping", entry);
+            Object location = map.get("location");
+            if (location == null) throw invalid(path + ".location", "location list", null);
+            var message = optionalString(map, "message", "观察地图", path + ".message");
+            points.add(new TourPoint(
+                    parseLocation(world, location, path + ".location", true),
+                    Component.text(message, NamedTextColor.GRAY)
+            ));
         }
-
-
-        return arena == null ? List.of() : defaultTour(arena);
-    }
-
-    private static TourPoint parseTourPoint(World world, Object entry) {
-        if (entry instanceof ConfigurationSection section) {
-            var location = parseLocation(world, section.get("location"));
-            if (location == null) return null;
-            return new TourPoint(location, Component.text(section.getString("message", "观察地图"), NamedTextColor.GRAY));
-        }
-        if (entry instanceof Map<?, ?> map) {
-            var location = parseLocation(world, map.get("location"));
-            if (location == null) return null;
-            Object rawMessage = map.get("message");
-            return new TourPoint(location, Component.text(rawMessage == null
-                    ? "观察地图"
-                    : String.valueOf(rawMessage), NamedTextColor.GRAY));
-        }
-        var location = parseLocation(world, entry);
-        return location == null ? null : new TourPoint(location, Component.text("观察地图", NamedTextColor.GRAY));
+        return List.copyOf(points);
     }
 
     private static List<TourPoint> defaultTour(ArenaInstance arena) {
@@ -125,68 +119,54 @@ public record StealArenaConfig(
         return List.copyOf(out);
     }
 
-    private static List<BlockCuboid> parseCuboids(World world, List<?> list) {
-        if (list == null || list.isEmpty()) return List.of();
-        var out = new ArrayList<BlockCuboid>();
-        for (Object entry : list) {
-            BlockCuboid cuboid = parseCuboid(world, entry);
-            if (cuboid != null) out.add(cuboid);
+    private static List<BlockCuboid> parseCuboids(World world, List<?> entries, String path) {
+        var out = new ArrayList<BlockCuboid>(entries.size());
+        for (int index = 0; index < entries.size(); index++) {
+            String entryPath = path + "[" + index + "]";
+            Object entry = entries.get(index);
+            if (!(entry instanceof Map<?, ?> map)) throw invalid(entryPath, "mapping with from and to", entry);
+            Object rawFrom = map.get("from");
+            Object rawTo = map.get("to");
+            if (rawFrom == null) throw invalid(entryPath + ".from", "three-number location list", null);
+            if (rawTo == null) throw invalid(entryPath + ".to", "three-number location list", null);
+            out.add(new BlockCuboid(
+                    parseLocation(world, rawFrom, entryPath + ".from", false),
+                    parseLocation(world, rawTo, entryPath + ".to", false)
+            ));
         }
         return List.copyOf(out);
     }
 
-    private static BlockCuboid parseCuboid(World world, Object entry) {
-        if (entry instanceof ConfigurationSection section) {
-            Location from = parseLocation(world, section.get("from"));
-            Location to = parseLocation(world, section.get("to"));
-            if (from == null) from = parseLocation(world, section.get("location"));
-            if (from == null) return null;
-            return new BlockCuboid(from, to == null ? from : to);
+    private static Location parseLocation(World world, Object raw, String path, boolean allowRotation) {
+        if (!(raw instanceof List<?> values)) throw invalid(path, "location list", raw);
+        int expected = allowRotation && values.size() == 5 ? 5 : 3;
+        if (values.size() != expected) {
+            String description = allowRotation ? "exactly 3 or 5 numbers" : "exactly 3 numbers";
+            throw new IllegalArgumentException("Invalid value at " + path + ": expected " + description);
         }
-
-        if (entry instanceof Map<?, ?> map) {
-            Location from = parseLocation(world, map.get("from"));
-            Location to = parseLocation(world, map.get("to"));
-            if (from == null) from = parseLocation(world, map.get("location"));
-            if (from == null) return null;
-            return new BlockCuboid(from, to == null ? from : to);
-        }
-
-        if (entry instanceof List<?> values) {
-            if (values.size() == 2 && values.get(0) instanceof List<?> && values.get(1) instanceof List<?>) {
-                Location from = parseLocation(world, values.get(0));
-                Location to = parseLocation(world, values.get(1));
-                if (from == null || to == null) return null;
-                return new BlockCuboid(from, to);
-            }
-            Location point = parseLocation(world, values);
-            if (point != null) return new BlockCuboid(point, point);
-        }
-
-        return null;
-    }
-
-    private static Location parseLocation(World world, Object value) {
-        if (!(value instanceof List<?> values) || values.size() < 3) return null;
-        Double x = number(values.get(0));
-        Double y = number(values.get(1));
-        Double z = number(values.get(2));
-        if (x == null || y == null || z == null) return null;
-        float yaw = values.size() > 3 && number(values.get(3)) != null ? number(values.get(3)).floatValue() : 0.0f;
-        float pitch = values.size() > 4 && number(values.get(4)) != null ? number(values.get(4)).floatValue() : 0.0f;
+        double x = number(values.get(0), path + "[0]");
+        double y = number(values.get(1), path + "[1]");
+        double z = number(values.get(2), path + "[2]");
+        float yaw = expected == 5 ? (float) number(values.get(3), path + "[3]") : 0.0F;
+        float pitch = expected == 5 ? (float) number(values.get(4), path + "[4]") : 0.0F;
         return new Location(world, x, y, z, yaw, pitch);
     }
 
-    private static Double number(Object value) {
-        if (value instanceof Number number) return number.doubleValue();
-        if (value instanceof String string) {
-            try {
-                return Double.parseDouble(string.trim());
-            } catch (NumberFormatException _) {
-                return null;
-            }
-        }
-        return null;
+    private static double number(Object raw, String path) {
+        if (raw instanceof Number number && Double.isFinite(number.doubleValue())) return number.doubleValue();
+        throw invalid(path, "finite number", raw);
+    }
+
+    private static String optionalString(Map<?, ?> map, String key, String fallback, String path) {
+        Object raw = map.get(key);
+        if (raw == null) return fallback;
+        if (raw instanceof String text) return text;
+        throw invalid(path, "string", raw);
+    }
+
+    private static IllegalArgumentException invalid(String path, String expected, Object raw) {
+        String actual = raw == null ? "null" : raw.getClass().getSimpleName() + " (" + raw + ")";
+        return new IllegalArgumentException("Invalid value at " + path + ": expected " + expected + ", got " + actual);
     }
 
     public Location spectatorFallbackOrAnchor(ArenaInstance arena) {
@@ -196,19 +176,15 @@ public record StealArenaConfig(
     }
 
     public int redstoneTargetCount() {
-        int count = 0;
-        for (BlockCuboid cuboid : redstoneBlocks) {
-            count += cuboid.blockCount();
-        }
-        return count;
+        return redstoneBlocks.stream()
+                .mapToInt(BlockCuboid::blockCount)
+                .sum();
     }
 
     public boolean isRedstoneTarget(Block block) {
         if (block == null) return false;
-        for (BlockCuboid cuboid : redstoneBlocks) {
-            if (cuboid.contains(block)) return true;
-        }
-        return false;
+        return redstoneBlocks.stream()
+                .anyMatch(cuboid -> cuboid.contains(block));
     }
 
     public void resetRedstoneTargets() {
@@ -217,16 +193,14 @@ public record StealArenaConfig(
 
     public void forEachRedstoneTarget(Consumer<Block> consumer) {
         if (consumer == null) return;
-        for (BlockCuboid cuboid : redstoneBlocks) {
-            cuboid.forEachBlock(consumer);
-        }
+        redstoneBlocks.forEach(cuboid -> cuboid.forEachBlock(consumer));
     }
 
     public void setSelectionBarriers(boolean enabled) {
         var material = enabled ? Material.BARRIER : Material.AIR;
-        for (BlockCuboid cuboid : selectionBarriers) {
-            cuboid.forEachBlock(block -> block.setType(material, false));
-        }
+        selectionBarriers.forEach(cuboid ->
+                cuboid.forEachBlock(block -> block.setType(material, false))
+        );
     }
 
     public record BlockCuboid(
@@ -244,16 +218,12 @@ public record StealArenaConfig(
                     && between(z, from.getBlockZ(), to.getBlockZ());
         }
 
-        private static boolean between(int value, int a, int b) {
-            return value >= min(a, b) && value <= max(a, b);
-        }
-
-        private static int min(int a, int b) {
-            return Math.min(a, b);
-        }
-
-        private static int max(int a, int b) {
-            return Math.max(a, b);
+        private static boolean between(
+                int value,
+                int a,
+                int b
+        ) {
+            return value >= Math.min(a, b) && value <= Math.max(a, b);
         }
 
         public void forEachBlock(Consumer<Block> consumer) {
@@ -269,7 +239,7 @@ public record StealArenaConfig(
 
             for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
                 for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
-                    Chunk chunk = world.getChunkAt(cx, cz);
+                    var chunk = world.getChunkAt(cx, cz);
 
                     int startX = Math.max(minX, cx << 4);
                     int endX = Math.min(maxX, (cx << 4) + 15);
@@ -288,14 +258,20 @@ public record StealArenaConfig(
         }
 
         public int blockCount() {
-            return (max(from.getBlockX(), to.getBlockX()) - min(from.getBlockX(), to.getBlockX()) + 1)
-                    * (max(from.getBlockY(), to.getBlockY()) - min(from.getBlockY(), to.getBlockY()) + 1)
-                    * (max(from.getBlockZ(), to.getBlockZ()) - min(from.getBlockZ(), to.getBlockZ()) + 1);
+            int a = from.getBlockZ();
+            int a1 = from.getBlockY();
+            int a2 = from.getBlockX();
+            int a3 = from.getBlockZ();
+            int a4 = from.getBlockY();
+            int a5 = from.getBlockX();
+            return (Math.max(a5, to.getBlockX()) - Math.min(a2, to.getBlockX()) + 1)
+                    * (Math.max(a4, to.getBlockY()) - Math.min(a1, to.getBlockY()) + 1)
+                    * (Math.max(a3, to.getBlockZ()) - Math.min(a, to.getBlockZ()) + 1);
         }
 
         public Location center() {
-            Vector v = from.toVector().add(to.toVector()).multiply(0.5);
-            return v.toLocation(from.getWorld());
+            var vector = from.toVector().add(to.toVector()).multiply(0.5);
+            return vector.toLocation(from.getWorld());
         }
 
     }

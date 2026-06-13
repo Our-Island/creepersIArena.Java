@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.command;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.core.utils.Msg;
 
 import java.util.Locale;
@@ -35,7 +36,7 @@ public final class CommandParsers {
 
     public static Boolean parseBoolean(String s) {
         if (s == null) return null;
-        String v = s.trim().toLowerCase(Locale.ROOT);
+        var v = s.trim().toLowerCase(Locale.ROOT);
         if (v.equals("true") || v.equals("yes") || v.equals("on") || v.equals("1")) return true;
         if (v.equals("false") || v.equals("no") || v.equals("off") || v.equals("0")) return false;
         return null;
@@ -57,24 +58,14 @@ public final class CommandParsers {
         }
     }
 
-    public static Integer parseTeamId(String token) {
-        if (token == null) return null;
-        if (token.equalsIgnoreCase("random")) return null;
-
-        var n = parseInt(token);
-        if (n != null) return n;
-
-        return switch (token.toLowerCase(Locale.ROOT)) {
-            case "red" -> 1;
-            case "blue" -> 2;
-            case "green" -> 3;
-            case "yellow" -> 4;
-            case "aqua", "cyan" -> 5;
-            case "purple" -> 6;
-            case "white" -> 7;
-            case "black" -> 8;
-            default -> null;
-        };
+    public static TeamId parseTeamId(String token) {
+        if (token == null) throw new IllegalArgumentException("Team id is required");
+        var value = token.trim();
+        if (value.equalsIgnoreCase("random")) return null;
+        if (value.chars().allMatch(Character::isDigit)) {
+            throw new IllegalArgumentException("Numeric team aliases are not supported; use the canonical team id");
+        }
+        return TeamId.parse(value);
     }
 
     public static Optional<Player> asPlayer(CommandSender sender) {

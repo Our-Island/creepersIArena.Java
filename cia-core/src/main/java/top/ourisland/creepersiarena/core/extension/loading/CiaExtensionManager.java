@@ -33,6 +33,7 @@ public final class CiaExtensionManager {
     private final Path extensionDataDirectory;
     private final ClassLoader parentClassLoader;
     private final Logger log;
+    private final String runtimeCiaVersion;
     private final List<LoadedCiaExtension> loadedExtensions = new ArrayList<>();
     private final List<CiaExtensionLoadFailure> loadFailures = new ArrayList<>();
 
@@ -47,7 +48,8 @@ public final class CiaExtensionManager {
                 rt.plugin().getDataFolder().toPath().resolve("extensions"),
                 rt.plugin().getDataFolder().toPath().resolve("extension-data"),
                 rt.plugin().getClass().getClassLoader(),
-                rt.log()
+                rt.log(),
+                rt.plugin().getPluginMeta().getVersion()
         );
     }
 
@@ -58,7 +60,8 @@ public final class CiaExtensionManager {
             Path extensionsDirectory,
             Path extensionDataDirectory,
             ClassLoader parentClassLoader,
-            Logger log
+            Logger log,
+            String runtimeCiaVersion
     ) {
         this.rt = rt;
         this.catalog = catalog;
@@ -68,6 +71,7 @@ public final class CiaExtensionManager {
         this.extensionDataDirectory = extensionDataDirectory;
         this.parentClassLoader = parentClassLoader;
         this.log = log;
+        this.runtimeCiaVersion = Objects.requireNonNull(runtimeCiaVersion, "runtimeCiaVersion");
     }
 
     public CiaExtensionManager(
@@ -83,7 +87,8 @@ public final class CiaExtensionManager {
                 extensionsDirectory,
                 extensionDataDirectory,
                 parentClassLoader,
-                null
+                null,
+                "0.1.0"
         );
     }
 
@@ -141,13 +146,34 @@ public final class CiaExtensionManager {
             return;
         }
 
+        if (!loadedExtensions.isEmpty()) {
+            throw new CiaExtensionLoadException("Extensions are already loaded");
+        }
+
         var ordered = resolveLoadOrder(candidates);
         claimNamespaces(ordered);
         info("[Extension] Loading {} CIA extension(s)...", ordered.size());
 
+        var successfullyLoaded = new HashSet<ExtensionId>();
         for (var candidate : ordered) {
+            var missingLoadedDependency = candidate.descriptor().requiredDependencyIds().stream()
+                    .filter(dependencyId -> !successfullyLoaded.contains(dependencyId))
+                    .findFirst();
+            if (missingLoadedDependency.isPresent()) {
+                namespaces.release(candidate.descriptor().owner());
+                var message = "Required extension " + missingLoadedDependency.get() + " did not load successfully";
+                loadFailures.add(new CiaExtensionLoadFailure(
+                        candidate.descriptor().id(),
+                        candidate.jarPath(),
+                        message
+                ));
+                warn("[Extension] Skipping {}: {}", candidate.descriptor().id(), message);
+                continue;
+            }
+
             try {
                 loadedExtensions.add(load(candidate));
+                successfullyLoaded.add(candidate.descriptor().id());
             } catch (RuntimeException ex) {
                 namespaces.release(candidate.descriptor().owner());
                 loadFailures.add(new CiaExtensionLoadFailure(
@@ -162,7 +188,7 @@ public final class CiaExtensionManager {
         info("[Extension] Loaded {} CIA extension(s).", loadedExtensions.size());
     }
 
-    public LoadedCiaExtension load(Path jarPath) {
+    LoadedCiaExtension load(Path jarPath) {
         ExtensionCandidate candidate = new ExtensionCandidate(descriptorReader.read(jarPath), jarPath);
         namespaces.claim(candidate.descriptor().owner());
         try {
@@ -177,6 +203,7 @@ public final class CiaExtensionManager {
         var descriptor = candidate.descriptor();
         var jarPath = candidate.jarPath();
         validateApiVersion(descriptor);
+        validateCiaVersion(descriptor);
 
         CiaExtensionClassLoader classLoader;
         try {
@@ -200,18 +227,42 @@ public final class CiaExtensionManager {
             extension.onLoad(context);
             info("[Extension] Loaded {} {} from {}", descriptor.id(), descriptor.version(), jarPath.getFileName());
             return new LoadedCiaExtension(descriptor, jarPath, classLoader, extension, context);
-        } catch (Exception | ServiceConfigurationError ex) {
-            if (context != null) context.unregisterOwnedComponents();
+        } catch (Throwable throwable) {
+            if (context != null) {
+                try {
+                    context.unregisterOwnedComponents();
+                } catch (Throwable cleanupFailure) {
+                    throwable.addSuppressed(cleanupFailure);
+                }
+            }
             closeQuietly(classLoader, descriptor.id());
-            throw new CiaExtensionLoadException("Failed to load extension " + descriptor.id(), ex);
+            throw new CiaExtensionLoadException("Failed to load extension " + descriptor.id(), throwable);
         }
     }
 
     private void validateApiVersion(CiaExtensionDescriptor descriptor) {
-        if (descriptor.apiVersion() > CiaExtensionDescriptor.CURRENT_API_VERSION) {
+        if (descriptor.apiVersion() != CiaExtensionDescriptor.CURRENT_API_VERSION) {
             throw new CiaExtensionLoadException(
-                    "Extension " + descriptor.id() + " requires descriptor API " + descriptor.apiVersion()
-                            + ", but this runtime supports " + CiaExtensionDescriptor.CURRENT_API_VERSION
+                    "Extension " + descriptor.id() + " uses descriptor API " + descriptor.apiVersion()
+                            + ", but this runtime requires " + CiaExtensionDescriptor.CURRENT_API_VERSION
+            );
+        }
+    }
+
+    private void validateCiaVersion(CiaExtensionDescriptor descriptor) {
+        final CiaVersionRequirement requirement;
+        try {
+            requirement = CiaVersionRequirement.parse(descriptor.ciaVersion());
+        } catch (IllegalArgumentException exception) {
+            throw new CiaExtensionLoadException(
+                    "Extension " + descriptor.id() + " has invalid cia-version '" + descriptor.ciaVersion() + "'",
+                    exception
+            );
+        }
+        if (!requirement.accepts(runtimeCiaVersion)) {
+            throw new CiaExtensionLoadException(
+                    "Extension " + descriptor.id() + " requires CreepersIArena " + requirement
+                            + ", but the runtime version is " + runtimeCiaVersion
             );
         }
     }
@@ -261,26 +312,56 @@ public final class CiaExtensionManager {
         if (log != null) log.warn(message, args);
     }
 
+    private void validateVersion(CiaExtensionDescriptor descriptor) {
+        validateApiVersion(descriptor);
+        validateCiaVersion(descriptor);
+    }
+
     public void enableAll() {
-        for (int index = 0; index < loadedExtensions.size(); index++) {
-            var loaded = loadedExtensions.get(index);
+        for (var loaded : List.copyOf(loadedExtensions)) {
             try {
                 loaded.extension().onEnable(loaded.context());
                 loaded.markEnabled();
                 info("[Extension] Enabled {} {}", loaded.descriptor().id(), loaded.descriptor().version());
-            } catch (Exception ex) {
-                loaded.runtimeContext().unregisterOwnedComponents();
-                namespaces.release(loaded.descriptor().owner());
-                closeQuietly(loaded.classLoader(), loaded.descriptor().id());
-                loadedExtensions.remove(index);
+            } catch (Throwable throwable) {
                 loadFailures.add(new CiaExtensionLoadFailure(
                         loaded.descriptor().id(),
                         loaded.jarPath(),
-                        ex.getMessage()
+                        throwable.getMessage()
                 ));
-                throw new CiaExtensionLoadException("Failed to enable extension " + loaded.descriptor().id(), ex);
+                rollbackLoadedExtensions();
+                throw new CiaExtensionLoadException(
+                        "Failed to enable extension " + loaded.descriptor().id(),
+                        throwable
+                );
             }
         }
+    }
+
+    private void rollbackLoadedExtensions() {
+        for (var index = loadedExtensions.size() - 1; index >= 0; index--) {
+            var loaded = loadedExtensions.get(index);
+            if (loaded.enabled()) {
+                try {
+                    loaded.extension().onDisable(loaded.context());
+                    loaded.markDisabled();
+                } catch (Throwable disableFailure) {
+                    warn("[Extension] Failed to disable {} during rollback: {}",
+                            loaded.descriptor().id(), disableFailure.getMessage(), disableFailure);
+                }
+            }
+
+            try {
+                loaded.runtimeContext().unregisterOwnedComponents();
+            } catch (Throwable cleanupFailure) {
+                warn("[Extension] Failed to unregister {} during rollback: {}",
+                        loaded.descriptor().id(), cleanupFailure.getMessage(), cleanupFailure);
+            } finally {
+                namespaces.release(loaded.descriptor().owner());
+                closeQuietly(loaded.classLoader(), loaded.descriptor().id());
+            }
+        }
+        loadedExtensions.clear();
     }
 
     public void disableAll() {
@@ -290,12 +371,19 @@ public final class CiaExtensionManager {
                 loaded.extension().onDisable(loaded.context());
                 loaded.markDisabled();
                 info("[Extension] Disabled {}", loaded.descriptor().id());
-            } catch (Exception ex) {
-                warn("[Extension] Failed to disable {}: {}", loaded.descriptor().id(), ex.getMessage(), ex);
+            } catch (Throwable throwable) {
+                warn("[Extension] Failed to disable {}: {}",
+                        loaded.descriptor().id(), throwable.getMessage(), throwable);
             } finally {
-                loaded.runtimeContext().unregisterOwnedComponents();
-                namespaces.release(loaded.descriptor().owner());
-                closeQuietly(loaded.classLoader(), loaded.descriptor().id());
+                try {
+                    loaded.runtimeContext().unregisterOwnedComponents();
+                } catch (Throwable cleanupFailure) {
+                    warn("[Extension] Failed to unregister {}: {}",
+                            loaded.descriptor().id(), cleanupFailure.getMessage(), cleanupFailure);
+                } finally {
+                    namespaces.release(loaded.descriptor().owner());
+                    closeQuietly(loaded.classLoader(), loaded.descriptor().id());
+                }
             }
         }
         loadedExtensions.clear();
@@ -402,7 +490,7 @@ public final class CiaExtensionManager {
     private void validateApiVersions(List<ExtensionCandidate> candidates) {
         candidates.stream()
                 .map(ExtensionCandidate::descriptor)
-                .forEach(this::validateApiVersion);
+                .forEach(this::validateVersion);
     }
 
     private void validateRequiredDependencies(List<ExtensionCandidate> candidates) {

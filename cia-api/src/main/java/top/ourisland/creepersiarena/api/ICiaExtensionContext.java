@@ -9,10 +9,10 @@ import top.ourisland.creepersiarena.api.ability.IAbilityPolicy;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigration;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
+import top.ourisland.creepersiarena.api.economy.WalletReasonId;
+import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
-import top.ourisland.creepersiarena.api.identity.CiaNamespace;
-import top.ourisland.creepersiarena.api.identity.ExtensionId;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.api.identity.*;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 
@@ -146,8 +146,26 @@ public interface ICiaExtensionContext {
         return owner().extensionId();
     }
 
+    /**
+     * Returns the owner-bound session-data access object for this extension.
+     */
+    ExtensionSessionData sessionData();
+
+    /**
+     * Returns the cached owner-bound ability-context attribute key scope for this extension.
+     */
+    ExtensionContextAttributes contextAttributes();
+
+    default DeathCauseId deathCause(String path) {
+        return DeathCauseId.of(CiaKey.of(namespace(), path));
+    }
+
     default CiaNamespace namespace() {
         return owner().namespace();
+    }
+
+    default WalletReasonId walletReason(String path) {
+        return WalletReasonId.of(CiaKey.of(namespace(), path));
     }
 
     default void registerDatabaseMigration(IDatabaseMigration migration) {

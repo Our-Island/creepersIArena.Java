@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mutation.acceleratedtime;
 
 import org.bukkit.configuration.ConfigurationSection;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 
 public record AcceleratedTimeSoundConfig(
         String sound,
@@ -9,8 +10,15 @@ public record AcceleratedTimeSoundConfig(
 ) {
 
     public AcceleratedTimeSoundConfig {
-        if (sound == null || sound.isBlank()) sound = "minecraft:block.beacon.activate";
-        volume = Math.max(0.0F, volume);
+        if (sound == null || sound.isBlank()) {
+            throw new IllegalArgumentException("Accelerated-time sound id must not be blank");
+        }
+        if (!Float.isFinite(volume) || volume < 0.0F) {
+            throw new IllegalArgumentException("Accelerated-time sound volume must be finite and >= 0: " + volume);
+        }
+        if (!Float.isFinite(pitch) || pitch <= 0.0F) {
+            throw new IllegalArgumentException("Accelerated-time sound pitch must be finite and > 0: " + pitch);
+        }
     }
 
     public static AcceleratedTimeSoundConfig startDefault() {
@@ -23,13 +31,14 @@ public record AcceleratedTimeSoundConfig(
 
     public static AcceleratedTimeSoundConfig fromSection(
             ConfigurationSection section,
-            AcceleratedTimeSoundConfig fallback
+            AcceleratedTimeSoundConfig defaults,
+            String path
     ) {
-        if (section == null) return fallback;
+        if (section == null) return defaults;
         return new AcceleratedTimeSoundConfig(
-                section.getString("sound", fallback.sound()),
-                (float) section.getDouble("volume", fallback.volume()),
-                (float) section.getDouble("pitch", fallback.pitch())
+                StrictConfig.string(section, "sound", defaults.sound(), path + ".sound"),
+                (float) StrictConfig.decimal(section, "volume", defaults.volume(), path + ".volume"),
+                (float) StrictConfig.decimal(section, "pitch", defaults.pitch(), path + ".pitch")
         );
     }
 

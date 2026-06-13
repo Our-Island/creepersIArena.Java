@@ -13,8 +13,6 @@ import java.util.UUID;
 
 public final class PersistentStatsRepository {
 
-    private static final GameModeId UNKNOWN_MODE = GameModeId.parse("core:unknown");
-
     private final JdbcDatabaseService database;
 
     public PersistentStatsRepository(
@@ -30,9 +28,10 @@ public final class PersistentStatsRepository {
         if (result == null) return;
         database.transaction(connection -> {
             insertDeath(connection, match, result);
-            incrementTotals(connection, mode(match), result.victim().getUniqueId(), false, true, false);
+            if (match == null) return null;
+            incrementTotals(connection, match.mode(), result.victim().getUniqueId(), false, true, false);
             if (result.hasKiller() && result.killer() != null) {
-                incrementTotals(connection, mode(match), result.killer().getUniqueId(), true, false, true);
+                incrementTotals(connection, match.mode(), result.killer().getUniqueId(), true, false, true);
             }
             return null;
         });
@@ -76,11 +75,11 @@ public final class PersistentStatsRepository {
     ) throws SQLException {
         if (playerId == null) return;
 
-        var actualMode = mode == null ? UNKNOWN_MODE : mode;
+        if (mode == null) return;
         var table = database.names().playerStatTotals();
         var now = Instant.now().toEpochMilli();
 
-        ensureTotalsRow(connection, table, playerId, actualMode, now);
+        ensureTotalsRow(connection, table, playerId, mode, now);
         try (
                 var st = connection.prepareStatement(
                         "UPDATE " + table + " SET kills = kills + ?, deaths = deaths + ?, kill_score = kill_score + ?, updated_at = ? WHERE player_uuid = ? AND mode_namespace = ? AND mode_path = ?"
@@ -91,13 +90,9 @@ public final class PersistentStatsRepository {
             st.setLong(3, killScore ? 1L : 0L);
             st.setLong(4, now);
             st.setString(5, playerId.toString());
-            CiaKeySql.bind(st, 6, 7, actualMode.key());
+            CiaKeySql.bind(st, 6, 7, mode.key());
             st.executeUpdate();
         }
-    }
-
-    private GameModeId mode(GameSession match) {
-        return match == null ? null : match.mode();
     }
 
     private void ensureTotalsRow(

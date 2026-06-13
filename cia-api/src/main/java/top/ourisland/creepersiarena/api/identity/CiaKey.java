@@ -1,12 +1,12 @@
 package top.ourisland.creepersiarena.api.identity;
 
-import org.bukkit.NamespacedKey;
 import org.jspecify.annotations.NonNull;
 
 /**
  * Canonical globally unique CreepersIArena resource key.
  * <p>
- * This is the only type that parses the serialized {@code namespace:path} form.
+ * This is the only domain type that exposes parsing of the serialized {@code namespace:path} form. The grammar itself
+ * is centralized in {@link CiaKeySyntax}; platform conversions belong to their platform boundary module.
  */
 public record CiaKey(
         @lombok.NonNull CiaNamespace namespace,
@@ -14,21 +14,11 @@ public record CiaKey(
 ) {
 
     public static @NonNull CiaKey parse(@lombok.NonNull String raw) {
-        int separator = raw.indexOf(':');
-        if (separator <= 0
-                || separator != raw.lastIndexOf(':')
-                || separator == raw.length() - 1) {
-            throw new IllegalArgumentException("Expected namespaced CIA id: " + raw);
-        }
-
+        var parsed = CiaKeySyntax.parse(raw);
         return new CiaKey(
-                CiaNamespace.parse(raw.substring(0, separator)),
-                ResourcePath.parse(raw.substring(separator + 1))
+                CiaNamespace.parse(parsed.namespace()),
+                ResourcePath.parse(parsed.path())
         );
-    }
-
-    public static @NonNull CiaKey fromBukkitKey(@lombok.NonNull NamespacedKey key) {
-        return of(CiaNamespace.parse(key.getNamespace()), key.getKey());
     }
 
     public static @NonNull CiaKey of(
@@ -36,10 +26,6 @@ public record CiaKey(
             String path
     ) {
         return new CiaKey(namespace, ResourcePath.parse(path));
-    }
-
-    public @NonNull NamespacedKey toBukkitKey() {
-        return new NamespacedKey(namespace.value(), path.value());
     }
 
     @Override

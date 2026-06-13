@@ -61,7 +61,7 @@ public interface ISkillDefinition {
      * Returns the stable runtime id of this skill.
      * <p>
      * The value comes from the attached {@code @CiaSkillDef} metadata and must be globally unique inside the runtime
-     * catalog. Built-in skills use ids such as {@code cia:creeper.crossbow}; extension skills are expected to use their
+     * catalog. Built-in skills use ids such as {@code cia:creeper/crossbow}; extension skills are expected to use their
      * own namespace to avoid collisions.
      *
      * @return namespaced skill id resolved from {@link SkillMetadata}

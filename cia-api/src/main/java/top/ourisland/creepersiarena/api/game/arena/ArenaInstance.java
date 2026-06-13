@@ -7,7 +7,6 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.region.Region2D;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public record ArenaInstance(
@@ -38,16 +37,12 @@ public record ArenaInstance(
 
     public List<Location> spawnGroup(String group) {
         if (group == null || group.isBlank()) return List.of();
-        return spawnGroups.getOrDefault(normalize(group), List.of());
+        return spawnGroups.getOrDefault(group, List.of());
     }
 
     @Override
     public Location anchor() {
         return anchor.clone();
-    }
-
-    private static String normalize(String key) {
-        return key.trim().toLowerCase(Locale.ROOT);
     }
 
 }

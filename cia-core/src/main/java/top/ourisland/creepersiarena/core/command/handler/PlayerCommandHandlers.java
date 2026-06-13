@@ -12,8 +12,7 @@ import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
-import top.ourisland.creepersiarena.api.identity.CiaKey;
-import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.service.LeaveService;
@@ -22,17 +21,12 @@ import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.job.JobManager;
 import top.ourisland.creepersiarena.core.utils.Msg;
 
-import java.util.Locale;
 import java.util.Optional;
 
 import static top.ourisland.creepersiarena.core.command.CommandParsers.asPlayer;
 import static top.ourisland.creepersiarena.core.command.CommandParsers.parseTeamId;
 
 public final class PlayerCommandHandlers {
-
-    private static final StoreId DEFAULT_PARTICLE_STORE = StoreId.of(
-            CiaKey.of(CiaNamespace.parse("cia"), "particle_store")
-    );
 
     private final BootstrapRuntime rt;
 
@@ -45,7 +39,7 @@ public final class PlayerCommandHandlers {
                 /cia join
                 /cia leave
                 /cia job <cia:id>
-                /cia team <id|color>
+                /cia team <team-id|random>
                 /cia language <id|default>
                 /cia pref
                 /cia balance [namespace:currency]
@@ -110,12 +104,18 @@ public final class PlayerCommandHandlers {
         Player p = playerOpt.get();
 
         if (args.length < 1) {
-            Msg.send(sender, "Usage: /team <team_id|team_color|random>");
+            Msg.send(sender, "Usage: /team <team-id|random>");
             return;
         }
 
-        String token = args[0].toLowerCase(Locale.ROOT);
-        Integer id = parseTeamId(token);
+        String token = args[0];
+        final TeamId id;
+        try {
+            id = parseTeamId(token);
+        } catch (IllegalArgumentException exception) {
+            Msg.send(sender, "Invalid team id: " + token);
+            return;
+        }
 
         var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.lobbySelectTeam(p, id);
@@ -192,7 +192,23 @@ public final class PlayerCommandHandlers {
     }
 
     public void defaultStore(CommandSender sender) {
-        store(sender, DEFAULT_PARTICLE_STORE);
+        var registry = rt.getService(IStoreRegistry.class);
+        if (registry == null) {
+            Msg.send(sender, "Store service is not available.");
+            return;
+        }
+        var stores = registry.stores().stream()
+                .sorted(java.util.Comparator.comparing(store -> store.id().asString()))
+                .toList();
+        if (stores.isEmpty()) {
+            Msg.send(sender, "No stores are registered.");
+            return;
+        }
+        if (stores.size() != 1) {
+            Msg.send(sender, "Multiple stores are registered; use /cia store <namespace:store>.");
+            return;
+        }
+        store(sender, stores.getFirst().id());
     }
 
     public void store(CommandSender sender, StoreId storeId) {

@@ -4,12 +4,14 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.mode.context.ModePlayerContext;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.core.job.JobManager;
 import top.ourisland.creepersiarena.core.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 /**
  * Player flow for the bundled battle content.
@@ -34,7 +37,11 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
     private final BattleTeamBalancer teams;
     private final DefaultLoadoutService kit;
 
-    public BattlePlayerFlow(GameRuntime runtime, BattleState state, BattleTeamBalancer teams) {
+    public BattlePlayerFlow(
+            GameRuntime runtime,
+            BattleState state,
+            BattleTeamBalancer teams
+    ) {
         this.state = state;
         this.teams = teams;
         this.kit = new DefaultLoadoutService(
@@ -47,16 +54,19 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
 
     @Override
     public Location spawnLocation(ModePlayerContext ctx) {
-        ArenaInstance arena = ctx.game().arena();
+        var arena = ctx.game().arena();
         var playerSession = ctx.session();
         if (playerSession != null) {
             teams.assign(playerSession, state.players());
         }
-        int team = playerSession == null || playerSession.selectedTeam() == null ? 0 : playerSession.selectedTeam();
-        List<Location> spawns = team <= 0 ? List.of() : arena.spawnGroup(String.valueOf(team));
-        if (spawns.isEmpty()) spawns = arena.spawnGroup("team-" + team);
+
+        int team = playerSession == null || playerSession.selectedTeam() == null
+                ? 0
+                : playerSession.selectedTeam().number().orElse(0);
+        List<Location> spawns = team <= 0 ? List.of() : arena.spawnGroup("team-" + team);
         if (spawns.isEmpty()) spawns = arena.spawnGroup("default");
         if (spawns.isEmpty()) return arena.anchor();
+
         return pickLeastCrowded(spawns, Bukkit.getOnlinePlayers(), 10.0);
     }
 
@@ -66,20 +76,22 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
     }
 
     @Override
-    public int selectableTeamCount(ModeLobbyContext ctx) {
-        return state.config().maxTeam();
+    public List<TeamId> selectableTeams(ModeLobbyContext ctx) {
+        return IntStream.rangeClosed(1, state.config().maxTeam())
+                .mapToObj(TeamId::numbered)
+                .toList();
     }
 
     @Override
     public void onEnterGame(ModePlayerContext ctx) {
-        Player player = ctx.player();
+        var player = ctx.player();
         var playerSession = ctx.session();
 
         state.markFighter(playerSession);
 
         player.setGameMode(GameMode.ADVENTURE);
-        AttributeUtils.setBaseValue(player, 20.0D, "max_health", "generic_max_health");
-        Double maxHealth = AttributeUtils.baseValue(player, "max_health", "generic_max_health");
+        AttributeUtils.setBaseValue(player, 20.0D, Attribute.MAX_HEALTH);
+        var maxHealth = AttributeUtils.baseValue(player, Attribute.MAX_HEALTH);
         player.setHealth(maxHealth == null ? 20.0D : Math.max(1.0D, maxHealth));
         kit.apply(player, playerSession);
         Msg.actionBar(player, Component.text("进入 battle 战场"));
@@ -96,14 +108,13 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
         List<Location> bestList = new ArrayList<>();
         double r2 = radius * radius;
 
-        for (Location base : spawns) {
-            int count = 0;
-            for (Player p : candidates) {
-                if (p == null || !p.isOnline()) continue;
-                if (base.getWorld() == null) continue;
-                if (!p.getWorld().getUID().equals(base.getWorld().getUID())) continue;
-                if (p.getLocation().distanceSquared(base) <= r2) count++;
-            }
+        for (var base : spawns) {
+            int count = (int) candidates.stream()
+                    .filter(p -> p != null && p.isOnline())
+                    .filter(_ -> base.getWorld() != null)
+                    .filter(p -> p.getWorld().getUID().equals(base.getWorld().getUID()))
+                    .filter(p -> p.getLocation().distanceSquared(base) <= r2)
+                    .count();
 
             if (count < best) {
                 best = count;
@@ -114,7 +125,7 @@ public final class BattlePlayerFlow implements IModePlayerFlow {
             }
         }
 
-        Location picked = bestList.get(ThreadLocalRandom.current().nextInt(bestList.size()));
+        var picked = bestList.get(ThreadLocalRandom.current().nextInt(bestList.size()));
         return picked.clone();
     }
 

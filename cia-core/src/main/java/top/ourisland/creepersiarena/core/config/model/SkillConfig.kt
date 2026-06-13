@@ -3,58 +3,24 @@ package top.ourisland.creepersiarena.core.config.model
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import top.ourisland.creepersiarena.api.config.ISkillConfigView
-import top.ourisland.creepersiarena.api.identity.CiaKey
-import top.ourisland.creepersiarena.api.identity.CiaNamespace
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths
 import top.ourisland.creepersiarena.api.skill.SkillId
-import java.util.*
 
 class SkillConfig private constructor(
-    private val byId: Map<SkillId, ConfigurationSection>,
+    private val root: ConfigurationSection?,
 ) : ISkillConfigView {
 
     companion object {
 
         @JvmStatic
-        fun defaults(): SkillConfig = SkillConfig(Collections.emptyMap())
+        fun defaults(): SkillConfig = SkillConfig(null)
 
         @JvmStatic
-        fun fromYaml(yml: YamlConfiguration?): SkillConfig {
-            if (yml == null) return defaults()
-
-            val map = HashMap<SkillId, ConfigurationSection>()
-            for (rootKey in yml.getKeys(false)) {
-                val root = yml.getConfigurationSection(rootKey) ?: continue
-                collectSections(CiaNamespace.parse(rootKey), root, "", map)
-            }
-            return SkillConfig(map)
-        }
-
-        private fun collectSections(
-            namespace: CiaNamespace,
-            sec: ConfigurationSection,
-            path: String,
-            out: MutableMap<SkillId, ConfigurationSection>
-        ) {
-            for (key in sec.getKeys(false)) {
-                val child = sec.getConfigurationSection(key) ?: continue
-                val nextPath = if (path.isEmpty()) key else "$path/$key"
-                val id = try {
-                    SkillId.of(CiaKey.of(namespace, nextPath))
-                } catch (exception: IllegalArgumentException) {
-                    throw IllegalArgumentException(
-                        "Invalid skill config path ${namespace.value()}:$nextPath",
-                        exception
-                    )
-                }
-                out.putIfAbsent(id, child)
-                collectSections(namespace, child, nextPath, out)
-            }
-        }
-
+        fun fromYaml(yml: YamlConfiguration?): SkillConfig = SkillConfig(yml)
     }
 
     private fun sectionOf(skillId: SkillId?): ConfigurationSection? =
-        skillId?.let(byId::get)
+        skillId?.let { root?.getConfigurationSection(CiaConfigPaths.section(it)) }
 
     override fun cooldownSeconds(skillId: SkillId, def: Int): Int =
         getInt(skillId, "cooldown-seconds", def)
@@ -64,12 +30,13 @@ class SkillConfig private constructor(
         key: String?,
         def: Int
     ): Int {
-        val sec = sectionOf(skillId)
-        if (sec == null || key == null) return def
-        return try {
-            sec.getInt(key, def)
-        } catch (_: Throwable) {
-            def
+        val value = value(skillId, key) ?: return def
+        return when (value) {
+            is Byte, is Short, is Int -> (value as Number).toInt()
+            is Long -> value.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt()
+                ?: invalid(skillId, key, "integer", value)
+
+            else -> invalid(skillId, key, "integer", value)
         }
     }
 
@@ -78,12 +45,10 @@ class SkillConfig private constructor(
         key: String?,
         def: Long
     ): Long {
-        val sec = sectionOf(skillId)
-        if (sec == null || key == null) return def
-        return try {
-            sec.getLong(key, def)
-        } catch (_: Throwable) {
-            def
+        val value = value(skillId, key) ?: return def
+        return when (value) {
+            is Byte, is Short, is Int, is Long -> (value as Number).toLong()
+            else -> invalid(skillId, key, "integer", value)
         }
     }
 
@@ -92,13 +57,11 @@ class SkillConfig private constructor(
         key: String?,
         def: Double
     ): Double {
-        val sec = sectionOf(skillId)
-        if (sec == null || key == null) return def
-        return try {
-            sec.getDouble(key, def)
-        } catch (_: Throwable) {
-            def
-        }
+        val value = value(skillId, key) ?: return def
+        val number = value as? Number
+            ?: invalid(skillId, key, "number", value)
+        return number.toDouble().takeIf(Double::isFinite)
+            ?: invalid(skillId, key, "finite number", value)
     }
 
     override fun getBoolean(
@@ -106,13 +69,27 @@ class SkillConfig private constructor(
         key: String?,
         def: Boolean
     ): Boolean {
-        val sec = sectionOf(skillId)
-        if (sec == null || key == null) return def
-        return try {
-            sec.getBoolean(key, def)
-        } catch (_: Throwable) {
-            def
-        }
+        val value = value(skillId, key) ?: return def
+        return value as? Boolean
+            ?: invalid(skillId, key, "boolean", value)
+    }
+
+    private fun value(skillId: SkillId?, key: String?): Any? {
+        if (skillId == null || key == null) return null
+        val section = sectionOf(skillId) ?: return null
+        return section.get(key)
+    }
+
+    private fun <T> invalid(
+        skillId: SkillId?,
+        key: String?,
+        expected: String,
+        actual: Any
+    ): T {
+        val section = skillId?.let(CiaConfigPaths::section) ?: "<unknown>"
+        throw IllegalArgumentException(
+            "Invalid value at $section.$key: expected $expected, got ${actual::class.java.simpleName} ($actual)"
+        )
     }
 
 }

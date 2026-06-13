@@ -15,11 +15,14 @@ import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.core.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRuntime;
 import top.ourisland.creepersiarena.core.utils.EntityStateUtils;
 import top.ourisland.creepersiarena.defaultcontent.DefaultJobIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
+import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 import java.util.UUID;
@@ -98,17 +101,23 @@ public final class SkillImplementationListener implements Listener {
         if (!skillRuntimeEnabled(owner, "skill_implementation_projectile")) return;
         if (owner.equals(victim)) return;
 
-        String source = arrow.getPersistentDataContainer()
-                .get(BuiltinKeys.key("moison_source"), PersistentDataType.STRING);
-        if (source == null) return;
+        var source = BuiltinDamageAttributionMarker.readEntitySource(arrow)
+                .map(BuiltinDamageAttributionMarker.MarkedDamageSource::sourceSkillId)
+                .orElse(null);
+        if (source == null || !DefaultJobIds.MOISON.equals(ownerSessionJob(owner))) return;
 
         long now = tickTask.nowTick();
-        reduceCooldown(owner, SkillId.parse("cia:moison/blowgun"), now, 40L);
-        reduceCooldown(owner, SkillId.parse("cia:moison/volley"), now, 40L);
+        reduceCooldown(owner, DefaultSkillIds.MOISON_BLOWGUN, now, 40L);
+        reduceCooldown(owner, DefaultSkillIds.MOISON_VOLLEY, now, 40L);
 
         if (arrow.getPersistentDataContainer().has(BuiltinKeys.key("moison_spectral"), PersistentDataType.BYTE)) {
             EntityStateUtils.applyHiddenEffect(victim, PotionEffectType.GLOWING, 20);
         }
+    }
+
+    private JobId ownerSessionJob(Player owner) {
+        var session = sessions.get(owner);
+        return session == null ? null : session.selectedJob();
     }
 
     private void reduceCooldown(Player owner, SkillId skillId, long now, long ticks) {

@@ -14,6 +14,7 @@ import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
+import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
@@ -55,10 +56,9 @@ public class Skill3 implements ISkillDefinition {
 
             var target = p.getWorld().getEntities().stream()
                     .filter(e -> e instanceof AbstractArrow)
-                    .filter(e -> owner.toString().equals(e.getPersistentDataContainer().get(
-                            BuiltinKeys.key("moison_owner"),
-                            PersistentDataType.STRING)
-                    ))
+                    .filter(e -> BuiltinDamageAttributionMarker.readEntitySource(e)
+                            .map(source -> owner.equals(source.ownerId()))
+                            .orElse(false))
                     .filter(e -> e.getPersistentDataContainer().has(
                             BuiltinKeys.key("moison_spectral"),
                             PersistentDataType.BYTE

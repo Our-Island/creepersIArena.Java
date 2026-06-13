@@ -9,6 +9,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
@@ -117,7 +118,7 @@ final class PlayerTransitions {
         lobby.cycleTeam(p);
     }
 
-    boolean selectTeam(Player p, Integer teamId) {
+    boolean selectTeam(Player p, TeamId teamId) {
         return lobby.selectTeam(p, teamId);
     }
 

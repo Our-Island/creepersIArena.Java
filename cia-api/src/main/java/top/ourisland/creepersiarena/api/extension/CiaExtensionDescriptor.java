@@ -24,7 +24,7 @@ public record CiaExtensionDescriptor(
 ) {
 
     public static final String DESCRIPTOR_ENTRY = "cia-extension.yml";
-    public static final int CURRENT_API_VERSION = 2;
+    public static final int CURRENT_API_VERSION = 1;
 
     public @NonNull RegistrationOwner owner() {
         return new RegistrationOwner(id, namespace);

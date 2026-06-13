@@ -15,8 +15,8 @@ import java.util.stream.IntStream
  * those keys via [I18n].
  *
  * This object centralizes translation-key naming rules so job/skill UI code does not have to hand-roll string
- * concatenation. It also defines how runtime registry ids such as `cia:creeper` or `extension:mage.fireball` are mapped to
- * stable translation segments.
+ * concatenation. It also defines how strict runtime registry ids such as `cia:creeper` or
+ * `extension:mage/fireball` are mapped to stable translation segments.
  *
  * ## Key conventions
  * - **Job** keys:
@@ -26,10 +26,10 @@ import java.util.stream.IntStream
  *   - `cia.job.<job>.skill.<skill>.name`
  *   - `cia.job.<job>.skill.<skill>.lore.<line>`
  *
- * ## Skill id parsing
- * Skill ids are currently expected to follow the convention `<jobId>.<skillPath>`, where `<jobId>` itself may be
- * namespaced (for example `cia:creeper.crossbow` or `extension:mage.fireball`). [skillBase] splits on the **last** dot so
- * the left-hand side becomes the runtime job id and the right-hand side becomes the skill-local segment.
+ * ## Skill id mapping
+ * Skill ids are strict namespaced resources. A skill must share its namespace with its owning job and its resource path
+ * must be nested below the job path, for example `cia:creeper/crossbow`. The typed [SkillId] and [JobId] values are
+ * validated before translation keys are generated.
  *
  * ## Lore resolving
  * Lore is resolved by querying [I18n.has] for numbered line keys in ascending order starting from `1`. Resolution stops

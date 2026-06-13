@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.api.game.mode.context.*;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.game.GameManager;
@@ -225,7 +226,7 @@ public final class GameFlow {
             return;
         }
 
-        boolean attached = g.players().contains(p.getUniqueId());
+        var attached = g.players().contains(p.getUniqueId());
         if (attached) {
             g.removePlayer(p.getUniqueId());
 
@@ -318,7 +319,7 @@ public final class GameFlow {
     /**
      * Commands: select a team in HUB.
      */
-    public boolean lobbySelectTeam(Player p, Integer teamId) {
+    public boolean lobbySelectTeam(Player p, TeamId teamId) {
         if (p == null) return false;
         var s = store.get(p);
         if (s == null || s.state() != PlayerState.HUB) return false;
@@ -507,14 +508,22 @@ public final class GameFlow {
     }
 
     private RespawnCountdownDisabledFallback respawnCountdownDisabledFallback() {
-        String raw = abilities.config(CoreAbilities.RESPAWN_COUNTDOWN)
+        var raw = abilities.config(CoreAbilities.RESPAWN_COUNTDOWN)
                 .getString("settings.disabled-fallback", "IMMEDIATE_RESPAWN");
-        if (raw == null || raw.isBlank()) return RespawnCountdownDisabledFallback.IMMEDIATE_RESPAWN;
-        return switch (raw.trim().toUpperCase(Locale.ROOT).replace('-', '_')) {
-            case "HUB", "TO_HUB" -> RespawnCountdownDisabledFallback.HUB;
-            case "SPECTATE", "TO_SPECTATE" -> RespawnCountdownDisabledFallback.SPECTATE;
-            default -> RespawnCountdownDisabledFallback.IMMEDIATE_RESPAWN;
-        };
+        if (raw == null) return RespawnCountdownDisabledFallback.IMMEDIATE_RESPAWN;
+        if (raw.isBlank()) {
+            throw new IllegalArgumentException(
+                    "abilities.core.respawn_countdown.settings.disabled-fallback must not be blank"
+            );
+        }
+        try {
+            return RespawnCountdownDisabledFallback.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(
+                    "Invalid value at abilities.core.respawn_countdown.settings.disabled-fallback: " + raw,
+                    exception
+            );
+        }
     }
 
     /**
@@ -666,7 +675,7 @@ public final class GameFlow {
      * Called by the global 1-second ticker (see GameTickModule).
      */
     public void tick1s() {
-        List<GameAction> actions = gameManager.tick1s();
+        var actions = gameManager.tick1s();
         actions.forEach(this::applyGameAction);
 
         respawns.tick1s();

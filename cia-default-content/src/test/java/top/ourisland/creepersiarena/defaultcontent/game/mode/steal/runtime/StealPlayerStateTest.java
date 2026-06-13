@@ -29,20 +29,18 @@ class StealPlayerStateTest {
     }
 
     @Test
-    void storesSemanticTeamAndKeepsLegacyNumericSelectionInSync() {
+    void storesOneCanonicalLocalTeamId() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
         StealPlayerState.team(session, StealTeam.BLUE);
 
         assertEquals(StealTeam.BLUE, StealPlayerState.team(session));
-        assertEquals(Integer.valueOf(2), session.selectedTeam());
-        assertEquals("blue", session.selectedTeamKey());
+        assertEquals(StealTeam.BLUE.id(), session.selectedTeam());
 
         StealPlayerState.clear(session);
 
         assertNull(StealPlayerState.team(session));
         assertNull(session.selectedTeam());
-        assertNull(session.selectedTeamKey());
     }
 
 }

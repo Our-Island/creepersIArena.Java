@@ -4,7 +4,8 @@ import lombok.Data;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
 import top.ourisland.creepersiarena.api.job.JobId;
 
@@ -19,8 +20,7 @@ public final class PlayerSession {
     private final Map<SessionDataKey<?>, Object> modeData = new HashMap<>();
     private PlayerState state = PlayerState.HUB;
     private JobId selectedJob;
-    private Integer selectedTeam;
-    private String selectedTeamKey;
+    private TeamId selectedTeam;
     private int lobbyJobPage;
     private int respawnSecondsRemaining;
 
@@ -36,7 +36,7 @@ public final class PlayerSession {
     public <T> @Nullable T get(
             @lombok.NonNull SessionDataKey<T> key
     ) {
-        Object value = modeData.get(key);
+        var value = modeData.get(key);
         if (value == null) return null;
 
         if (!key.type().isInstance(value)) {
@@ -70,8 +70,8 @@ public final class PlayerSession {
         modeData.remove(key);
     }
 
-    public void clearNamespace(@lombok.NonNull CiaNamespace namespace) {
-        modeData.keySet().removeIf(key -> key.namespace().equals(namespace));
+    public void clear(@lombok.NonNull ExtensionSessionData scope) {
+        modeData.keySet().removeIf(scope::owns);
     }
 
 }

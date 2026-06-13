@@ -71,6 +71,8 @@ public final class CiaCommand {
         registerRedirect(commands, "particles", child(root, "particles"), P_BASE + ".particles", List.of("particle"));
         LiteralCommandNode<CommandSourceStack> ciaaRoot = buildAdminSubtree(rt, admin, "ciaa").build();
         commands.register(ciaaRoot, "CreepersIArena admin commands", List.of());
+
+        rt.log().info("[Command] Registered command trees and redirects.");
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildRoot(
@@ -241,11 +243,11 @@ public final class CiaCommand {
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, String> argWord(String name) {
-        return RequiredArgumentBuilder.argument(name, StringArgumentType.word());
+        return Commands.argument(name, StringArgumentType.word());
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, CiaKey> argCiaKey(String name) {
-        return RequiredArgumentBuilder.argument(name, CiaKeyArgument.ciaKey());
+        return Commands.argument(name, CiaKeyArgument.ciaKey());
     }
 
     private static JobId jobId(CommandContext<CommandSourceStack> ctx, String name) {

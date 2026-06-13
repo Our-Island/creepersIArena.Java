@@ -26,18 +26,19 @@ public enum CiaExtensionLoadOrder {
     /**
      * Parses a descriptor value into a load order.
      *
-     * @param raw descriptor value; blank values default to {@link #NORMAL}
+     * @param raw descriptor value; {@code null} defaults to {@link #NORMAL}
      *
      * @return parsed load order
      *
      * @throws IllegalArgumentException when the value is not a known load order
      */
     public static CiaExtensionLoadOrder parse(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return NORMAL;
+        if (raw == null) return NORMAL;
+        if (raw.isBlank()) {
+            throw new IllegalArgumentException("CIA extension load order must not be blank");
         }
 
-        return CiaExtensionLoadOrder.valueOf(raw.trim().toUpperCase());
+        return CiaExtensionLoadOrder.valueOf(raw.trim().toUpperCase(java.util.Locale.ROOT));
     }
 
 }

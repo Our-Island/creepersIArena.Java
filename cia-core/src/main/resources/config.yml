@@ -48,7 +48,6 @@ database:
 
   migrations:
     validate-checksum: true
-    fail-on-error: true
 
   executor:
     threads: 2

@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job.skill.golem;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.potion.PotionEffectType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -47,9 +48,9 @@ public class Skill1 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            var previous = AttributeUtils.baseValue(p, "generic.knockback_resistance");
+            var previous = AttributeUtils.baseValue(p, Attribute.KNOCKBACK_RESISTANCE);
             if (previous != null) {
-                AttributeUtils.setBaseValue(p, 1.0, "generic.knockback_resistance");
+                AttributeUtils.setBaseValue(p, 1.0, Attribute.KNOCKBACK_RESISTANCE);
             }
 
             EntityStateUtils.applyHiddenEffect(p, PotionEffectType.JUMP_BOOST, 60, 4);
@@ -59,7 +60,7 @@ public class Skill1 implements ISkillDefinition {
                     plugin,
                     _ -> {
                         if (previous != null) {
-                            AttributeUtils.setBaseValue(p, previous, "generic.knockback_resistance");
+                            AttributeUtils.setBaseValue(p, previous, Attribute.KNOCKBACK_RESISTANCE);
                         }
                     },
                     null,

@@ -54,7 +54,9 @@ public final class ComponentCatalog {
             throw new DuplicateRegistrationException(
                     module.name(),
                     existing.owner(),
-                    RegistrationOwner.CORE
+                    existing.value(),
+                    RegistrationOwner.CORE,
+                    module
             );
         }
     }

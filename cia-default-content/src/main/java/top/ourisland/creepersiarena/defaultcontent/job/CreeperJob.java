@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -27,7 +28,7 @@ public class CreeperJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 null,
                 null,
@@ -39,7 +40,7 @@ public class CreeperJob implements IJob {
                         TrimPattern.BOLT,
                         13572,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 0.0,
                                 org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.CHEST,

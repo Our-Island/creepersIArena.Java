@@ -5,11 +5,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public record RegenerationConfig(
         boolean requireInGame,
@@ -20,23 +18,28 @@ public record RegenerationConfig(
         List<RegenerationStage> stages
 ) {
 
+    private static final String ROOT = "game.abilities.core.resting_regeneration.settings";
     private static final String DEFAULT_CHIME_SOUND = "minecraft:block.note_block.chime";
     private static final String DEFAULT_BEACON_SOUND = "minecraft:block.beacon.ambient";
+
+    public RegenerationConfig {
+        if (!Double.isFinite(stationaryHorizontalEpsilon) || stationaryHorizontalEpsilon < 0.0D) {
+            throw new IllegalArgumentException(ROOT + ".stationary-horizontal-epsilon must be a finite value >= 0");
+        }
+        if (!Double.isFinite(maxVerticalDelta) || maxVerticalDelta < 0.0D) {
+            throw new IllegalArgumentException(ROOT + ".max-vertical-delta must be a finite value >= 0");
+        }
+        if (stages == null || stages.isEmpty()) {
+            throw new IllegalArgumentException(ROOT + ".stages must contain at least one stage");
+        }
+        stages = List.copyOf(stages);
+    }
 
     public static RegenerationConfig load(
             @Nullable IAbilityConfigView view,
             @NonNull Logger logger
     ) {
-        try {
-            return fromSection(view == null ? null : view.settingsSection());
-        } catch (Throwable throwable) {
-            logger.warn(
-                    "[Regeneration] Failed to load resting regeneration settings, using defaults: {}",
-                    throwable.getMessage(),
-                    throwable
-            );
-            return defaults();
-        }
+        return fromSection(view == null ? null : view.settingsSection());
     }
 
     public static RegenerationConfig defaults() {
@@ -51,19 +54,35 @@ public record RegenerationConfig(
     }
 
     public static @NonNull RegenerationConfig fromSection(@Nullable ConfigurationSection section) {
-        RegenerationConfig defaults = defaults();
+        var defaults = defaults();
         if (section == null) return defaults;
 
-        List<RegenerationStage> stages = readStages(section.getMapList("stages"));
-        if (stages.isEmpty()) stages = defaults.stages();
+        var stages = section.contains("stages")
+                ? readStages(StrictConfig.list(section, "stages", List.of(), ROOT + ".stages"))
+                : defaults.stages();
 
         return new RegenerationConfig(
-                section.getBoolean("require-in-game", defaults.requireInGame()),
-                Math.max(0.0D, section.getDouble("stationary-horizontal-epsilon", defaults.stationaryHorizontalEpsilon())),
-                Math.max(0.0D, section.getDouble("max-vertical-delta", defaults.maxVerticalDelta())),
-                section.getBoolean("require-on-ground", defaults.requireOnGround()),
-                section.getBoolean("clear-effect-on-break", defaults.clearEffectOnBreak()),
-                List.copyOf(stages)
+                StrictConfig.bool(section, "require-in-game", defaults.requireInGame(), ROOT + ".require-in-game"),
+                StrictConfig.decimal(
+                        section,
+                        "stationary-horizontal-epsilon",
+                        defaults.stationaryHorizontalEpsilon(),
+                        ROOT + ".stationary-horizontal-epsilon"
+                ),
+                StrictConfig.decimal(
+                        section,
+                        "max-vertical-delta",
+                        defaults.maxVerticalDelta(),
+                        ROOT + ".max-vertical-delta"
+                ),
+                StrictConfig.bool(section, "require-on-ground", defaults.requireOnGround(), ROOT + ".require-on-ground"),
+                StrictConfig.bool(
+                        section,
+                        "clear-effect-on-break",
+                        defaults.clearEffectOnBreak(),
+                        ROOT + ".clear-effect-on-break"
+                ),
+                stages
         );
     }
 
@@ -85,57 +104,112 @@ public record RegenerationConfig(
         );
     }
 
-    private static @NonNull List<RegenerationStage> readStages(List<Map<?, ?>> rawStages) {
-        var out = new ArrayList<RegenerationStage>();
-        if (rawStages == null) return out;
+    private static @NonNull List<RegenerationStage> readStages(List<?> rawStages) {
+        if (rawStages.isEmpty()) {
+            throw new IllegalArgumentException(ROOT + ".stages must contain at least one stage");
+        }
 
-        for (var rawStage : rawStages) {
-            int tick = readInt(rawStage.get("tick"), -1);
-            int durationTicks = readInt(rawStage.get("duration-ticks"), -1);
-            int amplifier = Math.max(0, readInt(rawStage.get("amplifier"), 0));
-            String sound = readString(rawStage.get("sound"), DEFAULT_BEACON_SOUND);
-            float volume = Math.max(0.0F, readFloat(rawStage.get("volume"), 1.0F));
-            float pitch = Math.max(0.0F, readFloat(rawStage.get("pitch"), 1.0F));
+        var out = new ArrayList<RegenerationStage>(rawStages.size());
+        var seenTicks = new HashSet<Integer>();
+        for (int index = 0; index < rawStages.size(); index++) {
+            Object item = rawStages.get(index);
+            if (!(item instanceof Map<?, ?> rawStage)) {
+                throw invalid(index, "stage map", item);
+            }
 
-            if (tick <= 0 || durationTicks <= 0) continue;
-            out.add(new RegenerationStage(
-                    tick,
-                    durationTicks,
-                    amplifier,
-                    sound,
-                    volume,
-                    pitch
-            ));
+            int tick = requiredInt(rawStage, "tick", index);
+            int durationTicks = requiredInt(rawStage, "duration-ticks", index);
+            int amplifier = optionalInt(rawStage, "amplifier", 0, index);
+            var sound = optionalString(rawStage, "sound", DEFAULT_BEACON_SOUND, index);
+            var volume = (float) optionalDouble(rawStage, "volume", 1.0D, index);
+            var pitch = (float) optionalDouble(rawStage, "pitch", 1.0D, index);
+
+            if (tick <= 0) throw semantic(index, "tick must be positive");
+            if (durationTicks <= 0) throw semantic(index, "duration-ticks must be positive");
+            if (amplifier < 0) throw semantic(index, "amplifier must be >= 0");
+            if (sound.isBlank()) throw semantic(index, "sound must not be blank");
+            if (volume < 0.0F) throw semantic(index, "volume must be >= 0");
+            if (pitch < 0.0F) throw semantic(index, "pitch must be >= 0");
+            if (!seenTicks.add(tick)) throw semantic(index, "duplicate tick " + tick);
+
+            out.add(new RegenerationStage(tick, durationTicks, amplifier, sound, volume, pitch));
         }
 
         out.sort(Comparator.comparingInt(RegenerationStage::tick));
-        return out;
+        return List.copyOf(out);
     }
 
-    private static int readInt(Object value, int fallback) {
-        if (value instanceof Number number) return number.intValue();
-        if (value == null) return fallback;
-        try {
-            return Integer.parseInt(value.toString().trim());
-        } catch (NumberFormatException _) {
-            return fallback;
+    private static int requiredInt(
+            Map<?, ?> map,
+            String key,
+            int index
+    ) {
+        Object value = map.get(key);
+        if (value == null) throw semantic(index, key + " is required");
+        return integer(value, key, index);
+    }
+
+    private static int optionalInt(
+            Map<?, ?> map,
+            String key,
+            int fallback,
+            int index
+    ) {
+        Object value = map.get(key);
+        return value == null ? fallback : integer(value, key, index);
+    }
+
+    private static int integer(
+            Object value,
+            String key,
+            int index
+    ) {
+        if (value instanceof Byte || value instanceof Short || value instanceof Integer) {
+            return ((Number) value).intValue();
         }
-    }
-
-    private static String readString(Object value, String fallback) {
-        if (value == null) return fallback;
-        String string = value.toString().trim();
-        return string.isEmpty() ? fallback : string;
-    }
-
-    private static float readFloat(Object value, float fallback) {
-        if (value instanceof Number number) return number.floatValue();
-        if (value == null) return fallback;
-        try {
-            return Float.parseFloat(value.toString().trim());
-        } catch (NumberFormatException _) {
-            return fallback;
+        if (value instanceof Long number && number >= Integer.MIN_VALUE && number <= Integer.MAX_VALUE) {
+            return number.intValue();
         }
+        throw invalid(index, "integer at " + key, value);
+    }
+
+    private static double optionalDouble(
+            Map<?, ?> map,
+            String key,
+            double fallback,
+            int index
+    ) {
+        Object value = map.get(key);
+        if (value == null) return fallback;
+        if (value instanceof Number number && Double.isFinite(number.doubleValue())) return number.doubleValue();
+        throw invalid(index, "finite number at " + key, value);
+    }
+
+    private static String optionalString(
+            Map<?, ?> map,
+            String key,
+            String fallback,
+            int index
+    ) {
+        Object value = map.get(key);
+        if (value == null) return fallback;
+        if (value instanceof String string) return string;
+        throw invalid(index, "string at " + key, value);
+    }
+
+    private static IllegalArgumentException invalid(
+            int index,
+            String expected,
+            Object actual
+    ) {
+        return new IllegalArgumentException(
+                ROOT + ".stages[" + index + "] expected " + expected + ", got "
+                        + (actual == null ? "null" : actual.getClass().getSimpleName() + " (" + actual + ")")
+        );
+    }
+
+    private static IllegalArgumentException semantic(int index, String message) {
+        return new IllegalArgumentException(ROOT + ".stages[" + index + "]: " + message);
     }
 
 }

@@ -4,10 +4,10 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.jspecify.annotations.Nullable
 import top.ourisland.creepersiarena.api.config.IGameConfigView
+import top.ourisland.creepersiarena.api.config.StrictConfig
 import top.ourisland.creepersiarena.api.database.DatabaseType
 import top.ourisland.creepersiarena.api.game.mode.GameModeId
-import top.ourisland.creepersiarena.api.identity.CiaKey
-import top.ourisland.creepersiarena.api.identity.CiaNamespace
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths
 import top.ourisland.creepersiarena.api.job.JobId
 import java.util.*
 
@@ -25,7 +25,7 @@ data class GlobalConfig(
     @get:JvmName("ui") val ui: Ui,
     @get:JvmName("world") val world: World,
     @get:JvmName("database") val database: Database,
-    private val modeSections: Map<GameModeId, ConfigurationSection>,
+    private val modesRoot: ConfigurationSection?,
 ) : IGameConfigView {
 
     companion object {
@@ -38,30 +38,36 @@ data class GlobalConfig(
             Ui.defaults(),
             World.defaults(),
             Database.defaults(),
-            mapOf(),
+            null,
         )
 
         @JvmStatic
         fun fromYaml(yml: YamlConfiguration): GlobalConfig {
-            val lang = yml.getString("lang", "en_us") ?: "en_us"
-            val disabledJobs = parseIds(yml.getStringList("disabled-jobs"), "disabled-jobs", JobId::parse)
+            val lang = StrictConfig.string(yml, "lang", "en_us", "lang") ?: "en_us"
+            require(lang.isNotBlank()) { "lang must not be blank" }
+            val disabledJobs = parseIds(
+                StrictConfig.stringList(yml, "disabled-jobs", emptyList(), "disabled-jobs"),
+                "disabled-jobs",
+                JobId::parse
+            )
 
             val lobbies = HashMap<String, Lobby>()
-            val lobbiesSec = yml.getConfigurationSection("lobbies")
+            val lobbiesSec = StrictConfig.section(yml, "lobbies", "lobbies")
             if (lobbiesSec != null) {
                 for (key in lobbiesSec.getKeys(false)) {
-                    val sec = lobbiesSec.getConfigurationSection(key) ?: continue
-                    lobbies[key] = Lobby.fromSection(sec)
+                    val sec = StrictConfig.section(lobbiesSec, key, "lobbies.$key")
+                        ?: throw IllegalArgumentException("Missing lobby section at lobbies.$key")
+                    lobbies[key] = Lobby.fromSection(key, sec)
                 }
             }
 
-            val gameSec = yml.getConfigurationSection("game")
+            val gameSec = StrictConfig.section(yml, "game", "game")
             val game = Game.fromSection(gameSec)
-            val modeSections = collectModeSections(gameSec)
+            val modesRoot = StrictConfig.section(gameSec, "modes", "game.modes")
 
-            val ui = Ui.fromSection(yml.getConfigurationSection("ui"))
-            val world = World.fromSection(yml.getConfigurationSection("world"))
-            val database = Database.fromSection(yml.getConfigurationSection("database"))
+            val ui = Ui.fromSection(StrictConfig.section(yml, "ui", "ui"))
+            val world = World.fromSection(StrictConfig.section(yml, "world", "world"))
+            val database = Database.fromSection(StrictConfig.section(yml, "database", "database"))
 
             return GlobalConfig(
                 lang,
@@ -71,51 +77,8 @@ data class GlobalConfig(
                 ui,
                 world,
                 database,
-                Collections.unmodifiableMap(modeSections),
+                modesRoot,
             )
-        }
-
-        private fun collectModeSections(
-            gameSec: ConfigurationSection?
-        ): Map<GameModeId, ConfigurationSection> {
-            if (gameSec == null) return mapOf()
-            val modesSec = gameSec.getConfigurationSection("modes") ?: return mapOf()
-            val out = LinkedHashMap<GameModeId, ConfigurationSection>()
-            for (namespace in modesSec.getKeys(false)) {
-                val namespaceSection = modesSec.getConfigurationSection(namespace) ?: continue
-                collectModeSections(namespace, namespaceSection, "", out)
-            }
-            return out
-        }
-
-        private fun collectModeSections(
-            namespace: String,
-            section: ConfigurationSection,
-            path: String,
-            out: MutableMap<GameModeId, ConfigurationSection>
-        ) {
-            // A mode section is a leaf from the identity perspective; its children are mode-owned settings.
-            if (path.isNotEmpty()) {
-                val id = try {
-                    GameModeId.of(
-                        CiaKey.of(
-                            CiaNamespace.parse(namespace),
-                            path.replace('.', '/')
-                        )
-                    )
-                } catch (exception: IllegalArgumentException) {
-                    throw IllegalArgumentException(
-                        "Invalid game mode config path game.modes.$namespace.$path",
-                        exception
-                    )
-                }
-                out[id] = section
-                return
-            }
-            for (key in section.getKeys(false)) {
-                val child = section.getConfigurationSection(key) ?: continue
-                collectModeSections(namespace, child, key, out)
-            }
         }
 
         private fun <T> parseIds(
@@ -140,22 +103,14 @@ data class GlobalConfig(
             def: Double
         ): Double {
             if (list == null || list.size <= idx) return def
-            val o = list[idx]
-            if (o is Number) return o.toDouble()
-            return try {
-                o?.toString()?.toDouble() ?: def
-            } catch (_: Exception) {
-                def
-            }
+            val value = list[idx]
+            if (value is Number) return value.toDouble()
+            throw IllegalArgumentException("Expected a numeric coordinate at index $idx, got '$value'")
         }
 
         internal fun toInt(o: Any?): Int {
             if (o is Number) return o.toInt()
-            return try {
-                o?.toString()?.toInt() ?: 0
-            } catch (_: Exception) {
-                0
-            }
+            throw IllegalArgumentException("Expected an integer coordinate, got '$o'")
         }
 
     }
@@ -164,7 +119,10 @@ data class GlobalConfig(
 
     override fun leaveDelaySeconds(): Int = game.leaveDelaySeconds
 
-    override fun modeSection(modeId: GameModeId): ConfigurationSection? = modeSections[modeId]
+    override fun modeSection(modeId: GameModeId): ConfigurationSection? {
+        val key = CiaConfigPaths.section(modeId)
+        return StrictConfig.section(modesRoot, key, "game.modes.$key")
+    }
 
     enum class JobSelectMode {
 
@@ -175,9 +133,13 @@ data class GlobalConfig(
 
             fun fromConfig(s: String?): JobSelectMode {
                 if (s == null) return HOTBAR
-                return when (s.trim().lowercase(Locale.ROOT)) {
-                    "inventory", "inv", "bag" -> INVENTORY
-                    else -> HOTBAR
+                return try {
+                    valueOf(s.trim().uppercase(Locale.ROOT))
+                } catch (exception: IllegalArgumentException) {
+                    throw IllegalArgumentException(
+                        "Invalid value at ui.lobby.job-select-mode: expected HOTBAR or INVENTORY, got '$s'",
+                        exception
+                    )
                 }
             }
 
@@ -198,10 +160,11 @@ data class GlobalConfig(
 
         companion object {
 
-            fun fromSection(sec: ConfigurationSection): Lobby {
-                val loc = sec.getList("location", listOf(0, 100, 0))
-                val from = sec.getList("range.from", listOf(100, 100))
-                val to = sec.getList("range.to", listOf(-100, -100))
+            fun fromSection(id: String, sec: ConfigurationSection): Lobby {
+                val base = "lobbies.$id"
+                val loc = StrictConfig.list(sec, "location", listOf(0, 100, 0), "$base.location")
+                val from = StrictConfig.list(sec, "range.from", listOf(100, 100), "$base.range.from")
+                val to = StrictConfig.list(sec, "range.to", listOf(-100, -100), "$base.range.to")
 
                 val x = asDouble(loc, 0, 0.0)
                 val y = asDouble(loc, 1, 100.0)
@@ -212,7 +175,10 @@ data class GlobalConfig(
                 val toX = asDouble(to, 0, -100.0)
                 val toZ = asDouble(to, 1, -100.0)
 
-                val entry = Entry.fromSection(sec.getConfigurationSection("entry"))
+                val entry = Entry.fromSection(
+                    StrictConfig.section(sec, "entry", "$base.entry"),
+                    "$base.entry"
+                )
                 return Lobby(x, y, z, fromX, fromZ, toX, toZ, entry)
             }
 
@@ -230,13 +196,14 @@ data class GlobalConfig(
 
             companion object {
 
-                fun fromSection(sec: ConfigurationSection?): @Nullable Entry? {
+                fun fromSection(sec: ConfigurationSection?, path: String): @Nullable Entry? {
                     if (sec == null) return null
-                    val time = sec.getLong("time", 0L)
-                    if (time <= 0L) return null
+                    val time = StrictConfig.longValue(sec, "time", 0L, "$path.time")
+                    require(time >= 0L) { "$path.time must be >= 0, got $time" }
+                    if (time == 0L) return null
 
-                    val from = sec.getList("from", listOf(0, 0, 0))
-                    val to = sec.getList("to", listOf(0, 0, 0))
+                    val from = StrictConfig.list(sec, "from", listOf(0, 0, 0), "$path.from")
+                    val to = StrictConfig.list(sec, "to", listOf(0, 0, 0), "$path.to")
 
                     return Entry(
                         time,
@@ -268,18 +235,27 @@ data class GlobalConfig(
                 return Game(
                     disabledModes = Collections.unmodifiableSet(
                         parseIds(
-                            sec.getStringList("disabled-modes"),
+                            StrictConfig.stringList(
+                                sec,
+                                "disabled-modes",
+                                emptyList(),
+                                "game.disabled-modes"
+                            ),
                             "game.disabled-modes",
                             GameModeId::parse
                         )
                     ),
-                    leaveDelaySeconds = sec.getInt("leave-delay-seconds", 5)
-                        .coerceAtLeast(0),
-                    defaultMode = sec.getString("default-mode")
-                        ?.takeIf {
-                            it.isNotBlank()
-                        }
+                    leaveDelaySeconds = StrictConfig.integer(
+                        sec,
+                        "leave-delay-seconds",
+                        5,
+                        "game.leave-delay-seconds"
+                    ).also {
+                        require(it >= 0) { "game.leave-delay-seconds must be >= 0, got $it" }
+                    },
+                    defaultMode = StrictConfig.string(sec, "default-mode", null, "game.default-mode")
                         ?.let { raw ->
+                            require(raw.isNotBlank()) { "game.default-mode must not be blank" }
                             try {
                                 GameModeId.parse(raw)
                             } catch (exception: IllegalArgumentException) {
@@ -310,7 +286,7 @@ data class GlobalConfig(
 
             fun fromSection(sec: ConfigurationSection?): Ui {
                 if (sec == null) return defaults()
-                return Ui(LobbyUi.fromSection(sec.getConfigurationSection("lobby")))
+                return Ui(LobbyUi.fromSection(StrictConfig.section(sec, "lobby", "ui.lobby")))
             }
 
             fun defaults(): Ui = Ui(LobbyUi.defaults())
@@ -328,8 +304,9 @@ data class GlobalConfig(
 
             fun fromSection(sec: ConfigurationSection?): LobbyUi {
                 if (sec == null) return defaults()
-                val mode = sec.getString("job-select-mode", "hotbar")
-                val perPage = sec.getInt("jobs-per-page", 5)
+                val mode = StrictConfig.string(sec, "job-select-mode", "hotbar", "ui.lobby.job-select-mode")
+                val perPage = StrictConfig.integer(sec, "jobs-per-page", 5, "ui.lobby.jobs-per-page")
+                require(perPage > 0) { "ui.lobby.jobs-per-page must be positive, got $perPage" }
                 return LobbyUi(JobSelectMode.fromConfig(mode), perPage)
             }
 
@@ -360,7 +337,6 @@ data class GlobalConfig(
         @get:JvmName("executorThreads") val executorThreads: Int,
         @get:JvmName("executorQueueSize") val executorQueueSize: Int,
         @get:JvmName("validateMigrationChecksum") val validateMigrationChecksum: Boolean,
-        @get:JvmName("failOnMigrationError") val failOnMigrationError: Boolean,
     ) {
 
         companion object {
@@ -368,11 +344,17 @@ data class GlobalConfig(
             fun fromSection(sec: ConfigurationSection?): Database {
                 if (sec == null) return defaults()
 
-                val type = DatabaseType.parse(sec.getString("type", "sqlite"))
-                val tablePrefix = sanitizeTablePrefix(sec.getString("table-prefix", "cia_"))
-                val typed = sec.getConfigurationSection(type.name.lowercase(Locale.ROOT))
+                val type = DatabaseType.parse(
+                    StrictConfig.string(sec, "type", "sqlite", "database.type")
+                )
+                val tablePrefix = sanitizeTablePrefix(
+                    StrictConfig.string(sec, "table-prefix", "cia_", "database.table-prefix")
+                )
+                val typeKey = type.name.lowercase(Locale.ROOT)
+                val typed = StrictConfig.section(sec, typeKey, "database.$typeKey")
+                val typedPath = "database.$typeKey"
 
-                val host = typed?.getString("host") ?: sec.getString("host", "localhost") ?: "localhost"
+                val host = StrictConfig.string(typed, "host", "localhost", "$typedPath.host") ?: "localhost"
 
                 val defaultPort = when (type) {
                     DatabaseType.MYSQL -> 3306
@@ -380,54 +362,84 @@ data class GlobalConfig(
                     DatabaseType.H2 -> 0
                     DatabaseType.SQLITE -> 0
                 }
-                val port = typed?.getInt("port", defaultPort)
-                    ?: sec.getInt("port", defaultPort)
+                val port = StrictConfig.integer(typed, "port", defaultPort, "$typedPath.port")
+                if ((type == DatabaseType.MYSQL || type == DatabaseType.POSTGRESQL) && port !in 1..65535) {
+                    throw IllegalArgumentException("$typedPath.port must be between 1 and 65535, got $port")
+                }
 
-                val database = typed?.getString("database")
-                    ?: sec.getString("database", "creepersiarena")
-                    ?: "creepersiarena"
-                val username = typed?.getString("username")
-                    ?: sec.getString("username", "")
-                    ?: ""
-                val password = typed?.getString("password")
-                    ?: sec.getString("password", "")
-                    ?: ""
-                val file = typed?.getString("file")
-                    ?: sec.getString("file", defaultFile(type))
-                    ?: defaultFile(type)
+                val database = StrictConfig.string(
+                    typed,
+                    "database",
+                    "creepersiarena",
+                    "$typedPath.database"
+                ) ?: "creepersiarena"
+                val username = StrictConfig.string(typed, "username", "", "$typedPath.username") ?: ""
+                val password = StrictConfig.string(typed, "password", "", "$typedPath.password") ?: ""
+                val file = StrictConfig.string(
+                    typed,
+                    "file",
+                    defaultFile(type),
+                    "$typedPath.file"
+                ) ?: defaultFile(type)
                 val parameters = parseParameters(
-                    typed?.getConfigurationSection("parameters")
-                        ?: sec.getConfigurationSection("parameters")
+                    StrictConfig.section(typed, "parameters", "$typedPath.parameters")
                 )
 
                 val poolSize = positive(
-                    typed?.getInt("pool-size", defaultPoolSize(type))
-                        ?: sec.getInt("pool-size", defaultPoolSize(type)),
-                    defaultPoolSize(type)
+                    StrictConfig.integer(
+                        typed,
+                        "pool-size",
+                        defaultPoolSize(type),
+                        "$typedPath.pool-size"
+                    ),
+                    "$typedPath.pool-size"
                 )
                 val connectionTimeoutMs = positiveLong(
-                    typed?.getLong("connection-timeout-ms", 5000L)
-                        ?: sec.getLong("connection-timeout-ms", 5000L),
-                    5000L
+                    StrictConfig.longValue(
+                        typed,
+                        "connection-timeout-ms",
+                        5000L,
+                        "$typedPath.connection-timeout-ms"
+                    ),
+                    "$typedPath.connection-timeout-ms"
                 )
                 val busyTimeoutMs = positive(
-                    typed?.getInt("busy-timeout-ms", 5000)
-                        ?: sec.getInt("busy-timeout-ms", 5000),
-                    5000
+                    StrictConfig.integer(
+                        typed,
+                        "busy-timeout-ms",
+                        5000,
+                        "$typedPath.busy-timeout-ms"
+                    ),
+                    "$typedPath.busy-timeout-ms"
                 )
-                val journalMode = (typed?.getString("journal-mode") ?: sec.getString("journal-mode", "WAL") ?: "WAL")
-                    .trim().uppercase(Locale.ROOT)
-                val synchronous =
-                    (typed?.getString("synchronous") ?: sec.getString("synchronous", "NORMAL") ?: "NORMAL")
-                        .trim().uppercase(Locale.ROOT)
+                val journalMode = enumValue(
+                    StrictConfig.string(typed, "journal-mode", "WAL", "$typedPath.journal-mode") ?: "WAL",
+                    setOf("DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"),
+                    "$typedPath.journal-mode"
+                )
+                val synchronous = enumValue(
+                    StrictConfig.string(typed, "synchronous", "NORMAL", "$typedPath.synchronous") ?: "NORMAL",
+                    setOf("OFF", "NORMAL", "FULL", "EXTRA"),
+                    "$typedPath.synchronous"
+                )
 
-                val executorSec = sec.getConfigurationSection("executor")
-                val executorThreads = positive(executorSec?.getInt("threads", 2) ?: 2, 2)
-                val executorQueueSize = positive(executorSec?.getInt("queue-size", 10000) ?: 10000, 10000)
+                val executorSec = StrictConfig.section(sec, "executor", "database.executor")
+                val executorThreads = positive(
+                    StrictConfig.integer(executorSec, "threads", 2, "database.executor.threads"),
+                    "database.executor.threads"
+                )
+                val executorQueueSize = positive(
+                    StrictConfig.integer(executorSec, "queue-size", 10000, "database.executor.queue-size"),
+                    "database.executor.queue-size"
+                )
 
-                val migrationSec = sec.getConfigurationSection("migrations")
-                val validateChecksum = migrationSec?.getBoolean("validate-checksum", true) ?: true
-                val failOnError = migrationSec?.getBoolean("fail-on-error", true) ?: true
+                val migrationSec = StrictConfig.section(sec, "migrations", "database.migrations")
+                val validateChecksum = StrictConfig.bool(
+                    migrationSec,
+                    "validate-checksum",
+                    true,
+                    "database.migrations.validate-checksum"
+                )
 
                 return Database(
                     type,
@@ -447,7 +459,6 @@ data class GlobalConfig(
                     executorThreads,
                     executorQueueSize,
                     validateChecksum,
-                    failOnError,
                 )
             }
 
@@ -469,7 +480,6 @@ data class GlobalConfig(
                 executorThreads = 2,
                 executorQueueSize = 10000,
                 validateMigrationChecksum = true,
-                failOnMigrationError = true,
             )
 
             private fun defaultFile(type: DatabaseType): String = when (type) {
@@ -483,27 +493,49 @@ data class GlobalConfig(
                 else -> 10
             }
 
-            private fun positive(value: Int, fallback: Int): Int = if (value > 0) value else fallback
+            private fun positive(value: Int, path: String): Int {
+                if (value > 0) return value
+                throw IllegalArgumentException("$path must be positive, got $value")
+            }
 
-            private fun positiveLong(value: Long, fallback: Long): Long = if (value > 0L) value else fallback
+            private fun positiveLong(value: Long, path: String): Long {
+                if (value > 0L) return value
+                throw IllegalArgumentException("$path must be positive, got $value")
+            }
 
             private fun parseParameters(sec: ConfigurationSection?): Map<String, String> {
                 if (sec == null) return mapOf()
 
                 val out = LinkedHashMap<String, String>()
                 for (key in sec.getKeys(false)) {
-                    val value = sec.get(key) ?: continue
+                    val value = sec.get(key)
+                        ?: throw IllegalArgumentException("database parameters must not contain null: $key")
+                    if (value !is String && value !is Number && value !is Boolean) {
+                        throw IllegalArgumentException(
+                            "Invalid value at database parameters.$key: expected scalar, got ${value::class.java.simpleName}"
+                        )
+                    }
                     out[key] = value.toString()
                 }
 
                 return Collections.unmodifiableMap(out)
             }
 
+
+            private fun enumValue(raw: String, allowed: Set<String>, path: String): String {
+                val value = raw.trim().uppercase(Locale.ROOT)
+                if (value in allowed) return value
+                throw IllegalArgumentException(
+                    "Invalid value at $path: expected one of ${allowed.joinToString()}, got '$raw'"
+                )
+            }
+
             private fun sanitizeTablePrefix(raw: String?): String {
                 val text = raw?.trim() ?: "cia_"
-                val cleaned = text.replace(Regex("[^A-Za-z0-9_]"), "_")
-                if (cleaned.isBlank()) return "cia_"
-                return cleaned
+                require(text.isNotBlank() && text.matches(Regex("[A-Za-z0-9_]+"))) {
+                    "Invalid value at database.table-prefix: expected [A-Za-z0-9_]+, got '$raw'"
+                }
+                return text
             }
 
         }
@@ -518,7 +550,7 @@ data class GlobalConfig(
 
             fun fromSection(sec: ConfigurationSection?): World {
                 if (sec == null) return defaults()
-                return World(sec.getBoolean("portals-enabled", false))
+                return World(StrictConfig.bool(sec, "portals-enabled", false, "world.portals-enabled"))
             }
 
             fun defaults(): World = World(false)

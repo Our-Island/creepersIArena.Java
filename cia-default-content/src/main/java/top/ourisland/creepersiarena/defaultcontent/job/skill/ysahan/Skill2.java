@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.ysahan;
 
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
@@ -128,7 +129,7 @@ public class Skill2 implements ISkillDefinition {
                         p.getPersistentDataContainer().remove(BuiltinKeys.key("ysahan_whale_task"));
                         p.setExp(0f);
                         p.setLevel(0);
-                        AttributeUtils.setBaseValue(p, 1.0, "generic.scale");
+                        AttributeUtils.setBaseValue(p, 1.0, Attribute.SCALE);
                         task.cancel();
                         return;
                     }
@@ -138,7 +139,7 @@ public class Skill2 implements ISkillDefinition {
                     EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.RESISTANCE, 15);
                     p.setExp((float) Math.clamp((until - now) / 8000.0, 0.0, 1.0));
                     p.setLevel((int) Math.ceil((until - now) / 1000.0));
-                    AttributeUtils.setBaseValue(p, 1.3, "generic.scale");
+                    AttributeUtils.setBaseValue(p, 1.3, Attribute.SCALE);
                 },
                 null,
                 1L,

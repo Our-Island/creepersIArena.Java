@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.mutation.IMutationEffect;
 import top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry;
 import top.ourisland.creepersiarena.api.game.mutation.MutationId;
@@ -45,16 +46,22 @@ public final class MutationRegistry implements IMutationRegistry {
             IMutationEffect effect,
             @Nullable ConfigurationSection mutationSettings
     ) {
-        try {
-            ConfigurationSection effectSection = null;
-            if (mutationSettings != null) {
-                var effectsSection = mutationSettings.getConfigurationSection("effects");
-                if (effectsSection != null) effectSection = effectsSection.getConfigurationSection(effect.configKey());
+        ConfigurationSection effectSection = null;
+        if (mutationSettings != null) {
+            var effectsSection = StrictConfig.section(
+                    mutationSettings,
+                    "effects",
+                    "game.abilities.core.mutation.settings.effects"
+            );
+            if (effectsSection != null) {
+                effectSection = StrictConfig.section(
+                        effectsSection,
+                        effect.configKey(),
+                        "game.abilities.core.mutation.settings.effects." + effect.configKey()
+                );
             }
-            effect.reload(effectSection, logger);
-        } catch (Throwable throwable) {
-            logger.warn("[Mutation] Failed to reload {}: {}", effect.type(), throwable.getMessage(), throwable);
         }
+        effect.reload(effectSection, logger);
     }
 
     private @Nullable ConfigurationSection mutationSection() {
