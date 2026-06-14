@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ class JobManagerTest {
     @Test
     void resolvesOnlyStrictTypedJobIdsAndKeepsOwner() {
         var namespaces = new NamespaceRegistry();
-        var owner = new RegistrationOwner(ExtensionId.parse("default-content"), CiaNamespace.parse("cia"));
+        var owner = RegistrationOwnerAuthority.issue(ExtensionId.parse("default-content"), CiaNamespace.parse("cia"));
         namespaces.claim(owner);
         var manager = new JobManager(namespaces);
         var job = new CreeperLikeJob();
@@ -36,7 +36,7 @@ class JobManagerTest {
     @Test
     void duplicateRegistrationFailsInsteadOfReplacing() {
         var namespaces = new NamespaceRegistry();
-        var owner = new RegistrationOwner(ExtensionId.parse("default-content"), CiaNamespace.parse("cia"));
+        var owner = RegistrationOwnerAuthority.issue(ExtensionId.parse("default-content"), CiaNamespace.parse("cia"));
         namespaces.claim(owner);
         var manager = new JobManager(namespaces);
         manager.register(owner, new CreeperLikeJob());

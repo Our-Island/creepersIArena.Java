@@ -5,8 +5,8 @@ import lombok.Getter;
 /**
  * Typed key issued by one {@link ExtensionContextAttributes} scope.
  * <p>
- * Equality includes the scope's opaque token, so reconstructing an owner with matching text cannot collide with another
- * extension's context attributes.
+ * Equality includes the scope's opaque token, so creating another scope from the same runtime-issued owner cannot
+ * collide with another extension context's attributes.
  */
 public final class ContextAttributeKey<T> implements CiaResourceId {
 

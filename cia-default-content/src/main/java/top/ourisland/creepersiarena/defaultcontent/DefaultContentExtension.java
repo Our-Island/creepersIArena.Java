@@ -55,6 +55,7 @@ public final class DefaultContentExtension implements ICiaExtension {
 
     @Override
     public void onLoad(ICiaExtensionContext context) {
+        DefaultContentRuntimeIdentity.install(context);
         context.mergeYamlResource("default-content/config.yml", "config.yml");
         context.mergeYamlResource("default-content/arena.yml", "arena.yml");
         context.installResource("default-content/skill.yml", "skill.yml");

@@ -8,6 +8,7 @@ import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -57,6 +58,7 @@ class CiaExtensionRuntimeContextResourceTest {
                 null,
                 new ComponentCatalog(),
                 descriptor,
+                RegistrationOwnerAuthority.issue(descriptor.id(), descriptor.namespace()),
                 classLoader,
                 tempDir.resolve("resource-extension.cia.jar"),
                 tempDir.resolve("plugin-data/resource-extension")

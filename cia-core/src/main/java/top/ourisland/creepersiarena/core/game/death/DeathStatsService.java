@@ -6,13 +6,13 @@ import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
 import top.ourisland.creepersiarena.core.game.GameManager;
 
 public final class DeathStatsService {
 
-    private static final ExtensionSessionData CORE_SESSION_DATA = new ExtensionSessionData(RegistrationOwner.CORE);
+    private static final ExtensionSessionData CORE_SESSION_DATA = new ExtensionSessionData(RegistrationOwnerAuthority.core());
 
     public static final SessionDataKey<Integer>
             KILLS = key("kills"),

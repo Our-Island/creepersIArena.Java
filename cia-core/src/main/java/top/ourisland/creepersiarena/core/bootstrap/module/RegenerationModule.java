@@ -6,7 +6,7 @@ import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
@@ -39,7 +39,7 @@ public final class RegenerationModule implements IBootstrapModule {
             );
             rt.putService(RegenerationService.class, service);
             rt.putService(IRestStateService.class, service);
-            rt.requireService(IAbilityRegistry.class).registerAbility(RegistrationOwner.CORE, service);
+            rt.requireService(IAbilityRegistry.class).registerAbility(RegistrationOwnerAuthority.core(), service);
         }, "Loading resting regeneration...", "Resting regeneration loaded.");
     }
 

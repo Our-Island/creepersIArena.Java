@@ -6,6 +6,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.skill.SkillId;
+import top.ourisland.creepersiarena.core.identity.CiaIdPdcCodec;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 import java.util.Optional;
@@ -45,18 +46,18 @@ public final class BuiltinDamageAttributionMarker {
                 PersistentDataType.STRING,
                 ownerId.toString()
         );
-        container.set(
+        CiaIdPdcCodec.write(
+                container,
                 BuiltinKeys.key("death_cause_id"),
-                PersistentDataType.STRING,
-                causeId.toString()
+                causeId
         );
         if (sourceSkillId == null) {
             container.remove(BuiltinKeys.key("death_source_skill"));
         } else {
-            container.set(
+            CiaIdPdcCodec.write(
+                    container,
                     BuiltinKeys.key("death_source_skill"),
-                    PersistentDataType.STRING,
-                    sourceSkillId.asString()
+                    sourceSkillId
             );
         }
     }
@@ -92,14 +93,21 @@ public final class BuiltinDamageAttributionMarker {
 
     private static Optional<MarkedDamageSource> read(PersistentDataContainer container) {
         var ownerRaw = container.get(BuiltinKeys.key("death_source_owner"), PersistentDataType.STRING);
-        var causeRaw = container.get(BuiltinKeys.key("death_cause_id"), PersistentDataType.STRING);
-        if (ownerRaw == null || causeRaw == null) return Optional.empty();
+        if (ownerRaw == null) return Optional.empty();
 
         try {
             var ownerId = UUID.fromString(ownerRaw);
-            var causeId = DeathCauseId.parse(causeRaw);
-            var rawSkillId = container.get(BuiltinKeys.key("death_source_skill"), PersistentDataType.STRING);
-            var skillId = rawSkillId == null ? null : SkillId.parse(rawSkillId);
+            var causeId = CiaIdPdcCodec.read(
+                    container,
+                    BuiltinKeys.key("death_cause_id"),
+                    DeathCauseId::of
+            );
+            if (causeId == null) return Optional.empty();
+            var skillId = CiaIdPdcCodec.read(
+                    container,
+                    BuiltinKeys.key("death_source_skill"),
+                    SkillId::of
+            );
             return Optional.of(new MarkedDamageSource(ownerId, causeId, skillId));
         } catch (IllegalArgumentException _) {
             return Optional.empty();

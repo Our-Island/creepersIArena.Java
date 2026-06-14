@@ -6,7 +6,7 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
@@ -37,7 +37,7 @@ public final class StoreModule implements IBootstrapModule {
             rt.putService(IStoreService.class, service);
             rt.putService(StorePurchaseRepository.class, purchases);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegistrationOwner.CORE,
+                    RegistrationOwnerAuthority.core(),
                     new SimpleAbility(CoreAbilities.STORE_UI)
             );
         }, "Loading store runtime...", "Store runtime loaded.");

@@ -1,7 +1,7 @@
 package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.api.ability.*;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.ability.AbilityContextFactory;
 import top.ourisland.creepersiarena.core.ability.AbilityGate;
 import top.ourisland.creepersiarena.core.ability.AbilityService;
@@ -70,7 +70,7 @@ public final class AbilityModule implements IBootstrapModule {
 
     private void registerStaticCoreAbilities(AbilityService service) {
         service.registerAbility(
-                RegistrationOwner.CORE,
+                RegistrationOwnerAuthority.core(),
                 STATIC_CORE_ABILITY_IDS.stream()
                         .map(SimpleAbility::new)
                         .toArray(IAbility[]::new)

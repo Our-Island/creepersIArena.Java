@@ -6,12 +6,17 @@ import top.ourisland.creepersiarena.api.annotation.CiaModeDef;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.metadata.JobMetadata;
+import top.ourisland.creepersiarena.api.metadata.ModeMetadata;
+import top.ourisland.creepersiarena.api.metadata.SkillMetadata;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -28,7 +33,7 @@ public final class AnnotationComponentScanner {
             @lombok.NonNull String basePackage,
             @lombok.NonNull ComponentCatalog catalog
     ) {
-        scanInto(plugin, basePackage, catalog, RegistrationOwner.CORE);
+        scanInto(plugin, basePackage, catalog, RegistrationOwnerAuthority.core());
     }
 
     public void scanInto(
@@ -56,15 +61,128 @@ public final class AnnotationComponentScanner {
         var classNames = discoverClassNames(codeSource, basePackage);
         classNames.sort(Comparator.naturalOrder());
 
+        List<Class<?>> types = new ArrayList<>(classNames.size());
         for (var className : classNames) {
             try {
-                Class<?> type = Class.forName(className, false, classLoader);
-                tryRegister(type, catalog, includeBootstrapModules, owner);
-            } catch (ReflectiveOperationException ex) {
-                throw new IllegalStateException("Unable to instantiate annotated CIA component " + className, ex);
-            } catch (LinkageError ex) {
-                throw new IllegalStateException("Unable to link annotated CIA component " + className, ex);
+                types.add(Class.forName(className, false, classLoader));
+            } catch (LinkageError error) {
+                throw new IllegalStateException("Unable to link annotated CIA component " + className, error);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Unable to load annotated CIA component " + className, exception);
             }
+        }
+
+        try {
+            if (includeBootstrapModules) {
+                for (var type : types) registerBootstrapModule(type, catalog, owner);
+            }
+            for (var type : types) registerJob(type, catalog, owner);
+            for (var type : types) registerSkill(type, catalog, owner);
+            for (var type : types) registerMode(type, catalog, owner);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Unable to instantiate annotated CIA component", ex);
+        }
+    }
+
+    private void registerBootstrapModule(
+            Class<?> type,
+            ComponentCatalog catalog,
+            RegistrationOwner owner
+    ) throws ReflectiveOperationException {
+        if (!type.isAnnotationPresent(CiaBootstrapModule.class)) return;
+        requireConcreteImplementation(type, CiaBootstrapModule.class, IBootstrapModule.class);
+        if (owner != RegistrationOwnerAuthority.core()) {
+            throw new IllegalArgumentException("Extensions cannot register bootstrap modules: " + type.getName());
+        }
+        catalog.registerModule((IBootstrapModule) instantiate(type));
+    }
+
+    private void registerJob(
+            Class<?> type,
+            ComponentCatalog catalog,
+            RegistrationOwner owner
+    ) throws ReflectiveOperationException {
+        if (!type.isAnnotationPresent(CiaJobDef.class)) return;
+        requireConcreteImplementation(type, CiaJobDef.class, IJob.class);
+        var job = (IJob) instantiate(type);
+        var annotatedId = JobMetadata.of(type).id();
+        if (!annotatedId.equals(job.id())) {
+            throw new IllegalArgumentException(
+                    "Annotated job id %s does not match runtime id %s on %s".formatted(
+                            annotatedId,
+                            job.id(),
+                            type.getName()
+                    )
+            );
+        }
+        catalog.registerJob(owner, job);
+    }
+
+    private void registerSkill(
+            Class<?> type,
+            ComponentCatalog catalog,
+            RegistrationOwner owner
+    ) throws ReflectiveOperationException {
+        if (!type.isAnnotationPresent(CiaSkillDef.class)) return;
+        requireConcreteImplementation(type, CiaSkillDef.class, ISkillDefinition.class);
+        var skill = (ISkillDefinition) instantiate(type);
+        var metadata = SkillMetadata.of(type);
+        if (!metadata.id().equals(skill.id()) || !metadata.job().equals(skill.jobId())) {
+            throw new IllegalArgumentException(
+                    "Annotated skill metadata %s -> %s does not match runtime metadata %s -> %s on %s".formatted(
+                            metadata.id(),
+                            metadata.job(),
+                            skill.id(),
+                            skill.jobId(),
+                            type.getName()
+                    )
+            );
+        }
+        catalog.registerSkill(owner, skill);
+    }
+
+    private void registerMode(
+            Class<?> type,
+            ComponentCatalog catalog,
+            RegistrationOwner owner
+    ) throws ReflectiveOperationException {
+        if (!type.isAnnotationPresent(CiaModeDef.class)) return;
+        requireConcreteImplementation(type, CiaModeDef.class, IGameMode.class);
+        var mode = (IGameMode) instantiate(type);
+        var annotatedId = ModeMetadata.of(type).id();
+        if (!annotatedId.equals(mode.mode())) {
+            throw new IllegalArgumentException(
+                    "Annotated mode id %s does not match runtime id %s on %s".formatted(
+                            annotatedId,
+                            mode.mode(),
+                            type.getName()
+                    )
+            );
+        }
+        catalog.registerMode(owner, mode);
+    }
+
+    private void requireConcreteImplementation(
+            Class<?> type,
+            Class<? extends Annotation> annotation,
+            Class<?> requiredType
+    ) {
+        if (!requiredType.isAssignableFrom(type)) {
+            throw new IllegalArgumentException(
+                    "@%s type must implement %s: %s".formatted(
+                            annotation.getSimpleName(),
+                            requiredType.getName(),
+                            type.getName()
+                    )
+            );
+        }
+        if (type.isInterface() || Modifier.isAbstract(type.getModifiers()) || type.isAnonymousClass()) {
+            throw new IllegalArgumentException(
+                    "@%s type must be a concrete class: %s".formatted(
+                            annotation.getSimpleName(),
+                            type.getName()
+                    )
+            );
         }
     }
 
@@ -97,37 +215,6 @@ public final class AnnotationComponentScanner {
         }
 
         return out;
-    }
-
-    private void tryRegister(
-            Class<?> type,
-            ComponentCatalog catalog,
-            boolean includeBootstrapModules,
-            RegistrationOwner owner
-    ) throws ReflectiveOperationException {
-        if (type.isInterface() || Modifier.isAbstract(type.getModifiers()) || type.isAnonymousClass()) {
-            return;
-        }
-
-        if (
-                includeBootstrapModules
-                        && type.isAnnotationPresent(CiaBootstrapModule.class)
-                        && IBootstrapModule.class.isAssignableFrom(type)
-        ) {
-            if (!RegistrationOwner.CORE.equals(owner)) {
-                throw new IllegalArgumentException("Extensions cannot register bootstrap modules: " + type.getName());
-            }
-            catalog.registerModule((IBootstrapModule) instantiate(type));
-        }
-        if (type.isAnnotationPresent(CiaJobDef.class) && IJob.class.isAssignableFrom(type)) {
-            catalog.registerJob(owner, (IJob) instantiate(type));
-        }
-        if (type.isAnnotationPresent(CiaSkillDef.class) && ISkillDefinition.class.isAssignableFrom(type)) {
-            catalog.registerSkill(owner, (ISkillDefinition) instantiate(type));
-        }
-        if (type.isAnnotationPresent(CiaModeDef.class) && IGameMode.class.isAssignableFrom(type)) {
-            catalog.registerMode(owner, (IGameMode) instantiate(type));
-        }
     }
 
     private String toClassName(Path root, Path path) {

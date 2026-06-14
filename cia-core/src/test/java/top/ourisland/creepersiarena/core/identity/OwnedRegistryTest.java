@@ -34,7 +34,7 @@ class OwnedRegistryTest {
     }
 
     private static RegistrationOwner owner(String extensionId, String namespace) {
-        return new RegistrationOwner(ExtensionId.parse(extensionId), CiaNamespace.parse(namespace));
+        return RegistrationOwnerAuthority.issue(ExtensionId.parse(extensionId), CiaNamespace.parse(namespace));
     }
 
     @Test

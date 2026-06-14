@@ -4,7 +4,7 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
@@ -39,7 +39,7 @@ public final class MutationModule implements IBootstrapModule {
             rt.putService(MutationRegistry.class, registry);
             rt.putService(MutationService.class, service);
             rt.putService(top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry.class, registry);
-            rt.requireService(IAbilityRegistry.class).registerAbility(RegistrationOwner.CORE, service);
+            rt.requireService(IAbilityRegistry.class).registerAbility(RegistrationOwnerAuthority.core(), service);
         }, "Loading mutation runtime...", "Mutation runtime loaded.");
     }
 

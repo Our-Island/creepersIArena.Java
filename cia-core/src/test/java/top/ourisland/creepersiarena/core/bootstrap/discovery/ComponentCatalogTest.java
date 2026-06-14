@@ -12,23 +12,24 @@ import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.mode.ModeLogic;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ComponentCatalogTest {
 
     @Test
     void tracksOwnersForRegisteredJobsSkillsAndModes() {
         var namespaces = new NamespaceRegistry();
-        var owner = new RegistrationOwner(ExtensionId.parse("ext-one"), CiaNamespace.parse("test"));
+        var owner = RegistrationOwnerAuthority.issue(ExtensionId.parse("ext-one"), CiaNamespace.parse("test"));
         namespaces.claim(owner);
         var catalog = new ComponentCatalog(namespaces);
         var job = new TestJob();
@@ -45,6 +46,46 @@ class ComponentCatalogTest {
         assertEquals(owner, catalog.ownerOfJob(JobId.parse("test:job")));
         assertEquals(owner, catalog.ownerOfSkill(SkillId.parse("test:job/primary")));
         assertEquals(owner, catalog.ownerOfMode(GameModeId.parse("test:mode")));
+    }
+
+    @Test
+    void validatesSkillNamespacePathAndJobOwnershipAtRuntime() {
+        var namespaces = new NamespaceRegistry();
+        var alpha = RegistrationOwnerAuthority.issue(ExtensionId.parse("alpha-extension"), CiaNamespace.parse("alpha"));
+        var beta = RegistrationOwnerAuthority.issue(ExtensionId.parse("beta-extension"), CiaNamespace.parse("beta"));
+        namespaces.claim(alpha);
+        namespaces.claim(beta);
+        var catalog = new ComponentCatalog(namespaces);
+        catalog.registerJob(alpha, manualJob("alpha:job"));
+        catalog.registerJob(beta, manualJob("beta:job"));
+
+        assertThrows(IllegalArgumentException.class, () -> catalog.registerSkill(
+                alpha,
+                new ManualSkill("alpha:job/foreign", "beta:job")
+        ));
+        assertThrows(IllegalArgumentException.class, () -> catalog.registerSkill(
+                alpha,
+                new ManualSkill("alpha:unrelated/skill", "alpha:job")
+        ));
+    }
+
+    private static IJob manualJob(String id) {
+        return new IJob() {
+            @Override
+            public JobId id() {
+                return JobId.parse(id);
+            }
+
+            @Override
+            public ItemStack display() {
+                return null;
+            }
+
+            @Override
+            public ItemStack[] armorTemplate() {
+                return new ItemStack[4];
+            }
+        };
     }
 
     @CiaJobDef(id = "test:job")
@@ -94,6 +135,33 @@ class ComponentCatalogTest {
         @Override
         public ModeLogic createLogic(GameSession session, GameRuntime runtime) {
             return new ModeLogic(null, null);
+        }
+
+    }
+
+    private record ManualSkill(
+            SkillId id,
+            JobId jobId
+    ) implements ISkillDefinition {
+
+        private ManualSkill(String id, String jobId) {
+            this(SkillId.parse(id), JobId.parse(jobId));
+        }
+
+        @Override
+        public List<ITrigger> triggers() {
+            return List.of();
+        }
+
+        @Override
+        public ISkillIcon icon() {
+            return _ -> null;
+        }
+
+        @Override
+        public ISkillExecutor executor() {
+            return (_, _) -> {
+            };
         }
 
     }

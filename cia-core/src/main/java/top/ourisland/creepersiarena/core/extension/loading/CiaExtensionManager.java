@@ -7,6 +7,7 @@ import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.extension.metadata.CiaExtensionDescriptorException;
@@ -160,7 +161,7 @@ public final class CiaExtensionManager {
                     .filter(dependencyId -> !successfullyLoaded.contains(dependencyId))
                     .findFirst();
             if (missingLoadedDependency.isPresent()) {
-                namespaces.release(candidate.descriptor().owner());
+                namespaces.release(candidate.owner());
                 var message = "Required extension " + missingLoadedDependency.get() + " did not load successfully";
                 loadFailures.add(new CiaExtensionLoadFailure(
                         candidate.descriptor().id(),
@@ -175,7 +176,7 @@ public final class CiaExtensionManager {
                 loadedExtensions.add(load(candidate));
                 successfullyLoaded.add(candidate.descriptor().id());
             } catch (RuntimeException ex) {
-                namespaces.release(candidate.descriptor().owner());
+                namespaces.release(candidate.owner());
                 loadFailures.add(new CiaExtensionLoadFailure(
                         candidate.descriptor().id(),
                         candidate.jarPath(),
@@ -189,12 +190,17 @@ public final class CiaExtensionManager {
     }
 
     LoadedCiaExtension load(Path jarPath) {
-        ExtensionCandidate candidate = new ExtensionCandidate(descriptorReader.read(jarPath), jarPath);
-        namespaces.claim(candidate.descriptor().owner());
+        var descriptor = descriptorReader.read(jarPath);
+        var candidate = new ExtensionCandidate(
+                descriptor,
+                jarPath,
+                RegistrationOwnerAuthority.issue(descriptor.id(), descriptor.namespace())
+        );
+        namespaces.claim(candidate.owner());
         try {
             return load(candidate);
         } catch (RuntimeException exception) {
-            namespaces.release(candidate.descriptor().owner());
+            namespaces.release(candidate.owner());
             throw exception;
         }
     }
@@ -219,6 +225,7 @@ public final class CiaExtensionManager {
                     rt,
                     catalog,
                     descriptor,
+                    candidate.owner(),
                     classLoader,
                     jarPath,
                     extensionDataDirectory.resolve(descriptor.id().value())
@@ -357,7 +364,7 @@ public final class CiaExtensionManager {
                 warn("[Extension] Failed to unregister {} during rollback: {}",
                         loaded.descriptor().id(), cleanupFailure.getMessage(), cleanupFailure);
             } finally {
-                namespaces.release(loaded.descriptor().owner());
+                namespaces.release(loaded.runtimeContext().owner());
                 closeQuietly(loaded.classLoader(), loaded.descriptor().id());
             }
         }
@@ -381,7 +388,7 @@ public final class CiaExtensionManager {
                     warn("[Extension] Failed to unregister {}: {}",
                             loaded.descriptor().id(), cleanupFailure.getMessage(), cleanupFailure);
                 } finally {
-                    namespaces.release(loaded.descriptor().owner());
+                    namespaces.release(loaded.runtimeContext().owner());
                     closeQuietly(loaded.classLoader(), loaded.descriptor().id());
                 }
             }
@@ -407,7 +414,12 @@ public final class CiaExtensionManager {
 
     private ExtensionCandidate readCandidate(Path jarPath) {
         try {
-            return new ExtensionCandidate(descriptorReader.read(jarPath), jarPath);
+            var descriptor = descriptorReader.read(jarPath);
+            return new ExtensionCandidate(
+                    descriptor,
+                    jarPath,
+                    RegistrationOwnerAuthority.issue(descriptor.id(), descriptor.namespace())
+            );
         } catch (CiaExtensionDescriptorException ex) {
             throw new CiaExtensionLoadException("Invalid extension descriptor in " + jarPath, ex);
         }
@@ -516,8 +528,8 @@ public final class CiaExtensionManager {
         List<RegistrationOwner> claimed = new ArrayList<>();
         try {
             for (ExtensionCandidate candidate : candidates) {
-                namespaces.claim(candidate.descriptor().owner());
-                claimed.add(candidate.descriptor().owner());
+                namespaces.claim(candidate.owner());
+                claimed.add(candidate.owner());
             }
         } catch (RuntimeException exception) {
             for (var owner : claimed) namespaces.release(owner);
@@ -542,7 +554,8 @@ public final class CiaExtensionManager {
 
     private record ExtensionCandidate(
             CiaExtensionDescriptor descriptor,
-            Path jarPath
+            Path jarPath,
+            RegistrationOwner owner
     ) {
 
     }

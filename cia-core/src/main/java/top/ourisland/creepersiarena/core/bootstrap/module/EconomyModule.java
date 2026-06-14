@@ -6,7 +6,7 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.ICurrencyRegistry;
 import top.ourisland.creepersiarena.api.economy.IWalletService;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -41,7 +41,7 @@ public final class EconomyModule implements IBootstrapModule {
             rt.putService(WalletService.class, wallet);
             rt.putService(IWalletService.class, wallet);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegistrationOwner.CORE,
+                    RegistrationOwnerAuthority.core(),
                     new SimpleAbility(CoreAbilities.CURRENCY)
             );
         }, "Loading economy runtime...", "Economy runtime loaded.");

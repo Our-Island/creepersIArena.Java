@@ -48,7 +48,11 @@ public final class SkillModule implements IBootstrapModule {
 
             var skillCodec = new SkillItemCodec(rt.plugin());
             var skillStore = new InMemorySkillStateStore();
-            var skillRegistry = new SkillRegistry(sessionStore, rt.requireService(NamespaceRegistry.class));
+            var skillRegistry = new SkillRegistry(
+                    sessionStore,
+                    rt.requireService(NamespaceRegistry.class),
+                    catalog::ownerOfJob
+            );
             skillRegistry.replaceAllRegistered(catalog.registeredSkills());
 
             var skillRuntime = new SkillRuntime(

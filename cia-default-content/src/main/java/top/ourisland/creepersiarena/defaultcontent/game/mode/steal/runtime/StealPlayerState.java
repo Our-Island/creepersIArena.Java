@@ -3,24 +3,16 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
-import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentRuntimeIdentity;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
 
 final class StealPlayerState {
 
-    private static final ExtensionSessionData SESSION_DATA = new ExtensionSessionData(DefaultContentIds.OWNER);
-    private static final SessionDataKey<Boolean> READY = SESSION_DATA.key(
-            "steal/ready",
-            Boolean.class
-    );
-    private static final SessionDataKey<Boolean> PARTICIPANT = SESSION_DATA.key(
-            "steal/participant",
-            Boolean.class
-    );
-    private static final SessionDataKey<Boolean> ALIVE = SESSION_DATA.key(
-            "steal/alive",
-            Boolean.class
-    );
+    private static final ExtensionSessionData SESSION_DATA = DefaultContentRuntimeIdentity.sessionData();
+    private static final SessionDataKey<Boolean>
+            READY = SESSION_DATA.key("steal/ready", Boolean.class),
+            PARTICIPANT = SESSION_DATA.key("steal/participant", Boolean.class),
+            ALIVE = SESSION_DATA.key("steal/alive", Boolean.class);
 
     private StealPlayerState() {
     }

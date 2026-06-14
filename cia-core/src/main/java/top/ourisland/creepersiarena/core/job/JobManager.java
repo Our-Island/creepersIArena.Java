@@ -1,5 +1,7 @@
 package top.ourisland.creepersiarena.core.job;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.job.JobId;
@@ -26,19 +28,33 @@ public final class JobManager {
         jobs.clear();
     }
 
-    public void register(IJob job) {
-        register(RegistrationOwner.CORE, job);
-    }
-
     public void register(RegistrationOwner owner, IJob job) {
         jobs.register(owner, job.id(), job);
+    }
+
+    public void validateAll(
+            RegistrationOwner owner,
+            @NonNull Collection<IJob> values
+    ) {
+        jobs.validateAll(owner, values.stream()
+                .map(job -> new OwnedRegistry.Registration<>(job.id(), job))
+                .toList());
+    }
+
+    public void registerAll(
+            RegistrationOwner owner,
+            @NonNull Collection<IJob> values
+    ) {
+        jobs.registerAll(owner, values.stream()
+                .map(job -> new OwnedRegistry.Registration<>(job.id(), job))
+                .toList());
     }
 
     public void clearOwner(RegistrationOwner owner) {
         jobs.clearOwner(owner);
     }
 
-    public IJob getJob(JobId id) {
+    public @Nullable IJob getJob(JobId id) {
         var registered = jobs.get(id);
         return registered == null ? null : registered.value();
     }
@@ -61,7 +77,7 @@ public final class JobManager {
         return jobs.values();
     }
 
-    public RegistrationOwner ownerOf(JobId id) {
+    public @Nullable RegistrationOwner ownerOf(JobId id) {
         var registered = jobs.get(id);
         return registered == null ? null : registered.owner();
     }

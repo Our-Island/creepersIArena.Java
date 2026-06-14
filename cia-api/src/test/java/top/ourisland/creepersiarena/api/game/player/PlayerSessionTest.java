@@ -1,7 +1,10 @@
 package top.ourisland.creepersiarena.api.game.player;
 
 import org.junit.jupiter.api.Test;
-import top.ourisland.creepersiarena.api.identity.*;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.api.identity.TestRegistrationOwners;
 
 import java.util.UUID;
 
@@ -11,8 +14,8 @@ import static top.ourisland.creepersiarena.api.testsupport.TestBukkit.player;
 class PlayerSessionTest {
 
     private static final RegistrationOwner
-            CIA_OWNER = new RegistrationOwner(ExtensionId.parse("cia-test"), CiaNamespace.parse("cia")),
-            OTHER_OWNER = new RegistrationOwner(ExtensionId.parse("other-test"), CiaNamespace.parse("other"));
+            CIA_OWNER = TestRegistrationOwners.issue("cia-test", "cia"),
+            OTHER_OWNER = TestRegistrationOwners.issue("other-test", "other");
     private static final ExtensionSessionData CIA_DATA = new ExtensionSessionData(CIA_OWNER);
     private static final SessionDataKey<Boolean>
             READY = CIA_DATA.key("steal/ready", Boolean.class),
@@ -63,9 +66,9 @@ class PlayerSessionTest {
 
     @Test
     @SuppressWarnings("DataFlowIssue")
-    void separatelyCreatedScopesCannotCollideEvenWithTheSameOwnerObject() {
+    void separatelyIssuedOwnersAndScopesCannotCollideEvenWithTheSameTextualIdentity() {
         var session = new PlayerSession(player(UUID.randomUUID()));
-        var forgedOwner = new RegistrationOwner(ExtensionId.parse("cia-test"), CiaNamespace.parse("cia"));
+        var forgedOwner = TestRegistrationOwners.issue("cia-test", "cia");
         var forgedReady = new ExtensionSessionData(forgedOwner).key("steal/ready", Boolean.class);
 
         session.set(READY, true);
@@ -77,8 +80,10 @@ class PlayerSessionTest {
         assertNull(session.get(READY));
         assertFalse(session.get(forgedReady));
 
-        var coreScope = new ExtensionSessionData(RegistrationOwner.CORE);
-        var forgedCoreScope = new ExtensionSessionData(RegistrationOwner.CORE);
+        var sameTextOwner = TestRegistrationOwners.issue("core", "core");
+        var forgedSameTextOwner = TestRegistrationOwners.issue("core", "core");
+        var coreScope = new ExtensionSessionData(sameTextOwner);
+        var forgedCoreScope = new ExtensionSessionData(forgedSameTextOwner);
         var coreKey = coreScope.key("same", String.class);
         var forgedCoreKey = forgedCoreScope.key("same", String.class);
         session.set(coreKey, "core");

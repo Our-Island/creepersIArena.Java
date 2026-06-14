@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.api.extension;
 import org.jspecify.annotations.NonNull;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 
 import java.util.List;
 
@@ -29,10 +28,6 @@ public record CiaExtensionDescriptor(
     public CiaExtensionDescriptor {
         authors = List.copyOf(authors);
         dependencies = List.copyOf(dependencies);
-    }
-
-    public @NonNull RegistrationOwner owner() {
-        return new RegistrationOwner(id, namespace);
     }
 
     public @NonNull List<ExtensionId> requiredDependencyIds() {

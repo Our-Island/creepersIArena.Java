@@ -5,7 +5,7 @@ import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
@@ -21,9 +21,16 @@ class SkillRegistryTest {
     @Test
     void groupsSortsAndRejectsDuplicateSkills() {
         var namespaces = new NamespaceRegistry();
-        var owner = new RegistrationOwner(ExtensionId.parse("extension-a"), CiaNamespace.parse("test"));
+        var owner = RegistrationOwnerAuthority.issue(ExtensionId.parse("extension-a"), CiaNamespace.parse("test"));
         namespaces.claim(owner);
-        var registry = new SkillRegistry(new PlayerSessionStore(), namespaces);
+        var registry = new SkillRegistry(
+                new PlayerSessionStore(),
+                namespaces,
+                jobId -> switch (jobId.asString()) {
+                    case "test:job", "test:other" -> owner;
+                    default -> null;
+                }
+        );
 
         registry.register(owner, new LateSkill());
         registry.register(owner, new EarlySkill());

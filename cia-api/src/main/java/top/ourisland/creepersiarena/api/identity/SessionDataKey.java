@@ -6,8 +6,8 @@ import lombok.Getter;
 /**
  * Typed key issued by one {@link ExtensionSessionData} scope.
  * <p>
- * Equality includes the scope's opaque token. A caller cannot forge a colliding key by reconstructing a textual
- * {@link RegistrationOwner} or by referencing {@link RegistrationOwner#CORE}.
+ * Equality includes the scope's opaque token. A caller cannot forge a colliding key by creating another scope from the
+ * same runtime-issued {@link RegistrationOwner}.
  */
 public final class SessionDataKey<T> implements CiaResourceId {
 

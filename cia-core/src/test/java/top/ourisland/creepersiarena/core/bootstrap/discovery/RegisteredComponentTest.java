@@ -5,12 +5,13 @@ import top.ourisland.creepersiarena.api.identity.CiaNamespace;
 import top.ourisland.creepersiarena.api.identity.ExtensionId;
 import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RegisteredComponentTest {
 
-    private static final RegistrationOwner OWNER = new RegistrationOwner(
+    private static final RegistrationOwner OWNER = RegistrationOwnerAuthority.issue(
             ExtensionId.parse("custom-extension"),
             CiaNamespace.parse("custom")
     );

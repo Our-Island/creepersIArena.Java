@@ -99,11 +99,11 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
 
     public void clearOwner(RegistrationOwner owner) {
         var removed = abilities.entries().stream()
-                .filter(entry -> entry.owner().equals(owner))
+                .filter(entry -> entry.owner() == owner)
                 .map(RegisteredComponent::id)
                 .toList();
         abilities.clearOwner(owner);
-        policies.removeIf(policy -> policy.owner().equals(owner));
+        policies.removeIf(policy -> policy.owner() == owner);
         removed.forEach(adminOverrides::remove);
     }
 

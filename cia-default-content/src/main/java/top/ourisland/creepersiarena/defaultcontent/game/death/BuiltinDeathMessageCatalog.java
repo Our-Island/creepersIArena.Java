@@ -11,11 +11,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class BuiltinDeathMessageCatalog {
 
     private static final String RESOURCE_PATH = "default-content/death-messages.yml";
-    private static final String GENERIC_KEY = StandardDeathCauses.GENERIC.asString();
+    private static final DeathCauseId GENERIC_KEY = StandardDeathCauses.GENERIC;
     private static final List<DeathCauseId> REQUIRED_STANDARD_CAUSES = List.of(
             StandardDeathCauses.GENERIC,
             StandardDeathCauses.CONTACT,
@@ -32,12 +33,12 @@ public final class BuiltinDeathMessageCatalog {
 
     private final Map<DeathMessageLabel, LabelEntry> labels;
     private final Map<String, LabelEntry> namedLabels;
-    private final Map<String, MessagePool> messages;
+    private final Map<DeathCauseId, MessagePool> messages;
 
     private BuiltinDeathMessageCatalog(
             Map<DeathMessageLabel, LabelEntry> labels,
             Map<String, LabelEntry> namedLabels,
-            Map<String, MessagePool> messages
+            Map<DeathCauseId, MessagePool> messages
     ) {
         this.labels = labels;
         this.namedLabels = namedLabels;
@@ -107,11 +108,11 @@ public final class BuiltinDeathMessageCatalog {
         return Map.copyOf(loaded);
     }
 
-    private static Map<String, MessagePool> loadMessages(YamlConfiguration yaml) {
+    private static Map<DeathCauseId, MessagePool> loadMessages(YamlConfiguration yaml) {
         var section = StrictConfig.section(yaml, "messages", "messages");
         if (section == null) throw new IllegalArgumentException("Missing required configuration section messages");
 
-        var loaded = new HashMap<String, MessagePool>();
+        var loaded = new HashMap<DeathCauseId, MessagePool>();
         for (var rawId : section.getKeys(false)) {
             var causeId = DeathCauseId.parse(rawId);
             var path = "messages." + rawId;
@@ -122,17 +123,18 @@ public final class BuiltinDeathMessageCatalog {
             if (killer.isEmpty() && solo.isEmpty()) {
                 throw new IllegalArgumentException("Message pool at " + path + " must contain killer or solo templates");
             }
-            var previous = loaded.put(causeId.asString(), new MessagePool(killer, solo));
+            var previous = loaded.put(causeId, new MessagePool(killer, solo));
             if (previous != null) throw new IllegalArgumentException("Duplicate death-message id " + causeId);
         }
 
         var missingStandardPools = REQUIRED_STANDARD_CAUSES.stream()
-                .map(DeathCauseId::asString)
                 .filter(id -> !loaded.containsKey(id))
                 .toList();
         if (!missingStandardPools.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Missing required standard death-message pools: " + String.join(", ", missingStandardPools)
+                    "Missing required standard death-message pools: " + missingStandardPools.stream()
+                            .map(DeathCauseId::asString)
+                            .collect(Collectors.joining(", "))
             );
         }
         return Map.copyOf(loaded);
@@ -156,7 +158,7 @@ public final class BuiltinDeathMessageCatalog {
     }
 
     public List<String> templates(DeathCauseId causeId, boolean hasKiller) {
-        var pool = messages.get(causeId.asString());
+        var pool = messages.get(causeId);
         if (pool == null) pool = messages.get(GENERIC_KEY);
         if (pool == null) return fallbackTemplates(hasKiller);
 

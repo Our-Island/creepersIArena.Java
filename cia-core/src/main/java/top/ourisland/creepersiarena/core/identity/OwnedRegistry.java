@@ -65,21 +65,7 @@ public final class OwnedRegistry<K extends CiaResourceId, V> {
         ensureNoInitializationInProgress("start another registration batch");
 
         var requested = List.copyOf(registrations);
-        LinkedHashMap<K, RegisteredComponent<K, V>> proposed = new LinkedHashMap<>();
-
-        for (var registration : requested) {
-            namespaces.requireOwnership(owner, registration.id().namespace());
-            var candidate = new RegisteredComponent<>(owner, registration.id(), registration.value());
-            var duplicate = proposed.putIfAbsent(registration.id(), candidate);
-            if (duplicate != null) {
-                throw duplicate(registration.id(), duplicate, candidate);
-            }
-
-            var existing = claimed(registration.id());
-            if (existing != null) {
-                throw duplicate(registration.id(), existing, candidate);
-            }
-        }
+        var proposed = validateRequested(owner, requested);
 
         initializing.putAll(proposed);
         try {
@@ -101,6 +87,27 @@ public final class OwnedRegistry<K extends CiaResourceId, V> {
         }
     }
 
+    private LinkedHashMap<K, RegisteredComponent<K, V>> validateRequested(
+            RegistrationOwner owner,
+            List<Registration<K, V>> requested
+    ) {
+        LinkedHashMap<K, RegisteredComponent<K, V>> proposed = new LinkedHashMap<>();
+        for (var registration : requested) {
+            namespaces.requireOwnership(owner, registration.id().namespace());
+            var candidate = new RegisteredComponent<>(owner, registration.id(), registration.value());
+            var duplicate = proposed.putIfAbsent(registration.id(), candidate);
+            if (duplicate != null) {
+                throw duplicate(registration.id(), duplicate, candidate);
+            }
+
+            var existing = claimed(registration.id());
+            if (existing != null) {
+                throw duplicate(registration.id(), existing, candidate);
+            }
+        }
+        return proposed;
+    }
+
     private DuplicateRegistrationException duplicate(
             K id,
             RegisteredComponent<K, V> existing,
@@ -120,6 +127,25 @@ public final class OwnedRegistry<K extends CiaResourceId, V> {
         return existing != null ? existing : initializing.get(id);
     }
 
+    /**
+     * Validates a registration batch without mutating the registry.
+     */
+    public synchronized void validateAll(
+            @lombok.NonNull RegistrationOwner owner,
+            @lombok.NonNull Collection<Registration<K, V>> registrations
+    ) {
+        ensureNoInitializationInProgress("validate another registration batch");
+        validateRequested(owner, List.copyOf(registrations));
+    }
+
+    public void registerAll(
+            @lombok.NonNull RegistrationOwner owner,
+            @lombok.NonNull Collection<Registration<K, V>> registrations
+    ) {
+        registerAllInitialized(owner, registrations, _ -> {
+        });
+    }
+
     public synchronized void replaceOwner(
             @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull Collection<Registration<K, V>> replacements
@@ -135,13 +161,13 @@ public final class OwnedRegistry<K extends CiaResourceId, V> {
                 throw duplicate(replacement.id(), duplicate, candidate);
             }
             var existing = entries.get(replacement.id());
-            if (existing != null && !existing.owner().equals(owner)) {
+            if (existing != null && existing.owner() != owner) {
                 throw duplicate(replacement.id(), existing, candidate);
             }
         }
 
         var next = entries.entrySet().stream()
-                .filter(entry -> !entry.getValue().owner().equals(owner))
+                .filter(entry -> entry.getValue().owner() != owner)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -192,7 +218,7 @@ public final class OwnedRegistry<K extends CiaResourceId, V> {
     public synchronized void clearOwner(RegistrationOwner owner) {
         ensureNoInitializationInProgress("clear an owner");
         entries.entrySet()
-                .removeIf(entry -> entry.getValue().owner().equals(owner));
+                .removeIf(entry -> entry.getValue().owner() == owner);
     }
 
     public record Registration<K, V>(

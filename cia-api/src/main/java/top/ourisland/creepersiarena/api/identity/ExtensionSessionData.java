@@ -8,9 +8,8 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 /**
  * Owner-bound scope for extension session data keys and cleanup.
  * <p>
- * Every scope carries an opaque identity token. Creating another scope with the same textual owner, including
- * {@link RegistrationOwner#CORE}, cannot collide with or clear keys issued by this scope. Runtime contexts cache one
- * scope for their complete lifetime.
+ * Every scope carries an opaque identity token. Creating another scope from the same owner capability cannot collide
+ * with or clear keys issued by this scope. Runtime contexts cache one scope for their complete lifetime.
  */
 public final class ExtensionSessionData {
 

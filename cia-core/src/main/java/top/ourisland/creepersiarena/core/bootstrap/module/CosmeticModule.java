@@ -8,7 +8,7 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticRegistry;
 import top.ourisland.creepersiarena.api.economy.cosmetic.ICosmeticService;
-import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -43,7 +43,7 @@ public final class CosmeticModule implements IBootstrapModule {
             rt.putService(CosmeticService.class, service);
             rt.putService(ICosmeticService.class, service);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegistrationOwner.CORE,
+                    RegistrationOwnerAuthority.core(),
                     new SimpleAbility(CoreAbilities.COSMETIC_RUNTIME)
             );
         }, "Loading cosmetic runtime...", "Cosmetic runtime loaded.");

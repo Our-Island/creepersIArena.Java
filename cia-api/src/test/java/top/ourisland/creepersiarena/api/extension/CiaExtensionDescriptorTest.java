@@ -39,7 +39,7 @@ class CiaExtensionDescriptorTest {
         assertEquals(List.of("Alice"), descriptor.authors());
         assertEquals(List.of(ExtensionId.parse("base")), descriptor.requiredDependencyIds());
         assertEquals(List.of(ExtensionId.parse("integration")), descriptor.optionalDependencyIds());
-        assertEquals(CiaNamespace.parse("sample"), descriptor.owner().namespace());
+        assertEquals(CiaNamespace.parse("sample"), descriptor.namespace());
         assertThrows(UnsupportedOperationException.class, () -> descriptor.authors().add("Bob"));
         assertThrows(UnsupportedOperationException.class, () -> descriptor.dependencies().clear());
     }

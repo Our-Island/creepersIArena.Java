@@ -1,7 +1,9 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIdentityTestSupport;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
 
 import java.util.UUID;
@@ -10,6 +12,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static top.ourisland.creepersiarena.api.testsupport.TestBukkit.player;
 
 class StealPlayerStateTest {
+
+    @BeforeAll
+    static void installRuntimeIdentity() {
+        DefaultContentIdentityTestSupport.install();
+    }
 
     @Test
     void storesStealFlagsInGenericPlayerModeData() {

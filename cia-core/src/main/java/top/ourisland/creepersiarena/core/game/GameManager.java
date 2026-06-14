@@ -65,7 +65,7 @@ public final class GameManager {
     }
 
     public void clearOwner(RegistrationOwner owner) {
-        if (active != null && owner.equals(ownerOf(active.mode()))) {
+        if (active != null && owner == ownerOf(active.mode())) {
             endActive();
         }
         modes.clearOwner(owner);
@@ -102,10 +102,6 @@ public final class GameManager {
         return type != null && modes.get(type) != null;
     }
 
-    public void registerMode(IGameMode mode) {
-        registerMode(RegistrationOwner.CORE, mode);
-    }
-
     public void registerMode(
             RegistrationOwner owner,
             IGameMode mode
@@ -113,6 +109,24 @@ public final class GameManager {
         modes.register(owner, mode.mode(), mode);
         logger.info("[Game] Mode {} registered by {}: {}",
                 mode.mode(), owner, mode.getClass().getSimpleName());
+    }
+
+    public void validateModes(RegistrationOwner owner, java.util.Collection<IGameMode> values) {
+        modes.validateAll(owner, values.stream()
+                .map(mode -> new OwnedRegistry.Registration<>(mode.mode(), mode))
+                .toList());
+    }
+
+    public void registerModes(RegistrationOwner owner, java.util.Collection<IGameMode> values) {
+        modes.registerAll(owner, values.stream()
+                .map(mode -> new OwnedRegistry.Registration<>(mode.mode(), mode))
+                .toList());
+        values.forEach(mode -> logger.info(
+                "[Game] Mode {} registered by {}: {}",
+                mode.mode(),
+                owner,
+                mode.getClass().getSimpleName()
+        ));
     }
 
     public void start(

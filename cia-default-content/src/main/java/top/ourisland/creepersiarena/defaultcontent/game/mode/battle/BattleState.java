@@ -13,7 +13,7 @@ import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
 import top.ourisland.creepersiarena.api.identity.SessionDataKey;
-import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentRuntimeIdentity;
 import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
@@ -25,7 +25,7 @@ import java.util.UUID;
 public final class BattleState {
 
     static final GameModeId TYPE = DefaultModeIds.BATTLE;
-    private static final ExtensionSessionData SESSION_DATA = new ExtensionSessionData(DefaultContentIds.OWNER);
+    private static final ExtensionSessionData SESSION_DATA = DefaultContentRuntimeIdentity.sessionData();
     static final SessionDataKey<Boolean> PARTICIPANT_KEY = SESSION_DATA.key(
             "battle/participant",
             Boolean.class

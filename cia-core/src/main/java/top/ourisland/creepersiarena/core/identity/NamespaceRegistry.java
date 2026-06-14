@@ -5,30 +5,36 @@ import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Runtime authority for exclusive extension namespace claims.
  */
 public final class NamespaceRegistry {
 
+    private final RegistrationOwner coreOwner;
     private final Map<CiaNamespace, RegistrationOwner> owners = new LinkedHashMap<>();
 
     public NamespaceRegistry() {
-        owners.put(RegistrationOwner.CORE.namespace(), RegistrationOwner.CORE);
+        this.coreOwner = RegistrationOwnerAuthority.core();
+        owners.put(coreOwner.namespace(), coreOwner);
+    }
+
+    public RegistrationOwner coreOwner() {
+        return coreOwner;
     }
 
     public synchronized void claim(@lombok.NonNull RegistrationOwner owner) {
+        RegistrationOwnerAuthority.requireRuntimeIssued(owner);
         var namespace = owner.namespace();
         if ("minecraft".equals(namespace.value())) {
             throw new IllegalArgumentException("The minecraft namespace is reserved");
         }
-        if (RegistrationOwner.CORE.namespace().equals(namespace) && !RegistrationOwner.CORE.equals(owner)) {
+        if (coreOwner.namespace().equals(namespace) && owner != coreOwner) {
             throw new IllegalArgumentException("The core namespace is reserved");
         }
 
         var existing = owners.putIfAbsent(namespace, owner);
-        if (existing != null && !existing.equals(owner)) {
+        if (existing != null && existing != owner) {
             throw new IllegalStateException(
                     "Extension \"%s\" cannot claim namespace \"%s\"; it is already owned by \"%s\".".formatted(
                             owner.extensionId().value(),
@@ -40,16 +46,21 @@ public final class NamespaceRegistry {
     }
 
     public synchronized void release(@lombok.NonNull RegistrationOwner owner) {
-        if (RegistrationOwner.CORE.equals(owner)) return;
-        owners.remove(owner.namespace(), owner);
+        RegistrationOwnerAuthority.requireRuntimeIssued(owner);
+        if (owner == coreOwner) return;
+        var registered = owners.get(owner.namespace());
+        if (registered == owner) {
+            owners.remove(owner.namespace());
+        }
     }
 
     public synchronized void requireOwnership(
             @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull CiaNamespace namespace
     ) {
+        RegistrationOwnerAuthority.requireRuntimeIssued(owner);
         var registered = owners.get(namespace);
-        if (!owner.equals(registered)) {
+        if (registered != owner) {
             throw new IllegalArgumentException(
                     "Registration owner %s does not own namespace %s".formatted(owner, namespace.value())
             );

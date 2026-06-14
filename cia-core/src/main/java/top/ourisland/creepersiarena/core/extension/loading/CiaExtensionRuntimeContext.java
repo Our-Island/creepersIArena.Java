@@ -69,6 +69,7 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
             BootstrapRuntime rt,
             @lombok.NonNull ComponentCatalog catalog,
             @lombok.NonNull CiaExtensionDescriptor descriptor,
+            @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull ClassLoader classLoader,
             @lombok.NonNull Path jarPath,
             @lombok.NonNull Path dataFolder
@@ -76,7 +77,7 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         this.rt = rt;
         this.catalog = catalog;
         this.descriptor = descriptor;
-        this.owner = descriptor.owner();
+        this.owner = owner;
         this.sessionData = new ExtensionSessionData(owner);
         this.contextAttributes = new ExtensionContextAttributes(owner);
         this.classLoader = classLoader;
@@ -231,14 +232,36 @@ public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
 
     @Override
     public void registerAnnotated(@lombok.NonNull String basePackage) {
-        var namespaces = new NamespaceRegistry();
-        namespaces.claim(owner());
-        var discovered = new ComponentCatalog(namespaces);
+        var validationNamespaces = new NamespaceRegistry();
+        validationNamespaces.claim(owner());
+        var discovered = new ComponentCatalog(validationNamespaces);
         scanner.scanInto(classLoader, jarPath, basePackage, discovered, owner());
 
-        discovered.jobs().forEach(this::registerJob);
-        discovered.skills().forEach(this::registerSkill);
-        discovered.modes().forEach(this::registerMode);
+        var jobs = discovered.jobs();
+        var skills = discovered.skills();
+        var modes = discovered.modes();
+
+        var jobManager = rt == null ? null : rt.getService(JobManager.class);
+        var skillRegistry = rt == null ? null : rt.getService(SkillRegistry.class);
+        var gameManager = rt == null ? null : rt.getService(GameManager.class);
+
+        catalog.validateComponents(owner(), jobs, skills, modes);
+        if (jobManager != null) jobManager.validateAll(owner(), jobs);
+        if (skillRegistry != null) skillRegistry.validateAll(owner(), skills);
+        if (gameManager != null) gameManager.validateModes(owner(), modes);
+
+        catalog.registerComponents(owner(), jobs, skills, modes);
+        if (jobManager != null) jobManager.registerAll(owner(), jobs);
+        if (skillRegistry != null) skillRegistry.registerAll(owner(), skills);
+        if (gameManager != null) gameManager.registerModes(owner(), modes);
+
+        jobs.forEach(job -> remember(registeredJobs, job.id().asString()));
+        skills.forEach(skill -> remember(registeredSkills, skill.id().asString()));
+        modes.forEach(mode -> remember(registeredModes, mode.mode().asString()));
+
+        jobs.forEach(job -> logInfo("[Extension] {} registered job {}", descriptor.id(), job.id()));
+        skills.forEach(skill -> logInfo("[Extension] {} registered skill {}", descriptor.id(), skill.id()));
+        modes.forEach(mode -> logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode()));
     }
 
     private Properties loadTargetProperties(Path target, String targetPath) throws Exception {

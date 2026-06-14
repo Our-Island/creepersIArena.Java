@@ -13,6 +13,7 @@ import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.identity.DuplicateRegistrationException;
 import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
+import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistrationValidator;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Map;
 public final class ComponentCatalog {
 
     private final NamespaceRegistry namespaces;
+    private final RegistrationOwner coreOwner;
     private final Map<String, RegisteredComponent<String, IBootstrapModule>> modules = new LinkedHashMap<>();
     private final OwnedRegistry<JobId, IJob> jobs;
     private final OwnedRegistry<SkillId, ISkillDefinition> skills;
@@ -34,6 +36,7 @@ public final class ComponentCatalog {
             @lombok.NonNull NamespaceRegistry namespaces
     ) {
         this.namespaces = namespaces;
+        this.coreOwner = namespaces.coreOwner();
         this.jobs = new OwnedRegistry<>(namespaces);
         this.skills = new OwnedRegistry<>(namespaces);
         this.modes = new OwnedRegistry<>(namespaces);
@@ -45,7 +48,7 @@ public final class ComponentCatalog {
 
     public synchronized void registerModule(@lombok.NonNull IBootstrapModule module) {
         var entry = new RegisteredComponent<>(
-                RegistrationOwner.CORE,
+                coreOwner,
                 module.name(),
                 module
         );
@@ -55,43 +58,109 @@ public final class ComponentCatalog {
                     module.name(),
                     existing.owner(),
                     existing.value(),
-                    RegistrationOwner.CORE,
+                    coreOwner,
                     module
             );
         }
     }
 
-    public void registerJob(IJob job) {
-        registerJob(RegistrationOwner.CORE, job);
+    void registerCoreJob(@lombok.NonNull IJob job) {
+        registerJob(coreOwner, job);
     }
 
-    public void registerJob(
-            RegistrationOwner owner,
+    public synchronized void registerJob(
+            @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull IJob job
     ) {
         jobs.register(owner, job.id(), job);
     }
 
-    public void registerSkill(ISkillDefinition skill) {
-        registerSkill(RegistrationOwner.CORE, skill);
+    void registerCoreSkill(@lombok.NonNull ISkillDefinition skill) {
+        registerSkill(coreOwner, skill);
     }
 
-    public void registerSkill(
-            RegistrationOwner owner,
+    public synchronized void registerSkill(
+            @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull ISkillDefinition skill
     ) {
+        SkillRegistrationValidator.validate(owner, skill, this::ownerOfJob);
         skills.register(owner, skill.id(), skill);
     }
 
-    public void registerMode(IGameMode mode) {
-        registerMode(RegistrationOwner.CORE, mode);
+    void registerCoreMode(@lombok.NonNull IGameMode mode) {
+        registerMode(coreOwner, mode);
     }
 
-    public void registerMode(
-            RegistrationOwner owner,
+    public synchronized void registerMode(
+            @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull IGameMode mode
     ) {
         modes.register(owner, mode.mode(), mode);
+    }
+
+    /**
+     * Validates an annotation-discovered component batch without mutating the catalog.
+     */
+    public synchronized void validateComponents(
+            @lombok.NonNull RegistrationOwner owner,
+            @lombok.NonNull List<IJob> discoveredJobs,
+            @lombok.NonNull List<ISkillDefinition> discoveredSkills,
+            @lombok.NonNull List<IGameMode> discoveredModes
+    ) {
+        var jobRegistrations = jobRegistrations(discoveredJobs);
+        var skillRegistrations = skillRegistrations(discoveredSkills);
+        var modeRegistrations = modeRegistrations(discoveredModes);
+
+        jobs.validateAll(owner, jobRegistrations);
+        modes.validateAll(owner, modeRegistrations);
+
+        Map<JobId, RegistrationOwner> proposedJobOwners = new LinkedHashMap<>();
+        discoveredJobs.forEach(job -> proposedJobOwners.put(job.id(), owner));
+        for (var skill : discoveredSkills) {
+            SkillRegistrationValidator.validate(
+                    owner,
+                    skill,
+                    jobId -> proposedJobOwners.containsKey(jobId)
+                            ? proposedJobOwners.get(jobId)
+                            : ownerOfJob(jobId)
+            );
+        }
+        skills.validateAll(owner, skillRegistrations);
+    }
+
+    /**
+     * Commits a component batch after complete validation.
+     */
+    public synchronized void registerComponents(
+            @lombok.NonNull RegistrationOwner owner,
+            @lombok.NonNull List<IJob> discoveredJobs,
+            @lombok.NonNull List<ISkillDefinition> discoveredSkills,
+            @lombok.NonNull List<IGameMode> discoveredModes
+    ) {
+        validateComponents(owner, discoveredJobs, discoveredSkills, discoveredModes);
+        jobs.registerAll(owner, jobRegistrations(discoveredJobs));
+        skills.registerAll(owner, skillRegistrations(discoveredSkills));
+        modes.registerAll(owner, modeRegistrations(discoveredModes));
+    }
+
+    private List<OwnedRegistry.Registration<JobId, IJob>> jobRegistrations(List<IJob> values) {
+        return List.copyOf(values).stream()
+                .map(job -> new OwnedRegistry.Registration<>(job.id(), job))
+                .toList();
+    }
+
+    private List<OwnedRegistry.Registration<SkillId, ISkillDefinition>> skillRegistrations(
+            List<ISkillDefinition> values
+    ) {
+        return List.copyOf(values).stream()
+                .map(skill -> new OwnedRegistry.Registration<>(skill.id(), skill))
+                .toList();
+    }
+
+    private List<OwnedRegistry.Registration<GameModeId, IGameMode>> modeRegistrations(List<IGameMode> values) {
+        return List.copyOf(values).stream()
+                .map(mode -> new OwnedRegistry.Registration<>(mode.mode(), mode))
+                .toList();
     }
 
     public synchronized @NonNull List<IBootstrapModule> modules() {

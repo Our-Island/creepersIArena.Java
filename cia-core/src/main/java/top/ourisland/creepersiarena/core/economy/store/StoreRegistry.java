@@ -70,7 +70,7 @@ public final class StoreRegistry implements IStoreRegistry {
 
     public synchronized void clearOwner(RegistrationOwner owner) {
         var removedStores = stores.entries().stream()
-                .filter(entry -> entry.owner().equals(owner))
+                .filter(entry -> entry.owner() == owner)
                 .map(RegisteredComponent::id)
                 .toList();
         stores.clearOwner(owner);
