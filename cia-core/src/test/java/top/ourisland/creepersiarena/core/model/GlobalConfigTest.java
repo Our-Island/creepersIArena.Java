@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GlobalConfigTest {
 
@@ -29,10 +28,7 @@ class GlobalConfigTest {
     void leaveDelayIsNeverNegative() {
         var yaml = new YamlConfiguration();
         yaml.set("game.leave-delay-seconds", -5);
-
-        var config = GlobalConfig.fromYaml(yaml);
-
-        assertEquals(0, config.leaveDelaySeconds());
+        assertThrows(IllegalArgumentException.class, () -> GlobalConfig.fromYaml(yaml));
     }
 
 }

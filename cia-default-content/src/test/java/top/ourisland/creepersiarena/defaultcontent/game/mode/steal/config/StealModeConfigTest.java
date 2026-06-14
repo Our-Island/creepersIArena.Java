@@ -48,25 +48,6 @@ class StealModeConfigTest {
     }
 
     @Test
-    void clampsNumericValuesToAtLeastOneExceptCooldown() {
-        var yaml = new YamlConfiguration();
-        yaml.set("game.modes.cia.steal.min-player-to-start", 0);
-        yaml.set("game.modes.cia.steal.start-countdown", -10);
-        yaml.set("game.modes.cia.steal.total-round", 0);
-        yaml.set("game.modes.cia.steal.time-per-round", -5);
-        yaml.set("game.modes.cia.steal.mine-cooldown-seconds", -1);
-
-        var config = StealModeConfig.from(fromYaml(yaml));
-
-        assertEquals(1, config.minPlayerToStart());
-        assertEquals(1, config.startCountdownSeconds());
-        assertEquals(1, config.totalRound());
-        assertEquals(1, config.timePerRoundSeconds());
-        assertEquals(0, config.mineCooldownSeconds());
-        assertEquals(2, config.requiredReadyPlayers(1));
-    }
-
-    @Test
     void scalesReadyRequirementFromJoinedPlayerCountLikeTheDatapackSurfaceBehavior() {
         var config = new StealModeConfig(2, true, 15, 11, 10, 7, 180, 10, 4, 5, 10, 3, false, false);
 

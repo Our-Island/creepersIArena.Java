@@ -26,6 +26,11 @@ public record CiaExtensionDescriptor(
     public static final String DESCRIPTOR_ENTRY = "cia-extension.yml";
     public static final int CURRENT_API_VERSION = 1;
 
+    public CiaExtensionDescriptor {
+        authors = List.copyOf(authors);
+        dependencies = List.copyOf(dependencies);
+    }
+
     public @NonNull RegistrationOwner owner() {
         return new RegistrationOwner(id, namespace);
     }

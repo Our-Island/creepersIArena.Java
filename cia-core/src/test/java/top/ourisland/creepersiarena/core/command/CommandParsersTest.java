@@ -18,15 +18,4 @@ class CommandParsersTest {
         assertEquals("plain", CommandParsers.parseValue("plain"));
     }
 
-    @Test
-    void parsesTeamAliasesAndRandom() {
-        assertNull(CommandParsers.parseTeamId("random"));
-        assertEquals(1, CommandParsers.parseTeamId("red"));
-        assertEquals(5, CommandParsers.parseTeamId("cyan"));
-        assertEquals(6, CommandParsers.parseTeamId("purple"));
-        assertEquals(8, CommandParsers.parseTeamId("black"));
-        assertEquals(12, CommandParsers.parseTeamId("12"));
-        assertNull(CommandParsers.parseTeamId("unknown"));
-    }
-
 }

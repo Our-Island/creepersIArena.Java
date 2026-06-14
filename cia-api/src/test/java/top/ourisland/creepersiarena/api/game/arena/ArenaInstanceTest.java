@@ -42,9 +42,39 @@ class ArenaInstanceTest {
         assertTrue(arena.spawnGroup("missing").isEmpty());
         assertNotSame(anchor, arena.anchor());
 
+        redSpawn.setX(99);
+        groups.put("green", List.of(new Location(null, 5, 65, 5)));
+        assertEquals(10, arena.spawnGroup("red").getFirst().getX());
+        assertTrue(arena.spawnGroup("green").isEmpty());
+
+        var returnedSpawn = arena.spawnGroup("red").getFirst();
+        returnedSpawn.setX(77);
+        assertEquals(10, arena.spawnGroup("red").getFirst().getX());
+        assertThrows(UnsupportedOperationException.class, () -> arena.spawnGroup("red").clear());
+        assertThrows(UnsupportedOperationException.class, () -> arena.spawnGroups().clear());
+
         var fallback = arena.firstSpawnOrAnchor("missing");
         assertNotSame(anchor, fallback);
         assertEquals(anchor, fallback);
+    }
+
+    @Test
+    void rejectsSpawnGroupsThatCollideAfterNormalization() {
+        var groups = new LinkedHashMap<String, List<Location>>();
+        groups.put("Red", List.of(new Location(null, 1, 65, 1)));
+        groups.put(" red ", List.of(new Location(null, 2, 65, 2)));
+
+        assertThrows(IllegalArgumentException.class, () -> new ArenaInstance(
+                ArenaId.parse("arena-one"),
+                "cia.arena.one",
+                GameModeId.parse("cia:battle"),
+                new Location(null, 0, 64, 0),
+                new Region2D(TestBukkit.world(), Bounds2D.of(0, 0, 10, 10)),
+                List.of(),
+                Map.of(),
+                groups,
+                IArenaConfigView.EMPTY
+        ));
     }
 
 }

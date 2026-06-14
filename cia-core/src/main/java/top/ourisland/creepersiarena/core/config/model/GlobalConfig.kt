@@ -521,7 +521,6 @@ data class GlobalConfig(
                 return Collections.unmodifiableMap(out)
             }
 
-
             private fun enumValue(raw: String, allowed: Set<String>, path: String): String {
                 val value = raw.trim().uppercase(Locale.ROOT)
                 if (value in allowed) return value

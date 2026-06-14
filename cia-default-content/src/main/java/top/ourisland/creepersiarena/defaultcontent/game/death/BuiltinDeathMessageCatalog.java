@@ -16,6 +16,15 @@ public final class BuiltinDeathMessageCatalog {
 
     private static final String RESOURCE_PATH = "default-content/death-messages.yml";
     private static final String GENERIC_KEY = StandardDeathCauses.GENERIC.asString();
+    private static final List<DeathCauseId> REQUIRED_STANDARD_CAUSES = List.of(
+            StandardDeathCauses.GENERIC,
+            StandardDeathCauses.CONTACT,
+            StandardDeathCauses.DIRECT_HIT,
+            StandardDeathCauses.VOID,
+            StandardDeathCauses.FIRE,
+            StandardDeathCauses.FALL,
+            StandardDeathCauses.DROWNING
+    );
     private static final Set<String> COLORS = Set.of(
             "black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold", "gray",
             "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"
@@ -75,11 +84,11 @@ public final class BuiltinDeathMessageCatalog {
             if (!key.equals(key.toLowerCase(Locale.ROOT))) {
                 throw new IllegalArgumentException("Invalid label id at labels." + key + ": expected lowercase id");
             }
-            String path = "labels." + key;
+            var path = "labels." + key;
             var label = StrictConfig.section(section, key, path);
             if (label == null) throw new IllegalArgumentException("Missing label section at " + path);
-            String text = StrictConfig.string(label, "text", key, path + ".text");
-            String color = StrictConfig.string(label, "color", "gray", path + ".color");
+            var text = StrictConfig.string(label, "text", key, path + ".text");
+            var color = StrictConfig.string(label, "color", "gray", path + ".color");
             if (!COLORS.contains(color)) {
                 throw new IllegalArgumentException("Invalid value at " + path + ".color: unknown named color " + color);
             }
@@ -91,8 +100,8 @@ public final class BuiltinDeathMessageCatalog {
     private static Map<DeathMessageLabel, LabelEntry> loadLabels(Map<String, LabelEntry> named) {
         var loaded = new EnumMap<DeathMessageLabel, LabelEntry>(DeathMessageLabel.class);
         for (var label : DeathMessageLabel.values()) {
-            String key = label.name().toLowerCase(Locale.ROOT);
-            LabelEntry entry = named.get(key);
+            var key = label.name().toLowerCase(Locale.ROOT);
+            var entry = named.get(key);
             if (entry != null) loaded.put(label, entry);
         }
         return Map.copyOf(loaded);
@@ -105,43 +114,53 @@ public final class BuiltinDeathMessageCatalog {
         var loaded = new HashMap<String, MessagePool>();
         for (var rawId : section.getKeys(false)) {
             var causeId = DeathCauseId.parse(rawId);
-            String path = "messages." + rawId;
+            var path = "messages." + rawId;
             var messageSection = StrictConfig.section(section, rawId, path);
             if (messageSection == null) throw new IllegalArgumentException("Missing message section at " + path);
-            List<String> killer = StrictConfig.stringList(messageSection, "killer", List.of(), path + ".killer");
-            List<String> solo = StrictConfig.stringList(messageSection, "solo", List.of(), path + ".solo");
+            var killer = StrictConfig.stringList(messageSection, "killer", List.of(), path + ".killer");
+            var solo = StrictConfig.stringList(messageSection, "solo", List.of(), path + ".solo");
             if (killer.isEmpty() && solo.isEmpty()) {
                 throw new IllegalArgumentException("Message pool at " + path + " must contain killer or solo templates");
             }
-            MessagePool previous = loaded.put(causeId.asString(), new MessagePool(killer, solo));
+            var previous = loaded.put(causeId.asString(), new MessagePool(killer, solo));
             if (previous != null) throw new IllegalArgumentException("Duplicate death-message id " + causeId);
+        }
+
+        var missingStandardPools = REQUIRED_STANDARD_CAUSES.stream()
+                .map(DeathCauseId::asString)
+                .filter(id -> !loaded.containsKey(id))
+                .toList();
+        if (!missingStandardPools.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Missing required standard death-message pools: " + String.join(", ", missingStandardPools)
+            );
         }
         return Map.copyOf(loaded);
     }
 
     public LabelEntry label(DeathMessageLabel label) {
-        LabelEntry entry = labels.get(label);
+        var entry = labels.get(label);
         if (entry != null) return entry;
 
-        String key = label.name().toLowerCase(Locale.ROOT);
+        var key = label.name().toLowerCase(Locale.ROOT);
         entry = namedLabels.get(key);
         if (entry != null) return entry;
         return new LabelEntry(key, "gray");
     }
 
     public LabelEntry namedLabel(String key, String fallbackText) {
-        String normalized = key == null ? "" : key.toLowerCase(Locale.ROOT);
-        LabelEntry entry = namedLabels.get(normalized);
+        var normalized = key == null ? "" : key.toLowerCase(Locale.ROOT);
+        var entry = namedLabels.get(normalized);
         if (entry != null) return entry;
         return new LabelEntry(fallbackText == null ? normalized : fallbackText, "gray");
     }
 
     public List<String> templates(DeathCauseId causeId, boolean hasKiller) {
-        MessagePool pool = messages.get(causeId.asString());
+        var pool = messages.get(causeId.asString());
         if (pool == null) pool = messages.get(GENERIC_KEY);
         if (pool == null) return fallbackTemplates(hasKiller);
 
-        List<String> templates = hasKiller ? pool.killer() : pool.solo();
+        var templates = hasKiller ? pool.killer() : pool.solo();
         if (!templates.isEmpty()) return templates;
         templates = hasKiller ? pool.solo() : pool.killer();
         return templates.isEmpty() ? fallbackTemplates(hasKiller) : templates;

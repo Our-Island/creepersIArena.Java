@@ -17,6 +17,7 @@ class SkillConfig private constructor(
 
         @JvmStatic
         fun fromYaml(yml: YamlConfiguration?): SkillConfig = SkillConfig(yml)
+
     }
 
     private fun sectionOf(skillId: SkillId?): ConfigurationSection? =

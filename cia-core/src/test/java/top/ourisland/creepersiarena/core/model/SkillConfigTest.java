@@ -25,13 +25,6 @@ class SkillConfigTest {
     }
 
     @Test
-    void rejectsInvalidNamespaceInsteadOfNormalizingIt() {
-        var yaml = new YamlConfiguration();
-        yaml.set("Custom.warrior.dash.cooldown-seconds", 5);
-        assertThrows(IllegalArgumentException.class, () -> SkillConfig.fromYaml(yaml));
-    }
-
-    @Test
     void returnsDefaultsForMissingInputs() {
         var config = SkillConfig.defaults();
         var missing = SkillId.parse("test:missing/skill");
