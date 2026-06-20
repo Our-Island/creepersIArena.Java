@@ -1,74 +1,85 @@
 package top.ourisland.creepersiarena.core.job;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class JobManager {
 
-    private final Map<JobId, RegisteredComponent<IJob>> jobs = new LinkedHashMap<>();
+    private final OwnedRegistry<JobId, IJob> jobs;
+
+    public JobManager() {
+        this(new NamespaceRegistry());
+    }
+
+    public JobManager(NamespaceRegistry namespaces) {
+        this.jobs = new OwnedRegistry<>(namespaces);
+    }
 
     public void clear() {
         jobs.clear();
     }
 
-    public void register(@lombok.NonNull IJob job) {
-        register(RegisteredComponent.CORE_OWNER, job);
+    public void register(RegistrationOwner owner, IJob job) {
+        jobs.register(owner, job.id(), job);
     }
 
-    public void register(String ownerId, @lombok.NonNull IJob job) {
-        jobs.put(job.id(), new RegisteredComponent<>(ownerId, job.id().id(), job));
+    public void validateAll(
+            RegistrationOwner owner,
+            @NonNull Collection<IJob> values
+    ) {
+        jobs.validateAll(owner, values.stream()
+                .map(job -> new OwnedRegistry.Registration<>(job.id(), job))
+                .toList());
     }
 
-    public IJob getJob(String id) {
-        if (id == null || id.isBlank()) return null;
-        IJob job = getJob(JobId.fromId(id));
-        if (job != null) return job;
-        if (id.indexOf(':') < 0) {
-            return getJob(JobId.fromId("cia:" + id));
-        }
-        return null;
+    public void registerAll(
+            RegistrationOwner owner,
+            @NonNull Collection<IJob> values
+    ) {
+        jobs.registerAll(owner, values.stream()
+                .map(job -> new OwnedRegistry.Registration<>(job.id(), job))
+                .toList());
     }
 
-    public IJob getJob(JobId id) {
-        var registered = getRegisteredJob(id);
+    public void clearOwner(RegistrationOwner owner) {
+        jobs.clearOwner(owner);
+    }
+
+    public @Nullable IJob getJob(JobId id) {
+        var registered = jobs.get(id);
         return registered == null ? null : registered.value();
     }
 
-    public RegisteredComponent<IJob> getRegisteredJob(JobId id) {
-        if (id == null) return null;
-        var registered = jobs.get(id);
-        if (registered != null) return registered;
-        if (id.id().indexOf(':') < 0) {
-            return jobs.get(JobId.fromId("cia:" + id.id()));
-        }
-        return null;
+    public RegisteredComponent<JobId, IJob> getRegisteredJob(JobId id) {
+        return id == null ? null : jobs.get(id);
     }
 
-    public List<String> getAllJobIds() {
-        return getAllJobs().stream()
-                .map(job -> job.id().toString())
+    public List<JobId> getAllJobIds() {
+        return registeredJobs().stream()
+                .map(RegisteredComponent::id)
                 .toList();
+    }
+
+    public List<RegisteredComponent<JobId, IJob>> registeredJobs() {
+        return jobs.entries();
     }
 
     public Collection<IJob> getAllJobs() {
-        return jobs.values().stream()
-                .map(RegisteredComponent::value)
-                .toList();
+        return jobs.values();
     }
 
-    public List<RegisteredComponent<IJob>> registeredJobs() {
-        return List.copyOf(jobs.values());
-    }
-
-    public String ownerOf(JobId id) {
-        var registered = getRegisteredJob(id);
-        return registered == null ? null : registered.ownerId();
+    public @Nullable RegistrationOwner ownerOf(JobId id) {
+        var registered = jobs.get(id);
+        return registered == null ? null : registered.owner();
     }
 
 }

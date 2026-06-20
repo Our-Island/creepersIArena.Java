@@ -4,6 +4,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.IAbilityConfigView;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 
 public record BukkitAbilityConfigView(
         AbilityId id,
@@ -17,7 +18,11 @@ public record BukkitAbilityConfigView(
 
     @Override
     public @Nullable ConfigurationSection settingsSection() {
-        return section == null ? null : section.getConfigurationSection("settings");
+        return StrictConfig.section(
+                section,
+                "settings",
+                section == null ? "ability." + id.asString() + ".settings" : section.getCurrentPath() + ".settings"
+        );
     }
 
 }

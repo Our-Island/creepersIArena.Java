@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.battle;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.SoundCategory;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,7 +13,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.death.ArenaPlayerDeathResolvedEvent;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
@@ -28,11 +31,13 @@ import java.util.UUID;
 /**
  * Battle-owned respawn effects during the generic RESPAWN stage.
  * <p>
- * The old combined "presentation" is deliberately split at the ability level: recovery changes gameplay state
- * (temporary max health, resistance and healing), while visuals only play sounds. Either side can be disabled or tuned
- * independently.
+ * Respawn presentation is split at the ability level: recovery changes gameplay state (temporary max health, resistance
+ * and healing), while visuals only play sounds. Either side can be disabled or tuned independently.
  */
 public final class BattleRespawnEffectsListener implements Listener {
+
+    private static final String RECOVERY_PATH = "game.abilities.cia.battle_respawn_recovery.settings";
+    private static final String VISUALS_PATH = "game.abilities.cia.battle_respawn_visuals.settings";
 
     private final Plugin plugin;
     private final GameManager gameManager;
@@ -54,24 +59,34 @@ public final class BattleRespawnEffectsListener implements Listener {
         this.abilities = abilities;
     }
 
-    private static ConfigurationSection sub(ConfigurationSection section, String path) {
-        return section == null ? null : section.getConfigurationSection(path);
+    private static ConfigurationSection sub(
+            ConfigurationSection section,
+            String key,
+            String path
+    ) {
+        return StrictConfig.section(section, key, path);
     }
 
     private static double positive(
             ConfigurationSection section,
-            String path,
-            double fallback
+            String key,
+            double fallback,
+            String path
     ) {
-        return Math.max(0.1D, section == null ? fallback : section.getDouble(path, fallback));
+        double value = StrictConfig.decimal(section, key, fallback, path);
+        if (!(value > 0.0D)) throw new IllegalArgumentException("Invalid value at " + path + ": expected > 0");
+        return value;
     }
 
-    private static int integer(
+    private static int nonNegative(
             ConfigurationSection section,
-            String path,
-            int fallback
+            String key,
+            int fallback,
+            String path
     ) {
-        return section == null ? fallback : section.getInt(path, fallback);
+        int value = StrictConfig.integer(section, key, fallback, path);
+        if (value < 0) throw new IllegalArgumentException("Invalid value at " + path + ": expected >= 0");
+        return value;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -90,7 +105,7 @@ public final class BattleRespawnEffectsListener implements Listener {
         cancelTask(victim.getUniqueId(), false);
     }
 
-    private @NonNull BattleState activeBattle() {
+    private @Nullable BattleState activeBattle() {
         var session = gameManager.active();
         if (session == null || !session.mode().equals(BattleState.TYPE)) return null;
         if (!(gameManager.timeline() instanceof BattleTimeline timeline)) return null;
@@ -144,28 +159,28 @@ public final class BattleRespawnEffectsListener implements Listener {
             RecoveryConfig config
     ) {
         if (player == null || !player.isOnline()) return;
-        AttributeUtils.setBaseValue(player, config.fullHealth(), "max_health", "generic_max_health");
+        AttributeUtils.setBaseValue(player, config.fullHealth(), Attribute.MAX_HEALTH);
         double currentMax = currentMaxHealth(player, config.fullHealth());
         if (player.getHealth() < currentMax) player.setHealth(currentMax);
         if (removeResistance) player.removePotionEffect(PotionEffectType.RESISTANCE);
     }
 
     private @NonNull RecoveryConfig recoveryConfig() {
-        ConfigurationSection section = abilities == null
+        var section = abilities == null
                 ? null
                 : abilities.config(DefaultContentAbilities.BATTLE_RESPAWN_RECOVERY).settingsSection();
         return RecoveryConfig.fromSection(section);
     }
 
     private double currentMaxHealth(Player player, double fallback) {
-        Double value = AttributeUtils.baseValue(player, "max_health", "generic_max_health");
+        var value = AttributeUtils.baseValue(player, Attribute.MAX_HEALTH);
         return value == null ? fallback : Math.max(1.0D, value);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onRespawn(PlayerRespawnEvent event) {
         var player = event.getPlayer();
-        Integer configuredSeconds = pendingRespawns.remove(player.getUniqueId());
+        var configuredSeconds = pendingRespawns.remove(player.getUniqueId());
         if (configuredSeconds == null) return;
 
         player.getScheduler().runDelayed(
@@ -180,8 +195,8 @@ public final class BattleRespawnEffectsListener implements Listener {
         if (!isBattleRespawn(player)) return;
 
         var state = activeBattle();
-        boolean recovery = recoveryEnabled(state, player, "battle_respawn_recovery");
-        boolean visuals = visualsEnabled(state, player, "battle_respawn_visuals");
+        var recovery = recoveryEnabled(state, player, "battle_respawn_recovery");
+        var visuals = visualsEnabled(state, player, "battle_respawn_visuals");
         if (!recovery && !visuals) return;
 
         var recoveryConfig = recoveryConfig();
@@ -197,9 +212,9 @@ public final class BattleRespawnEffectsListener implements Listener {
         var task = player.getScheduler().runAtFixedRate(
                 plugin,
                 scheduled -> {
-                    BattleState currentState = activeBattle();
-                    boolean stillRecovery = recoveryEnabled(currentState, player, "battle_respawn_recovery");
-                    boolean stillVisuals = visualsEnabled(currentState, player, "battle_respawn_visuals");
+                    var currentState = activeBattle();
+                    var stillRecovery = recoveryEnabled(currentState, player, "battle_respawn_recovery");
+                    var stillVisuals = visualsEnabled(currentState, player, "battle_respawn_visuals");
                     if (!player.isOnline() || !isBattleRespawn(player) || (!stillRecovery && !stillVisuals)) {
                         scheduled.cancel();
                         tasks.remove(playerId);
@@ -237,7 +252,8 @@ public final class BattleRespawnEffectsListener implements Listener {
         var state = activeBattle();
 
         var session = sessions.get(player);
-        return session != null
+        return state != null
+                && session != null
                 && session.state() == PlayerState.RESPAWN
                 && state.session().players().contains(player.getUniqueId());
     }
@@ -279,7 +295,7 @@ public final class BattleRespawnEffectsListener implements Listener {
     }
 
     private void applyMaxHealth(Player player, double maxHealth) {
-        AttributeUtils.setBaseValue(player, maxHealth, "max_health", "generic_max_health");
+        AttributeUtils.setBaseValue(player, maxHealth, Attribute.MAX_HEALTH);
         double currentMax = currentMaxHealth(player, maxHealth);
         player.setHealth(Math.min(currentMax, Math.clamp(player.getHealth(), 1.0D, maxHealth)));
     }
@@ -303,7 +319,7 @@ public final class BattleRespawnEffectsListener implements Listener {
     }
 
     private VisualConfig visualConfig() {
-        ConfigurationSection section = abilities == null
+        var section = abilities == null
                 ? null
                 : abilities.config(DefaultContentAbilities.BATTLE_RESPAWN_VISUALS).settingsSection();
         return VisualConfig.fromSection(section);
@@ -319,13 +335,31 @@ public final class BattleRespawnEffectsListener implements Listener {
     ) {
 
         static RecoveryConfig fromSection(ConfigurationSection section) {
+            double startHealth = positive(section, "start-health", 4.0D, RECOVERY_PATH + ".start-health");
+            double fullHealth = positive(section, "full-health", 20.0D, RECOVERY_PATH + ".full-health");
+            if (fullHealth < startHealth) {
+                throw new IllegalArgumentException("Invalid value at " + RECOVERY_PATH
+                        + ".full-health: expected >= start-health");
+            }
+            var resistance = sub(section, "resistance", RECOVERY_PATH + ".resistance");
+            var instantHealth = sub(section, "instant-health", RECOVERY_PATH + ".instant-health");
+            int healAmplifier = StrictConfig.integer(
+                    instantHealth,
+                    "amplifier",
+                    0,
+                    RECOVERY_PATH + ".instant-health.amplifier"
+            );
+            if (healAmplifier < -1) {
+                throw new IllegalArgumentException("Invalid value at " + RECOVERY_PATH
+                        + ".instant-health.amplifier: expected >= -1");
+            }
             return new RecoveryConfig(
-                    positive(section, "start-health", 4.0D),
-                    positive(section, "full-health", 20.0D),
-                    positive(section, "health-step-per-second", 2.0D),
-                    Math.max(0, integer(section, "resistance.duration-ticks", 40)),
-                    Math.max(0, integer(section, "resistance.amplifier", 5)),
-                    integer(section, "instant-health.amplifier", 0)
+                    startHealth,
+                    fullHealth,
+                    positive(section, "health-step-per-second", 2.0D, RECOVERY_PATH + ".health-step-per-second"),
+                    nonNegative(resistance, "duration-ticks", 40, RECOVERY_PATH + ".resistance.duration-ticks"),
+                    nonNegative(resistance, "amplifier", 5, RECOVERY_PATH + ".resistance.amplifier"),
+                    healAmplifier
             );
         }
 
@@ -339,9 +373,27 @@ public final class BattleRespawnEffectsListener implements Listener {
 
         static VisualConfig fromSection(ConfigurationSection section) {
             return new VisualConfig(
-                    SoundConfig.fromSection(sub(section, "start-sound"), "minecraft:entity.wither.spawn", 1.0F, 1.5F),
-                    SoundConfig.fromSection(sub(section, "ambient-sound"), "minecraft:block.beacon.ambient", 10.0F, 0.1F),
-                    SoundConfig.fromSection(sub(section, "step-sound"), "minecraft:item.lead.tied", 1.0F, 0.0F)
+                    SoundConfig.fromSection(
+                            sub(section, "start-sound", VISUALS_PATH + ".start-sound"),
+                            VISUALS_PATH + ".start-sound",
+                            "minecraft:entity.wither.spawn",
+                            1.0F,
+                            1.5F
+                    ),
+                    SoundConfig.fromSection(
+                            sub(section, "ambient-sound", VISUALS_PATH + ".ambient-sound"),
+                            VISUALS_PATH + ".ambient-sound",
+                            "minecraft:block.beacon.ambient",
+                            10.0F,
+                            0.1F
+                    ),
+                    SoundConfig.fromSection(
+                            sub(section, "step-sound", VISUALS_PATH + ".step-sound"),
+                            VISUALS_PATH + ".step-sound",
+                            "minecraft:item.lead.tied",
+                            1.0F,
+                            0.0F
+                    )
             );
         }
 
@@ -355,16 +407,23 @@ public final class BattleRespawnEffectsListener implements Listener {
 
         static SoundConfig fromSection(
                 ConfigurationSection section,
+                String path,
                 String fallbackSound,
                 float fallbackVolume,
                 float fallbackPitch
         ) {
-            if (section == null) return new SoundConfig(fallbackSound, fallbackVolume, fallbackPitch);
-            return new SoundConfig(
-                    section.getString("sound", fallbackSound),
-                    (float) Math.max(0.0D, section.getDouble("volume", fallbackVolume)),
-                    (float) section.getDouble("pitch", fallbackPitch)
-            );
+            String sound = StrictConfig.string(section, "sound", fallbackSound, path + ".sound");
+            if (sound.isBlank() || !sound.matches("[a-z0-9._-]+:[a-z0-9_./-]+")) {
+                throw new IllegalArgumentException("Invalid value at " + path + ".sound: expected namespaced sound id");
+            }
+            double volume = StrictConfig.decimal(section, "volume", fallbackVolume, path + ".volume");
+            if (volume < 0.0D)
+                throw new IllegalArgumentException("Invalid value at " + path + ".volume: expected >= 0");
+            double pitch = StrictConfig.decimal(section, "pitch", fallbackPitch, path + ".pitch");
+            if (pitch < 0.0D || pitch > 2.0D) {
+                throw new IllegalArgumentException("Invalid value at " + path + ".pitch: expected 0..2");
+            }
+            return new SoundConfig(sound, (float) volume, (float) pitch);
         }
 
     }

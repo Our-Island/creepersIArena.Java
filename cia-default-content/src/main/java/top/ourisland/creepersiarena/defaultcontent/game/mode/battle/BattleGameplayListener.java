@@ -25,7 +25,10 @@ public final class BattleGameplayListener implements Listener {
     private final GameManager gameManager;
     private final PlayerSessionStore sessions;
 
-    public BattleGameplayListener(GameManager gameManager, PlayerSessionStore sessions) {
+    public BattleGameplayListener(
+            GameManager gameManager,
+            PlayerSessionStore sessions
+    ) {
         this.gameManager = gameManager;
         this.sessions = sessions;
     }
@@ -72,8 +75,8 @@ public final class BattleGameplayListener implements Listener {
 
     private boolean sameTeam(PlayerSession left, PlayerSession right) {
         if (left == null || right == null) return false;
-        Integer leftTeam = left.selectedTeam();
-        Integer rightTeam = right.selectedTeam();
+        var leftTeam = left.selectedTeam();
+        var rightTeam = right.selectedTeam();
         return leftTeam != null && leftTeam.equals(rightTeam);
     }
 

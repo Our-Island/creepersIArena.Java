@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
 import top.ourisland.creepersiarena.api.economy.store.StoreItemId;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class DefaultParticleStoreAccessListener implements Listener {
+
+    private static final String SOURCES_PATH = "game.abilities.cia.particle_store.settings.sources";
 
     private final IStoreService stores;
     private final IAbilityGate abilities;
@@ -38,67 +41,53 @@ public final class DefaultParticleStoreAccessListener implements Listener {
     private List<BlockSource> loadSources(Path configPath) {
         var out = new ArrayList<BlockSource>();
         var yml = YamlConfiguration.loadConfiguration(configPath.toFile());
-        var root = yml.getConfigurationSection("game.abilities.cia-default-content.particle-store.settings.sources");
+        var root = StrictConfig.section(yml, SOURCES_PATH, SOURCES_PATH);
         if (root == null) return List.of();
 
-        root.getKeys(false)
-                .stream()
-                .map(root::getConfigurationSection)
-                .filter(sec -> sec != null && "block".equalsIgnoreCase(sec.getString("type", "")))
-                .forEach(sec -> {
-                    var world = sec.getString("world", "world");
-                    var loc = sec.getList("location", List.of(0, 0, 0));
-                    double radius = Math.max(0.0D, sec.getDouble("radius", 1.5D));
-                    var storeId = id(sec.getString("store"), DefaultParticleStore.STORE_ID);
-                    var itemId = itemId(sec.getString("item"));
+        for (var key : root.getKeys(false)) {
+            String path = SOURCES_PATH + "." + key;
+            var section = StrictConfig.section(root, key, path);
+            if (section == null) throw new IllegalArgumentException("Missing store source section at " + path);
 
-                    out.add(new BlockSource(
-                            world,
-                            number(loc, 0),
-                            number(loc, 1),
-                            number(loc, 2),
-                            radius,
-                            storeId,
-                            itemId
-                    ));
-                });
+            String type = StrictConfig.string(section, "type", null, path + ".type");
+            if (!"block".equals(type)) {
+                throw new IllegalArgumentException("Invalid value at " + path + ".type: expected block");
+            }
+            String world = StrictConfig.string(section, "world", "world", path + ".world");
+            if (world.isBlank())
+                throw new IllegalArgumentException("Invalid value at " + path + ".world: expected non-blank string");
+            double[] location = coordinates(
+                    StrictConfig.list(section, "location", List.of(0, 0, 0), path + ".location"),
+                    path + ".location"
+            );
+            double radius = StrictConfig.decimal(section, "radius", 1.5D, path + ".radius");
+            if (!(radius > 0.0D))
+                throw new IllegalArgumentException("Invalid value at " + path + ".radius: expected > 0");
+
+            String store = StrictConfig.string(section, "store", null, path + ".store");
+            String item = StrictConfig.string(section, "item", null, path + ".item");
+            out.add(new BlockSource(
+                    world,
+                    location[0], location[1], location[2],
+                    radius,
+                    store == null ? DefaultParticleStore.STORE_ID : StoreId.parse(store),
+                    item == null ? null : StoreItemId.parse(item)
+            ));
+        }
 
         return List.copyOf(out);
     }
 
-    private static StoreId id(
-            String raw,
-            StoreId fallback
-    ) {
-        if (raw == null || raw.isBlank()) return fallback;
-        String text = raw.trim();
-        return text.indexOf(':') >= 0
-                ? StoreId.of(text)
-                : StoreId.of("cia-default-content", text);
-    }
-
-    private static StoreItemId itemId(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        String text = raw.trim();
-        return text.indexOf(':') >= 0
-                ? StoreItemId.of(text)
-                : StoreItemId.of("cia-default-content", text);
-    }
-
-    private static double number(
-            List<?> values,
-            int index
-    ) {
-        if (values == null || values.size() <= index) return 0.0D;
-
-        Object value = values.get(index);
-        if (value instanceof Number number) return number.doubleValue();
-
-        try {
-            return Double.parseDouble(String.valueOf(value));
-        } catch (NumberFormatException _) {
-            return 0.0D;
+    private static double[] coordinates(List<?> values, String path) {
+        if (values.size() != 3) {
+            throw new IllegalArgumentException("Invalid value at " + path + ": expected exactly 3 numbers");
         }
+        return new double[]{number(values.get(0), path + "[0]"), number(values.get(1), path + "[1]"), number(values.get(2), path + "[2]")};
+    }
+
+    private static double number(Object value, String path) {
+        if (value instanceof Number number && Double.isFinite(number.doubleValue())) return number.doubleValue();
+        throw new IllegalArgumentException("Invalid value at " + path + ": expected finite number, got " + value);
     }
 
     public void reload() {
@@ -117,11 +106,8 @@ public final class DefaultParticleStoreAccessListener implements Listener {
         for (BlockSource source : blockSources) {
             if (!source.matches(clicked)) continue;
             event.setCancelled(true);
-            if (source.itemId() == null) {
-                stores.openStore(player, source.storeId());
-            } else {
-                stores.openItem(player, source.storeId(), source.itemId());
-            }
+            if (source.itemId() == null) stores.openStore(player, source.storeId());
+            else stores.openItem(player, source.storeId(), source.itemId());
             return;
         }
     }
@@ -138,10 +124,8 @@ public final class DefaultParticleStoreAccessListener implements Listener {
 
         boolean matches(Location location) {
             if (location == null || location.getWorld() == null) return false;
-
-            var world = Bukkit.getWorld(worldName == null ? "" : worldName);
+            var world = Bukkit.getWorld(worldName);
             if (world == null || !world.equals(location.getWorld())) return false;
-
             var center = new Location(world, x, y, z);
             return center.distanceSquared(location) <= radius * radius;
         }

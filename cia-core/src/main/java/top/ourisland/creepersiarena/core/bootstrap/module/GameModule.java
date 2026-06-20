@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -17,6 +18,7 @@ import top.ourisland.creepersiarena.core.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -47,7 +49,7 @@ public final class GameModule implements IBootstrapModule {
             var lobbyItems = rt.requireService(LobbyItemService.class);
             var lobbyService = rt.requireService(LobbyService.class);
 
-            var gameManager = new GameManager(arenaManager, rt.log());
+            var gameManager = new GameManager(arenaManager, rt.log(), rt.requireService(NamespaceRegistry.class));
             registerModes(gameManager, catalog, gcfg.game().disabledModes(), rt.log());
 
             var runtime = new GameRuntime(cfg::globalConfig, store, rt::getService);
@@ -75,19 +77,15 @@ public final class GameModule implements IBootstrapModule {
     private void registerModes(
             GameManager gameManager,
             ComponentCatalog catalog,
-            Iterable<String> disabledModes,
+            Iterable<GameModeId> disabledModes,
             Logger log
     ) {
-        Set<String> disabled = new HashSet<>();
-        if (disabledModes != null) {
-            for (String s : disabledModes) {
-                if (s != null) disabled.add(s.trim().toLowerCase());
-            }
-        }
+        Set<GameModeId> disabled = new HashSet<>();
+        if (disabledModes != null) disabledModes.forEach(disabled::add);
 
-        for (RegisteredComponent<IGameMode> registered : catalog.registeredModes()) {
-            IGameMode mode = registered.value();
-            String id = mode.mode().id();
+        for (RegisteredComponent<GameModeId, IGameMode> registered : catalog.registeredModes()) {
+            var mode = registered.value();
+            var id = mode.mode();
             if (!mode.enabled()) {
                 log.info("[Game] Mode disabled by annotation: {}", id);
                 continue;
@@ -96,7 +94,7 @@ public final class GameModule implements IBootstrapModule {
                 log.info("[Game] Mode disabled by config: {}", id);
                 continue;
             }
-            gameManager.registerMode(registered.ownerId(), mode);
+            gameManager.registerMode(registered.owner(), mode);
         }
     }
 

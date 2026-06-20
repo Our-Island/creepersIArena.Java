@@ -9,11 +9,14 @@ public enum MutationClockMode {
     LOGICAL;
 
     public static MutationClockMode fromConfig(String raw) {
-        if (raw == null || raw.isBlank()) return AUTO;
+        if (raw == null) return AUTO;
+        if (raw.isBlank()) {
+            throw new IllegalArgumentException("MutationClockMode must not be blank");
+        }
         try {
-            return MutationClockMode.valueOf(raw.trim().toUpperCase(Locale.ROOT).replace('-', '_'));
-        } catch (IllegalArgumentException _) {
-            return AUTO;
+            return MutationClockMode.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid MutationClockMode value: " + raw, exception);
         }
     }
 

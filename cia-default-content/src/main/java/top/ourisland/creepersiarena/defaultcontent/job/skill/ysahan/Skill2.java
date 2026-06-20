@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.ysahan;
 
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @CiaSkillDef(
-        id = "cia:ysahan.whale",
+        id = "cia:ysahan/whale",
         job = "cia:ysahan",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -63,10 +64,10 @@ public class Skill2 implements ISkillDefinition {
             startLoop(p, ctx.plugin());
 
             for (int i = 0; i < 10; i++) {
-                double angle = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
-                double dist = ThreadLocalRandom.current().nextDouble(1.5, 5.0);
-                long delay = ThreadLocalRandom.current().nextLong(20L, 50L);
-                Vector offset = new Vector(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+                var angle = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
+                var dist = ThreadLocalRandom.current().nextDouble(1.5, 5.0);
+                var delay = ThreadLocalRandom.current().nextLong(20L, 50L);
+                var offset = new Vector(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
 
                 p.getScheduler().runDelayed(
                         ctx.plugin(),
@@ -115,7 +116,7 @@ public class Skill2 implements ISkillDefinition {
         p.getScheduler().runAtFixedRate(
                 plugin,
                 task -> {
-                    Long until = EntityStateUtils.timedUntil(
+                    var until = EntityStateUtils.timedUntil(
                             p.getPersistentDataContainer(),
                             BuiltinKeys.key("ysahan_whale_until")
                     );
@@ -128,7 +129,7 @@ public class Skill2 implements ISkillDefinition {
                         p.getPersistentDataContainer().remove(BuiltinKeys.key("ysahan_whale_task"));
                         p.setExp(0f);
                         p.setLevel(0);
-                        AttributeUtils.setBaseValue(p, 1.0, "generic.scale");
+                        AttributeUtils.setBaseValue(p, 1.0, Attribute.SCALE);
                         task.cancel();
                         return;
                     }
@@ -138,11 +139,12 @@ public class Skill2 implements ISkillDefinition {
                     EntityStateUtils.applyHiddenEffect(p, org.bukkit.potion.PotionEffectType.RESISTANCE, 15);
                     p.setExp((float) Math.clamp((until - now) / 8000.0, 0.0, 1.0));
                     p.setLevel((int) Math.ceil((until - now) / 1000.0));
-                    AttributeUtils.setBaseValue(p, 1.3, "generic.scale");
+                    AttributeUtils.setBaseValue(p, 1.3, Attribute.SCALE);
                 },
                 null,
                 1L,
-                5L);
+                5L
+        );
     }
 
 }

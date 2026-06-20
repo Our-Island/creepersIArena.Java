@@ -1,12 +1,13 @@
 package top.ourisland.creepersiarena.api.economy.cosmetic;
 
 import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 
 import java.util.Collection;
 
 public interface ICosmeticRegistry {
 
-    void registerCosmetic(String ownerId, ICosmetic cosmetic);
+    void registerCosmetic(RegistrationOwner owner, ICosmetic cosmetic);
 
     Collection<ICosmetic> cosmetics(CosmeticSlot slot);
 

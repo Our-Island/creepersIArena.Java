@@ -21,7 +21,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:wolong.repeating_crossbow",
+        id = "cia:wolong/repeating_crossbow",
         job = "cia:wolong",
         type = SkillType.ACTIVE,
         slot = 2,

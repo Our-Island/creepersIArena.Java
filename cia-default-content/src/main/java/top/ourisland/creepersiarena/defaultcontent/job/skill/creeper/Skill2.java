@@ -6,14 +6,15 @@ import org.bukkit.entity.Firework;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
@@ -21,7 +22,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.crossbow",
+        id = "cia:creeper/crossbow",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 1,
@@ -99,12 +100,12 @@ public class Skill2 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var cfg = ctx.skillConfig();
-            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
-            double speed = cfg.getDouble(id(), "speed", SPEED);
+            var flight = nonNegative(cfg.getInt(id(), "flight", FLIGHT), "flight");
+            var speed = positive(cfg.getDouble(id(), "speed", SPEED), "speed");
             var w = p.getWorld();
 
-            Vector dir = p.getEyeLocation().getDirection().normalize();
-            Location spawnPosition = p.getEyeLocation().add(dir.clone().multiply(0.6));
+            var dir = p.getEyeLocation().getDirection().normalize();
+            var spawnPosition = p.getEyeLocation().add(dir.clone().multiply(0.6));
 
             w.spawn(spawnPosition, Firework.class, f -> {
                 f.setShooter(p);
@@ -129,6 +130,20 @@ public class Skill2 implements ISkillDefinition {
             p.playSound(p, Sound.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0f, 1.0f);
             p.swingMainHand();
         };
+    }
+
+    private static int nonNegative(int value, String key) {
+        if (value >= 0) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be >= 0, got " + value);
+    }
+
+    private static double positive(double value, String key) {
+        if (Double.isFinite(value) && value > 0.0D) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be a finite positive number, got " + value);
+    }
+
+    private static String idPath(String key) {
+        return "skills." + CiaConfigPaths.section(DefaultSkillIds.CREEPER_CROSSBOW) + "." + key;
     }
 
 }

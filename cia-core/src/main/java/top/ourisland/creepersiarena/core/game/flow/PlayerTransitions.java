@@ -9,6 +9,8 @@ import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.game.lobby.LobbyService;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
@@ -104,8 +106,8 @@ final class PlayerTransitions {
         return lobby.allowJobSelection(p);
     }
 
-    void selectJob(Player p, String jobIdRaw) {
-        lobby.selectJob(p, jobIdRaw);
+    void selectJob(Player p, JobId jobId) {
+        lobby.selectJob(p, jobId);
     }
 
     void nextJobPage(Player p) {
@@ -116,7 +118,7 @@ final class PlayerTransitions {
         lobby.cycleTeam(p);
     }
 
-    boolean selectTeam(Player p, Integer teamId) {
+    boolean selectTeam(Player p, TeamId teamId) {
         return lobby.selectTeam(p, teamId);
     }
 

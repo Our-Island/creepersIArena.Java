@@ -1,31 +1,39 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.battle;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class BattleTeamBalancer {
 
     private final BattleModeConfig config;
     private final PlayerSessionStore sessions;
 
-    public BattleTeamBalancer(BattleModeConfig config, PlayerSessionStore sessions) {
+    public BattleTeamBalancer(
+            BattleModeConfig config,
+            PlayerSessionStore sessions
+    ) {
         this.config = config;
         this.sessions = sessions;
     }
 
-    public int assign(PlayerSession target, Collection<UUID> activePlayers) {
+    public int assign(
+            PlayerSession target,
+            Collection<UUID> activePlayers
+    ) {
         if (target == null) return 1;
 
-        Integer requested = normalized(target.selectedTeam());
+        var requested = normalized(target.selectedTeam());
         if (BattleState.markedFighter(target) && requested != null) {
             return requested;
         }
@@ -39,34 +47,39 @@ public final class BattleTeamBalancer {
             team = requested == null ? randomTeam() : requested;
         }
 
-        target.selectedTeam(team);
-        target.selectedTeamKey(String.valueOf(team));
+        target.selectedTeam(TeamId.numbered(team));
         return team;
     }
 
-    private Integer normalized(Integer requested) {
+    private Integer normalized(TeamId requested) {
         if (requested == null) return null;
-        if (requested < 1 || requested > config.maxTeam()) return null;
-        return requested;
+        int number = requested.number().orElse(0);
+        if (number < 1 || number > config.maxTeam()) return null;
+        return number;
     }
 
-    private int leastPopulatedTeam(Collection<UUID> activePlayers, UUID joiningPlayer) {
-        Map<Integer, Integer> counts = new LinkedHashMap<>();
-        for (int team = 1; team <= config.maxTeam(); team++) {
-            counts.put(team, 0);
-        }
+    private int leastPopulatedTeam(
+            Collection<UUID> activePlayers,
+            UUID joiningPlayer
+    ) {
+        var counts = IntStream.rangeClosed(1, config.maxTeam())
+                .boxed()
+                .collect(Collectors.toMap(
+                        team -> team,
+                        _ -> 0,
+                        (_, b) -> b,
+                        LinkedHashMap::new
+                ));
 
-        if (activePlayers != null) {
-            for (UUID id : activePlayers) {
-                if (id == null || id.equals(joiningPlayer)) continue;
-                Player online = Bukkit.getPlayer(id);
-                if (online == null || !online.isOnline()) continue;
-                PlayerSession player = sessions.get(online);
-                if (player == null) continue;
-                Integer team = normalized(player.selectedTeam());
-                if (team != null) counts.merge(team, 1, Integer::sum);
-            }
-        }
+        if (activePlayers != null) activePlayers.stream()
+                .filter(id -> id != null && !id.equals(joiningPlayer))
+                .map(Bukkit::getPlayer)
+                .filter(online -> online != null && online.isOnline())
+                .map(sessions::get)
+                .filter(Objects::nonNull)
+                .map(player -> normalized(player.selectedTeam()))
+                .filter(Objects::nonNull)
+                .forEach(team -> counts.merge(team, 1, Integer::sum));
 
         int bestTeam = 1;
         int bestCount = Integer.MAX_VALUE;

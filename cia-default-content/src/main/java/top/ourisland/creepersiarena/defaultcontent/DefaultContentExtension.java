@@ -8,6 +8,9 @@ import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import top.ourisland.creepersiarena.api.extension.annotation.CiaExtensionInfo;
+import top.ourisland.creepersiarena.api.game.death.DeathCleanupParticipantId;
+import top.ourisland.creepersiarena.api.game.death.DeathMessageProviderId;
+import top.ourisland.creepersiarena.api.game.death.DeathResolverId;
 import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
 import top.ourisland.creepersiarena.api.game.mutation.IMutationRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
@@ -39,6 +42,7 @@ import java.util.function.LongSupplier;
  */
 @CiaExtensionInfo(
         id = "cia-default-content",
+        namespace = "cia",
         name = "CreepersIArena Default Content",
         apiVersion = 1,
         authors = {"Our Island", "Chiloven945", "xqysp"},
@@ -51,6 +55,7 @@ public final class DefaultContentExtension implements ICiaExtension {
 
     @Override
     public void onLoad(ICiaExtensionContext context) {
+        DefaultContentRuntimeIdentity.install(context);
         context.mergeYamlResource("default-content/config.yml", "config.yml");
         context.mergeYamlResource("default-content/arena.yml", "arena.yml");
         context.installResource("default-content/skill.yml", "skill.yml");
@@ -126,7 +131,7 @@ public final class DefaultContentExtension implements ICiaExtension {
 
     private void registerMutationContent(ICiaExtensionContext context) {
         context.requireService(IMutationRegistry.class).registerMutation(
-                context.extensionId(),
+                context.owner(),
                 new AcceleratedTimeMutationEffect(
                         context.plugin(),
                         context.plugin().getSLF4JLogger()
@@ -147,9 +152,21 @@ public final class DefaultContentExtension implements ICiaExtension {
         );
 
         var registry = context.requireService(IDeathResolutionRegistry.class);
-        registry.registerResolver(context.extensionId(), new BuiltinDeathCauseResolver(sessions, currentTick));
-        registry.registerMessageProvider(context.extensionId(), new BuiltinDeathMessageProvider(catalog));
-        registry.registerCleanupParticipant(context.extensionId(), new BuiltinDeathCleanupParticipant(runtime.store()));
+        registry.registerResolver(
+                context.owner(),
+                DeathResolverId.parse("cia:builtin_death_causes"),
+                new BuiltinDeathCauseResolver(sessions, currentTick)
+        );
+        registry.registerMessageProvider(
+                context.owner(),
+                DeathMessageProviderId.parse("cia:builtin_death_messages"),
+                new BuiltinDeathMessageProvider(catalog)
+        );
+        registry.registerCleanupParticipant(
+                context.owner(),
+                DeathCleanupParticipantId.parse("cia:builtin_death_cleanup"),
+                new BuiltinDeathCleanupParticipant(runtime.store())
+        );
     }
 
     private void registerEconomyStoreAndCosmetics(ICiaExtensionContext context) {

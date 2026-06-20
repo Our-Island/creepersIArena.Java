@@ -3,11 +3,11 @@ package top.ourisland.creepersiarena.core.database;
 import lombok.NonNull;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigration;
 import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class DatabaseMigrationRegistry implements IDatabaseMigrationRegistry {
@@ -16,38 +16,38 @@ public final class DatabaseMigrationRegistry implements IDatabaseMigrationRegist
 
     @Override
     public void registerMigration(
-            String ownerId,
-            @lombok.NonNull IDatabaseMigration migration
+            RegistrationOwner owner,
+            @NonNull IDatabaseMigration migration
     ) {
-        String expectedOwner = normalize(ownerId == null || ownerId.isBlank() ? migration.ownerId() : ownerId);
-        String migrationOwner = normalize(migration.ownerId());
-
-        if (!expectedOwner.equals(migrationOwner)) {
-            throw new IllegalArgumentException("Migration owner mismatch: expected " + expectedOwner + " but got " + migrationOwner);
+        if (!owner.extensionId().equals(migration.ownerId())) {
+            throw new IllegalArgumentException("Migration owner mismatch: expected %s but got %s".formatted(
+                    owner.extensionId(),
+                    migration.ownerId()
+            ));
         }
-
-        migrations.stream()
-                .filter(existing ->
-                        normalize(existing.ownerId()).equals(migrationOwner)
-                                && existing.version() == migration.version()
-                )
-                .forEach(_ -> {
-                    throw new IllegalArgumentException("Duplicate migration " + migrationOwner + ":" + migration.version());
-                });
+        boolean duplicate = migrations.stream().anyMatch(existing ->
+                existing.ownerId().equals(migration.ownerId()) && existing.version() == migration.version()
+        );
+        if (duplicate) {
+            throw new IllegalArgumentException(
+                    "Duplicate migration " + migration.ownerId().value() + ":" + migration.version()
+            );
+        }
         migrations.add(migration);
     }
 
     @Override
     public @NonNull List<IDatabaseMigration> migrations() {
         var out = new ArrayList<>(migrations);
-        out.sort(Comparator.comparing((IDatabaseMigration migration) -> normalize(migration.ownerId()))
-                .thenComparingInt(IDatabaseMigration::version));
+        out.sort(
+                Comparator.comparing((IDatabaseMigration migration) -> migration.ownerId().value())
+                        .thenComparingInt(IDatabaseMigration::version)
+        );
         return List.copyOf(out);
     }
 
-    private static String normalize(String raw) {
-        if (raw == null || raw.isBlank()) return "unknown";
-        return raw.trim().toLowerCase(Locale.ROOT);
+    public void clearOwner(RegistrationOwner owner) {
+        migrations.removeIf(migration -> migration.ownerId().equals(owner.extensionId()));
     }
 
 }

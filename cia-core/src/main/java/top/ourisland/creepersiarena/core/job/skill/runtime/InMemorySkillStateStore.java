@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.core.job.skill.runtime;
 
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
 
 import java.util.HashMap;
@@ -8,18 +9,25 @@ import java.util.UUID;
 
 public final class InMemorySkillStateStore implements ISkillStateStore {
 
-    private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
+    private final Map<UUID, Map<SkillId, Long>> cooldowns = new HashMap<>();
 
     @Override
-    public void cooldownEndsAtTick(UUID playerId, String skillId, long endTick) {
-        cooldowns.computeIfAbsent(playerId, k -> new HashMap<>()).put(skillId, endTick);
+    public void cooldownEndsAtTick(
+            UUID playerId,
+            SkillId skillId,
+            long endTick
+    ) {
+        cooldowns.computeIfAbsent(
+                playerId,
+                _ -> new HashMap<>()
+        ).put(skillId, endTick);
     }
 
     @Override
-    public long cooldownEndsAtTick(UUID playerId, String skillId) {
-        Map<String, Long> m = cooldowns.get(playerId);
-        if (m == null) return 0;
-        return m.getOrDefault(skillId, 0L);
+    public long cooldownEndsAtTick(UUID playerId, SkillId skillId) {
+        var playerCooldowns = cooldowns.get(playerId);
+        if (playerCooldowns == null) return 0;
+        return playerCooldowns.getOrDefault(skillId, 0L);
     }
 
 }

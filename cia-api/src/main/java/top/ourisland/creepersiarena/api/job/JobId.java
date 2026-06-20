@@ -1,61 +1,35 @@
 package top.ourisland.creepersiarena.api.job;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import org.jspecify.annotations.NonNull;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.CiaResourceId;
 
-public final class JobId {
+/**
+ * Domain-specific globally namespaced resource identifier.
+ */
+public record JobId(
+        @lombok.NonNull CiaKey key
+) implements CiaResourceId {
 
-    private static final Map<String, JobId> CACHE = new ConcurrentHashMap<>();
-
-    private final String id;
-
-    public static JobId fromId(String raw) {
-        if (raw == null) return null;
-        String normalized = normalize(raw);
-        if (normalized.isBlank()) return null;
-        return of(normalized);
+    public static @NonNull JobId parse(String raw) {
+        return new JobId(CiaKey.parse(raw));
     }
 
-    private static String normalize(String raw) {
-        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+    public static @NonNull JobId of(CiaKey key) {
+        return new JobId(key);
     }
 
-    public static JobId of(String raw) {
-        String normalized = normalize(raw);
-        if (normalized.isBlank()) throw new IllegalArgumentException("job id is blank");
-        return CACHE.computeIfAbsent(normalized, JobId::new);
-    }
-
-    private JobId(String id) {
-        this.id = id;
-    }
-
-    public String id() {
-        return id;
-    }
-
-    public String path() {
-        int colon = id.indexOf(':');
-        return colon >= 0 ? id.substring(colon + 1) : id;
+    public static @NonNull JobId of(
+            CiaNamespace namespace,
+            String path
+    ) {
+        return new JobId(CiaKey.of(namespace, path));
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof JobId jobId)) return false;
-        return id.equals(jobId.id);
-    }
-
-    @Override
-    public String toString() {
-        return id;
+    public @NonNull String toString() {
+        return asString();
     }
 
 }

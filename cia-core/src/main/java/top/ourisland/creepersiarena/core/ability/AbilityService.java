@@ -2,37 +2,47 @@ package top.ourisland.creepersiarena.core.ability;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ability.*;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.mode.IModeAbilityPolicy;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
 
     private final Logger logger;
     private final ConfigManager configManager;
     private final Supplier<GameManager> gameManager;
-    private final Map<AbilityId, RegisteredAbility> abilities = new ConcurrentHashMap<>();
+    private final OwnedRegistry<AbilityId, IAbility> abilities;
     private final List<RegisteredAbilityPolicy> policies = new CopyOnWriteArrayList<>();
     private final Map<AbilityId, Boolean> adminOverrides = new ConcurrentHashMap<>();
     private volatile YamlConfiguration configSnapshot = new YamlConfiguration();
 
     public AbilityService(
-            Logger logger,
-            ConfigManager configManager,
-            Supplier<GameManager> gameManager
+            @lombok.NonNull Logger logger,
+            @lombok.NonNull ConfigManager configManager,
+            Supplier<GameManager> gameManager,
+            NamespaceRegistry namespaces
     ) {
         this.logger = logger;
         this.configManager = configManager;
         this.gameManager = gameManager;
+        this.abilities = new OwnedRegistry<>(namespaces);
         reloadSnapshot();
     }
 
@@ -42,29 +52,66 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     }
 
     @Override
-    public void registerAbility(String ownerId, IAbility ability) {
-        if (ability == null || ability.id() == null) return;
-        String owner = RegisteredComponent.normalizeOwnerId(ownerId);
-        abilities.put(ability.id(), new RegisteredAbility(owner, ability));
-        try {
-            ability.reload(config(ability.id()));
-        } catch (Throwable t) {
-            logger.warn("[Ability] reload failed while registering {}: {}", ability.id(), t.getMessage(), t);
-        }
-        logger.info("[Ability] Registered {} by {}.", ability.id(), owner);
+    public void registerAbility(
+            RegistrationOwner owner,
+            IAbility @NonNull ... abilityProviders
+    ) {
+        registerAbilities(owner, List.of(abilityProviders));
     }
 
     @Override
-    public void registerPolicy(String ownerId, IAbilityPolicy policy) {
-        if (policy == null) return;
-        String owner = RegisteredComponent.normalizeOwnerId(ownerId);
+    public void registerAbility(
+            RegistrationOwner owner,
+            @lombok.NonNull IAbility ability
+    ) {
+        registerAbilities(owner, List.of(ability));
+    }
+
+    @Override
+    public void registerPolicy(
+            @lombok.NonNull RegistrationOwner owner,
+            @lombok.NonNull IAbilityPolicy policy
+    ) {
         policies.add(new RegisteredAbilityPolicy(owner, policy));
-        logger.info("[Ability] Registered policy {} by {}.", policy.getClass().getSimpleName(), owner);
+        logger.info("[Ability] Registered policy {} by {}.", policy.getClass().getSimpleName(), owner.extensionId());
+    }
+
+    private void registerAbilities(
+            RegistrationOwner owner,
+            Collection<IAbility> abilityProviders
+    ) {
+        var requested = List.copyOf(abilityProviders);
+        var registrations = requested.stream()
+                .map(ability -> new OwnedRegistry.Registration<>(ability.id(), ability))
+                .toList();
+
+        abilities.registerAllInitialized(
+                owner,
+                registrations,
+                ability -> ability.reload(config(ability.id()))
+        );
+        requested.forEach(ability -> logger.info(
+                "[Ability] Registered {} by {}.",
+                ability.id(),
+                owner.extensionId()
+        ));
+    }
+
+    public void clearOwner(RegistrationOwner owner) {
+        var removed = abilities.entries().stream()
+                .filter(entry -> entry.owner() == owner)
+                .map(RegisteredComponent::id)
+                .toList();
+        abilities.clearOwner(owner);
+        policies.removeIf(policy -> policy.owner() == owner);
+        removed.forEach(adminOverrides::remove);
     }
 
     @Override
-    public void setAdminEnabled(AbilityId abilityId, boolean enabled) {
-        if (abilityId == null) return;
+    public void setAdminEnabled(
+            @lombok.NonNull AbilityId abilityId,
+            boolean enabled
+    ) {
         if (enabled) adminOverrides.remove(abilityId);
         else adminOverrides.put(abilityId, false);
     }
@@ -75,40 +122,56 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     }
 
     @Override
-    public List<AbilityId> abilityIds() {
-        var out = new LinkedHashSet<>(abilities.keySet());
-        var root = configSnapshot.getConfigurationSection("game.abilities");
+    public @NonNull List<AbilityId> abilityIds() {
+        var out = abilities.entries().stream()
+                .map(RegisteredComponent::id)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        var root = StrictConfig.section(configSnapshot, "game.abilities", "game.abilities");
+
         if (root != null) {
-            for (var ns : root.getKeys(false)) {
-                var nsSec = root.getConfigurationSection(ns);
-                if (nsSec == null) continue;
-                for (var value : nsSec.getKeys(false)) {
-                    if (nsSec.isConfigurationSection(value)) out.add(AbilityId.of(ns, value));
+            for (var namespaceValue : root.getKeys(false)) {
+                var namespaceSection = StrictConfig.section(
+                        root,
+                        namespaceValue,
+                        "game.abilities." + namespaceValue
+                );
+                if (namespaceSection == null) {
+                    throw new IllegalArgumentException("Missing ability namespace section game.abilities." + namespaceValue);
                 }
+
+                CiaNamespace namespace;
+                try {
+                    namespace = CiaNamespace.parse(namespaceValue);
+                } catch (IllegalArgumentException exception) {
+                    throw new IllegalArgumentException(
+                            "Invalid ability namespace at game.abilities." + namespaceValue,
+                            exception
+                    );
+                }
+                collectConfiguredIds(namespace, namespaceSection, "", out);
             }
         }
-        return out.stream().sorted(Comparator.comparing(AbilityId::asString)).toList();
+        return out.stream()
+                .sorted(Comparator.comparing(AbilityId::asString))
+                .toList();
     }
 
     @Override
-    public IAbilityConfigView config(AbilityId abilityId) {
-        var id = abilityId == null
-                ? AbilityId.of("core:unknown")
-                : abilityId;
-        var section = configSnapshot.getConfigurationSection(id.configPath());
-        return new BukkitAbilityConfigView(id, section);
+    public @NonNull IAbilityConfigView config(@lombok.NonNull AbilityId abilityId) {
+        String path = "game.abilities." + CiaConfigPaths.section(abilityId);
+        return new BukkitAbilityConfigView(abilityId, StrictConfig.section(configSnapshot, path, path));
     }
 
     @Override
     public boolean isEnabled(AbilityId id, AbilityContext context) {
         if (id == null) return false;
+
         var view = config(id);
-        boolean registered = abilities.containsKey(id);
+        var registered = abilities.get(id) != null;
         if (!registered && !view.exists()) return false;
 
         var section = view.section();
-        if (section == null || !section.getBoolean("enabled", false)) return false;
-        if (!adminEnabled(id)) return false;
+        if (section == null || !view.enabled(false) || !adminEnabled(id)) return false;
 
         var state = DecisionState.active(view.defaultActive(false));
         state = applyConfigOverrides(state, section, context);
@@ -124,12 +187,35 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     private DecisionState applyConfigOverrides(
             DecisionState state,
             ConfigurationSection section,
-            AbilityContext context
+            @Nullable AbilityContext context
     ) {
         if (context == null) return state;
-        state = applyNamedOverride(state, section.getConfigurationSection("modes"), context.modeId(), context.phase());
+
+        if (context.modeId() != null) {
+            state = applyOverride(
+                    state,
+                    StrictConfig.section(
+                            section,
+                            "modes." + CiaConfigPaths.section(context.modeId()),
+                            section.getCurrentPath() + ".modes." + CiaConfigPaths.section(context.modeId())
+                    ),
+                    context.phase()
+            );
+        }
         if (state.hardDenied()) return state;
-        return applyNamedOverride(state, section.getConfigurationSection("arenas"), context.arenaId(), context.phase());
+
+        if (context.arenaId() != null) {
+            state = applyOverride(
+                    state,
+                    StrictConfig.section(
+                            section,
+                            "arenas." + context.arenaId().value(),
+                            section.getCurrentPath() + ".arenas." + context.arenaId().value()
+                    ),
+                    context.phase()
+            );
+        }
+        return state;
     }
 
     private DecisionState applyModePolicies(
@@ -137,15 +223,14 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
             AbilityContext context,
             DecisionState state
     ) {
-        var gm = gameManager == null ? null : gameManager.get();
-        if (gm == null) return state;
+        var manager = gameManager == null ? null : gameManager.get();
+        if (manager == null) return state;
 
         var out = state;
-        Object[] candidates = {gm.rules(), gm.timeline(), gm.playerFlow()};
+        Object[] candidates = {manager.rules(), manager.timeline(), manager.playerFlow()};
         for (var candidate : candidates) {
             if (!(candidate instanceof IModeAbilityPolicy policy)) continue;
-            var decision = evaluatePolicy(policy, id, context, "mode");
-            out = applyPolicyDecision(out, decision);
+            out = applyPolicyDecision(out, evaluatePolicy(policy, id, context, "mode"));
             if (out.hardDenied()) return out;
         }
         return out;
@@ -158,40 +243,40 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
     ) {
         var out = state;
         for (var registered : policies) {
-            var decision = evaluatePolicy(registered.value(), id, context, registered.ownerId());
-            out = applyPolicyDecision(out, decision);
+            out = applyPolicyDecision(
+                    out,
+                    evaluatePolicy(registered.value(), id, context, registered.owner().extensionId().value())
+            );
             if (out.hardDenied()) return out;
         }
         return out;
     }
 
-    private DecisionState applyNamedOverride(
+    private DecisionState applyOverride(
             DecisionState state,
-            @Nullable ConfigurationSection parent,
-            @Nullable String rawName,
+            @Nullable ConfigurationSection override,
             @Nullable String phase
     ) {
-        if (parent == null || rawName == null || rawName.isBlank()) return state;
-        ConfigurationSection override = null;
-        for (var name : candidateKeys(rawName)) {
-            override = parent.getConfigurationSection(name);
-            if (override != null) break;
-        }
         if (override == null) return state;
+        var enabled = override.contains("enabled")
+                ? StrictConfig.bool(override, "enabled", false, override.getCurrentPath() + ".enabled")
+                : null;
+        if (Boolean.FALSE.equals(enabled)) return DecisionState.denied();
 
-        if (override.contains("enabled") && !override.getBoolean("enabled", false)) {
-            return DecisionState.denied();
-        }
+        var phases = StrictConfig.stringList(
+                override,
+                "phases",
+                List.of(),
+                override.getCurrentPath() + ".phases"
+        );
+        if (!phases.isEmpty() && (phase == null || !phases.contains(phase))) return DecisionState.denied();
+        return Boolean.TRUE.equals(enabled) ? state.withActive(true) : state;
+    }
 
-        var phases = normalizeList(override.getStringList("phases"));
-        if (!phases.isEmpty()) {
-            String normalizedPhase = normalizeToken(phase);
-            if (normalizedPhase.isBlank() || !phases.contains(normalizedPhase)) return DecisionState.denied();
-        }
-
-        return override.contains("enabled") && override.getBoolean("enabled", false)
-                ? state.withActive(true)
-                : state;
+    private DecisionState applyPolicyDecision(DecisionState state, AbilityDecision decision) {
+        if (decision == AbilityDecision.DENY) return DecisionState.denied();
+        if (decision == AbilityDecision.ALLOW) return state.withActive(true);
+        return state;
     }
 
     private AbilityDecision evaluatePolicy(
@@ -203,16 +288,10 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         try {
             var decision = policy.evaluateAbility(id, context);
             return decision == null ? AbilityDecision.PASS : decision;
-        } catch (Throwable t) {
-            logger.warn("[Ability] mode policy failed owner={} ability={} err={}", owner, id, t.getMessage(), t);
+        } catch (Throwable throwable) {
+            logger.warn("[Ability] mode policy failed owner={} ability={} err={}", owner, id, throwable.getMessage(), throwable);
             return AbilityDecision.DENY;
         }
-    }
-
-    private DecisionState applyPolicyDecision(DecisionState state, AbilityDecision decision) {
-        if (decision == AbilityDecision.DENY) return DecisionState.denied();
-        if (decision == AbilityDecision.ALLOW) return state.withActive(true);
-        return state;
     }
 
     private AbilityDecision evaluatePolicy(
@@ -224,63 +303,70 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
         try {
             var decision = policy.evaluate(id, context);
             return decision == null ? AbilityDecision.PASS : decision;
-        } catch (Throwable t) {
-            logger.warn("[Ability] policy failed owner={} ability={} err={}", owner, id, t.getMessage(), t);
+        } catch (Throwable throwable) {
+            logger.warn("[Ability] policy failed owner={} ability={} err={}", owner, id, throwable.getMessage(), throwable);
             return AbilityDecision.DENY;
         }
     }
 
-    private Set<String> candidateKeys(String raw) {
-        String normalized = normalizeToken(raw);
-        String plain = plainToken(normalized);
-        var out = new LinkedHashSet<String>();
-        out.add(normalized);
-        out.add(plain);
-        out.add(normalized.replace('_', '-'));
-        out.add(plain.replace('_', '-'));
-        return out;
-    }
-
-    private Set<String> normalizeList(List<String> values) {
-        var out = new LinkedHashSet<String>();
-        if (values == null) return out;
-        for (String value : values) {
-            String normalized = normalizeToken(value);
-            if (!normalized.isBlank()) out.add(normalized);
-        }
-        return out;
-    }
-
-    private String normalizeToken(String raw) {
-        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT).replace('-', '_');
-    }
-
-    private String plainToken(String normalized) {
-        int index = normalized.indexOf(':');
-        return index < 0 ? normalized : normalized.substring(index + 1);
-    }
-
     public void reload() {
         reloadSnapshot();
-        for (var registered : abilities.values()) {
-            try {
-                registered.value().reload(config(registered.value().id()));
-            } catch (Throwable t) {
-                logger.warn("[Ability] reload failed for {}: {}", registered.value().id(), t.getMessage(), t);
-            }
+        for (var registered : abilities.entries()) {
+            registered.value().reload(config(registered.id()));
         }
     }
 
-    public List<RegisteredAbility> registeredAbilities() {
-        return List.copyOf(abilities.values());
+    private void collectConfiguredIds(
+            CiaNamespace namespace,
+            ConfigurationSection section,
+            String resourcePath,
+            Set<AbilityId> out
+    ) {
+        if (!resourcePath.isEmpty() && isAbilitySection(section)) {
+            try {
+                out.add(AbilityId.of(namespace, resourcePath));
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException(
+                        "Invalid ability configuration path game.abilities."
+                                + namespace.value() + "." + resourcePath.replace('/', '.'),
+                        exception
+                );
+            }
+            return;
+        }
+        for (var key : section.getKeys(false)) {
+            var child = StrictConfig.section(
+                    section,
+                    key,
+                    section.getCurrentPath() + "." + key
+            );
+            if (child == null) {
+                throw new IllegalArgumentException("Missing ability section at " + section.getCurrentPath() + "." + key);
+            }
+            var childPath = resourcePath.isEmpty() ? key : resourcePath + "/" + key;
+            collectConfiguredIds(namespace, child, childPath, out);
+        }
     }
 
-    public List<RegisteredAbilityPolicy> registeredPolicies() {
+    private boolean isAbilitySection(ConfigurationSection section) {
+        return section.contains("enabled") || section.contains("default-active") || section.isConfigurationSection("settings");
+    }
+
+    public @NonNull List<RegisteredAbility> registeredAbilities() {
+        return abilities.entries().stream()
+                .map(entry -> new RegisteredAbility(entry.owner(), entry.id(), entry.value()))
+                .toList();
+    }
+
+    public @NonNull List<RegisteredAbilityPolicy> registeredPolicies() {
         return List.copyOf(policies);
     }
 
     public @Nullable RegisteredAbility registeredAbility(AbilityId id) {
-        return abilities.get(id);
+        RegisteredComponent<AbilityId, IAbility> registered = abilities.get(id);
+        return registered == null
+                ? null
+                : new RegisteredAbility(registered.owner(), registered.id(), registered.value());
     }
 
     private record DecisionState(
@@ -288,11 +374,11 @@ public final class AbilityService implements IAbilityRegistry, IAbilityAdmin {
             boolean active
     ) {
 
-        static DecisionState active(boolean active) {
+        static @NonNull DecisionState active(boolean active) {
             return new DecisionState(false, active);
         }
 
-        static DecisionState denied() {
+        static @NonNull DecisionState denied() {
             return new DecisionState(true, false);
         }
 

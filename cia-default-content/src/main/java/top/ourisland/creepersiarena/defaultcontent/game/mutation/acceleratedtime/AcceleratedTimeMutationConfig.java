@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mutation.acceleratedtime;
 
 import org.bukkit.configuration.ConfigurationSection;
+import top.ourisland.creepersiarena.api.config.StrictConfig;
 import top.ourisland.creepersiarena.api.game.mutation.MutationTargetScope;
 
 public record AcceleratedTimeMutationConfig(
@@ -12,61 +13,91 @@ public record AcceleratedTimeMutationConfig(
         boolean serverGlobalTickRateEnabled,
         double movementSpeedAdd,
         long timeAddPerTargetPerTick,
-        MutationTargetScope timeTargetScope,
+        @lombok.NonNull MutationTargetScope timeTargetScope,
         boolean startDaylightCycle,
         boolean resetDaylightCycle,
         boolean resetTimeEnabled,
         long resetTime,
-        MutationTargetScope speedTargetScope,
-        AcceleratedTimeSoundConfig startSound,
-        AcceleratedTimeSoundConfig endSound,
-        AcceleratedTimeMessageSet messages
+        @lombok.NonNull MutationTargetScope speedTargetScope,
+        @lombok.NonNull AcceleratedTimeSoundConfig startSound,
+        @lombok.NonNull AcceleratedTimeSoundConfig endSound,
+        @lombok.NonNull AcceleratedTimeMessageSet messages
 ) {
 
+    private static final String PATH = "game.mutations.cia.accelerated_time";
+
     public AcceleratedTimeMutationConfig {
-        weight = Math.max(0, weight);
-        durationTicks = Math.max(1, durationTicks);
-        tickRateMin = Math.max(20.0D, tickRateMin);
-        tickRateMax = Math.max(20.0D, tickRateMax);
-        if (tickRateMax < tickRateMin) {
-            double tmp = tickRateMin;
-            tickRateMin = tickRateMax;
-            tickRateMax = tmp;
+        if (weight < 0) throw invalid("weight", "must be >= 0", weight);
+        if (durationTicks <= 0) throw invalid("duration-ticks", "must be > 0", durationTicks);
+        if (!Double.isFinite(tickRateMin) || tickRateMin < 20.0D) {
+            throw invalid("tick-rate-min", "must be finite and >= 20", tickRateMin);
         }
-        movementSpeedAdd = Math.max(0.0D, movementSpeedAdd);
-        timeAddPerTargetPerTick = Math.max(0L, timeAddPerTargetPerTick);
-        if (timeTargetScope == null) timeTargetScope = MutationTargetScope.ACTIVE_GAME_PLAYERS;
-        if (speedTargetScope == null) speedTargetScope = MutationTargetScope.ACTIVE_GAME_PLAYERS;
-        if (startSound == null) startSound = AcceleratedTimeSoundConfig.startDefault();
-        if (endSound == null) endSound = AcceleratedTimeSoundConfig.endDefault();
-        if (messages == null) messages = AcceleratedTimeMessageSet.defaults();
+        if (!Double.isFinite(tickRateMax) || tickRateMax < tickRateMin) {
+            throw invalid("tick-rate-max", "must be finite and >= tick-rate-min", tickRateMax);
+        }
+        if (!Double.isFinite(movementSpeedAdd) || movementSpeedAdd < 0.0D) {
+            throw invalid("movement-speed-add", "must be finite and >= 0", movementSpeedAdd);
+        }
+        if (timeAddPerTargetPerTick < 0L) {
+            throw invalid("time-add-per-target-per-tick", "must be >= 0", timeAddPerTargetPerTick);
+        }
+    }
+
+    private static IllegalArgumentException invalid(
+            String key,
+            String requirement,
+            Object value
+    ) {
+        return new IllegalArgumentException(PATH + "." + key + " " + requirement + ", got " + value);
     }
 
     public static AcceleratedTimeMutationConfig fromSection(ConfigurationSection section) {
         if (section == null) return defaults();
+        var startDefaults = AcceleratedTimeSoundConfig.startDefault();
+        var endDefaults = AcceleratedTimeSoundConfig.endDefault();
+        var startSection = StrictConfig.section(section, "start-sound", PATH + ".start-sound");
+        var endSection = StrictConfig.section(section, "end-sound", PATH + ".end-sound");
         return new AcceleratedTimeMutationConfig(
-                section.getBoolean("enabled", true),
-                section.getInt("weight", 1),
-                section.getInt("duration-ticks", 9000),
-                section.getDouble("tick-rate-min", 34.0D),
-                section.getDouble("tick-rate-max", 58.0D),
-                section.getBoolean("server-global-tick-rate-enabled", true),
-                section.getDouble("movement-speed-add", 0.1D),
-                section.getLong("time-add-per-target-per-tick", 8L),
-                MutationTargetScope.fromConfig(section.getString("time-target-scope", "ACTIVE_GAME_PLAYERS")),
-                section.getBoolean("start-daylight-cycle", true),
-                section.getBoolean("reset-daylight-cycle", false),
-                section.getBoolean("reset-time-enabled", true),
-                section.getLong("reset-time", 6000L),
-                MutationTargetScope.fromConfig(section.getString("speed-target-scope", "ACTIVE_GAME_PLAYERS")),
-                AcceleratedTimeSoundConfig.fromSection(
-                        section.getConfigurationSection("start-sound"),
-                        AcceleratedTimeSoundConfig.startDefault()
+                StrictConfig.bool(section, "enabled", true, PATH + ".enabled"),
+                StrictConfig.integer(section, "weight", 1, PATH + ".weight"),
+                StrictConfig.integer(section, "duration-ticks", 9000, PATH + ".duration-ticks"),
+                StrictConfig.decimal(section, "tick-rate-min", 34.0D, PATH + ".tick-rate-min"),
+                StrictConfig.decimal(section, "tick-rate-max", 58.0D, PATH + ".tick-rate-max"),
+                StrictConfig.bool(
+                        section,
+                        "server-global-tick-rate-enabled",
+                        true,
+                        PATH + ".server-global-tick-rate-enabled"
                 ),
-                AcceleratedTimeSoundConfig.fromSection(
-                        section.getConfigurationSection("end-sound"),
-                        AcceleratedTimeSoundConfig.endDefault()
+                StrictConfig.decimal(section, "movement-speed-add", 0.1D, PATH + ".movement-speed-add"),
+                StrictConfig.longValue(
+                        section,
+                        "time-add-per-target-per-tick",
+                        8L,
+                        PATH + ".time-add-per-target-per-tick"
                 ),
+                MutationTargetScope.fromConfig(
+                        StrictConfig.string(
+                                section,
+                                "time-target-scope",
+                                "ACTIVE_GAME_PLAYERS",
+                                PATH + ".time-target-scope"
+                        )
+                ),
+                StrictConfig.bool(section, "start-daylight-cycle", true, PATH + ".start-daylight-cycle"),
+                StrictConfig.bool(section, "reset-daylight-cycle", false, PATH + ".reset-daylight-cycle"),
+                StrictConfig.bool(section, "reset-time-enabled", true, PATH + ".reset-time-enabled"),
+                StrictConfig.longValue(section, "reset-time", 6000L, PATH + ".reset-time"),
+                MutationTargetScope.fromConfig(
+                        StrictConfig.string(
+                                section,
+                                "speed-target-scope",
+                                "ACTIVE_GAME_PLAYERS",
+                                PATH + ".speed-target-scope"
+                        )
+                ),
+                AcceleratedTimeSoundConfig.fromSection(startSection, startDefaults, PATH + ".start-sound"),
+                AcceleratedTimeSoundConfig.fromSection(endSection, endDefaults, PATH + ".end-sound"),
                 AcceleratedTimeMessageSet.fromSection(section)
         );
     }

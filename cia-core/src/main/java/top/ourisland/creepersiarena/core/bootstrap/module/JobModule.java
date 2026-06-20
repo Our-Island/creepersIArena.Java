@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.job.IJob;
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
@@ -9,6 +10,7 @@ import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.job.JobManager;
 
 import java.util.Set;
@@ -32,8 +34,8 @@ public final class JobModule implements IBootstrapModule {
             var cfg = rt.requireService(ConfigManager.class);
             var catalog = rt.requireService(ComponentCatalog.class);
 
-            var jobManager = new JobManager();
-            Set<String> disabled = cfg.globalConfig().disabledJobs();
+            var jobManager = new JobManager(rt.requireService(NamespaceRegistry.class));
+            Set<JobId> disabled = cfg.globalConfig().disabledJobs();
             int regJobs = registerCatalogJobs(jobManager, catalog, disabled, rt.log());
             rt.log().info("[Job] Registered {} jobs with {} disabled.", regJobs, disabled);
 
@@ -44,27 +46,23 @@ public final class JobModule implements IBootstrapModule {
     private static int registerCatalogJobs(
             JobManager jobManager,
             ComponentCatalog catalog,
-            Set<String> disabledJobs,
+            Set<JobId> disabledJobs,
             Logger log
     ) {
-        int count = 0;
-        for (var registered : catalog.registeredJobs()) {
-            count += registerIfEnabled(jobManager, registered, disabledJobs, log);
-        }
-        return count;
+        return catalog.registeredJobs().stream()
+                .mapToInt(registered -> registerIfEnabled(jobManager, registered, disabledJobs, log))
+                .sum();
     }
 
     private static int registerIfEnabled(
             JobManager jobManager,
-            RegisteredComponent<IJob> registered,
-            Set<String> disabledJobs,
+            RegisteredComponent<JobId, IJob> registered,
+            Set<JobId> disabledJobs,
             Logger log
     ) {
-        IJob job = registered.value();
-        String id = job.id().toString();
-        String path = job.id().path();
-        boolean disabledByConfig = disabledJobs != null && disabledJobs.stream()
-                .anyMatch(s -> s != null && (s.trim().equalsIgnoreCase(id) || s.trim().equalsIgnoreCase(path)));
+        var job = registered.value();
+        var id = job.id().toString();
+        boolean disabledByConfig = disabledJobs != null && disabledJobs.contains(job.id());
 
         if (!job.enabled()) {
             log.info("[Job] Job disabled by annotation: {}", id);
@@ -76,8 +74,8 @@ public final class JobModule implements IBootstrapModule {
             return 0;
         }
 
-        jobManager.register(registered.ownerId(), job);
-        log.info("[Job] Job registered: {} owner={}", id, registered.ownerId());
+        jobManager.register(registered.owner(), job);
+        log.info("[Job] Job registered: {} owner={}", id, registered.owner());
         return 1;
     }
 

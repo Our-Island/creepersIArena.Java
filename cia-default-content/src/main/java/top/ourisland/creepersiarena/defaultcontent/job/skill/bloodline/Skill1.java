@@ -18,7 +18,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:bloodline.blood_orb",
+        id = "cia:bloodline/blood_orb",
         job = "cia:bloodline",
         type = SkillType.ACTIVE,
         slot = 1,
@@ -58,7 +58,7 @@ public class Skill1 implements ISkillDefinition {
                     task -> {
                         if (!p.isOnline() || waves[0] >= 6) {
                             task.cancel();
-                            double bonus = Math.min(12.0, hits[0] * 2.0);
+                            var bonus = Math.min(12.0, hits[0] * 2.0);
                             if (bonus > 0) {
                                 double applied = Math.max(p.getAbsorptionAmount(), bonus);
                                 p.setAbsorptionAmount(applied);

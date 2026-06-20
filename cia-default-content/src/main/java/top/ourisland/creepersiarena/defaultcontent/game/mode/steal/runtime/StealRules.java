@@ -9,7 +9,7 @@ import org.bukkit.SoundCategory;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.api.game.mode.context.JoinSource;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
 import top.ourisland.creepersiarena.api.game.mode.context.RespawnContext;
 import top.ourisland.creepersiarena.core.utils.Msg;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 
 final class StealRules implements IModeRules {
 
@@ -24,15 +25,19 @@ final class StealRules implements IModeRules {
     private final GameSession game;
     private final StealState state;
 
-    StealRules(GameRuntime runtime, GameSession game, StealState state) {
+    StealRules(
+            GameRuntime runtime,
+            GameSession game,
+            StealState state
+    ) {
         this.runtime = runtime;
         this.game = game;
         this.state = state;
     }
 
     @Override
-    public GameModeType type() {
-        return GameModeType.of("steal");
+    public GameModeId type() {
+        return DefaultModeIds.STEAL;
     }
 
     @Override
@@ -73,7 +78,7 @@ final class StealRules implements IModeRules {
 
     @Override
     public RespawnDecision onRespawn(RespawnContext ctx) {
-        Location teammateView = livingTeammateLocation(ctx);
+        var teammateView = livingTeammateLocation(ctx);
         if (teammateView != null) return new RespawnDecision.Spectate(teammateView);
 
         return new RespawnDecision.Spectate(state.arenaConfig().spectatorFallbackOrAnchor(game.arena()));
@@ -86,16 +91,14 @@ final class StealRules implements IModeRules {
         var team = state.team(victimId);
         if (team == null) return null;
 
-        for (var candidateId : state.participantIds()) {
-            if (candidateId == null || candidateId.equals(victimId)) continue;
-            if (!state.isAlive(candidateId) || state.team(candidateId) != team) continue;
-
-            var teammate = Bukkit.getPlayer(candidateId);
-            if (teammate != null && teammate.isOnline()) {
-                return teammate.getLocation().clone();
-            }
-        }
-        return null;
+        return state.participantIds().stream()
+                .filter(candidateId -> candidateId != null && !candidateId.equals(victimId))
+                .filter(candidateId -> state.isAlive(candidateId) && state.team(candidateId) == team)
+                .map(Bukkit::getPlayer)
+                .filter(teammate -> teammate != null && teammate.isOnline())
+                .findFirst()
+                .map(teammate -> teammate.getLocation().clone())
+                .orElse(null);
     }
 
 }

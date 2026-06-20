@@ -6,7 +6,9 @@ import org.bukkit.entity.SpectralArrow;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.api.skill.runtime.ISkillStateStore;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
@@ -30,7 +32,7 @@ final class MoisonProjectileSupport {
 
     static void shoot(
             Player player,
-            String sourceId,
+            SkillId sourceId,
             boolean spectral,
             Vector direction,
             double speed,
@@ -44,16 +46,6 @@ final class MoisonProjectileSupport {
                 spawned.setPierceLevel(0);
                 spawned.setCritical(false);
                 spawned.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
-                spawned.getPersistentDataContainer().set(
-                        BuiltinKeys.key("moison_owner"),
-                        PersistentDataType.STRING,
-                        player.getUniqueId().toString()
-                );
-                spawned.getPersistentDataContainer().set(
-                        BuiltinKeys.key("moison_source"),
-                        PersistentDataType.STRING,
-                        sourceId
-                );
                 spawned.getPersistentDataContainer().set(
                         BuiltinKeys.key("moison_spectral"),
                         PersistentDataType.BYTE,
@@ -76,16 +68,6 @@ final class MoisonProjectileSupport {
             spawned.setPierceLevel(0);
             spawned.setCritical(false);
             spawned.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
-            spawned.getPersistentDataContainer().set(
-                    BuiltinKeys.key("moison_owner"),
-                    PersistentDataType.STRING,
-                    player.getUniqueId().toString()
-            );
-            spawned.getPersistentDataContainer().set(
-                    BuiltinKeys.key("moison_source"),
-                    PersistentDataType.STRING,
-                    sourceId
-            );
             BuiltinDamageAttributionMarker.markEntitySource(
                     spawned,
                     player,
@@ -96,8 +78,8 @@ final class MoisonProjectileSupport {
         arrow.setDamage(damage);
     }
 
-    private static DeathCauseId causeIdFor(String sourceId) {
-        return "cia:moison.volley".equals(sourceId)
+    private static DeathCauseId causeIdFor(SkillId sourceId) {
+        return DefaultSkillIds.MOISON_VOLLEY.equals(sourceId)
                 ? DefaultContentDeathCauses.moisonArrow2()
                 : DefaultContentDeathCauses.moisonArrow1();
     }

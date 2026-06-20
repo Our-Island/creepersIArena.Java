@@ -25,6 +25,7 @@ class CiaExtensionDescriptorReaderTest {
     void readsDescriptorFromJar() throws IOException {
         var jar = createJar("""
                 id: custom-warrior
+                namespace: custom
                 name: Custom Warrior
                 version: 1.0.0
                 main: com.example.CustomWarriorExtension
@@ -43,7 +44,8 @@ class CiaExtensionDescriptorReaderTest {
 
         var descriptor = reader.read(jar);
 
-        assertEquals("custom-warrior", descriptor.id());
+        assertEquals("custom-warrior", descriptor.id().value());
+        assertEquals("custom", descriptor.namespace().value());
         assertEquals("Custom Warrior", descriptor.name());
         assertEquals("1.0.0", descriptor.version());
         assertEquals("com.example.CustomWarriorExtension", descriptor.mainClass());
@@ -52,8 +54,8 @@ class CiaExtensionDescriptorReaderTest {
         assertEquals(CiaExtensionLoadOrder.EARLY, descriptor.loadOrder());
         assertEquals(2, descriptor.authors().size());
         assertEquals("Our Island", descriptor.authors().getFirst());
-        assertEquals("cia-default-content", descriptor.requiredDependencyIds().getFirst());
-        assertEquals("some-other-extension", descriptor.optionalDependencyIds().getFirst());
+        assertEquals("cia-default-content", descriptor.requiredDependencyIds().getFirst().value());
+        assertEquals("some-other-extension", descriptor.optionalDependencyIds().getFirst().value());
     }
 
     private Path createJar(String descriptor) throws IOException {
@@ -70,6 +72,7 @@ class CiaExtensionDescriptorReaderTest {
     void defaultsLoadOrderAndAllowsEmptyLists() throws IOException {
         var jar = createJar("""
                 id: minimal-extension
+                namespace: custom
                 name: Minimal Extension
                 version: 1.0.0
                 main: com.example.MinimalExtension
@@ -106,6 +109,7 @@ class CiaExtensionDescriptorReaderTest {
     void rejectsInvalidExtensionId() throws IOException {
         var jar = createJar("""
                 id: Invalid Extension
+                namespace: custom
                 name: Invalid Extension
                 version: 1.0.0
                 main: com.example.InvalidExtension
@@ -126,6 +130,7 @@ class CiaExtensionDescriptorReaderTest {
     void rejectsMissingRequiredMainClass() throws IOException {
         var jar = createJar("""
                 id: no-main
+                namespace: custom
                 name: No Main
                 version: 1.0.0
                 api-version: 1

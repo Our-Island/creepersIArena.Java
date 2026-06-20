@@ -1,8 +1,10 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.Nullable;
@@ -10,12 +12,23 @@ import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.game.mode.IGameMode;
+import top.ourisland.creepersiarena.api.identity.ExtensionContextAttributes;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
+import top.ourisland.creepersiarena.core.ability.AbilityService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.AnnotationComponentScanner;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.database.DatabaseMigrationRegistry;
+import top.ourisland.creepersiarena.core.economy.CurrencyRegistry;
+import top.ourisland.creepersiarena.core.economy.cosmetic.CosmeticRegistry;
+import top.ourisland.creepersiarena.core.economy.store.StoreRegistry;
 import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.core.game.death.DeathResolutionRegistry;
+import top.ourisland.creepersiarena.core.game.mutation.MutationRegistry;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.job.JobManager;
 import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
 
@@ -27,23 +40,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
 
-final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
+public final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
 
     private final BootstrapRuntime rt;
     private final ComponentCatalog catalog;
     private final CiaExtensionDescriptor descriptor;
+    @Getter(onMethod_ = {@Override}) private final RegistrationOwner owner;
+    @Getter(onMethod_ = {@Override}) private final ExtensionSessionData sessionData;
+    @Getter(onMethod_ = {@Override}) private final ExtensionContextAttributes contextAttributes;
     private final ClassLoader classLoader;
     private final Path jarPath;
-    private final Path dataFolder;
+    @Getter private final Path dataFolder;
     private final Path pluginDataFolder;
     private final AnnotationComponentScanner scanner = new AnnotationComponentScanner();
     private final List<String> registeredJobs = new ArrayList<>();
     private final List<String> registeredSkills = new ArrayList<>();
     private final List<String> registeredModes = new ArrayList<>();
     private final List<String> registeredListeners = new ArrayList<>();
+    private final List<Listener> listenerInstances = new ArrayList<>();
     private final List<String> installedResources = new ArrayList<>();
     private final List<String> mergedYamlResources = new ArrayList<>();
     private final List<String> mergedPropertiesResources = new ArrayList<>();
@@ -52,6 +69,7 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
             BootstrapRuntime rt,
             @lombok.NonNull ComponentCatalog catalog,
             @lombok.NonNull CiaExtensionDescriptor descriptor,
+            @lombok.NonNull RegistrationOwner owner,
             @lombok.NonNull ClassLoader classLoader,
             @lombok.NonNull Path jarPath,
             @lombok.NonNull Path dataFolder
@@ -59,15 +77,15 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         this.rt = rt;
         this.catalog = catalog;
         this.descriptor = descriptor;
+        this.owner = owner;
+        this.sessionData = new ExtensionSessionData(owner);
+        this.contextAttributes = new ExtensionContextAttributes(owner);
         this.classLoader = classLoader;
         this.jarPath = jarPath;
         this.dataFolder = dataFolder;
-        this.pluginDataFolder = rt == null ? dataFolder.getParent() : rt.plugin().getDataFolder().toPath();
-    }
-
-    @Override
-    public Path dataFolder() {
-        return dataFolder;
+        this.pluginDataFolder = rt == null
+                ? dataFolder.getParent()
+                : rt.plugin().getDataFolder().toPath();
     }
 
     @Override
@@ -162,61 +180,88 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     }
 
     @Override
-    public void registerJob(IJob job) {
-        Objects.requireNonNull(job, "job");
-        catalog.registerJob(descriptor.id(), job);
-        registeredJobs.add(job.id().id());
-        var jm = rt == null ? null : rt.getService(JobManager.class);
-        if (jm != null) jm.register(descriptor.id(), job);
+    public void registerJob(@lombok.NonNull IJob job) {
+        catalog.registerJob(owner(), job);
+        registeredJobs.add(job.id().asString());
+
+        var jm = rt == null
+                ? null
+                : rt.getService(JobManager.class);
+        if (jm != null) jm.register(owner(), job);
         logInfo("[Extension] {} registered job {}", descriptor.id(), job.id());
     }
 
     @Override
-    public void registerSkill(ISkillDefinition skill) {
-        Objects.requireNonNull(skill, "skill");
-        catalog.registerSkill(descriptor.id(), skill);
-        registeredSkills.add(skill.id());
-        var sr = rt == null ? null : rt.getService(SkillRegistry.class);
-        if (sr != null) sr.register(descriptor.id(), skill);
+    public void registerSkill(@lombok.NonNull ISkillDefinition skill) {
+        catalog.registerSkill(owner(), skill);
+        registeredSkills.add(skill.id().asString());
+
+        var sr = rt == null
+                ? null
+                : rt.getService(SkillRegistry.class);
+        if (sr != null) sr.register(owner(), skill);
         logInfo("[Extension] {} registered skill {}", descriptor.id(), skill.id());
     }
 
     @Override
-    public void registerMode(IGameMode mode) {
-        Objects.requireNonNull(mode, "mode");
-        catalog.registerMode(descriptor.id(), mode);
-        registeredModes.add(mode.mode().id());
-        var gm = rt == null ? null : rt.getService(GameManager.class);
-        if (gm != null) gm.registerMode(descriptor.id(), mode);
+    public void registerMode(@lombok.NonNull IGameMode mode) {
+        catalog.registerMode(owner(), mode);
+        registeredModes.add(mode.mode().asString());
+
+        var gm = rt == null
+                ? null
+                : rt.getService(GameManager.class);
+        if (gm != null) gm.registerMode(owner(), mode);
         logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode());
     }
 
     @Override
-    public String extensionId() {
-        return descriptor.id();
-    }
-
-    @Override
     public <T> @Nullable T getService(@lombok.NonNull Class<T> type) {
-        return rt == null ? null : rt.getService(type);
+        return rt == null
+                ? null
+                : rt.getService(type);
     }
 
     @Override
-    public void registerListener(Listener listener) {
-        Objects.requireNonNull(listener, "listener");
+    public void registerListener(@lombok.NonNull Listener listener) {
         Bukkit.getPluginManager().registerEvents(listener, rt.plugin());
+        listenerInstances.add(listener);
         registeredListeners.add(listener.getClass().getName());
         logInfo("[Extension] {} registered listener {}", descriptor.id(), listener.getClass().getName());
     }
 
     @Override
-    public void registerAnnotated(String basePackage) {
-        Objects.requireNonNull(basePackage, "basePackage");
-        var discovered = new ComponentCatalog();
-        scanner.scanInto(classLoader, jarPath, basePackage, discovered);
-        for (var job : discovered.jobs()) registerJob(job);
-        for (var skill : discovered.skills()) registerSkill(skill);
-        for (var mode : discovered.modes()) registerMode(mode);
+    public void registerAnnotated(@lombok.NonNull String basePackage) {
+        var validationNamespaces = new NamespaceRegistry();
+        validationNamespaces.claim(owner());
+        var discovered = new ComponentCatalog(validationNamespaces);
+        scanner.scanInto(classLoader, jarPath, basePackage, discovered, owner());
+
+        var jobs = discovered.jobs();
+        var skills = discovered.skills();
+        var modes = discovered.modes();
+
+        var jobManager = rt == null ? null : rt.getService(JobManager.class);
+        var skillRegistry = rt == null ? null : rt.getService(SkillRegistry.class);
+        var gameManager = rt == null ? null : rt.getService(GameManager.class);
+
+        catalog.validateComponents(owner(), jobs, skills, modes);
+        if (jobManager != null) jobManager.validateAll(owner(), jobs);
+        if (skillRegistry != null) skillRegistry.validateAll(owner(), skills);
+        if (gameManager != null) gameManager.validateModes(owner(), modes);
+
+        catalog.registerComponents(owner(), jobs, skills, modes);
+        if (jobManager != null) jobManager.registerAll(owner(), jobs);
+        if (skillRegistry != null) skillRegistry.registerAll(owner(), skills);
+        if (gameManager != null) gameManager.registerModes(owner(), modes);
+
+        jobs.forEach(job -> remember(registeredJobs, job.id().asString()));
+        skills.forEach(skill -> remember(registeredSkills, skill.id().asString()));
+        modes.forEach(mode -> remember(registeredModes, mode.mode().asString()));
+
+        jobs.forEach(job -> logInfo("[Extension] {} registered job {}", descriptor.id(), job.id()));
+        skills.forEach(skill -> logInfo("[Extension] {} registered skill {}", descriptor.id(), skill.id()));
+        modes.forEach(mode -> logInfo("[Extension] {} registered mode {}", descriptor.id(), mode.mode()));
     }
 
     private Properties loadTargetProperties(Path target, String targetPath) throws Exception {
@@ -243,8 +288,7 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         if (!values.contains(value)) values.add(value);
     }
 
-    private Path resolvePluginDataTarget(String targetPath) {
-        Objects.requireNonNull(targetPath, "targetPath");
+    private Path resolvePluginDataTarget(@lombok.NonNull String targetPath) {
         var cleaned = targetPath.startsWith("/") ? targetPath.substring(1) : targetPath;
         var target = pluginDataFolder.resolve(cleaned).normalize();
         if (!target.startsWith(pluginDataFolder.normalize())) {
@@ -254,7 +298,9 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     }
 
     private InputStream openResource(String resourcePath) {
-        var cleaned = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+        var cleaned = resourcePath.startsWith("/")
+                ? resourcePath.substring(1)
+                : resourcePath;
         InputStream input;
         try {
             input = classLoader instanceof CiaExtensionClassLoader ciaClassLoader
@@ -274,8 +320,33 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
     }
 
     private void logInfo(String message, Object... args) {
-        Logger log = rt == null ? null : rt.log();
+        Logger log = rt == null
+                ? null
+                : rt.log();
         if (log != null) log.info(message, args);
+    }
+
+    void unregisterOwnedComponents() {
+        List.copyOf(listenerInstances).forEach(HandlerList::unregisterAll);
+        listenerInstances.clear();
+
+        catalog.clearOwner(owner());
+        if (rt == null) return;
+
+        clearOwner(rt.getService(JobManager.class), manager -> manager.clearOwner(owner()));
+        clearOwner(rt.getService(SkillRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(GameManager.class), manager -> manager.clearOwner(owner()));
+        clearOwner(rt.getService(AbilityService.class), service -> service.clearOwner(owner()));
+        clearOwner(rt.getService(CurrencyRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(CosmeticRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(StoreRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(MutationRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(DeathResolutionRegistry.class), registry -> registry.clearOwner(owner()));
+        clearOwner(rt.getService(DatabaseMigrationRegistry.class), registry -> registry.clearOwner(owner()));
+    }
+
+    private static <T> void clearOwner(@Nullable T service, Consumer<T> action) {
+        if (service != null) action.accept(service);
     }
 
     private YamlConfiguration loadTargetYaml(Path target, String targetPath) throws Exception {
@@ -295,7 +366,11 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         return yml;
     }
 
-    private boolean mergeYamlSection(ConfigurationSection source, YamlConfiguration destination, String prefix) {
+    private boolean mergeYamlSection(
+            ConfigurationSection source,
+            YamlConfiguration destination,
+            String prefix
+    ) {
         boolean changed = false;
         for (var key : source.getKeys(false)) {
             var path = prefix.isEmpty() ? key : prefix + "." + key;
@@ -317,7 +392,6 @@ final class CiaExtensionRuntimeContext implements ICiaExtensionContext {
         }
         return changed;
     }
-
 
     ExtensionRegistrationSnapshot snapshot() {
         return new ExtensionRegistrationSnapshot(

@@ -3,11 +3,11 @@ package top.ourisland.creepersiarena.core.game.arena;
 import org.bukkit.Location;
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.config.IArenaConfigView;
+import top.ourisland.creepersiarena.api.game.arena.ArenaId;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.region.Bounds2D;
 import top.ourisland.creepersiarena.api.region.Region2D;
-import top.ourisland.creepersiarena.core.game.arena.SpawnpointSelector;
 
 import java.util.List;
 import java.util.Map;
@@ -30,9 +30,9 @@ class SpawnpointSelectorTest {
         assertNull(selector.pickRandom(List.of()));
 
         var arena = new ArenaInstance(
-                "arena",
+                ArenaId.parse("arena"),
                 "arena.name",
-                GameModeType.of("battle"),
+                GameModeId.parse("cia:battle"),
                 new Location(null, 0, 64, 0),
                 new Region2D(world(), Bounds2D.of(0, 0, 10, 10)),
                 List.of(),

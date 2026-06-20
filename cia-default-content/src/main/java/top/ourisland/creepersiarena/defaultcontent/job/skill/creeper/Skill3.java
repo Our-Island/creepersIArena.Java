@@ -2,19 +2,20 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.creeper;
 
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Firework;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
@@ -22,7 +23,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.fireworks",
+        id = "cia:creeper/fireworks",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -61,13 +62,16 @@ public class Skill3 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var cfg = ctx.skillConfig();
-            int flight = Math.max(0, cfg.getInt(id(), "flight", FLIGHT));
-            int rideTicks = Math.max(1, cfg.getInt(id(), "ride-ticks", RIDE_TICKS));
-            double forward = cfg.getDouble(id(), "forward", FORWARD);
-            double up = cfg.getDouble(id(), "up", UP);
-            int slowFallingTicks = Math.max(0, cfg.getInt(id(), "slow-falling-ticks", 20));
-            double spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
-            double spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
+            var flight = nonNegative(cfg.getInt(id(), "flight", FLIGHT), "flight");
+            var rideTicks = positive(cfg.getInt(id(), "ride-ticks", RIDE_TICKS), "ride-ticks");
+            var forward = cfg.getDouble(id(), "forward", FORWARD);
+            var up = cfg.getDouble(id(), "up", UP);
+            var slowFallingTicks = nonNegative(
+                    cfg.getInt(id(), "slow-falling-ticks", 20),
+                    "slow-falling-ticks"
+            );
+            var spawnForward = cfg.getDouble(id(), "spawn-forward", 0.8);
+            var spawnUp = cfg.getDouble(id(), "spawn-up", 0.2);
 
             p.addPotionEffect(new PotionEffect(
                     PotionEffectType.SLOW_FALLING,
@@ -78,8 +82,8 @@ public class Skill3 implements ISkillDefinition {
                     false
             ));
             var w = p.getWorld();
-            Vector dir = p.getLocation().getDirection().normalize();
-            Location spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
+            var dir = p.getLocation().getDirection().normalize();
+            var spawn = p.getLocation().add(dir.clone().multiply(spawnForward)).add(0, spawnUp, 0);
             var fw = w.spawn(spawn, Firework.class, f -> {
                 var m = f.getFireworkMeta();
                 m.clearEffects();
@@ -127,6 +131,16 @@ public class Skill3 implements ISkillDefinition {
         };
     }
 
+    private static int nonNegative(int value, String key) {
+        if (value >= 0) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be >= 0, got " + value);
+    }
+
+    private static int positive(int value, String key) {
+        if (value > 0) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be positive, got " + value);
+    }
+
     private static FireworkEffect buildEffect() {
         return FireworkEffect.builder()
                 .with(FireworkEffect.Type.CREEPER)
@@ -143,6 +157,10 @@ public class Skill3 implements ISkillDefinition {
                 .trail(false)
                 .flicker(false)
                 .build();
+    }
+
+    private static String idPath(String key) {
+        return "skills." + CiaConfigPaths.section(DefaultSkillIds.CREEPER_FIREWORKS) + "." + key;
     }
 
 }

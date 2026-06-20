@@ -1,52 +1,31 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model;
 
+import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
-
-import java.util.Locale;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 
 public enum StealTeam {
 
-    RED("red", 1, NamedTextColor.RED),
-    BLUE("blue", 2, NamedTextColor.BLUE);
+    RED(TeamId.parse("red"), NamedTextColor.RED),
+    BLUE(TeamId.parse("blue"), NamedTextColor.BLUE);
 
-    private final String key;
-    private final int numericId;
-    private final NamedTextColor color;
+    @Getter private final TeamId id;
+    @Getter private final NamedTextColor color;
 
-    StealTeam(String key, int numericId, NamedTextColor color) {
-        this.key = key;
-        this.numericId = numericId;
+    StealTeam(TeamId id, NamedTextColor color) {
+        this.id = id;
         this.color = color;
     }
 
-    public static StealTeam fromNumericId(Integer id) {
+    public static StealTeam fromId(TeamId id) {
         if (id == null) return null;
-        return switch (id) {
-            case 1 -> RED;
-            case 2 -> BLUE;
-            default -> null;
-        };
-    }
-
-    public static StealTeam fromKey(String key) {
-        if (key == null || key.isBlank()) return null;
-        return switch (key.trim().toLowerCase(Locale.ROOT)) {
-            case "red", "r", "1" -> RED;
-            case "blue", "b", "2" -> BLUE;
-            default -> null;
-        };
+        if (RED.id.equals(id)) return RED;
+        if (BLUE.id.equals(id)) return BLUE;
+        return null;
     }
 
     public String key() {
-        return key;
-    }
-
-    public int numericId() {
-        return numericId;
-    }
-
-    public NamedTextColor color() {
-        return color;
+        return id.value();
     }
 
     public String displayNameZh() {

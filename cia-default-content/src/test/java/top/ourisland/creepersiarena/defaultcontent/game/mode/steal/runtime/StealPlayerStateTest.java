@@ -1,7 +1,9 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIdentityTestSupport;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
 
 import java.util.UUID;
@@ -10,6 +12,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static top.ourisland.creepersiarena.api.testsupport.TestBukkit.player;
 
 class StealPlayerStateTest {
+
+    @BeforeAll
+    static void installRuntimeIdentity() {
+        DefaultContentIdentityTestSupport.install();
+    }
 
     @Test
     void storesStealFlagsInGenericPlayerModeData() {
@@ -29,20 +36,18 @@ class StealPlayerStateTest {
     }
 
     @Test
-    void storesSemanticTeamAndKeepsLegacyNumericSelectionInSync() {
+    void storesOneCanonicalLocalTeamId() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
         StealPlayerState.team(session, StealTeam.BLUE);
 
         assertEquals(StealTeam.BLUE, StealPlayerState.team(session));
-        assertEquals(Integer.valueOf(2), session.selectedTeam());
-        assertEquals("blue", session.selectedTeamKey());
+        assertEquals(StealTeam.BLUE.id(), session.selectedTeam());
 
         StealPlayerState.clear(session);
 
         assertNull(StealPlayerState.team(session));
         assertNull(session.selectedTeam());
-        assertNull(session.selectedTeamKey());
     }
 
 }

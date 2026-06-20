@@ -2,19 +2,17 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.wolong;
 
 import org.bukkit.Material;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
-import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.api.skill.ISkillIcon;
-import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:wolong.empty_fort",
+        id = "cia:wolong/empty_fort",
         job = "cia:wolong",
         type = SkillType.PASSIVE,
         slot = 8,
@@ -22,10 +20,10 @@ import java.util.List;
 )
 public class Skill4 implements ISkillDefinition {
 
-    private static final List<String> TARGETS = List.of(
-            "cia:wolong.fan_dash",
-            "cia:wolong.sky_lantern",
-            "cia:wolong.repeating_crossbow"
+    private static final List<SkillId> TARGETS = List.of(
+            DefaultSkillIds.WOLONG_FAN_DASH,
+            DefaultSkillIds.WOLONG_SKY_LANTERN,
+            DefaultSkillIds.WOLONG_REPEATING_CROSSBOW
     );
 
     @Override
@@ -56,7 +54,7 @@ public class Skill4 implements ISkillDefinition {
                     .allMatch(id -> store.isCoolingDown(p.getUniqueId(), id, now));
 
             if (!allCooling) throw SkillActivationRejectedException.reject();
-            for (String id : TARGETS) {
+            for (var id : TARGETS) {
                 long end = store.cooldownEndsAtTick(p.getUniqueId(), id);
                 store.cooldownEndsAtTick(p.getUniqueId(), id, Math.max(now, end - 80L));
             }

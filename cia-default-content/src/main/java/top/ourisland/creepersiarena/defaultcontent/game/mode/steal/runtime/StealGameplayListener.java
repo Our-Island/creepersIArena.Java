@@ -23,12 +23,12 @@ import org.bukkit.projectiles.ProjectileSource;
 import org.jspecify.annotations.Nullable;
 import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.death.ArenaPlayerDeathResolvedEvent;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
 import top.ourisland.creepersiarena.core.game.GameManager;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 
 public final class StealGameplayListener implements Listener {
 
@@ -75,7 +75,7 @@ public final class StealGameplayListener implements Listener {
 
     private ActiveSteal activeSteal() {
         var session = gameManager.active();
-        if (session == null || !session.mode().equals(GameModeType.of("steal"))) return null;
+        if (session == null || !session.mode().equals(DefaultModeIds.STEAL)) return null;
         if (!(gameManager.timeline() instanceof StealTimeline timeline)) return null;
         return new ActiveSteal(session, timeline, timeline.state());
     }

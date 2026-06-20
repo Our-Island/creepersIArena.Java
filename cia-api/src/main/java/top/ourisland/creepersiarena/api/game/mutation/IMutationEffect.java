@@ -3,6 +3,7 @@ package top.ourisland.creepersiarena.api.game.mutation;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 
 /**
  * Pluggable mutation effect. Core owns selection and lifetime; each effect owns its config and side effects.
@@ -13,10 +14,10 @@ public interface IMutationEffect {
      * Configuration key under game.abilities.core.mutation.settings.effects.
      */
     default String configKey() {
-        return type().id().replace('_', '-');
+        return CiaConfigPaths.section(type());
     }
 
-    MutationType type();
+    MutationId type();
 
     void reload(ConfigurationSection effectSection, Logger logger);
 

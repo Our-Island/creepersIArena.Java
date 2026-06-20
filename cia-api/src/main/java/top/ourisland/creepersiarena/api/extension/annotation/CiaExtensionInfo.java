@@ -25,6 +25,13 @@ public @interface CiaExtensionInfo {
     String id();
 
     /**
+     * Exclusive namespace owned by this extension for globally registered content.
+     *
+     * @return content namespace using {@code [a-z0-9_-]}
+     */
+    String namespace();
+
+    /**
      * Human-readable extension name.
      *
      * @return display name

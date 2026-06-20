@@ -13,6 +13,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
+import top.ourisland.creepersiarena.api.skill.SkillId;
 import top.ourisland.creepersiarena.api.skill.event.SkillContext;
 import top.ourisland.creepersiarena.api.skill.event.impl.InteractEvent;
 import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRuntime;
@@ -57,7 +58,7 @@ public final class SkillUiListener implements Listener {
         var item = e.getItem();
         if (item == null) return;
 
-        String skillId = codec.readSkillId(item);
+        var skillId = codec.readSkillId(item);
         if (skillId == null) return;
 
         if (!runtime.isRuntimeEnabled(p, "skill_interact")) return;

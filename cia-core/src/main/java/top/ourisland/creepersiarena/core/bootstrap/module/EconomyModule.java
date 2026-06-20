@@ -6,14 +6,15 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.ICurrencyRegistry;
 import top.ourisland.creepersiarena.api.economy.IWalletService;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.economy.CurrencyRegistry;
 import top.ourisland.creepersiarena.core.economy.WalletService;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.player.PlayerDataService;
 
 @CiaBootstrapModule(name = "economy", order = 670)
@@ -27,7 +28,7 @@ public final class EconomyModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            var registry = new CurrencyRegistry(rt.log());
+            var registry = new CurrencyRegistry(rt.log(), rt.requireService(NamespaceRegistry.class));
             var wallet = new WalletService(
                     rt.log(),
                     rt.requireService(JdbcDatabaseService.class),
@@ -40,7 +41,7 @@ public final class EconomyModule implements IBootstrapModule {
             rt.putService(WalletService.class, wallet);
             rt.putService(IWalletService.class, wallet);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegisteredComponent.CORE_OWNER,
+                    RegistrationOwnerAuthority.core(),
                     new SimpleAbility(CoreAbilities.CURRENCY)
             );
         }, "Loading economy runtime...", "Economy runtime loaded.");

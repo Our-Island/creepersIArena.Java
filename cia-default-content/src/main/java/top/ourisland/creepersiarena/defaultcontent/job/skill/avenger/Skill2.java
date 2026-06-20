@@ -16,7 +16,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:avenger.revenge_grasp",
+        id = "cia:avenger/revenge_grasp",
         job = "cia:avenger",
         type = SkillType.PASSIVE,
         slot = 8
@@ -40,8 +40,8 @@ public class Skill2 implements ISkillDefinition {
         return (ctx, _) -> {
             var p = ctx.player();
             var armorKey = BuiltinKeys.key("avenger_armor_until");
-            boolean revenge = p.getHealth() <= 10.0;
-            boolean rageArmor = EntityStateUtils.isTimedActive(p.getPersistentDataContainer(), armorKey);
+            var revenge = p.getHealth() <= 10.0;
+            var rageArmor = EntityStateUtils.isTimedActive(p.getPersistentDataContainer(), armorKey);
 
             p.getInventory().setItem(0, AvengerJob.buildWeapon(revenge));
             p.getInventory().setHelmet(AvengerJob.buildHelmet(revenge));

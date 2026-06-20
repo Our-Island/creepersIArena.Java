@@ -28,12 +28,12 @@ class MetadataAnnotationTest {
         var mode = ModeMetadata.of(TestMode.class);
         var skill = SkillMetadata.of(TestSkill.class);
 
-        assertEquals("custom:job", job.id().id());
+        assertEquals("custom:job", job.id().asString());
         assertFalse(job.enabledByDefault());
-        assertEquals("custom:mode", mode.id().id());
+        assertEquals("custom:mode", mode.id().asString());
         assertFalse(mode.enabledByDefault());
-        assertEquals("custom:job.primary", skill.id());
-        assertEquals("custom:job", skill.job().id());
+        assertEquals("custom:job/primary", skill.id().asString());
+        assertEquals("custom:job", skill.job().asString());
         assertEquals(SkillType.ACTIVE, skill.type());
         assertEquals(3, skill.slot());
         assertEquals(12, skill.defaultCooldown());
@@ -99,7 +99,7 @@ class MetadataAnnotationTest {
     }
 
     @CiaSkillDef(
-            id = "custom:job.primary",
+            id = "custom:job/primary",
             job = "custom:job",
             type = SkillType.ACTIVE,
             slot = 3,

@@ -1,11 +1,25 @@
 package top.ourisland.creepersiarena.api.game.death;
 
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+
 public interface IDeathResolutionRegistry {
 
-    void registerResolver(String ownerId, IDeathCauseResolver resolver);
+    void registerResolver(
+            RegistrationOwner owner,
+            DeathResolverId id,
+            IDeathCauseResolver resolver
+    );
 
-    void registerMessageProvider(String ownerId, IDeathMessageProvider provider);
+    void registerMessageProvider(
+            RegistrationOwner owner,
+            DeathMessageProviderId id,
+            IDeathMessageProvider provider
+    );
 
-    void registerCleanupParticipant(String ownerId, IDeathCleanupParticipant participant);
+    void registerCleanupParticipant(
+            RegistrationOwner owner,
+            DeathCleanupParticipantId id,
+            IDeathCleanupParticipant participant
+    );
 
 }

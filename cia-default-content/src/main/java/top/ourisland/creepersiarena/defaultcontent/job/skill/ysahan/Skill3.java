@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:ysahan.it_was_me",
+        id = "cia:ysahan/it_was_me",
         job = "cia:ysahan",
         type = SkillType.PASSIVE,
         slot = 8

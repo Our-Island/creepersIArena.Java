@@ -8,26 +8,22 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.projectiles.ProjectileSource;
 import top.ourisland.creepersiarena.api.game.death.DeathAttribution;
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
 import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
-import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
+import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.api.skill.SkillId;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultJobIds;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 
 public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
-
-    private static final String JOB_AVENGER = "cia:avenger";
-    private static final String JOB_CREEPER = "cia:creeper";
-    private static final String JOB_MOISON = "cia:moison";
-    private static final String JOB_WOLONG = "cia:wolong";
-    private static final String SKILL_MOISON_VOLLEY = "cia:moison.volley";
 
     private final PlayerSessionStore sessions;
     private final LongSupplier currentTickSupplier;
@@ -45,7 +41,7 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
             EntityDamageEvent event,
             Player victim
     ) {
-        Optional<DeathAttribution> nextDamage = BuiltinDamageAttributionMarker.consumeNextDamage(victim)
+        var nextDamage = BuiltinDamageAttributionMarker.consumeNextDamage(victim)
                 .filter(marked -> isDefaultContentCause(marked.causeId()))
                 .map(marked -> attribution(
                         marked.causeId(),
@@ -76,9 +72,9 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
     }
 
     private boolean isDefaultContentCause(DeathCauseId causeId) {
-        if (causeId == null || !DeathCauseId.DEFAULT_NAMESPACE.equals(causeId.namespace())) return false;
+        if (causeId == null || !DefaultContentIds.NAMESPACE.equals(causeId.namespace())) return false;
 
-        String value = causeId.value();
+        var value = causeId.path().value();
         return value.startsWith("skill/creeper/")
                 || value.startsWith("skill/moison/")
                 || value.startsWith("skill/avenger/")
@@ -111,8 +107,8 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
         if (attackerSession.state() != PlayerState.IN_GAME || victimSession.state() != PlayerState.IN_GAME)
             return false;
 
-        Integer attackerTeam = attackerSession.selectedTeam();
-        Integer victimTeam = victimSession.selectedTeam();
+        var attackerTeam = attackerSession.selectedTeam();
+        var victimTeam = victimSession.selectedTeam();
         return attackerTeam != null && attackerTeam.equals(victimTeam);
     }
 
@@ -122,7 +118,8 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
     ) {
         var damager = event.getDamager();
 
-        if (damager instanceof Player attacker && selectedJobId(attacker).filter(JOB_AVENGER::equals).isPresent()) {
+        if (damager instanceof Player attacker && selectedJobId(attacker).filter(DefaultJobIds.AVENGER::equals)
+                .isPresent()) {
             return Optional.of(attribution(
                     directAvengerCauseFor(attacker),
                     attacker.getUniqueId(),
@@ -132,7 +129,7 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
             ));
         }
 
-        Optional<DeathAttribution> marked = BuiltinDamageAttributionMarker.readEntitySource(damager)
+        var marked = BuiltinDamageAttributionMarker.readEntitySource(damager)
                 .filter(source -> isDefaultContentCause(source.causeId()))
                 .map(source -> attribution(
                         adjustCauseForVictim(source.causeId(), source.ownerId(), victim),
@@ -143,9 +140,6 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
                 ));
         if (marked.isPresent()) return marked;
 
-        Optional<DeathAttribution> moisonLegacy = resolveMoisonLegacy(event, victim);
-        if (moisonLegacy.isPresent()) return moisonLegacy;
-
         return switch (damager) {
             case Firework firework -> resolveFirework(firework, victim, event.getCause());
             case Projectile projectile -> resolveProjectile(projectile, victim, event.getCause());
@@ -153,7 +147,7 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
                     DefaultContentDeathCauses.golemFangs(),
                     owner.getUniqueId(),
                     victim,
-                    "cia:golem.rift_fangs",
+                    DefaultSkillIds.GOLEM_RIFT_FANGS,
                     event.getCause()
             ));
             default -> Optional.empty();
@@ -166,7 +160,7 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
             EntityDamageEvent.DamageCause damageCause
     ) {
         if (!(firework.getShooter() instanceof Player shooter)) return Optional.empty();
-        if (selectedJobId(shooter).filter(JOB_CREEPER::equals).isEmpty()) return Optional.empty();
+        if (selectedJobId(shooter).filter(DefaultJobIds.CREEPER::equals).isEmpty()) return Optional.empty();
 
         return Optional.of(attribution(
                 DefaultContentDeathCauses.creeperFireworkCrossbow(),
@@ -182,14 +176,18 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
             Player victim,
             EntityDamageEvent.DamageCause damageCause
     ) {
-        ProjectileSource shooter = projectile.getShooter();
+        var shooter = projectile.getShooter();
         if (!(shooter instanceof Player owner)) return Optional.empty();
 
-        Optional<DeathCauseId> causeId = selectedJobId(owner)
-                .flatMap(jobId -> switch (jobId) {
-                    case JOB_MOISON -> Optional.of(DefaultContentDeathCauses.moisonArrow1());
-                    case JOB_WOLONG -> Optional.of(DefaultContentDeathCauses.wolongArrow());
-                    default -> Optional.empty();
+        var causeId = selectedJobId(owner)
+                .flatMap(jobId -> {
+                    if (DefaultJobIds.MOISON.equals(jobId)) {
+                        return Optional.of(DefaultContentDeathCauses.moisonArrow1());
+                    }
+                    if (DefaultJobIds.WOLONG.equals(jobId)) {
+                        return Optional.of(DefaultContentDeathCauses.wolongArrow());
+                    }
+                    return Optional.empty();
                 });
 
         return causeId.map(deathCauseId -> attribution(
@@ -201,33 +199,11 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
         ));
     }
 
-    private Optional<DeathAttribution> resolveMoisonLegacy(
-            EntityDamageByEntityEvent event,
-            Player victim
-    ) {
-        var container = event.getDamager().getPersistentDataContainer();
-        String ownerRaw = container.get(BuiltinKeys.key("moison_owner"), PersistentDataType.STRING);
-        String sourceId = container.get(BuiltinKeys.key("moison_source"), PersistentDataType.STRING);
-        if (ownerRaw == null && sourceId == null) return Optional.empty();
-
-        var ownerId = ownerRaw == null ? null : parseUuid(ownerRaw).orElse(null);
-        if (ownerId == null && sourceId != null && event.getDamager() instanceof Projectile projectile
-                && projectile.getShooter() instanceof Player owner) {
-            ownerId = owner.getUniqueId();
-        }
-        if (ownerId == null) return Optional.empty();
-
-        DeathCauseId causeId = SKILL_MOISON_VOLLEY.equals(sourceId)
-                ? DefaultContentDeathCauses.moisonArrow2()
-                : DefaultContentDeathCauses.moisonArrow1();
-        return Optional.of(attribution(causeId, ownerId, victim, sourceId, event.getCause()));
-    }
-
     private DeathAttribution attribution(
             DeathCauseId causeId,
             UUID attackerId,
             Player victim,
-            String sourceSkillId,
+            SkillId sourceSkillId,
             EntityDamageEvent.DamageCause damageCause
     ) {
         return new DeathAttribution(
@@ -248,18 +224,10 @@ public final class BuiltinDeathCauseResolver implements IDeathCauseResolver {
                 : DefaultContentDeathCauses.avengerNormalHit();
     }
 
-    private Optional<String> selectedJobId(Player player) {
+    private Optional<JobId> selectedJobId(Player player) {
         var session = sessions.get(player);
         if (session == null || session.selectedJob() == null) return Optional.empty();
-        return Optional.of(session.selectedJob().id());
-    }
-
-    private Optional<UUID> parseUuid(String raw) {
-        try {
-            return Optional.of(UUID.fromString(raw));
-        } catch (IllegalArgumentException ignored) {
-            return Optional.empty();
-        }
+        return Optional.of(session.selectedJob());
     }
 
 }

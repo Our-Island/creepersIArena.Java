@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.game.death;
 
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentIds;
 
 public final class DefaultContentDeathCauses {
 
@@ -8,59 +9,63 @@ public final class DefaultContentDeathCauses {
     }
 
     public static DeathCauseId creeperFireworkCrossbow() {
-        return DeathCauseId.skill("creeper", "firework_crossbow");
+        return skill("creeper", "firework_crossbow");
+    }
+
+    private static DeathCauseId skill(String jobPath, String causePath) {
+        return DeathCauseId.of(DefaultContentIds.NAMESPACE, "skill/" + jobPath + "/" + causePath);
     }
 
     public static DeathCauseId creeperFireworkMount() {
-        return DeathCauseId.skill("creeper", "firework_mount");
+        return skill("creeper", "firework_mount");
     }
 
     public static DeathCauseId moisonArrow1() {
-        return DeathCauseId.skill("moison", "arrow_1");
+        return skill("moison", "arrow_1");
     }
 
     public static DeathCauseId moisonArrow2() {
-        return DeathCauseId.skill("moison", "arrow_2");
+        return skill("moison", "arrow_2");
     }
 
     public static DeathCauseId avengerNormalHit() {
-        return DeathCauseId.skill("avenger", "normal_hit");
+        return skill("avenger", "normal_hit");
     }
 
     public static DeathCauseId avengerStrongHit() {
-        return DeathCauseId.skill("avenger", "strong_hit");
+        return skill("avenger", "strong_hit");
     }
 
     public static DeathCauseId bloodlineSkill1() {
-        return DeathCauseId.skill("bloodline", "skill_1");
+        return skill("bloodline", "skill_1");
     }
 
     public static DeathCauseId bloodlineSkill2() {
-        return DeathCauseId.skill("bloodline", "skill_2");
+        return skill("bloodline", "skill_2");
     }
 
     public static DeathCauseId golemSkill1() {
-        return DeathCauseId.skill("golem", "skill_1");
+        return skill("golem", "skill_1");
     }
 
     public static DeathCauseId golemFangs() {
-        return DeathCauseId.skill("golem", "fangs");
+        return skill("golem", "fangs");
     }
 
     public static DeathCauseId wolongFan() {
-        return DeathCauseId.skill("wolong", "fan");
+        return skill("wolong", "fan");
     }
 
     public static DeathCauseId wolongArrow() {
-        return DeathCauseId.skill("wolong", "arrow");
+        return skill("wolong", "arrow");
     }
 
     public static DeathCauseId ysahanRod() {
-        return DeathCauseId.skill("ysahan", "rod");
+        return skill("ysahan", "rod");
     }
 
     public static DeathCauseId ysahanFishExplosion() {
-        return DeathCauseId.skill("ysahan", "fish_explosion");
+        return skill("ysahan", "fish_explosion");
     }
 
     public static boolean isCreeperExplosion(DeathCauseId causeId) {
@@ -70,15 +75,15 @@ public final class DefaultContentDeathCauses {
     }
 
     public static DeathCauseId creeperExplosionEnemy() {
-        return DeathCauseId.skill("creeper", "explosion_enemy");
+        return skill("creeper", "explosion_enemy");
     }
 
     public static DeathCauseId creeperExplosionFriendly() {
-        return DeathCauseId.skill("creeper", "explosion_friendly");
+        return skill("creeper", "explosion_friendly");
     }
 
     public static DeathCauseId creeperExplosionSelf() {
-        return DeathCauseId.skill("creeper", "explosion_self");
+        return skill("creeper", "explosion_self");
     }
 
 }

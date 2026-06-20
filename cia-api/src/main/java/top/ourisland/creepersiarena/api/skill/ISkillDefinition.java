@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.api.skill;
 
+import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.api.metadata.SkillMetadata;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 
@@ -60,12 +61,12 @@ public interface ISkillDefinition {
      * Returns the stable runtime id of this skill.
      * <p>
      * The value comes from the attached {@code @CiaSkillDef} metadata and must be globally unique inside the runtime
-     * catalog. Built-in skills use ids such as {@code cia:creeper.crossbow}; extension skills are expected to use their
+     * catalog. Built-in skills use ids such as {@code cia:creeper/crossbow}; extension skills are expected to use their
      * own namespace to avoid collisions.
      *
      * @return namespaced skill id resolved from {@link SkillMetadata}
      */
-    default String id() {
+    default SkillId id() {
         return SkillMetadata.of(getClass()).id();
     }
 
@@ -77,8 +78,8 @@ public interface ISkillDefinition {
      *
      * @return namespaced owning job id resolved from {@link SkillMetadata}
      */
-    default String jobId() {
-        return SkillMetadata.of(getClass()).job().id();
+    default JobId jobId() {
+        return SkillMetadata.of(getClass()).job();
     }
 
     /**

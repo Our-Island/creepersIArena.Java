@@ -1,72 +1,74 @@
 package top.ourisland.creepersiarena.core.game.death;
 
-import top.ourisland.creepersiarena.api.game.death.IDeathCauseResolver;
-import top.ourisland.creepersiarena.api.game.death.IDeathCleanupParticipant;
-import top.ourisland.creepersiarena.api.game.death.IDeathMessageProvider;
-import top.ourisland.creepersiarena.api.game.death.IDeathResolutionRegistry;
+import top.ourisland.creepersiarena.api.game.death.*;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
+import top.ourisland.creepersiarena.core.identity.OwnedRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public final class DeathResolutionRegistry implements IDeathResolutionRegistry {
 
-    private final List<RegisteredDeathComponent<IDeathCauseResolver>> resolvers = new ArrayList<>();
-    private final List<RegisteredDeathComponent<IDeathMessageProvider>> messageProviders = new ArrayList<>();
-    private final List<RegisteredDeathComponent<IDeathCleanupParticipant>> cleanupParticipants = new ArrayList<>();
+    private final OwnedRegistry<DeathResolverId, IDeathCauseResolver> resolvers;
+    private final OwnedRegistry<DeathMessageProviderId, IDeathMessageProvider> messageProviders;
+    private final OwnedRegistry<DeathCleanupParticipantId, IDeathCleanupParticipant> cleanupParticipants;
 
-    @Override
-    public void registerResolver(String ownerId, IDeathCauseResolver resolver) {
-        resolvers.add(new RegisteredDeathComponent<>(
-                normalizeOwner(ownerId),
-                Objects.requireNonNull(resolver, "resolver")
-        ));
+    public DeathResolutionRegistry(@lombok.NonNull NamespaceRegistry namespaces) {
+        this.resolvers = new OwnedRegistry<>(namespaces);
+        this.messageProviders = new OwnedRegistry<>(namespaces);
+        this.cleanupParticipants = new OwnedRegistry<>(namespaces);
     }
 
     @Override
-    public void registerMessageProvider(String ownerId, IDeathMessageProvider provider) {
-        messageProviders.add(new RegisteredDeathComponent<>(
-                normalizeOwner(ownerId),
-                Objects.requireNonNull(provider, "provider")
-        ));
+    public void registerResolver(
+            RegistrationOwner owner,
+            DeathResolverId id,
+            @lombok.NonNull IDeathCauseResolver resolver
+    ) {
+        resolvers.register(owner, id, resolver);
     }
 
     @Override
-    public void registerCleanupParticipant(String ownerId, IDeathCleanupParticipant participant) {
-        cleanupParticipants.add(new RegisteredDeathComponent<>(
-                normalizeOwner(ownerId),
-                Objects.requireNonNull(participant, "participant")
-        ));
+    public void registerMessageProvider(
+            RegistrationOwner owner,
+            DeathMessageProviderId id,
+            @lombok.NonNull IDeathMessageProvider provider
+    ) {
+        messageProviders.register(owner, id, provider);
     }
 
-    private String normalizeOwner(String ownerId) {
-        if (ownerId == null || ownerId.isBlank()) return "unknown";
-        return ownerId.trim();
+    @Override
+    public void registerCleanupParticipant(
+            RegistrationOwner owner,
+            DeathCleanupParticipantId id,
+            @lombok.NonNull IDeathCleanupParticipant participant
+    ) {
+        cleanupParticipants.register(owner, id, participant);
     }
 
-    public List<RegisteredDeathComponent<IDeathCauseResolver>> resolvers() {
-        return List.copyOf(resolvers);
+    public List<RegisteredComponent<DeathResolverId, IDeathCauseResolver>> resolvers() {
+        return resolvers.entries();
     }
 
-    public List<RegisteredDeathComponent<IDeathMessageProvider>> messageProviders() {
-        return List.copyOf(messageProviders);
+    public List<RegisteredComponent<DeathMessageProviderId, IDeathMessageProvider>> messageProviders() {
+        return messageProviders.entries();
     }
 
-    public List<RegisteredDeathComponent<IDeathCleanupParticipant>> cleanupParticipants() {
-        return List.copyOf(cleanupParticipants);
+    public List<RegisteredComponent<DeathCleanupParticipantId, IDeathCleanupParticipant>> cleanupParticipants() {
+        return cleanupParticipants.entries();
+    }
+
+    public void clearOwner(@lombok.NonNull RegistrationOwner owner) {
+        resolvers.clearOwner(owner);
+        messageProviders.clearOwner(owner);
+        cleanupParticipants.clearOwner(owner);
     }
 
     public void clear() {
         resolvers.clear();
         messageProviders.clear();
         cleanupParticipants.clear();
-    }
-
-    public record RegisteredDeathComponent<T>(
-            String ownerId,
-            T value
-    ) {
-
     }
 
 }

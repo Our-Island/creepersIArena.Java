@@ -14,20 +14,20 @@ class StealModeConfigTest {
     @Test
     void readsCanonicalStealConfigFromModeSection() {
         var yaml = new YamlConfiguration();
-        yaml.set("game.modes.steal.min-player-to-start", 4);
-        yaml.set("game.modes.steal.dynamic-ready-requirement", false);
-        yaml.set("game.modes.steal.start-countdown", 45);
-        yaml.set("game.modes.steal.spectator-tour-time", 12);
-        yaml.set("game.modes.steal.choose-job-time", 8);
-        yaml.set("game.modes.steal.total-round", 7);
-        yaml.set("game.modes.steal.time-per-round", 120);
-        yaml.set("game.modes.steal.target-mine-count", 5);
-        yaml.set("game.modes.steal.mine-cooldown-seconds", 2);
-        yaml.set("game.modes.steal.score-to-win", 2);
-        yaml.set("game.modes.steal.round-celebration-time", 4);
-        yaml.set("game.modes.steal.game-end-celebration-time", 9);
-        yaml.set("game.modes.steal.allow-lobby-job-selection", true);
-        yaml.set("game.modes.steal.allow-respawn-job-selection", true);
+        yaml.set("game.modes.cia.steal.min-player-to-start", 4);
+        yaml.set("game.modes.cia.steal.dynamic-ready-requirement", false);
+        yaml.set("game.modes.cia.steal.start-countdown", 45);
+        yaml.set("game.modes.cia.steal.spectator-tour-time", 12);
+        yaml.set("game.modes.cia.steal.choose-job-time", 8);
+        yaml.set("game.modes.cia.steal.total-round", 7);
+        yaml.set("game.modes.cia.steal.time-per-round", 120);
+        yaml.set("game.modes.cia.steal.target-mine-count", 5);
+        yaml.set("game.modes.cia.steal.mine-cooldown-seconds", 2);
+        yaml.set("game.modes.cia.steal.score-to-win", 2);
+        yaml.set("game.modes.cia.steal.round-celebration-time", 4);
+        yaml.set("game.modes.cia.steal.game-end-celebration-time", 9);
+        yaml.set("game.modes.cia.steal.allow-lobby-job-selection", true);
+        yaml.set("game.modes.cia.steal.allow-respawn-job-selection", true);
 
         var config = StealModeConfig.from(fromYaml(yaml));
 
@@ -45,25 +45,6 @@ class StealModeConfigTest {
         assertEquals(9, config.gameEndCelebrationSeconds());
         assertTrue(config.allowLobbyJobSelection());
         assertTrue(config.allowRespawnJobSelection());
-    }
-
-    @Test
-    void clampsNumericValuesToAtLeastOneExceptCooldown() {
-        var yaml = new YamlConfiguration();
-        yaml.set("game.modes.steal.min-player-to-start", 0);
-        yaml.set("game.modes.steal.start-countdown", -10);
-        yaml.set("game.modes.steal.total-round", 0);
-        yaml.set("game.modes.steal.time-per-round", -5);
-        yaml.set("game.modes.steal.mine-cooldown-seconds", -1);
-
-        var config = StealModeConfig.from(fromYaml(yaml));
-
-        assertEquals(1, config.minPlayerToStart());
-        assertEquals(1, config.startCountdownSeconds());
-        assertEquals(1, config.totalRound());
-        assertEquals(1, config.timePerRoundSeconds());
-        assertEquals(0, config.mineCooldownSeconds());
-        assertEquals(2, config.requiredReadyPlayers(1));
     }
 
     @Test

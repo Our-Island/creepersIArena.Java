@@ -4,7 +4,8 @@ package top.ourisland.creepersiarena.api.game.death;
  * Standard death causes shared by core and extensions.
  * <p>
  * These ids describe baseline runtime causes that are not owned by any content pack. Custom jobs and skills should use
- * {@link DeathCauseId#skill(String, String)} or {@link DeathCauseId#custom(String, String)} instead of defining their
+ * {@link DeathCauseId#skill(top.ourisland.creepersiarena.api.skill.SkillId)} or
+ * {@link DeathCauseId#custom(top.ourisland.creepersiarena.api.identity.CiaNamespace, String)} instead of defining their
  * own parallel copy of these standard causes.
  */
 public final class StandardDeathCauses {

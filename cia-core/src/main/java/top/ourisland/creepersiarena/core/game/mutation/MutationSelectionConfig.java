@@ -10,14 +10,13 @@ public record MutationSelectionConfig(
 
     public MutationSelectionConfig {
         if (onlineRollMax < onlineRollMin) {
-            int tmp = onlineRollMin;
-            onlineRollMin = onlineRollMax;
-            onlineRollMax = tmp;
+            throw new IllegalArgumentException("online-roll-max must be >= online-roll-min");
         }
         if (offlineRollMax < offlineRollMin) {
-            int tmp = offlineRollMin;
-            offlineRollMin = offlineRollMax;
-            offlineRollMax = tmp;
+            throw new IllegalArgumentException("offline-roll-max must be >= offline-roll-min");
+        }
+        if (startMinInclusive < 0) {
+            throw new IllegalArgumentException("start-min-inclusive must be >= 0");
         }
     }
 

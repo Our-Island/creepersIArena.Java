@@ -1,7 +1,10 @@
 package top.ourisland.creepersiarena.api.game;
 
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,28 +13,19 @@ import java.util.UUID;
 
 public final class GameSession {
 
-    private final GameModeType mode;
+    @Getter private final GameModeId mode;
     private final Set<UUID> players = new HashSet<>();
-    private ArenaInstance arena;
+    @Getter @Setter private ArenaInstance arena;
 
-    public GameSession(GameModeType mode, ArenaInstance arena) {
+    public GameSession(
+            GameModeId mode,
+            ArenaInstance arena
+    ) {
         this.mode = mode;
         this.arena = arena;
     }
 
-    public GameModeType mode() {
-        return mode;
-    }
-
-    public ArenaInstance arena() {
-        return arena;
-    }
-
-    public void arena(ArenaInstance arena) {
-        this.arena = arena;
-    }
-
-    public Set<UUID> players() {
+    public @NonNull Set<UUID> players() {
         return Collections.unmodifiableSet(players);
     }
 

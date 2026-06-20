@@ -1,6 +1,10 @@
 package top.ourisland.creepersiarena.api.game.player;
 
 import org.junit.jupiter.api.Test;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.api.identity.TestRegistrationOwners;
 
 import java.util.UUID;
 
@@ -8,6 +12,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static top.ourisland.creepersiarena.api.testsupport.TestBukkit.player;
 
 class PlayerSessionTest {
+
+    private static final RegistrationOwner
+            CIA_OWNER = TestRegistrationOwners.issue("cia-test", "cia"),
+            OTHER_OWNER = TestRegistrationOwners.issue("other-test", "other");
+    private static final ExtensionSessionData CIA_DATA = new ExtensionSessionData(CIA_OWNER);
+    private static final SessionDataKey<Boolean>
+            READY = CIA_DATA.key("steal/ready", Boolean.class),
+            ALIVE = CIA_DATA.key("steal/alive", Boolean.class);
+    private static final ExtensionSessionData OTHER_DATA = new ExtensionSessionData(OTHER_OWNER);
+    private static final SessionDataKey<Integer>
+            OTHER_VALUE = OTHER_DATA.key("value", Integer.class);
 
     @Test
     void initializesFromPlayerUuid() {
@@ -18,36 +33,64 @@ class PlayerSessionTest {
         assertEquals(PlayerState.HUB, session.state());
     }
 
-
     @Test
-    void storesReadsAndClearsModeData() {
+    void storesReadsAndClearsOnlyOwnerData() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
-        session.modeData("cia.steal.ready", "true");
-        session.setModeBoolean("cia.steal.alive", false);
-        session.modeData("other.value", 42);
+        session.set(READY, true);
+        session.set(ALIVE, false);
+        session.set(OTHER_VALUE, 42);
 
-        assertTrue(session.modeBoolean("cia.steal.ready", false));
-        assertFalse(session.modeBoolean("cia.steal.alive", true));
-        assertEquals(42, session.modeData("other.value"));
+        assertTrue(session.getOrDefault(READY, false));
+        assertFalse(session.getOrDefault(ALIVE, true));
+        assertEquals(42, session.get(OTHER_VALUE));
 
-        session.clearModeData("cia.steal.");
+        CIA_DATA.clear(session);
 
-        assertNull(session.modeData("cia.steal.ready"));
-        assertNull(session.modeData("cia.steal.alive"));
-        assertEquals(42, session.modeData("other.value"));
+        assertNull(session.get(READY));
+        assertNull(session.get(ALIVE));
+        assertEquals(42, session.get(OTHER_VALUE));
     }
 
     @Test
-    void nullModeDataRemovesValueAndBlankKeysAreIgnored() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void nullRemovesAndTypeMismatchFailsFast() {
         var session = new PlayerSession(player(UUID.randomUUID()));
 
-        session.modeData("custom.flag", true);
-        session.modeData("custom.flag", null);
-        session.modeData(" ", true);
+        session.set(READY, true);
+        session.set(READY, null);
+        assertNull(session.get(READY));
 
-        assertNull(session.modeData("custom.flag"));
-        assertTrue(session.modeData().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> session.set((SessionDataKey) READY, "not-a-boolean"));
+    }
+
+    @Test
+    @SuppressWarnings("DataFlowIssue")
+    void separatelyIssuedOwnersAndScopesCannotCollideEvenWithTheSameTextualIdentity() {
+        var session = new PlayerSession(player(UUID.randomUUID()));
+        var forgedOwner = TestRegistrationOwners.issue("cia-test", "cia");
+        var forgedReady = new ExtensionSessionData(forgedOwner).key("steal/ready", Boolean.class);
+
+        session.set(READY, true);
+        session.set(forgedReady, false);
+
+        assertTrue(session.get(READY));
+        assertFalse(session.get(forgedReady));
+        CIA_DATA.clear(session);
+        assertNull(session.get(READY));
+        assertFalse(session.get(forgedReady));
+
+        var sameTextOwner = TestRegistrationOwners.issue("core", "core");
+        var forgedSameTextOwner = TestRegistrationOwners.issue("core", "core");
+        var coreScope = new ExtensionSessionData(sameTextOwner);
+        var forgedCoreScope = new ExtensionSessionData(forgedSameTextOwner);
+        var coreKey = coreScope.key("same", String.class);
+        var forgedCoreKey = forgedCoreScope.key("same", String.class);
+        session.set(coreKey, "core");
+        session.set(forgedCoreKey, "forged");
+        coreScope.clear(session);
+        assertNull(session.get(coreKey));
+        assertEquals("forged", session.get(forgedCoreKey));
     }
 
 }

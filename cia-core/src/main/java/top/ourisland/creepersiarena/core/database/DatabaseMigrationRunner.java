@@ -7,7 +7,6 @@ import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Locale;
 
 public final class DatabaseMigrationRunner {
 
@@ -32,7 +31,7 @@ public final class DatabaseMigrationRunner {
         database.runBlocking(() -> {
             try (var connection = database.connection()) {
                 ensureMigrationTable(connection);
-                for (IDatabaseMigration migration : registry.migrations()) {
+                for (var migration : registry.migrations()) {
                     runOne(connection, migration);
                 }
             }
@@ -48,12 +47,7 @@ public final class DatabaseMigrationRunner {
     }
 
     private void ensureMigrationTable(Connection connection) throws SQLException {
-        String table = database.names().schemaMigrations();
-
-        if (DatabaseSchemaUtils.tableExists(connection, table)
-                && !DatabaseSchemaUtils.columnExists(connection, table, "owner_id")) {
-            DatabaseSchemaUtils.dropTable(connection, table);
-        }
+        var table = database.names().schemaMigrations();
 
         DatabaseSchemaUtils.executeDdl(
                 connection,
@@ -72,8 +66,8 @@ public final class DatabaseMigrationRunner {
             Connection connection,
             IDatabaseMigration migration
     ) throws Exception {
-        String owner = normalize(migration.ownerId());
-        MigrationRecord record = find(connection, owner, migration.version());
+        var owner = migration.ownerId().value();
+        var record = find(connection, owner, migration.version());
 
         if (record != null) {
             if (config.validateMigrationChecksum() && !record.checksum().equals(migration.checksum())) {
@@ -83,7 +77,7 @@ public final class DatabaseMigrationRunner {
             return;
         }
 
-        boolean autoCommit = connection.getAutoCommit();
+        var autoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
 
         try {
@@ -97,16 +91,10 @@ public final class DatabaseMigrationRunner {
             } catch (SQLException rollback) {
                 e.addSuppressed(rollback);
             }
-            if (config.failOnMigrationError()) throw e;
-            logger.warn("[Database] Migration failed but fail-on-error=false: {}:{} {}", owner, migration.version(), e.getMessage(), e);
+            throw e;
         } finally {
             connection.setAutoCommit(autoCommit);
         }
-    }
-
-    private String normalize(String raw) {
-        if (raw == null || raw.isBlank()) return "unknown";
-        return raw.trim().toLowerCase(Locale.ROOT);
     }
 
     private MigrationRecord find(
@@ -114,7 +102,7 @@ public final class DatabaseMigrationRunner {
             String owner,
             int version
     ) throws SQLException {
-        String table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
+        var table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
 
         try (var st = connection.prepareStatement("SELECT checksum FROM " + table + " WHERE owner_id = ? AND version = ?")) {
             st.setString(1, owner);
@@ -132,7 +120,7 @@ public final class DatabaseMigrationRunner {
             String owner,
             IDatabaseMigration migration
     ) throws SQLException {
-        String table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
+        var table = DatabaseSchemaUtils.identifier(database.names().schemaMigrations());
 
         try (var st = connection.prepareStatement("INSERT INTO " + table + " (owner_id, version, name, checksum, applied_at) VALUES (?, ?, ?, ?, ?)")) {
             st.setString(1, owner);

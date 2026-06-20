@@ -1,74 +1,35 @@
 package top.ourisland.creepersiarena.api.economy.cosmetic;
 
-import org.bukkit.NamespacedKey;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.identity.CiaKey;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.CiaResourceId;
 
-import java.util.Locale;
-
+/**
+ * Domain-specific globally namespaced resource identifier.
+ */
 public record CosmeticId(
-        String namespace,
-        String value
-) {
+        @lombok.NonNull CiaKey key
+) implements CiaResourceId {
 
-    public CosmeticId {
-        namespace = normalizeNamespace(namespace);
-        value = normalizeValue(value);
-        if (namespace.isBlank()) throw new IllegalArgumentException("cosmetic namespace is blank");
-        if (value.isBlank()) throw new IllegalArgumentException("cosmetic value is blank");
+    public static @NonNull CosmeticId parse(String raw) {
+        return new CosmeticId(CiaKey.parse(raw));
     }
 
-    private static @NonNull String normalizeNamespace(@Nullable String raw) {
-        return raw == null
-                ? ""
-                : raw.trim().toLowerCase(Locale.ROOT)
-                        .replace(' ', '-')
-                        .replace('_', '-');
-    }
-
-    private static @NonNull String normalizeValue(@Nullable String raw) {
-        return raw == null
-                ? ""
-                : raw.trim().toLowerCase(Locale.ROOT)
-                        .replace('-', '_')
-                        .replace(' ', '_');
-    }
-
-    public static @NonNull CosmeticId of(@NonNull String raw) {
-        String text = raw.trim();
-        int colon = text.indexOf(':');
-        if (colon >= 0) {
-            return new CosmeticId(text.substring(0, colon), text.substring(colon + 1));
-        }
-        return new CosmeticId("core", text);
+    public static @NonNull CosmeticId of(CiaKey key) {
+        return new CosmeticId(key);
     }
 
     public static @NonNull CosmeticId of(
-            @NonNull String namespace,
-            @NonNull String value
+            CiaNamespace namespace,
+            String path
     ) {
-        return new CosmeticId(namespace, value);
-    }
-
-    public static @NonNull CosmeticId of(@NonNull NamespacedKey key) {
-        return new CosmeticId(key.getNamespace(), key.getKey());
-    }
-
-    public @NonNull String configNamespace() {
-        return namespace;
-    }
-
-    public @NonNull String configValue() {
-        return value.replace('_', '-');
+        return new CosmeticId(CiaKey.of(namespace, path));
     }
 
     @Override
     public @NonNull String toString() {
         return asString();
-    }
-
-    public @NonNull String asString() {
-        return namespace + ":" + value;
     }
 
 }

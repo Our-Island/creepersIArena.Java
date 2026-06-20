@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.battle;
 import lombok.Getter;
 import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.game.flow.action.GameAction;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.IModeTimeline;
 import top.ourisland.creepersiarena.api.game.mode.context.TickContext;
 import top.ourisland.creepersiarena.defaultcontent.DefaultContentAbilities;
@@ -28,7 +28,7 @@ public final class BattleTimeline implements IModeTimeline {
     }
 
     @Override
-    public GameModeType type() {
+    public GameModeId type() {
         return BattleState.TYPE;
     }
 
@@ -53,7 +53,7 @@ public final class BattleTimeline implements IModeTimeline {
         state.rotationPending(true);
         bossBars.hide();
 
-        Set<UUID> players = Set.copyOf(state.players());
+        var players = Set.copyOf(state.players());
         var actions = new ArrayList<GameAction>();
         actions.add(new GameAction.Broadcast(state.mapFinishedMessage()));
         actions.add(new GameAction.ToHub(players));

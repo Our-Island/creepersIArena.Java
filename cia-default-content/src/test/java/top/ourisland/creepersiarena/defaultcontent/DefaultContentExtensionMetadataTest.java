@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultContentExtensionMetadataTest {
 
+    @SuppressWarnings("ConstantValue")
     @Test
     void generatedDescriptorAndServiceProviderPointToDefaultContentExtension() throws Exception {
         assertTrue(ICiaExtension.class.isAssignableFrom(DefaultContentExtension.class));
@@ -19,6 +20,9 @@ class DefaultContentExtensionMetadataTest {
         String service = resource("META-INF/services/top.ourisland.creepersiarena.api.extension.ICiaExtension");
 
         assertTrue(descriptor.contains("id: \"cia-default-content\""));
+        assertTrue(descriptor.contains("namespace: \"cia\""));
+        assertTrue(descriptor.contains("api-version: 1"));
+        assertTrue(descriptor.contains("cia-version: \"0.1.0-SNAPSHOT\""));
         assertTrue(descriptor.contains("name: \"CreepersIArena Default Content\""));
         assertTrue(descriptor.contains("order: EARLY"));
         assertEquals("top.ourisland.creepersiarena.defaultcontent.DefaultContentExtension", service.strip());

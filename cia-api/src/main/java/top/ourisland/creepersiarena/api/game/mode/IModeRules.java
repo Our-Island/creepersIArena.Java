@@ -35,7 +35,7 @@ public interface IModeRules {
      *
      * @return namespaced mode id handled by this rules implementation
      */
-    GameModeType type();
+    GameModeId type();
 
     /**
      * Evaluates whether and how a player may join while this mode is active.

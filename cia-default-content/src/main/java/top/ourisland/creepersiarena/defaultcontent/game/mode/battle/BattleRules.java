@@ -2,7 +2,7 @@ package top.ourisland.creepersiarena.defaultcontent.game.mode.battle;
 
 import top.ourisland.creepersiarena.api.game.flow.decision.JoinDecision;
 import top.ourisland.creepersiarena.api.game.flow.decision.RespawnDecision;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.IModeRules;
 import top.ourisland.creepersiarena.api.game.mode.context.JoinContext;
 import top.ourisland.creepersiarena.api.game.mode.context.LeaveContext;
@@ -17,7 +17,7 @@ public final class BattleRules implements IModeRules {
     }
 
     @Override
-    public GameModeType type() {
+    public GameModeId type() {
         return BattleState.TYPE;
     }
 

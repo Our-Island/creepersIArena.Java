@@ -9,6 +9,7 @@ import org.bukkit.util.Vector
 import top.ourisland.creepersiarena.api.game.death.DeathCauseId
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore
 import top.ourisland.creepersiarena.api.game.player.PlayerState
+import top.ourisland.creepersiarena.api.skill.SkillId
 import top.ourisland.creepersiarena.core.utils.EntityStateUtils
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinCombatUtils.damage
@@ -63,7 +64,11 @@ object BuiltinCombatUtils {
      * @return the closest matching enemy, or `null` when nothing intersects the aim corridor
      */
     @JvmStatic
-    fun rayOtherPlayer(source: Player, range: Double, maxDistanceFromRay: Double): Player? {
+    fun rayOtherPlayer(
+        source: Player,
+        range: Double,
+        maxDistanceFromRay: Double
+    ): Player? {
         val origin = source.eyeLocation.toVector()
         val direction = source.eyeLocation.direction.normalize()
 
@@ -112,7 +117,11 @@ object BuiltinCombatUtils {
      * @return `true` when the entity is a player on a different team and both players are actively in game
      */
     @JvmStatic
-    fun isEnemy(sessions: PlayerSessionStore, source: Player, target: Entity): Boolean {
+    fun isEnemy(
+        sessions: PlayerSessionStore,
+        source: Player,
+        target: Entity
+    ): Boolean {
         val other = target as? Player ?: return false
         if (other == source) return false
 
@@ -168,7 +177,11 @@ object BuiltinCombatUtils {
      * @param amount damage amount passed to Paper
      */
     @JvmStatic
-    fun damage(source: Player?, target: Player?, amount: Double) {
+    fun damage(
+        source: Player?,
+        target: Player?,
+        amount: Double
+    ) {
         damage(source, target, amount, null, null)
     }
 
@@ -184,7 +197,12 @@ object BuiltinCombatUtils {
      * @param causeId default-content death cause id for this damage
      */
     @JvmStatic
-    fun damage(source: Player?, target: Player?, amount: Double, causeId: DeathCauseId?) {
+    fun damage(
+        source: Player?,
+        target: Player?,
+        amount: Double,
+        causeId: DeathCauseId?
+    ) {
         damage(source, target, amount, causeId, null)
     }
 
@@ -198,7 +216,13 @@ object BuiltinCombatUtils {
      * @param sourceSkillId skill id that produced the damage
      */
     @JvmStatic
-    fun damage(source: Player?, target: Player?, amount: Double, causeId: DeathCauseId?, sourceSkillId: String?) {
+    fun damage(
+        source: Player?,
+        target: Player?,
+        amount: Double,
+        causeId: DeathCauseId?,
+        sourceSkillId: SkillId?
+    ) {
         if (source == null || target == null) return
         val sessions = installedSessions
         if (sessions != null && !isEnemy(sessions, source, target)) return
@@ -228,7 +252,11 @@ object BuiltinCombatUtils {
     }
 
     /** Returns the shortest distance between [point] and the infinite ray defined by [origin] and [direction]. */
-    private fun distanceToRay(origin: Vector, direction: Vector, point: Vector): Double {
+    private fun distanceToRay(
+        origin: Vector,
+        direction: Vector,
+        point: Vector
+    ): Double {
         val relative = point.clone().subtract(origin)
         val t = maxOf(0.0, relative.dot(direction))
         val closest = origin.clone().add(direction.clone().multiply(t))

@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionLoadOrder;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
 import top.ourisland.creepersiarena.core.bootstrap.discovery.ComponentCatalog;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -39,7 +42,8 @@ class CiaExtensionRuntimeContextResourceTest {
 
     private CiaExtensionRuntimeContext context(Path resourcesRoot) throws Exception {
         var descriptor = new CiaExtensionDescriptor(
-                "resource-extension",
+                ExtensionId.parse("resource-extension"),
+                CiaNamespace.parse("resource"),
                 "Resource Extension",
                 "1.0.0",
                 "com.example.ResourceExtension",
@@ -54,6 +58,7 @@ class CiaExtensionRuntimeContextResourceTest {
                 null,
                 new ComponentCatalog(),
                 descriptor,
+                RegistrationOwnerAuthority.issue(descriptor.id(), descriptor.namespace()),
                 classLoader,
                 tempDir.resolve("resource-extension.cia.jar"),
                 tempDir.resolve("plugin-data/resource-extension")
@@ -67,11 +72,12 @@ class CiaExtensionRuntimeContextResourceTest {
         Files.writeString(resources.resolve("defaults/config.yml"), """
                 game:
                   modes:
-                    battle:
-                      max-team: 4
-                      respawn-time: 10
-                    steal:
-                      prepare-time: 30
+                    resource:
+                      battle:
+                        max-team: 4
+                        respawn-time: 10
+                      steal:
+                        prepare-time: 30
                 """, StandardCharsets.UTF_8);
 
         Path target = tempDir.resolve("plugin-data/config.yml");
@@ -79,17 +85,18 @@ class CiaExtensionRuntimeContextResourceTest {
         Files.writeString(target, """
                 game:
                   modes:
-                    battle:
-                      max-team: 2
+                    resource:
+                      battle:
+                        max-team: 2
                 """, StandardCharsets.UTF_8);
 
         var context = context(resources);
         context.mergeYamlResource("defaults/config.yml", "config.yml");
 
         var merged = YamlConfiguration.loadConfiguration(target.toFile());
-        assertEquals(2, merged.getInt("game.modes.battle.max-team"));
-        assertEquals(10, merged.getInt("game.modes.battle.respawn-time"));
-        assertEquals(30, merged.getInt("game.modes.steal.prepare-time"));
+        assertEquals(2, merged.getInt("game.modes.resource.battle.max-team"));
+        assertEquals(10, merged.getInt("game.modes.resource.battle.respawn-time"));
+        assertEquals(30, merged.getInt("game.modes.resource.steal.prepare-time"));
         assertEquals(List.of("config.yml"), context.snapshot().mergedYamlResources());
     }
 

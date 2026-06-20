@@ -3,45 +3,54 @@ package top.ourisland.creepersiarena.core.job.skill.runtime;
 import org.junit.jupiter.api.Test;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.api.job.JobId;
-import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
-import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
-import top.ourisland.creepersiarena.api.skill.ISkillIcon;
-import top.ourisland.creepersiarena.api.skill.SkillType;
+import top.ourisland.creepersiarena.api.skill.*;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
-import top.ourisland.creepersiarena.core.job.skill.runtime.SkillRegistry;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SkillRegistryTest {
 
     @Test
-    void groupsSortsAndReplacesSkillsPerJob() {
-        var registry = new SkillRegistry(new PlayerSessionStore());
-
-        registry.register("extension-a", new LateSkill());
-        registry.register("extension-b", new EarlySkill());
-        registry.register("extension-c", new OtherJobSkill());
-
-        assertEquals(
-                List.of("test:job.early", "test:job.late"),
-                registry.skillsOf(JobId.of("test:job")).stream()
-                        .map(ISkillDefinition::id)
-                        .toList()
-        );
-        assertEquals("extension-b", registry.ownerOf("test:job.early"));
-        assertEquals(
-                List.of("test:other.only"),
-                registry.skillsOf(JobId.of("test:other")).stream()
-                        .map(ISkillDefinition::id)
-                        .toList()
+    void groupsSortsAndRejectsDuplicateSkills() {
+        var namespaces = new NamespaceRegistry();
+        var owner = RegistrationOwnerAuthority.issue(ExtensionId.parse("extension-a"), CiaNamespace.parse("test"));
+        namespaces.claim(owner);
+        var registry = new SkillRegistry(
+                new PlayerSessionStore(),
+                namespaces,
+                jobId -> switch (jobId.asString()) {
+                    case "test:job", "test:other" -> owner;
+                    default -> null;
+                }
         );
 
-        registry.register("replacement", new EarlySkill());
+        registry.register(owner, new LateSkill());
+        registry.register(owner, new EarlySkill());
+        registry.register(owner, new OtherJobSkill());
 
-        assertEquals("replacement", registry.ownerOf("test:job.early"));
+        assertEquals(
+                List.of("test:job/early", "test:job/late"),
+                registry.skillsOf(JobId.parse("test:job")).stream()
+                        .map(skill -> skill.id().asString())
+                        .toList()
+        );
+        assertEquals(owner, registry.ownerOf(SkillId.parse("test:job/early")));
+        assertEquals(
+                List.of("test:other/only"),
+                registry.skillsOf(JobId.parse("test:other")).stream()
+                        .map(skill -> skill.id().asString())
+                        .toList()
+        );
+
+        assertThrows(RuntimeException.class, () -> registry.register(owner, new EarlySkill()));
         assertEquals(3, registry.registeredSkills().size());
     }
 
@@ -66,7 +75,7 @@ class SkillRegistryTest {
     }
 
     @CiaSkillDef(
-            id = "test:job.late",
+            id = "test:job/late",
             job = "test:job",
             type = SkillType.ACTIVE,
             slot = 8
@@ -76,7 +85,7 @@ class SkillRegistryTest {
     }
 
     @CiaSkillDef(
-            id = "test:job.early",
+            id = "test:job/early",
             job = "test:job",
             type = SkillType.ACTIVE,
             slot = 1
@@ -86,7 +95,7 @@ class SkillRegistryTest {
     }
 
     @CiaSkillDef(
-            id = "test:other.only",
+            id = "test:other/only",
             job = "test:other",
             type = SkillType.ACTIVE,
             slot = 0

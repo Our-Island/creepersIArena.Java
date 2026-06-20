@@ -8,11 +8,14 @@ public enum MutationTargetScope {
     ALL_ONLINE;
 
     public static MutationTargetScope fromConfig(String raw) {
-        if (raw == null || raw.isBlank()) return ACTIVE_GAME_PLAYERS;
+        if (raw == null) return ACTIVE_GAME_PLAYERS;
+        if (raw.isBlank()) {
+            throw new IllegalArgumentException("MutationTargetScope must not be blank");
+        }
         try {
-            return MutationTargetScope.valueOf(raw.trim().toUpperCase(Locale.ROOT).replace('-', '_'));
-        } catch (IllegalArgumentException _) {
-            return ACTIVE_GAME_PLAYERS;
+            return MutationTargetScope.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid MutationTargetScope value: " + raw, exception);
         }
     }
 

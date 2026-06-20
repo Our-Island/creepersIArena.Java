@@ -7,10 +7,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
 import top.ourisland.creepersiarena.api.game.GameSession;
-import top.ourisland.creepersiarena.api.game.mode.GameModeType;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentRuntimeIdentity;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.battle.config.BattleModeConfig;
 
 import java.util.LinkedHashMap;
@@ -20,9 +24,12 @@ import java.util.UUID;
 
 public final class BattleState {
 
-    static final GameModeType TYPE = GameModeType.of("battle");
-    static final String MODE_DATA_PREFIX = "battle:";
-    static final String PARTICIPANT_KEY = MODE_DATA_PREFIX + "participant";
+    static final GameModeId TYPE = DefaultModeIds.BATTLE;
+    private static final ExtensionSessionData SESSION_DATA = DefaultContentRuntimeIdentity.sessionData();
+    static final SessionDataKey<Boolean> PARTICIPANT_KEY = SESSION_DATA.key(
+            "battle/participant",
+            Boolean.class
+    );
 
     @Getter private final GameRuntime runtime;
     @Getter private final GameSession session;
@@ -44,7 +51,7 @@ public final class BattleState {
     }
 
     static boolean markedFighter(PlayerSession player) {
-        return player != null && player.modeBoolean(PARTICIPANT_KEY, false);
+        return player != null && player.getOrDefault(PARTICIPANT_KEY, false);
     }
 
     public float progressRatio() {
@@ -61,12 +68,12 @@ public final class BattleState {
 
     public void markFighter(PlayerSession player) {
         if (player == null) return;
-        player.modeData(PARTICIPANT_KEY, true);
+        player.set(PARTICIPANT_KEY, true);
     }
 
     public void clearFighter(PlayerSession player) {
         if (player == null) return;
-        player.clearModeData(MODE_DATA_PREFIX);
+        player.remove(PARTICIPANT_KEY);
     }
 
     public Set<UUID> players() {
@@ -98,23 +105,21 @@ public final class BattleState {
 
     private boolean sameTeam(PlayerSession left, PlayerSession right) {
         if (left == null || right == null) return false;
-        Integer leftTeam = left.selectedTeam();
-        Integer rightTeam = right.selectedTeam();
+        var leftTeam = left.selectedTeam();
+        var rightTeam = right.selectedTeam();
         return leftTeam != null && leftTeam.equals(rightTeam);
     }
 
     private int teamOf(PlayerSession session) {
         if (session == null || session.selectedTeam() == null) return 0;
-        return Math.clamp(session.selectedTeam(), 1, config.maxTeam());
+        return Math.clamp(session.selectedTeam().number().orElse(0), 1, config.maxTeam());
     }
 
     public int onlineFighterCount() {
-        int count = 0;
-        for (var uuid : session.players()) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (isFighter(player)) count++;
-        }
-        return count;
+        return (int) session.players().stream()
+                .map(Bukkit::getPlayer)
+                .filter(this::isFighter)
+                .count();
     }
 
     public boolean reachedMapTarget() {
@@ -123,7 +128,7 @@ public final class BattleState {
 
     public Component mapRotationDisabledMessage() {
         return Component.text("Battle map progress target reached, but automatic rotation is disabled: ", NamedTextColor.YELLOW)
-                .append(Component.text(session.arena().id(), NamedTextColor.GOLD))
+                .append(Component.text(session.arena().id().value(), NamedTextColor.GOLD))
                 .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
                 .append(scoreSummaryComponent());
     }
@@ -132,7 +137,7 @@ public final class BattleState {
         if (teamKills.isEmpty()) return Component.text("no kills recorded", NamedTextColor.GRAY);
 
         var out = Component.empty();
-        boolean first = true;
+        var first = true;
         for (int team = 1; team <= config.maxTeam(); team++) {
             int kills = teamKills.getOrDefault(team, 0);
             if (kills <= 0) continue;
@@ -146,7 +151,7 @@ public final class BattleState {
 
     public @NonNull Component mapFinishedMessage() {
         return Component.text("Battle map complete: ", NamedTextColor.GOLD)
-                .append(Component.text(session.arena().id(), NamedTextColor.YELLOW))
+                .append(Component.text(session.arena().id().value(), NamedTextColor.YELLOW))
                 .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
                 .append(scoreSummaryComponent());
     }
@@ -155,7 +160,7 @@ public final class BattleState {
         if (teamKills.isEmpty()) return "no kills recorded";
 
         var out = new StringBuilder();
-        boolean first = true;
+        var first = true;
         for (int team = 1; team <= config.maxTeam(); team++) {
             int kills = teamKills.getOrDefault(team, 0);
             if (kills <= 0) continue;

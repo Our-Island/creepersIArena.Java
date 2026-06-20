@@ -39,12 +39,10 @@ public final class DeathMessageService {
         var game = gameManager.active();
         if (game == null) return;
 
-        for (var playerId : game.players()) {
-            var player = Bukkit.getPlayer(playerId);
-            if (player != null && player.isOnline()) {
-                Msg.send(player, message.get());
-            }
-        }
+        game.players().stream()
+                .map(Bukkit::getPlayer)
+                .filter(player -> player != null && player.isOnline())
+                .forEach(player -> Msg.send(player, message.get()));
     }
 
     private Optional<Component> buildMessage(DeathResult result) {
@@ -55,7 +53,7 @@ public final class DeathMessageService {
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] message provider failed: owner={} err={}",
-                        registered.ownerId(),
+                        registered.owner(),
                         throwable.getMessage(),
                         throwable
                 );

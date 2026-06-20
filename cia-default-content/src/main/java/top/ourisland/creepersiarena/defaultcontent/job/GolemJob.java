@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -26,7 +27,7 @@ public class GolemJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 null,
                 BuiltinItemFactory.armor(
@@ -37,7 +38,7 @@ public class GolemJob implements IJob {
                         TrimPattern.EYE,
                         null,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 2.0,
                                 AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.LEGS,
@@ -58,14 +59,14 @@ public class GolemJob implements IJob {
                         null,
                         List.of(
                                 BuiltinItemFactory.mod(
-                                        new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"},
+                                        Attribute.MAX_HEALTH,
                                         2.0,
                                         AttributeModifier.Operation.ADD_NUMBER,
                                         EquipmentSlot.CHEST,
                                         "cia_golem_health"
                                 ),
                                 BuiltinItemFactory.mod(
-                                        new String[]{"MOVEMENT_SPEED", "GENERIC_MOVEMENT_SPEED"},
+                                        Attribute.MOVEMENT_SPEED,
                                         -0.10,
                                         AttributeModifier.Operation.ADD_SCALAR,
                                         EquipmentSlot.CHEST,

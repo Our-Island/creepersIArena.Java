@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
@@ -26,7 +27,7 @@ public class YsahanJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         int color = BuiltinItemFactory.teamLeatherColor(team, 13435137, 21943, 13873152, 634368);
         return new ItemStack[]{
                 null,
@@ -39,7 +40,7 @@ public class YsahanJob implements IJob {
                         TrimPattern.TIDE,
                         color,
                         List.of(BuiltinItemFactory.mod(
-                                new String[]{"ARMOR", "GENERIC_ARMOR"},
+                                Attribute.ARMOR,
                                 0.0,
                                 AttributeModifier.Operation.ADD_NUMBER,
                                 EquipmentSlot.CHEST,

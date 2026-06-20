@@ -16,6 +16,7 @@ import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 import top.ourisland.creepersiarena.core.job.listener.SkillUiListener;
 import top.ourisland.creepersiarena.core.job.skill.SkillTickTask;
 import top.ourisland.creepersiarena.core.job.skill.runtime.InMemorySkillStateStore;
@@ -47,7 +48,11 @@ public final class SkillModule implements IBootstrapModule {
 
             var skillCodec = new SkillItemCodec(rt.plugin());
             var skillStore = new InMemorySkillStateStore();
-            var skillRegistry = new SkillRegistry(sessionStore);
+            var skillRegistry = new SkillRegistry(
+                    sessionStore,
+                    rt.requireService(NamespaceRegistry.class),
+                    catalog::ownerOfJob
+            );
             skillRegistry.replaceAllRegistered(catalog.registeredSkills());
 
             var skillRuntime = new SkillRuntime(

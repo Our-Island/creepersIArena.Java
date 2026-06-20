@@ -1,5 +1,6 @@
 package top.ourisland.creepersiarena.core.extension.loading;
 
+import lombok.Getter;
 import top.ourisland.creepersiarena.api.ICiaExtensionContext;
 import top.ourisland.creepersiarena.api.extension.CiaExtensionDescriptor;
 import top.ourisland.creepersiarena.api.extension.ICiaExtension;
@@ -7,6 +8,7 @@ import top.ourisland.creepersiarena.api.extension.ICiaExtension;
 import java.nio.file.Path;
 import java.time.Instant;
 
+@Getter
 public final class LoadedCiaExtension {
 
     private final CiaExtensionDescriptor descriptor;
@@ -32,32 +34,12 @@ public final class LoadedCiaExtension {
         this.loadedAt = Instant.now();
     }
 
-    public CiaExtensionDescriptor descriptor() {
-        return descriptor;
-    }
-
-    public Path jarPath() {
-        return jarPath;
-    }
-
-    public CiaExtensionClassLoader classLoader() {
-        return classLoader;
-    }
-
-    public ICiaExtension extension() {
-        return extension;
-    }
-
     public ICiaExtensionContext context() {
         return context;
     }
 
-    public Instant loadedAt() {
-        return loadedAt;
-    }
-
-    public boolean enabled() {
-        return enabled;
+    CiaExtensionRuntimeContext runtimeContext() {
+        return context;
     }
 
     void markEnabled() {

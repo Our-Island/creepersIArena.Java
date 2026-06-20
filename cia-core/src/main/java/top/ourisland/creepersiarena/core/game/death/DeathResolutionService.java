@@ -10,8 +10,7 @@ import top.ourisland.creepersiarena.api.game.death.*;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
-
-import java.util.Optional;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 public final class DeathResolutionService {
 
@@ -25,6 +24,7 @@ public final class DeathResolutionService {
     private final DeathMessageService messageService;
     private final GameFlow flow;
     private final IAbilityGate abilities;
+    private final NamespaceRegistry namespaces;
 
     public DeathResolutionService(
             @lombok.NonNull Logger log,
@@ -36,7 +36,8 @@ public final class DeathResolutionService {
             @lombok.NonNull DeathStreakService streakService,
             @lombok.NonNull DeathMessageService messageService,
             @lombok.NonNull GameFlow flow,
-            @lombok.NonNull IAbilityGate abilities
+            @lombok.NonNull IAbilityGate abilities,
+            @lombok.NonNull NamespaceRegistry namespaces
     ) {
         this.log = log;
         this.store = store;
@@ -48,6 +49,7 @@ public final class DeathResolutionService {
         this.messageService = messageService;
         this.flow = flow;
         this.abilities = abilities;
+        this.namespaces = namespaces;
     }
 
     public void handleDeath(@lombok.NonNull PlayerDeathEvent event) {
@@ -59,14 +61,14 @@ public final class DeathResolutionService {
         event.setDroppedExp(0);
         event.deathMessage(null);
 
-        long currentTick = attributionStore.currentTick();
+        var currentTick = attributionStore.currentTick();
         var lastAttribution = attributionStore.findRecent(victim.getUniqueId(), currentTick).orElse(null);
         var causeId = resolveCause(event, victim, lastAttribution);
         var killer = resolveKiller(victim, lastAttribution);
-        boolean hasKiller = killer != null;
-        boolean selfKill = !hasKiller;
+        var hasKiller = killer != null;
+        var selfKill = !hasKiller;
 
-        DeathStreakService.StreakOutcome streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
+        var streak = abilities.isEnabled(CoreAbilities.KILL_STREAK, victim, "death_resolution")
                 ? streakService.apply(victim, killer, currentTick)
                 : DeathStreakService.StreakOutcome.none(hasKiller);
         var result = new DeathResult(
@@ -95,12 +97,15 @@ public final class DeathResolutionService {
     ) {
         for (var registered : registry.resolvers()) {
             try {
-                Optional<DeathCauseId> causeId = registered.value().resolveDeath(event, victim, lastAttribution);
-                if (causeId.isPresent()) return causeId.get();
+                var causeId = registered.value().resolveDeath(event, victim, lastAttribution);
+                if (causeId.isPresent()) {
+                    namespaces.requireOwnership(registered.owner(), causeId.get().namespace());
+                    return causeId.get();
+                }
             } catch (Throwable throwable) {
                 log.warn(
                         "[Death] cause resolver failed on death: owner={} player={} err={}",
-                        registered.ownerId(),
+                        registered.owner(),
                         victim.getName(),
                         throwable.getMessage(),
                         throwable

@@ -1,10 +1,12 @@
 package top.ourisland.creepersiarena.api.database;
 
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
+
 import java.sql.Connection;
 
 public interface IDatabaseMigration {
 
-    String ownerId();
+    ExtensionId ownerId();
 
     int version();
 
@@ -12,6 +14,10 @@ public interface IDatabaseMigration {
 
     String checksum();
 
-    void apply(Connection connection, DatabaseType type, String tablePrefix) throws Exception;
+    void apply(
+            Connection connection,
+            DatabaseType type,
+            String tablePrefix
+    ) throws Exception;
 
 }

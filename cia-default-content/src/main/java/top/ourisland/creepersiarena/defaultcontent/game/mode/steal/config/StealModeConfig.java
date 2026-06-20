@@ -1,7 +1,8 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.config;
 
-import org.bukkit.configuration.ConfigurationSection;
 import top.ourisland.creepersiarena.api.config.IGameConfigView;
+import top.ourisland.creepersiarena.api.game.mode.GameModeId;
+import top.ourisland.creepersiarena.defaultcontent.DefaultModeIds;
 
 /**
  * Steal-owned global mode configuration. This type intentionally lives with default content, not core.
@@ -23,39 +24,68 @@ public record StealModeConfig(
         boolean allowRespawnJobSelection
 ) {
 
+    private static final GameModeId MODE = DefaultModeIds.STEAL;
+    private static final String MODE_PATH = "game.modes.cia.steal";
+
+    public StealModeConfig {
+        requireAtLeast(minPlayerToStart, 1, "min-player-to-start");
+        requireAtLeast(startCountdownSeconds, 1, "start-countdown");
+        requireAtLeast(spectatorTourSeconds, 1, "spectator-tour-time");
+        requireAtLeast(chooseJobSeconds, 1, "choose-job-time");
+        requireAtLeast(totalRound, 1, "total-round");
+        requireAtLeast(timePerRoundSeconds, 1, "time-per-round");
+        requireAtLeast(targetMineCount, 1, "target-mine-count");
+        requireAtLeast(scoreToWin, 1, "score-to-win");
+        requireAtLeast(roundCelebrationSeconds, 1, "round-celebration-time");
+        requireAtLeast(gameEndCelebrationSeconds, 1, "game-end-celebration-time");
+        requireAtLeast(mineCooldownSeconds, 0, "mine-cooldown-seconds");
+    }
+
+    private static void requireAtLeast(
+            int value,
+            int minimum,
+            String key
+    ) {
+        if (value < minimum) {
+            throw new IllegalArgumentException(
+                    MODE_PATH + "." + key + " must be >= " + minimum + ", got " + value
+            );
+        }
+    }
+
     public static StealModeConfig from(IGameConfigView config) {
-        ConfigurationSection section = config == null ? null : config.modeSection("steal");
         return new StealModeConfig(
-                Math.max(1, intValue(section, config, "min-player-to-start", 2)),
-                boolValue(section, config, "dynamic-ready-requirement", true),
-                Math.max(1, intValue(section, config, "start-countdown", 15)),
-                Math.max(1, intValue(section, config, "spectator-tour-time", 11)),
-                Math.max(1, intValue(section, config, "choose-job-time", 10)),
-                Math.max(1, intValue(section, config, "total-round", 7)),
-                Math.max(1, intValue(section, config, "time-per-round", 180)),
-                Math.max(1, intValue(section, config, "target-mine-count", 10)),
-                Math.max(1, intValue(section, config, "score-to-win", 4)),
-                Math.max(1, intValue(section, config, "round-celebration-time", 5)),
-                Math.max(1, intValue(section, config, "game-end-celebration-time", 10)),
-                Math.max(0, intValue(section, config, "mine-cooldown-seconds", 3)),
-                boolValue(section, config, "allow-lobby-job-selection", false),
-                boolValue(section, config, "allow-respawn-job-selection", false)
+                intValue(config, "min-player-to-start", 2),
+                boolValue(config, "dynamic-ready-requirement", true),
+                intValue(config, "start-countdown", 15),
+                intValue(config, "spectator-tour-time", 11),
+                intValue(config, "choose-job-time", 10),
+                intValue(config, "total-round", 7),
+                intValue(config, "time-per-round", 180),
+                intValue(config, "target-mine-count", 10),
+                intValue(config, "score-to-win", 4),
+                intValue(config, "round-celebration-time", 5),
+                intValue(config, "game-end-celebration-time", 10),
+                intValue(config, "mine-cooldown-seconds", 3),
+                boolValue(config, "allow-lobby-job-selection", false),
+                boolValue(config, "allow-respawn-job-selection", false)
         );
     }
 
-    private static int intValue(ConfigurationSection section, IGameConfigView config, String key, int fallback) {
-        if (section != null) return section.getInt(key, fallback);
-        return config == null ? fallback : config.modeInt("steal", key, fallback);
+    private static int intValue(
+            IGameConfigView config,
+            String key,
+            int defaultValue
+    ) {
+        return config == null ? defaultValue : config.modeInt(MODE, key, defaultValue);
     }
 
     private static boolean boolValue(
-            ConfigurationSection section,
             IGameConfigView config,
             String key,
-            boolean fallback
+            boolean defaultValue
     ) {
-        if (section != null) return section.getBoolean(key, fallback);
-        return config == null ? fallback : config.modeBoolean("steal", key, fallback);
+        return config == null ? defaultValue : config.modeBoolean(MODE, key, defaultValue);
     }
 
     public int requiredReadyPlayers(int population) {

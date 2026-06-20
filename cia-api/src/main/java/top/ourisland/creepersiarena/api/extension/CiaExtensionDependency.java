@@ -1,41 +1,21 @@
 package top.ourisland.creepersiarena.api.extension;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
 
 /**
  * Dependency declaration from {@code cia-extension.yml}.
- *
- * @param id       extension id required or optionally integrated with by the declaring extension
- * @param optional whether the dependency is optional
  */
 public record CiaExtensionDependency(
-        String id,
+        @lombok.NonNull ExtensionId id,
         boolean optional
 ) {
 
-    public CiaExtensionDependency {
-        Objects.requireNonNull(id, "id");
-    }
-
-    /**
-     * Creates a required dependency declaration.
-     *
-     * @param id target extension id
-     *
-     * @return dependency declaration
-     */
-    public static CiaExtensionDependency required(String id) {
+    public static @NonNull CiaExtensionDependency required(ExtensionId id) {
         return new CiaExtensionDependency(id, false);
     }
 
-    /**
-     * Creates an optional dependency declaration.
-     *
-     * @param id target extension id
-     *
-     * @return dependency declaration
-     */
-    public static CiaExtensionDependency optional(String id) {
+    public static @NonNull CiaExtensionDependency optional(ExtensionId id) {
         return new CiaExtensionDependency(id, true);
     }
 

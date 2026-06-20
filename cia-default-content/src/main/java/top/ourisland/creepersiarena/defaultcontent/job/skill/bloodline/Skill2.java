@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.bloodline;
 import org.bukkit.Material;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
@@ -16,7 +15,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:bloodline.leap",
+        id = "cia:bloodline/leap",
         job = "cia:bloodline",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -26,7 +25,10 @@ public class Skill2 implements ISkillDefinition {
 
     @Override
     public List<ITrigger> triggers() {
-        return List.of(Triggers.interactRightClick(), Triggers.interactLeftClick());
+        return List.of(
+                Triggers.interactRightClick(),
+                Triggers.interactLeftClick()
+        );
     }
 
     @Override
@@ -46,7 +48,7 @@ public class Skill2 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            Vector vel = p.getVelocity();
+            var vel = p.getVelocity();
             vel.setY(Math.max(0.9, vel.getY() + 0.9));
             p.setVelocity(vel);
             p.addPotionEffect(new PotionEffect(

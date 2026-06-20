@@ -6,14 +6,15 @@ import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.ability.SimpleAbility;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
-import top.ourisland.creepersiarena.core.bootstrap.discovery.RegisteredComponent;
 import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
 import top.ourisland.creepersiarena.core.economy.store.*;
+import top.ourisland.creepersiarena.core.identity.NamespaceRegistry;
 
 @CiaBootstrapModule(name = "store", order = 680)
 public final class StoreModule implements IBootstrapModule {
@@ -26,7 +27,7 @@ public final class StoreModule implements IBootstrapModule {
     @Override
     public StageTask install(BootstrapRuntime rt) {
         return StageTask.of(() -> {
-            var registry = new StoreRegistry(rt.log());
+            var registry = new StoreRegistry(rt.log(), rt.requireService(NamespaceRegistry.class));
             var codec = new StoreItemCodec(rt.plugin());
             var service = new StoreService(registry, codec, rt.requireService(IAbilityGate.class));
             var purchases = new StorePurchaseRepository(rt.requireService(JdbcDatabaseService.class));
@@ -36,7 +37,7 @@ public final class StoreModule implements IBootstrapModule {
             rt.putService(IStoreService.class, service);
             rt.putService(StorePurchaseRepository.class, purchases);
             rt.requireService(IAbilityRegistry.class).registerAbility(
-                    RegisteredComponent.CORE_OWNER,
+                    RegistrationOwnerAuthority.core(),
                     new SimpleAbility(CoreAbilities.STORE_UI)
             );
         }, "Loading store runtime...", "Store runtime loaded.");

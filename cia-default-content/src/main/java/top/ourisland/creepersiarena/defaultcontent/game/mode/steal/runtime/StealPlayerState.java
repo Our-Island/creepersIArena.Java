@@ -1,75 +1,60 @@
 package top.ourisland.creepersiarena.defaultcontent.game.mode.steal.runtime;
 
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
+import top.ourisland.creepersiarena.defaultcontent.DefaultContentRuntimeIdentity;
 import top.ourisland.creepersiarena.defaultcontent.game.mode.steal.model.StealTeam;
 
 final class StealPlayerState {
 
-    private static final String PREFIX = "cia.steal.";
-    private static final String READY = PREFIX + "ready";
-    private static final String PARTICIPANT = PREFIX + "participant";
-    private static final String ALIVE = PREFIX + "alive";
-    private static final String TEAM = PREFIX + "team";
+    private static final ExtensionSessionData SESSION_DATA = DefaultContentRuntimeIdentity.sessionData();
+    private static final SessionDataKey<Boolean>
+            READY = SESSION_DATA.key("steal/ready", Boolean.class),
+            PARTICIPANT = SESSION_DATA.key("steal/participant", Boolean.class),
+            ALIVE = SESSION_DATA.key("steal/alive", Boolean.class);
 
     private StealPlayerState() {
     }
 
     static boolean ready(PlayerSession session) {
-        return session != null && session.modeBoolean(READY, false);
+        return session != null && session.getOrDefault(READY, false);
     }
 
     static void ready(PlayerSession session, boolean value) {
-        if (session != null) session.setModeBoolean(READY, value);
+        if (session != null) session.set(READY, value);
     }
 
     static boolean participant(PlayerSession session) {
-        return session != null && session.modeBoolean(PARTICIPANT, false);
+        return session != null && session.getOrDefault(PARTICIPANT, false);
     }
 
     static void participant(PlayerSession session, boolean value) {
-        if (session != null) session.setModeBoolean(PARTICIPANT, value);
+        if (session != null) session.set(PARTICIPANT, value);
     }
 
     static boolean alive(PlayerSession session) {
-        return session != null && session.modeBoolean(ALIVE, true);
+        return session != null && session.getOrDefault(ALIVE, true);
     }
 
     static void alive(PlayerSession session, boolean value) {
-        if (session != null) session.setModeBoolean(ALIVE, value);
+        if (session != null) session.set(ALIVE, value);
     }
 
     static StealTeam team(PlayerSession session) {
-        if (session == null) return null;
-
-        Object stored = session.modeData(TEAM);
-        if (stored instanceof String value) {
-            StealTeam team = StealTeam.fromKey(value);
-            if (team != null) return team;
-        }
-
-        var keyed = StealTeam.fromKey(session.selectedTeamKey());
-        return keyed == null ? StealTeam.fromNumericId(session.selectedTeam()) : keyed;
+        return session == null ? null : StealTeam.fromId(session.selectedTeam());
     }
 
     static void team(PlayerSession session, StealTeam team) {
-        if (session == null) return;
-        if (team == null) {
-            session.modeData(TEAM, null);
-            session.selectedTeam(null);
-            session.selectedTeamKey(null);
-            return;
-        }
-
-        session.modeData(TEAM, team.key());
-        session.selectedTeam(team.numericId());
-        session.selectedTeamKey(team.key());
+        if (session != null) session.selectedTeam(team == null ? null : team.id());
     }
 
     static void clear(PlayerSession session) {
         if (session == null) return;
-        session.clearModeData(PREFIX);
+        session.remove(READY);
+        session.remove(PARTICIPANT);
+        session.remove(ALIVE);
         session.selectedTeam(null);
-        session.selectedTeamKey(null);
     }
 
 }

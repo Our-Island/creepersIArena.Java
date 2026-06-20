@@ -35,7 +35,7 @@ public final class CommandModule implements IBootstrapModule {
                     LifecycleEvents.COMMANDS, event ->
                             CiaCommand.register(rt, event.registrar())
             );
-        }, "Registering commands...", "Commands registered.");
+        }, "Registering command lifecycle handler...", "Command lifecycle handler registered.");
     }
 
 }

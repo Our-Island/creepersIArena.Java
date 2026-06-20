@@ -8,9 +8,10 @@ import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.testsupport.TestGameConfigViews;
-import top.ourisland.creepersiarena.core.game.flow.PlayerModeLobbyHooks;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,9 +39,9 @@ class PlayerModeLobbyHooksTest {
             }
 
             @Override
-            public int selectableTeamCount(ModeLobbyContext ctx) {
+            public List<TeamId> selectableTeams(ModeLobbyContext ctx) {
                 calls[1]++;
-                return 2;
+                return List.of(TeamId.parse("red"), TeamId.parse("blue"));
             }
 
             @Override
@@ -52,7 +53,7 @@ class PlayerModeLobbyHooksTest {
         var hooks = new PlayerModeLobbyHooks(LoggerFactory.getLogger(getClass()), () -> runtime, () -> flow);
 
         assertFalse(hooks.showJobSelector(player, session));
-        assertEquals(2, hooks.selectableTeamCount(player, session));
+        assertEquals(List.of(TeamId.parse("red"), TeamId.parse("blue")), hooks.selectableTeams(player, session));
         assertTrue(hooks.allowJobSelection(player, session));
         assertFalse(hooks.acceptsLobbyUiInput(player, session));
         assertArrayEquals(new int[]{1, 1, 1, 1}, calls);
@@ -67,14 +68,14 @@ class PlayerModeLobbyHooksTest {
         assertTrue(hooks.showJobSelector(player, session));
         assertTrue(hooks.allowJobSelection(player, session));
         assertTrue(hooks.acceptsLobbyUiInput(player, session));
-        assertEquals(0, hooks.selectableTeamCount(player, session));
+        assertTrue(hooks.selectableTeams(player, session).isEmpty());
 
         session.state(PlayerState.IN_GAME);
 
         assertFalse(hooks.showJobSelector(player, session));
         assertFalse(hooks.allowJobSelection(player, session));
         assertFalse(hooks.acceptsLobbyUiInput(player, session));
-        assertEquals(0, hooks.selectableTeamCount(player, session));
+        assertTrue(hooks.selectableTeams(player, session).isEmpty());
     }
 
 }

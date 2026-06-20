@@ -1,11 +1,11 @@
 package top.ourisland.creepersiarena.core.database;
 
+import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.NonNull;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -16,19 +16,26 @@ final class DatabaseSchemaUtils {
     private DatabaseSchemaUtils() {
     }
 
-    static boolean tableExists(
+    static void createIndex(
             @NonNull Connection connection,
-            String table
+            String table,
+            String name,
+            String columns
     ) throws SQLException {
-        String safeTable = identifier(table);
-        var meta = connection.getMetaData();
+        executeDdl(
+                connection,
+                "CREATE INDEX " + identifier(name)
+                        + " ON " + identifier(table)
+                        + " (" + identifierList(columns) + ")"
+        );
+    }
 
-        try (var rs = meta.getTables(null, null, safeTable, null)) {
-            if (rs.next()) return true;
-        }
-
-        try (var rs = meta.getTables(null, null, safeTable.toUpperCase(Locale.ROOT), null)) {
-            return rs.next();
+    static void executeDdl(
+            @NonNull Connection connection,
+            @Language(value = "SQL") String sql
+    ) throws SQLException {
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         }
     }
 
@@ -37,69 +44,6 @@ final class DatabaseSchemaUtils {
             throw new IllegalArgumentException("Unsafe database identifier: " + raw);
         }
         return raw;
-    }
-
-    static boolean columnExists(
-            @NonNull Connection connection,
-            String table,
-            String column
-    ) throws SQLException {
-        String safeTable = identifier(table);
-        String safeColumn = identifier(column);
-        var meta = connection.getMetaData();
-
-        try (var rs = meta.getColumns(null, null, safeTable, safeColumn)) {
-            if (rs.next()) return true;
-        }
-
-        try (var rs = meta.getColumns(null, null, safeTable.toUpperCase(Locale.ROOT), safeColumn.toUpperCase(Locale.ROOT))) {
-            return rs.next();
-        }
-    }
-
-    static void dropTable(
-            @NonNull Connection connection,
-            String table
-    ) throws SQLException {
-        executeDdl(connection, "DROP TABLE " + identifier(table));
-    }
-
-    static void executeDdl(
-            @NonNull Connection connection,
-            String sql
-    ) throws SQLException {
-        try (var statement = connection.prepareStatement(sql)) {
-            statement.executeUpdate();
-        }
-    }
-
-    static void addColumn(
-            @NonNull Connection connection,
-            String table,
-            String ddl
-    ) throws SQLException {
-        executeDdl(connection, "ALTER TABLE " + identifier(table) + " ADD COLUMN " + ddl);
-    }
-
-    static void createIndex(
-            @NonNull Connection connection,
-            String table,
-            String name,
-            String columns
-    ) {
-        String safeTable = identifier(table);
-        String safeName = identifier(name);
-        String safeColumns = identifierList(columns);
-
-        try {
-            executeDdl(connection, "CREATE INDEX IF NOT EXISTS " + safeName + " ON " + safeTable + " (" + safeColumns + ")");
-        } catch (SQLException first) {
-            try {
-                executeDdl(connection, "CREATE INDEX " + safeName + " ON " + safeTable + " (" + safeColumns + ")");
-            } catch (SQLException _) {
-                // Index creation differences are non-fatal; table correctness is the critical migration step.
-            }
-        }
     }
 
     private static String identifierList(String raw) {

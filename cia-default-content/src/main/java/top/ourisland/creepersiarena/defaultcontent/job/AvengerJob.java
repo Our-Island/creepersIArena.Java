@@ -1,12 +1,14 @@
 package top.ourisland.creepersiarena.defaultcontent.job;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.trim.TrimPattern;
 import top.ourisland.creepersiarena.api.annotation.CiaJobDef;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.IJob;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 
@@ -27,7 +29,7 @@ public class AvengerJob implements IJob {
 
     @Override
     public ItemStack[] armorTemplate(PlayerSession session) {
-        Integer team = session == null ? null : session.selectedTeam();
+        var team = session == null ? null : session.selectedTeam();
         return new ItemStack[]{
                 null,
                 null,
@@ -75,7 +77,7 @@ public class AvengerJob implements IJob {
         );
     }
 
-    public static ItemStack buildChest(Integer team, boolean rageArmor) {
+    public static ItemStack buildChest(TeamId team, boolean rageArmor) {
         return BuiltinItemFactory.armor(
                 rageArmor ? Material.IRON_CHESTPLATE : Material.CHAINMAIL_CHESTPLATE,
                 rageArmor ? "不灭之甲" : "锁甲",
@@ -89,7 +91,7 @@ public class AvengerJob implements IJob {
                 null,
                 rageArmor
                         ? List.of(BuiltinItemFactory.mod(
-                        new String[]{"ARMOR", "GENERIC_ARMOR"},
+                        Attribute.ARMOR,
                         6.0,
                         AttributeModifier.Operation.ADD_NUMBER,
                         EquipmentSlot.CHEST,

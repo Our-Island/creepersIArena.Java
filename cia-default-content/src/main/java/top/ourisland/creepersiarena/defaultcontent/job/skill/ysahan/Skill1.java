@@ -16,7 +16,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:ysahan.pumpkin_trick",
+        id = "cia:ysahan/pumpkin_trick",
         job = "cia:ysahan",
         type = SkillType.ACTIVE,
         slot = 1,

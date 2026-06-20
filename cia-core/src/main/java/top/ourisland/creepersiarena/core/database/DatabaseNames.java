@@ -10,8 +10,10 @@ public final class DatabaseNames {
 
     private String sanitize(String raw) {
         if (raw == null || raw.isBlank()) return "cia_";
-        String out = raw.replaceAll("[^A-Za-z0-9_]", "_");
-        return out.isBlank() ? "cia_" : out;
+        if (!raw.matches("[A-Za-z0-9_]+")) {
+            throw new IllegalArgumentException("Invalid database table prefix: " + raw);
+        }
+        return raw;
     }
 
     public String tablePrefix() {
@@ -68,10 +70,6 @@ public final class DatabaseNames {
 
     public String playerStatTotals() {
         return prefix + "player_stat_totals";
-    }
-
-    public String reachDiscoveries() {
-        return prefix + "reach_discoveries";
     }
 
 }

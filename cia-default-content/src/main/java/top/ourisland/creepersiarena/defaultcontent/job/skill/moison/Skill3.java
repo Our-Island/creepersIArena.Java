@@ -5,7 +5,6 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.AbstractArrow;
-import org.bukkit.entity.Entity;
 import org.bukkit.persistence.PersistentDataType;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
@@ -15,15 +14,15 @@ import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
 import top.ourisland.creepersiarena.api.skill.runtime.SkillActivationRejectedException;
+import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinKeys;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 @CiaSkillDef(
-        id = "cia:moison.shadowstep",
+        id = "cia:moison/shadowstep",
         job = "cia:moison",
         type = SkillType.ACTIVE,
         slot = 2,
@@ -53,14 +52,13 @@ public class Skill3 implements ISkillDefinition {
     public ISkillExecutor executor() {
         return (ctx, _) -> {
             var p = ctx.player();
-            UUID owner = p.getUniqueId();
+            var owner = p.getUniqueId();
 
-            Entity target = p.getWorld().getEntities().stream()
+            var target = p.getWorld().getEntities().stream()
                     .filter(e -> e instanceof AbstractArrow)
-                    .filter(e -> owner.toString().equals(e.getPersistentDataContainer().get(
-                            BuiltinKeys.key("moison_owner"),
-                            PersistentDataType.STRING)
-                    ))
+                    .filter(e -> BuiltinDamageAttributionMarker.readEntitySource(e)
+                            .map(source -> owner.equals(source.ownerId()))
+                            .orElse(false))
                     .filter(e -> e.getPersistentDataContainer().has(
                             BuiltinKeys.key("moison_spectral"),
                             PersistentDataType.BYTE

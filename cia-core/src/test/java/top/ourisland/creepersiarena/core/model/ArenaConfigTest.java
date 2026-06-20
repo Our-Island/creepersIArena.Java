@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.model;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
+import top.ourisland.creepersiarena.api.game.arena.ArenaId;
 import top.ourisland.creepersiarena.core.config.model.ArenaConfig;
 
 import java.util.List;
@@ -14,7 +15,7 @@ class ArenaConfigTest {
     void readsGenericArenaEnvelopeWithNamedSpawnGroupsAndSettings() {
         var yaml = new YamlConfiguration();
         yaml.set("arena.hall.name", "cia.arena.hall");
-        yaml.set("arena.hall.mode", "steal");
+        yaml.set("arena.hall.mode", "cia:steal");
         yaml.set("arena.hall.location", List.of(10, 64, 20));
         yaml.set("arena.hall.range.from", List.of(100, 200));
         yaml.set("arena.hall.range.to", List.of(-50, -80));
@@ -23,10 +24,10 @@ class ArenaConfigTest {
         yaml.set("arena.hall.settings.redstone-blocks", List.of(List.of(5, 65, 5)));
 
         var config = ArenaConfig.fromYaml(yaml);
-        ArenaConfig.ArenaDef hall = config.get("hall");
+        var hall = config.get(ArenaId.parse("hall"));
 
         assertNotNull(hall);
-        assertEquals("steal", hall.mode());
+        assertEquals("cia:steal", hall.mode().asString());
         assertEquals(10, hall.location().x());
         assertEquals(-50, hall.range().minX());
         assertEquals(-80, hall.range().minZ());

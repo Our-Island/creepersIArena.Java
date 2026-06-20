@@ -36,19 +36,19 @@ labels:
     text: 误杀
     color: gray
 messages:
-  cia:accident/generic:
+  core:accident/generic:
     killer:
       - '{label}{victim} 在与 {killer} 的交战中死亡'
     solo:
       - '{death}{victim} 死亡了'
-  cia:accident/contact:
+  core:accident/contact:
     killer:
       - '{label}{victim} 在与 {killer} 的交战中被扎穿了'
       - '{label}{victim} 在与 {killer} 战斗时被扎的千疮百孔'
     solo:
       - '{suicide}{victim} 被扎穿了'
       - '{suicide}{victim} 被刺穿了'
-  cia:accident/direct_hit:
+  core:accident/direct_hit:
     killer:
       - '{label}{victim} 被 {killer} 一巴掌拍死了'
       - '{label}{victim} 被 {killer} 一拳打倒'
@@ -57,7 +57,7 @@ messages:
     solo:
       - '{suicide}{victim} 被空手打死了'
       - '{suicide}{victim} 在赤手双拳面前失去了勇气'
-  cia:accident/void:
+  core:accident/void:
     killer:
       - '{label}{victim} 被 {killer} 驱逐进了虚空'
       - '{label}{victim} 因为畏惧 {killer} 而踏入虚空'
@@ -72,7 +72,7 @@ messages:
       - '{suicide}{victim} 卷入无尽黑暗的虚空之中'
       - '{suicide}{victim} 在绝望中跳入虚空'
       - '{suicide}{victim} 把自己喂给了虚空'
-  cia:accident/fire:
+  core:accident/fire:
     killer:
       - '{label}{victim} 在与 {killer} 战斗时被迫“燃”起来了'
       - '{label}{victim} 在与 {killer} 战斗时绝望地死在火里'
@@ -82,7 +82,7 @@ messages:
       - '{suicide}{victim} “燃”起来了'
       - '{suicide}{victim} 死于高温'
       - '{suicide}{victim} 试图获得高温补贴，然而死了'
-  cia:accident/fall:
+  core:accident/fall:
     killer:
       - '{label}{victim} 在与 {killer} 战斗时摔死了'
       - '{label}{victim} 在与 {killer} 战斗过程中摔碎了'
@@ -92,7 +92,7 @@ messages:
       - '{suicide}{victim} 摔碎了'
       - '{suicide}{victim} 以为自己会飞，然而摔死了'
       - '{suicide}{victim} 试图对抗地心引力，然而摔死了'
-  cia:accident/drowning:
+  core:accident/drowning:
     killer:
       - '{label}{victim} 在与 {killer} 战斗时溺死了'
       - '{label}{victim} 在与 {killer} 战斗过程中被呛死了'

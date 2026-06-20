@@ -1,15 +1,19 @@
 package top.ourisland.creepersiarena.api.economy.store;
 
 import org.jspecify.annotations.Nullable;
+import top.ourisland.creepersiarena.api.identity.RegistrationOwner;
 
 import java.util.Collection;
 
 public interface IStoreRegistry {
 
-    void registerStore(String ownerId, StoreDefinition store);
+    void registerStore(
+            RegistrationOwner owner,
+            StoreDefinition store
+    );
 
     void registerItem(
-            String ownerId,
+            RegistrationOwner owner,
             StoreId storeId,
             IStoreItem item
     );

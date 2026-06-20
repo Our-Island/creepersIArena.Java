@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
 import top.ourisland.creepersiarena.api.game.player.PlayerState;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.config.model.GlobalConfig;
 import top.ourisland.creepersiarena.core.game.lobby.item.LobbyItemService;
@@ -37,30 +38,17 @@ final class PlayerLobbyTransitions {
         this.lobbyHooks = lobbyHooks;
     }
 
-    void selectJob(Player p, String jobIdRaw) {
-        var s = sessions.ensureSession(p);
-        if (!allowJobSelection(p, s)) return;
-
-        var jobId = JobId.fromId(jobIdRaw);
-        if (jobId == null && jobIdRaw != null && jobIdRaw.indexOf(':') < 0) {
-            jobId = JobId.fromId("cia:" + jobIdRaw);
-        }
-        if (jobId == null) {
-            log.debug("[Lobby] {} selectJob ignored (unknown jobId={})", p.getName(), jobIdRaw);
+    void selectJob(Player player, JobId jobId) {
+        var session = sessions.ensureSession(player);
+        if (!allowJobSelection(player, session)) return;
+        if (!lobbyItemService.hasJobId(jobId)) {
+            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", player.getName(), jobId);
             return;
         }
-
-        if (!lobbyItemService.hasJobId(jobId.toString())) {
-            log.debug("[Lobby] {} selectJob ignored (disabled/unregistered jobId={})", p.getName(), jobIdRaw);
-            return;
-        }
-
-        s.selectedJob(jobId);
-        sessions.persistSelectedJob(p, jobId);
-
-        refreshLobbyKit(p);
-
-        log.info("[Lobby] {} selected job={}", p.getName(), jobId.id());
+        session.selectedJob(jobId);
+        sessions.persistSelectedJob(player, jobId);
+        refreshLobbyKit(player);
+        log.info("[Lobby] {} selected job={}", player.getName(), jobId);
     }
 
     private boolean allowJobSelection(Player p, PlayerSession session) {
@@ -78,7 +66,7 @@ final class PlayerLobbyTransitions {
                         p,
                         s,
                         cfg.get(),
-                        lobbyHooks.selectableTeamCount(p, s),
+                        lobbyHooks.selectableTeams(p, s),
                         lobbyHooks.showJobSelector(p, s)
                 );
                 decorated = true;
@@ -130,26 +118,27 @@ final class PlayerLobbyTransitions {
     }
 
     void cycleTeam(Player p) {
-        var s = sessions.ensureSession(p);
-        int max = lobbyHooks.selectableTeamCount(p, s);
-        if (max <= 0) return;
+        var session = sessions.ensureSession(p);
+        var teams = lobbyHooks.selectableTeams(p, session);
+        if (teams.isEmpty()) return;
 
-        Integer cur = s.selectedTeam();
-        selectTeam(p, (cur == null) ? Integer.valueOf(1) : (cur >= max) ? null : cur + 1);
+        var current = session.selectedTeam();
+        int index = current == null ? -1 : teams.indexOf(current);
+        var next = index < 0 ? teams.getFirst() : index + 1 < teams.size() ? teams.get(index + 1) : null;
+        selectTeam(p, next);
     }
 
-    boolean selectTeam(Player p, Integer teamId) {
-        var s = sessions.ensureSession(p);
-        if (s.state() != PlayerState.HUB) return false;
+    boolean selectTeam(Player p, TeamId teamId) {
+        var session = sessions.ensureSession(p);
+        if (session.state() != PlayerState.HUB) return false;
 
-        int max = lobbyHooks.selectableTeamCount(p, s);
-        if (max <= 0) return false;
+        var teams = lobbyHooks.selectableTeams(p, session);
+        if (teams.isEmpty()) return false;
+        if (teamId != null && !teams.contains(teamId)) return false;
 
-        Integer next = (teamId == null) ? null : Math.clamp(teamId, 1, max);
-
-        s.selectedTeam(next);
+        session.selectedTeam(teamId);
         refreshLobbyKit(p);
-        log.info("[Lobby] {} team -> {}", p.getName(), next == null ? "RANDOM" : next);
+        log.info("[Lobby] {} team -> {}", p.getName(), teamId == null ? "RANDOM" : teamId);
         return true;
     }
 

@@ -10,6 +10,7 @@ import top.ourisland.creepersiarena.core.utils.I18n;
 import top.ourisland.creepersiarena.core.utils.LangKeyResolver;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class SkillHotbarRenderer {
 
@@ -24,23 +25,26 @@ public final class SkillHotbarRenderer {
         this.store = store;
     }
 
-    public void render(Player p, List<ISkillDefinition> skills, long nowTick) {
+    public void render(
+            Player p,
+            List<ISkillDefinition> skills,
+            long nowTick
+    ) {
         if (p == null || skills == null) return;
 
         var inv = p.getInventory();
 
-        ISkillDefinition[] desired = new ISkillDefinition[9];
-        for (ISkillDefinition def : skills) {
-            if (def == null) continue;
-
-            int slot = def.uiSlot();
-            if (slot < 0 || slot > 8) continue;
-
-            desired[slot] = def;
-        }
+        var desired = new ISkillDefinition[9];
+        skills.stream()
+                .filter(Objects::nonNull)
+                .forEach(def -> {
+                    int slot = def.uiSlot();
+                    if (slot < 0 || slot > 8) return;
+                    desired[slot] = def;
+                });
 
         for (int slot = 0; slot <= 8; slot++) {
-            ISkillDefinition def = desired[slot];
+            var def = desired[slot];
             var cur = inv.getItem(slot);
 
             if (def == null) {
@@ -57,7 +61,7 @@ public final class SkillHotbarRenderer {
                 continue;
             }
 
-            String curId = codec.readSkillId(cur);
+            var curId = codec.readSkillId(cur);
             boolean sameSkill = def.id().equals(curId);
 
             boolean sameLook = cur.isSimilar(next) && cur.getAmount() == next.getAmount();
@@ -68,7 +72,11 @@ public final class SkillHotbarRenderer {
         }
     }
 
-    private ItemStack buildSkillItem(Player p, ISkillDefinition def, long nowTick) {
+    private ItemStack buildSkillItem(
+            Player p,
+            ISkillDefinition def,
+            long nowTick
+    ) {
         long remain = store.cooldownRemainingTicks(p.getUniqueId(), def.id(), nowTick);
 
         ItemStack base;
@@ -93,7 +101,7 @@ public final class SkillHotbarRenderer {
                     var baseMeta = baseIcon == null ? null : baseIcon.getItemMeta();
                     var display = baseMeta == null ? null : baseMeta.displayName();
                     label = display == null
-                            ? def.id()
+                            ? def.id().asString()
                             : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
                                     .serialize(display);
                 }

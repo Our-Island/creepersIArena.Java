@@ -3,14 +3,15 @@ package top.ourisland.creepersiarena.defaultcontent.job.skill.creeper;
 import org.bukkit.Material;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.util.Vector;
 import top.ourisland.creepersiarena.api.annotation.CiaSkillDef;
+import top.ourisland.creepersiarena.api.identity.CiaConfigPaths;
 import top.ourisland.creepersiarena.api.skill.ISkillDefinition;
 import top.ourisland.creepersiarena.api.skill.ISkillExecutor;
 import top.ourisland.creepersiarena.api.skill.ISkillIcon;
 import top.ourisland.creepersiarena.api.skill.SkillType;
 import top.ourisland.creepersiarena.api.skill.event.ITrigger;
 import top.ourisland.creepersiarena.api.skill.event.Triggers;
+import top.ourisland.creepersiarena.defaultcontent.DefaultSkillIds;
 import top.ourisland.creepersiarena.defaultcontent.game.death.BuiltinDamageAttributionMarker;
 import top.ourisland.creepersiarena.defaultcontent.game.death.DefaultContentDeathCauses;
 import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
@@ -18,7 +19,7 @@ import top.ourisland.creepersiarena.defaultcontent.job.utils.BuiltinItemFactory;
 import java.util.List;
 
 @CiaSkillDef(
-        id = "cia:creeper.creeper",
+        id = "cia:creeper/creeper",
         job = "cia:creeper",
         type = SkillType.ACTIVE,
         slot = 0,
@@ -55,11 +56,14 @@ public class Skill1 implements ISkillDefinition {
             var world = caster.getWorld();
 
             var cfg = ctx.skillConfig();
-            long fuseTicks = cfg.getLong(id(), "fuse-ticks", FUSE_TICKS);
-            double speed = cfg.getDouble(id(), "speed", SPEED);
-            float explosionPower = (float) cfg.getDouble(id(), "explosion-power", 2.0);
+            var fuseTicks = positive(cfg.getLong(id(), "fuse-ticks", FUSE_TICKS), "fuse-ticks");
+            var speed = positive(cfg.getDouble(id(), "speed", SPEED), "speed");
+            var explosionPower = finiteFloat(
+                    positive(cfg.getDouble(id(), "explosion-power", 2.0), "explosion-power"),
+                    "explosion-power"
+            );
 
-            Vector dir = caster.getLocation().getDirection().normalize();
+            var dir = caster.getLocation().getDirection().normalize();
             var spawnLoc = caster.getLocation().add(dir.clone().multiply(1.2)).add(0, 0.2, 0);
 
             var creeper = (Creeper) world.spawnEntity(spawnLoc, EntityType.CREEPER);
@@ -89,9 +93,28 @@ public class Skill1 implements ISkillDefinition {
                         creeper.remove();
                     },
                     null,
-                    Math.max(1L, fuseTicks)
+                    fuseTicks
             );
         };
+    }
+
+    private static long positive(long value, String key) {
+        if (value > 0L) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be positive, got " + value);
+    }
+
+    private static double positive(double value, String key) {
+        if (Double.isFinite(value) && value > 0.0D) return value;
+        throw new IllegalArgumentException(idPath(key) + " must be a finite positive number, got " + value);
+    }
+
+    private static float finiteFloat(double value, String key) {
+        if (value <= Float.MAX_VALUE) return (float) value;
+        throw new IllegalArgumentException(idPath(key) + " exceeds the supported float range: " + value);
+    }
+
+    private static String idPath(String key) {
+        return "skills." + CiaConfigPaths.section(DefaultSkillIds.CREEPER_CREEPER) + "." + key;
     }
 
 }

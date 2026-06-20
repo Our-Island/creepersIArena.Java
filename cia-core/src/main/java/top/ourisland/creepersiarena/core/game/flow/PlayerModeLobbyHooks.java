@@ -7,6 +7,10 @@ import top.ourisland.creepersiarena.api.game.mode.GameRuntime;
 import top.ourisland.creepersiarena.api.game.mode.IModePlayerFlow;
 import top.ourisland.creepersiarena.api.game.mode.context.ModeLobbyContext;
 import top.ourisland.creepersiarena.api.game.player.PlayerSession;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
+
+import java.util.LinkedHashSet;
+import java.util.List;
 
 import java.util.function.Supplier;
 
@@ -33,8 +37,8 @@ final class PlayerModeLobbyHooks {
     }
 
     boolean allowJobSelection(Player player, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
+        var rt = runtime.get();
+        var flow = playerFlow.get();
         if (rt == null || flow == null) return session != null && session.state().isLobbyState();
         try {
             return flow.allowJobSelection(new ModeLobbyContext(rt, player, session));
@@ -52,8 +56,8 @@ final class PlayerModeLobbyHooks {
 
     boolean acceptsLobbyUiInput(Player player, PlayerSession session) {
         if (session == null) return false;
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
+        var rt = runtime.get();
+        var flow = playerFlow.get();
         if (rt == null || flow == null) return defaultAcceptsLobbyUiInput(player, session);
         try {
             return flow.acceptsLobbyUiInput(new ModeLobbyContext(rt, player, session));
@@ -66,13 +70,14 @@ final class PlayerModeLobbyHooks {
     }
 
     private boolean defaultAcceptsLobbyUiInput(Player player, PlayerSession session) {
-        return session.state()
-                .isLobbyState() || showJobSelector(player, session) || selectableTeamCount(player, session) > 0;
+        return session.state().isLobbyState()
+                || showJobSelector(player, session)
+                || !selectableTeams(player, session).isEmpty();
     }
 
     boolean showJobSelector(Player player, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
+        var rt = runtime.get();
+        var flow = playerFlow.get();
         if (rt == null || flow == null) return session != null && session.state().isLobbyState();
         try {
             return flow.showJobSelector(new ModeLobbyContext(rt, player, session));
@@ -84,24 +89,39 @@ final class PlayerModeLobbyHooks {
         }
     }
 
-    int selectableTeamCount(Player player, PlayerSession session) {
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
-        if (rt == null || flow == null) return 0;
+    List<TeamId> selectableTeams(Player player, PlayerSession session) {
+        var rt = runtime.get();
+        var flow = playerFlow.get();
+        if (rt == null || flow == null) return List.of();
         try {
-            return Math.max(0, flow.selectableTeamCount(new ModeLobbyContext(rt, player, session)));
+            var supplied = flow.selectableTeams(new ModeLobbyContext(rt, player, session));
+            if (supplied == null || supplied.isEmpty()) return List.of();
+            var unique = new LinkedHashSet<TeamId>();
+            for (var team : supplied) {
+                if (team == null) {
+                    throw new IllegalStateException("Mode returned a null selectable team");
+                }
+                if (!unique.add(team)) {
+                    throw new IllegalStateException("Mode returned duplicate selectable team: " + team);
+                }
+            }
+            return List.copyOf(unique);
         } catch (Throwable t) {
             log.warn("[LobbyHooks] mode selectable-team hook failed: player={} err={}",
                     playerName(player), t.getMessage(), t
             );
-            return 0;
+            return List.of();
         }
     }
 
-    void decorateLobbyInventory(Player player, PlayerSession session, PlayerInventory inventory) {
+    void decorateLobbyInventory(
+            Player player,
+            PlayerSession session,
+            PlayerInventory inventory
+    ) {
         if (inventory == null) return;
-        GameRuntime rt = runtime.get();
-        IModePlayerFlow flow = playerFlow.get();
+        var rt = runtime.get();
+        var flow = playerFlow.get();
         if (rt == null || flow == null) return;
         try {
             flow.decorateLobbyInventory(new ModeLobbyContext(rt, player, session), inventory);

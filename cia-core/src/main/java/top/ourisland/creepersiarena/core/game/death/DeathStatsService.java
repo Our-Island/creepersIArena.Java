@@ -5,13 +5,19 @@ import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.game.death.DeathResult;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
+import top.ourisland.creepersiarena.api.identity.ExtensionSessionData;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
+import top.ourisland.creepersiarena.api.identity.SessionDataKey;
 import top.ourisland.creepersiarena.core.game.GameManager;
 
 public final class DeathStatsService {
 
-    public static final String KILLS_KEY = "core.death.stats.kills";
-    public static final String DEATHS_KEY = "core.death.stats.deaths";
-    public static final String KILL_SCORE_KEY = "core.death.stats.kill_score";
+    private static final ExtensionSessionData CORE_SESSION_DATA = new ExtensionSessionData(RegistrationOwnerAuthority.core());
+
+    public static final SessionDataKey<Integer>
+            KILLS = key("kills"),
+            DEATHS = key("deaths"),
+            KILL_SCORE = key("kill_score");
 
     private final PlayerSessionStore store;
     private final IAbilityGate abilities;
@@ -30,43 +36,33 @@ public final class DeathStatsService {
         this.persistentStats = persistentStats;
     }
 
+    private static SessionDataKey<Integer> key(String path) {
+        return CORE_SESSION_DATA.key("death/stats/" + path, Integer.class);
+    }
+
     public void record(@lombok.NonNull DeathResult result) {
         if (!abilities.isEnabled(CoreAbilities.DEATH_STATS, result.victim(), "death_stats")) return;
         persistentStats.recordDeath(gameManager.active(), result);
-        increment(result.victim(), DEATHS_KEY);
+        increment(result.victim(), DEATHS);
 
         if (!result.hasKiller()) return;
 
         var killer = result.killer();
         if (killer == null) return;
 
-        increment(killer, KILLS_KEY);
-        increment(killer, KILL_SCORE_KEY);
+        increment(killer, KILLS);
+        increment(killer, KILL_SCORE);
     }
 
-    private void increment(Player player, String key) {
+    private void increment(Player player, SessionDataKey<Integer> key) {
         var session = store.get(player);
-        if (session == null) return;
-
-        session.modeData(key, value(player, key) + 1);
+        if (session != null) session.set(key, session.getOrDefault(key, 0) + 1);
     }
 
-    public int value(Player player, String key) {
-        if (player == null || key == null || key.isBlank()) return 0;
-
+    public int value(Player player, SessionDataKey<Integer> key) {
+        if (player == null || key == null) return 0;
         var session = store.get(player);
-        if (session == null) return 0;
-
-        Object value = session.modeData(key);
-        if (value instanceof Number number) return number.intValue();
-        if (value instanceof String string) {
-            try {
-                return Integer.parseInt(string);
-            } catch (NumberFormatException _) {
-                return 0;
-            }
-        }
-        return 0;
+        return session == null ? 0 : session.getOrDefault(key, 0);
     }
 
 }

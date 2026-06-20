@@ -1,6 +1,8 @@
 package top.ourisland.creepersiarena.api.extension;
 
 import org.junit.jupiter.api.Test;
+import top.ourisland.creepersiarena.api.identity.CiaNamespace;
+import top.ourisland.creepersiarena.api.identity.ExtensionId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,18 +14,19 @@ class CiaExtensionDescriptorTest {
 
     @Test
     void copiesInputListsAndFiltersDependencyKinds() {
-        List<String> authors = new ArrayList<>(List.of("Alice"));
-        List<CiaExtensionDependency> dependencies = new ArrayList<>(List.of(
-                CiaExtensionDependency.required("base"),
-                CiaExtensionDependency.optional("integration")
+        var authors = new ArrayList<>(List.of("Alice"));
+        var dependencies = new ArrayList<>(List.of(
+                CiaExtensionDependency.required(ExtensionId.parse("base")),
+                CiaExtensionDependency.optional(ExtensionId.parse("integration"))
         ));
 
-        CiaExtensionDescriptor descriptor = new CiaExtensionDescriptor(
-                "sample",
+        var descriptor = new CiaExtensionDescriptor(
+                ExtensionId.parse("sample"),
+                CiaNamespace.parse("sample"),
                 "Sample",
                 "1.0.0",
                 "com.example.SampleExtension",
-                1,
+                CiaExtensionDescriptor.CURRENT_API_VERSION,
                 "[0.1.0,0.2.0)",
                 authors,
                 dependencies,
@@ -31,23 +34,26 @@ class CiaExtensionDescriptorTest {
         );
 
         authors.add("Mallory");
-        dependencies.add(CiaExtensionDependency.required("late"));
+        dependencies.add(CiaExtensionDependency.required(ExtensionId.parse("late")));
 
         assertEquals(List.of("Alice"), descriptor.authors());
-        assertEquals(List.of("base"), descriptor.requiredDependencyIds());
-        assertEquals(List.of("integration"), descriptor.optionalDependencyIds());
+        assertEquals(List.of(ExtensionId.parse("base")), descriptor.requiredDependencyIds());
+        assertEquals(List.of(ExtensionId.parse("integration")), descriptor.optionalDependencyIds());
+        assertEquals(CiaNamespace.parse("sample"), descriptor.namespace());
         assertThrows(UnsupportedOperationException.class, () -> descriptor.authors().add("Bob"));
         assertThrows(UnsupportedOperationException.class, () -> descriptor.dependencies().clear());
     }
 
     @Test
+    @SuppressWarnings("DataFlowIssue")
     void rejectsNullRequiredFields() {
         assertThrows(NullPointerException.class, () -> new CiaExtensionDescriptor(
                 null,
+                CiaNamespace.parse("sample"),
                 "Name",
                 "1.0.0",
                 "com.example.Main",
-                1,
+                CiaExtensionDescriptor.CURRENT_API_VERSION,
                 "0.1.0",
                 List.of(),
                 List.of(),
