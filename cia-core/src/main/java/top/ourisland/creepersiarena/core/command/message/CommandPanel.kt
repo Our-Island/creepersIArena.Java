@@ -1,47 +1,46 @@
-package top.ourisland.creepersiarena.core.command.message;
+package top.ourisland.creepersiarena.core.command.message
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*
 
 /**
  * Small immutable MiniMessage panel model for command output.
  */
-public record CommandPanel(
-        String title,
-        List<String> rows
+class CommandPanel(
+    title: String?,
+    rows: List<String>?
 ) {
 
-    public CommandPanel {
-        if (title == null || title.isBlank()) title = "CreepersIArena";
-        rows = List.copyOf(rows == null ? List.of() : rows);
+    private val titleValue: String = if (title.isNullOrBlank()) "CreepersIArena" else title
+    private val rowsValue: List<String> = Collections.unmodifiableList(ArrayList(rows ?: emptyList()))
+
+    fun title(): String = titleValue
+
+    fun rows(): List<String> = rowsValue
+
+    companion object {
+
+        @JvmStatic
+        fun builder(title: String?): Builder = Builder(title)
+
     }
 
-    public static Builder builder(String title) {
-        return new Builder(title);
-    }
+    class Builder internal constructor(
+        private val title: String?
+    ) {
 
-    public static final class Builder {
+        private val rows = ArrayList<String>()
 
-        private final String title;
-        private final List<String> rows = new ArrayList<>();
-
-        private Builder(String title) {
-            this.title = title;
+        fun rows(rows: List<String>?): Builder {
+            rows?.forEach(this::row)
+            return this
         }
 
-        public Builder rows(List<String> rows) {
-            if (rows != null) rows.forEach(this::row);
-            return this;
+        fun row(row: String?): Builder {
+            rows.add(row ?: "")
+            return this
         }
 
-        public Builder row(String row) {
-            rows.add(row == null ? "" : row);
-            return this;
-        }
-
-        public CommandPanel build() {
-            return new CommandPanel(title, rows);
-        }
+        fun build(): CommandPanel = CommandPanel(title, rows)
 
     }
 

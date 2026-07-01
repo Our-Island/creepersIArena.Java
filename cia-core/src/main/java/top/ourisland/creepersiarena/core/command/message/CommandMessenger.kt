@@ -1,173 +1,185 @@
-package top.ourisland.creepersiarena.core.command.message;
+package top.ourisland.creepersiarena.core.command.message
 
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.core.utils.I18n;
-import top.ourisland.creepersiarena.core.utils.Msg;
-
-import java.util.List;
+import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.core.utils.I18n
+import top.ourisland.creepersiarena.core.utils.Msg
 
 /**
  * Command-specific MiniMessage renderer.
  *
- * <p>All command-visible feedback should go through this facade so handlers can stay focused on behavior while the
- * command UI keeps a consistent style.</p>
+ * All command-visible feedback should go through this facade so handlers can stay focused on behavior while the
+ * command UI keeps a consistent style.
  */
-public final class CommandMessenger {
+class CommandMessenger {
 
-    private static final MiniMessage MINI = MiniMessage.miniMessage();
-    private static final String PREFIX = "<dark_gray>[%sCIA%s<dark_gray>]</dark_gray> ".formatted(CommandColors.BRAND_GRADIENT, CommandColors.BRAND_CLOSE);
-
-    public static void plain(
-            CommandSender sender,
-            String message
+    fun info(
+        sender: CommandSender,
+        message: String?
     ) {
-        new CommandMessenger().info(sender, message);
+        line(sender, "<gray>ℹ</gray>", "<gray>${escape(message)}</gray>")
     }
 
-    public void info(
-            CommandSender sender,
-            String message
+    private fun line(
+        sender: CommandSender,
+        iconMini: String,
+        bodyMini: String
     ) {
-        line(sender, "<gray>ℹ</gray>", "<gray>%s</gray>".formatted(escape(message)));
+        Msg.sendMini(sender, "$PREFIX$iconMini $bodyMini")
     }
 
-    private void line(
-            CommandSender sender,
-            String iconMini,
-            String bodyMini
-    ) {
-        Msg.sendMini(sender, PREFIX + iconMini + " " + bodyMini);
+    fun value(value: Any?): String = "${CommandColors.VALUE}${escape(value.toString())}</white>"
+
+    fun id(value: Any?): String = "${CommandColors.KEY}${escape(value.toString())}</aqua>"
+
+    fun bool(enabled: Boolean): String = if (enabled) "<green>enabled</green>" else "<red>disabled</red>"
+
+    fun yesNo(enabled: Boolean): String = if (enabled) "<green>yes</green>" else "<red>no</red>"
+
+    fun infoMini(sender: CommandSender, miniMessage: String) {
+        line(sender, "<gray>ℹ</gray>", miniMessage)
     }
 
-    public static String escape(String value) {
-        return MINI.escapeTags(value == null ? "" : value);
+    fun success(sender: CommandSender, message: String?) {
+        line(sender, "<green>✔</green>", "<gray>${escape(message)}</gray>")
     }
 
-    public static void mini(CommandSender sender, String miniMessage) {
-        Msg.sendMini(sender, miniMessage);
+    fun successMini(sender: CommandSender, miniMessage: String) {
+        line(sender, "<green>✔</green>", miniMessage)
     }
 
-    public String value(Object value) {
-        return CommandColors.VALUE + escape(String.valueOf(value)) + "</white>";
+    fun warn(sender: CommandSender, message: String?) {
+        line(sender, "<yellow>⚠</yellow>", "<yellow>${escape(message)}</yellow>")
     }
 
-    public String id(Object value) {
-        return CommandColors.KEY + escape(String.valueOf(value)) + "</aqua>";
+    fun warnMini(sender: CommandSender, miniMessage: String) {
+        line(sender, "<yellow>⚠</yellow>", miniMessage)
     }
 
-    public String bool(boolean enabled) {
-        return enabled ? "<green>enabled</green>" : "<red>disabled</red>";
+    fun error(sender: CommandSender, message: String?) {
+        line(sender, "<red>✖</red>", "<red>${escape(message)}</red>")
     }
 
-    public String yesNo(boolean enabled) {
-        return enabled ? "<green>yes</green>" : "<red>no</red>";
+    fun errorMini(sender: CommandSender, miniMessage: String) {
+        line(sender, "<red>✖</red>", miniMessage)
     }
 
-    public void infoMini(CommandSender sender, String miniMessage) {
-        line(sender, "<gray>ℹ</gray>", miniMessage);
+    fun usage(sender: CommandSender, message: String?) {
+        val usage = normalizeUsage(message)
+        val suggest = suggestForUsage(usage)
+        line(
+            sender,
+            "<gold>Usage</gold>",
+            "<click:suggest_command:'${escapeForAttribute(suggest)}'><yellow>${escape(usage)}</yellow></click>"
+        )
     }
 
-    public void success(CommandSender sender, String message) {
-        line(sender, "<green>✔</green>", "<gray>" + escape(message) + "</gray>");
-    }
+    private fun normalizeUsage(message: String?): String {
+        if (message.isNullOrBlank()) return "/cia"
 
-    public void successMini(CommandSender sender, String miniMessage) {
-        line(sender, "<green>✔</green>", miniMessage);
-    }
-
-    public void warn(CommandSender sender, String message) {
-        line(sender, "<yellow>⚠</yellow>", "<yellow>" + escape(message) + "</yellow>");
-    }
-
-    public void warnMini(CommandSender sender, String miniMessage) {
-        line(sender, "<yellow>⚠</yellow>", miniMessage);
-    }
-
-    public void error(CommandSender sender, String message) {
-        line(sender, "<red>✖</red>", "<red>" + escape(message) + "</red>");
-    }
-
-    public void errorMini(CommandSender sender, String miniMessage) {
-        line(sender, "<red>✖</red>", miniMessage);
-    }
-
-    public void usage(CommandSender sender, String message) {
-        var usage = normalizeUsage(message);
-        var suggest = suggestForUsage(usage);
-        line(sender, "<gold>Usage</gold>", "<click:suggest_command:'" + escapeForAttribute(suggest) + "'><yellow>" + escape(usage) + "</yellow></click>");
-    }
-
-    private String normalizeUsage(String message) {
-        if (message == null || message.isBlank()) return "/cia";
-        var trimmed = message.trim();
-        if (trimmed.regionMatches(true, 0, "Usage:", 0, "Usage:".length())) {
-            return trimmed.substring("Usage:".length()).trim();
+        val trimmed = message.trim()
+        if (trimmed.regionMatches(0, "Usage:", 0, "Usage:".length, ignoreCase = true)) {
+            return trimmed.substring("Usage:".length).trim()
         }
-        return trimmed;
+
+        return trimmed
     }
 
-    private String suggestForUsage(String usage) {
-        var idx = usage.indexOf('<');
-        if (idx < 0) return usage;
-        var prefix = usage.substring(0, idx).stripTrailing();
-        return prefix.endsWith(" ") ? prefix : prefix + " ";
+    private fun suggestForUsage(usage: String): String {
+        val placeholderIndex = usage.indexOf('<')
+        if (placeholderIndex < 0) return usage
+
+        val prefix = usage.substring(0, placeholderIndex).trimEnd()
+        return if (prefix.endsWith(" ")) prefix else "$prefix "
     }
 
-    public static String escapeForAttribute(String value) {
-        return (value == null ? "" : value)
-                .replace("\\", "\\\\")
-                .replace("'", "\\'");
-    }
-
-    public void hint(
-            CommandSender sender,
-            String message
+    fun hint(
+        sender: CommandSender,
+        message: String?
     ) {
-        line(sender, "<gold>Tip</gold>", "<gray>" + escape(message) + "</gray>");
+        line(sender, "<gold>Tip</gold>", "<gray>${escape(message)}</gray>")
     }
 
-    public void panel(
-            CommandSender sender,
-            String title,
-            List<String> rows
+    fun panel(
+        sender: CommandSender,
+        title: String?,
+        rows: List<String>?
     ) {
-        panel(sender, new CommandPanel(title, rows));
+        panel(sender, CommandPanel(title, rows))
     }
 
-    public void panel(
-            CommandSender sender,
-            CommandPanel panel
+    fun panel(
+        sender: CommandSender,
+        panel: CommandPanel
     ) {
-        Msg.sendMini(sender, "<dark_gray>━━━━━━━━ " + CommandColors.BRAND_GRADIENT + escape(panel.title()) + CommandColors.BRAND_CLOSE + " <dark_gray>━━━━━━━━</dark_gray>");
-        panel.rows().forEach(row -> {
-            if (row == null || row.isBlank()) {
-                Msg.sendMini(sender, " ");
+        Msg.sendMini(
+            sender,
+            "<dark_gray>━━━━━━━━ ${CommandColors.BRAND_GRADIENT}${escape(panel.title())}${CommandColors.BRAND_CLOSE} <dark_gray>━━━━━━━━</dark_gray>"
+        )
+
+        panel.rows().forEach { row ->
+            if (row.isBlank()) {
+                Msg.sendMini(sender, " ")
             } else {
-                Msg.sendMini(sender, row);
+                Msg.sendMini(sender, row)
             }
-        });
-        Msg.sendMini(sender, CommandColors.LINE);
+        }
+
+        Msg.sendMini(sender, CommandColors.LINE)
     }
 
-    public void keyValue(
-            CommandSender sender,
-            String key,
-            Object value
+    fun keyValue(
+        sender: CommandSender,
+        key: String?,
+        value: Any?
     ) {
-        Msg.sendMini(sender, "<gray>•</gray> <aqua>" + escape(key) + "</aqua><dark_gray>:</dark_gray> <white>" + escape(String.valueOf(value)) + "</white>");
+        Msg.sendMini(
+            sender,
+            "<gray>•</gray> <aqua>${escape(key)}</aqua><dark_gray>:</dark_gray> <white>${escape(value.toString())}</white>"
+        )
     }
 
-    public void i18n(
-            CommandSender sender,
-            String key,
-            Object... args
+    fun i18n(
+        sender: CommandSender,
+        key: String,
+        vararg args: Any?
     ) {
         if (I18n.has(key)) {
-            Msg.sendMini(sender, I18n.langStrNP(key, args));
-            return;
+            Msg.sendMini(sender, I18n.langStrNP(key, *args))
+            return
         }
-        info(sender, key);
+
+        info(sender, key)
+    }
+
+    companion object {
+
+        private val MINI: MiniMessage = MiniMessage.miniMessage()
+        private const val PREFIX: String =
+            "<dark_gray>[${CommandColors.BRAND_GRADIENT}CIA${CommandColors.BRAND_CLOSE}<dark_gray>]</dark_gray> "
+
+        @JvmStatic
+        fun plain(
+            sender: CommandSender,
+            message: String?
+        ) {
+            CommandMessenger().info(sender, message)
+        }
+
+        @JvmStatic
+        fun escape(value: String?): String = MINI.escapeTags(value ?: "")
+
+        @JvmStatic
+        fun mini(sender: CommandSender, miniMessage: String) {
+            Msg.sendMini(sender, miniMessage)
+        }
+
+        @JvmStatic
+        fun escapeForAttribute(value: String?): String =
+            (value ?: "")
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+
     }
 
 }

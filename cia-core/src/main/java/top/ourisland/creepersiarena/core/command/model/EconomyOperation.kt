@@ -1,22 +1,16 @@
-package top.ourisland.creepersiarena.core.command.model;
+package top.ourisland.creepersiarena.core.command.model
 
 /**
  * Mutating wallet operation used by /ciaa economy.
  */
-public enum EconomyOperation {
+enum class EconomyOperation(
+    private val rawId: String
+) {
 
     GIVE("give"),
     TAKE("take"),
     SET("set");
 
-    private final String id;
-
-    EconomyOperation(String id) {
-        this.id = id;
-    }
-
-    public String id() {
-        return id;
-    }
+    fun id(): String = rawId
 
 }

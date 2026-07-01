@@ -1,38 +1,30 @@
-package top.ourisland.creepersiarena.core.command.model;
+package top.ourisland.creepersiarena.core.command.model
 
-import java.util.Arrays;
-import java.util.Locale;
+import java.util.*
 
 /**
  * Target configuration file for /ciaa config.
  */
-public enum ConfigTarget {
+enum class ConfigTarget(
+    private val rawId: String
+) {
 
     CONFIG("config"),
     ARENA("arena"),
     SKILL("skill");
 
-    private final String id;
+    fun id(): String = rawId
 
-    ConfigTarget(String id) {
-        this.id = id;
-    }
+    fun fileName(): String = "$rawId.yml"
 
-    public static ConfigTarget parse(String raw) {
-        if (raw == null) return null;
-        var normalized = raw.trim().toLowerCase(Locale.ROOT);
-        return Arrays.stream(values())
-                .filter(target -> target.id.equals(normalized))
-                .findFirst()
-                .orElse(null);
-    }
+    companion object {
 
-    public String id() {
-        return id;
-    }
+        @JvmStatic
+        fun parse(raw: String?): ConfigTarget? {
+            val normalized = raw?.trim()?.lowercase(Locale.ROOT) ?: return null
+            return entries.firstOrNull { it.rawId == normalized }
+        }
 
-    public String fileName() {
-        return id + ".yml";
     }
 
 }

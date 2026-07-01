@@ -1,23 +1,20 @@
-package top.ourisland.creepersiarena.core.command.message;
+package top.ourisland.creepersiarena.core.command.message
 
 /**
  * MiniMessage palette used by command UI renderers.
  */
-public final class CommandColors {
+object CommandColors {
 
-    public static final String BRAND_GRADIENT = "<gradient:#7CFFB2:#47A9FF>";
-    public static final String BRAND_CLOSE = "</gradient>";
-    public static final String LINE = "<dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</dark_gray>";
-    public static final String TEXT = "<gray>";
-    public static final String MUTED = "<dark_gray>";
-    public static final String KEY = "<aqua>";
-    public static final String VALUE = "<white>";
-    public static final String SUCCESS = "<green>";
-    public static final String WARN = "<yellow>";
-    public static final String ERROR = "<red>";
-    public static final String HINT = "<gold>";
-
-    private CommandColors() {
-    }
+    const val BRAND_GRADIENT: String = "<gradient:#7CFFB2:#47A9FF>"
+    const val BRAND_CLOSE: String = "</gradient>"
+    const val LINE: String = "<dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</dark_gray>"
+    const val TEXT: String = "<gray>"
+    const val MUTED: String = "<dark_gray>"
+    const val KEY: String = "<aqua>"
+    const val VALUE: String = "<white>"
+    const val SUCCESS: String = "<green>"
+    const val WARN: String = "<yellow>"
+    const val ERROR: String = "<red>"
+    const val HINT: String = "<gold>"
 
 }
