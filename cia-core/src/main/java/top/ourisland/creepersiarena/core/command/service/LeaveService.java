@@ -2,9 +2,11 @@ package top.ourisland.creepersiarena.core.command.service;
 
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.game.flow.LeaveReason;
-import top.ourisland.creepersiarena.core.utils.Msg;
+
+import static top.ourisland.creepersiarena.core.game.flow.GameFlow.LeavePlan.*;
 
 /**
  * Command-layer adapter for "/cia leave".
@@ -15,6 +17,7 @@ import top.ourisland.creepersiarena.core.utils.Msg;
 public final class LeaveService {
 
     private final BootstrapRuntime rt;
+    private final CommandMessenger messenger = new CommandMessenger();
 
     public LeaveService(BootstrapRuntime rt) {
         this.rt = rt;
@@ -23,16 +26,15 @@ public final class LeaveService {
     public void leave(Player p) {
         if (p == null) return;
 
-        GameFlow flow = rt.requireService(GameFlow.class);
-
-        GameFlow.LeavePlan plan = flow.requestLeaveToHub(p, LeaveReason.COMMAND);
+        var flow = rt.requireService(GameFlow.class);
+        var plan = flow.requestLeaveToHub(p, LeaveReason.COMMAND);
 
         switch (plan) {
-            case GameFlow.LeavePlan.NotPlayer _ -> Msg.send(p, "Only players can use this command.");
-            case GameFlow.LeavePlan.NotInSession _ -> Msg.send(p, "You are not in CIA session.");
-            case GameFlow.LeavePlan.AlreadyInHub _ -> Msg.send(p, "You are already in HUB.");
-            case GameFlow.LeavePlan.Immediate _ -> Msg.send(p, "Returned to HUB.");
-            case GameFlow.LeavePlan.Scheduled(int seconds) -> Msg.send(p, "Returning to HUB in " + seconds + "s...");
+            case NotPlayer _ -> messenger.error(p, "Only players can use this command.");
+            case NotInSession _ -> messenger.warn(p, "You are not in CIA session.");
+            case AlreadyInHub _ -> messenger.warn(p, "You are already in HUB.");
+            case Immediate _ -> messenger.success(p, "Returned to HUB.");
+            case Scheduled(int seconds) -> messenger.info(p, "Returning to HUB in %ds...".formatted(seconds));
         }
     }
 

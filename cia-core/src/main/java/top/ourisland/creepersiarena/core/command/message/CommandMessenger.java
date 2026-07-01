@@ -4,16 +4,13 @@ import org.bukkit.command.CommandSender;
 import top.ourisland.creepersiarena.core.utils.Msg;
 
 /**
- * Command-specific messaging facade reserved for the second refactor stage.
+ * Command-specific messaging facade.
  *
- * <p>Stage one intentionally keeps existing command text unchanged; this class
- * provides a stable place for future MiniMessage/help-panel rendering without coupling tree builders back to
- * {@code Msg} directly.</p>
+ * <p>Stage two routes handler-visible command output through this facade so later MiniMessage/i18n rendering can be
+ * introduced without touching business handlers again. The methods intentionally preserve the existing plain text
+ * output for now.</p>
  */
 public final class CommandMessenger {
-
-    private CommandMessenger() {
-    }
 
     public static void plain(CommandSender sender, String message) {
         Msg.send(sender, message);
@@ -21,6 +18,26 @@ public final class CommandMessenger {
 
     public static void mini(CommandSender sender, String miniMessage) {
         Msg.sendMini(sender, miniMessage);
+    }
+
+    public void info(CommandSender sender, String message) {
+        Msg.send(sender, message);
+    }
+
+    public void success(CommandSender sender, String message) {
+        Msg.send(sender, message);
+    }
+
+    public void warn(CommandSender sender, String message) {
+        Msg.send(sender, message);
+    }
+
+    public void error(CommandSender sender, String message) {
+        Msg.send(sender, message);
+    }
+
+    public void usage(CommandSender sender, String message) {
+        Msg.send(sender, message);
     }
 
 }

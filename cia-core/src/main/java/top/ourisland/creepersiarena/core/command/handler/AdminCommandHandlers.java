@@ -11,13 +11,14 @@ import top.ourisland.creepersiarena.api.economy.*;
 import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
 import top.ourisland.creepersiarena.api.economy.store.IStoreService;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
-import top.ourisland.creepersiarena.api.game.GameSession;
 import top.ourisland.creepersiarena.api.game.arena.ArenaId;
-import top.ourisland.creepersiarena.api.game.arena.ArenaInstance;
 import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.core.ability.AbilityService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
+import top.ourisland.creepersiarena.core.command.model.ConfigTarget;
+import top.ourisland.creepersiarena.core.command.model.EconomyOperation;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
 import top.ourisland.creepersiarena.core.extension.debug.ExtensionDiagnostics;
 import top.ourisland.creepersiarena.core.game.GameManager;
@@ -26,24 +27,31 @@ import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.game.mutation.MutationResetReason;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
 import top.ourisland.creepersiarena.core.utils.I18n;
-import top.ourisland.creepersiarena.core.utils.Msg;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
-import static top.ourisland.creepersiarena.core.command.CommandParsers.*;
+import static top.ourisland.creepersiarena.core.command.CommandParsers.parseValue;
 
 public final class AdminCommandHandlers {
 
     private final BootstrapRuntime rt;
+    private final CommandMessenger messenger;
 
     public AdminCommandHandlers(BootstrapRuntime rt) {
+        this(rt, new CommandMessenger());
+    }
+
+    public AdminCommandHandlers(
+            BootstrapRuntime rt,
+            CommandMessenger messenger
+    ) {
         this.rt = rt;
+        this.messenger = messenger;
     }
 
     public void help(CommandSender sender) {
-        Msg.send(sender, """
+        messenger.info(sender, """
                 /ciaa mode <namespace:mode>
                 /ciaa arena <arena_id>
                 /ciaa skip [arena_id]
@@ -66,7 +74,7 @@ public final class AdminCommandHandlers {
     public void mode(CommandSender sender, GameModeId modeId) {
         var games = rt.requireService(GameManager.class);
         if (!games.hasMode(modeId)) {
-            Msg.send(sender, "Unknown mode: " + modeId.asString());
+            messenger.error(sender, "Unknown mode: %s".formatted(modeId.asString()));
             return;
         }
 
@@ -80,70 +88,56 @@ public final class AdminCommandHandlers {
         }
 
         games.startAuto(modeId);
-        Msg.send(sender, "Mode switched to: " + modeId.asString());
+        messenger.success(sender, "Mode switched to: " + modeId.asString());
     }
 
     public void modeUsage(CommandSender sender) {
-        Msg.send(sender, "Usage: /ciaa mode <namespace:mode>");
+        messenger.usage(sender, "Usage: /ciaa mode <namespace:mode>");
     }
 
-    public void arena(CommandSender sender, String[] args) {
-        if (args.length < 1) {
-            Msg.send(sender, "Usage: /ciaa arena <arena_id>");
-            return;
-        }
-
+    public void arena(CommandSender sender, ArenaId arenaId) {
         var gm = rt.requireService(GameManager.class);
         var am = rt.requireService(ArenaManager.class);
 
-        ArenaId arenaId;
-        try {
-            arenaId = ArenaId.parse(args[0]);
-        } catch (IllegalArgumentException exception) {
-            Msg.send(sender, exception.getMessage());
-            return;
-        }
-        ArenaInstance inst = am.getArena(arenaId);
+        var inst = am.getArena(arenaId);
         if (inst == null) {
-            Msg.send(sender, "Arena not found: " + arenaId);
+            messenger.error(sender, "Arena not found: %s".formatted(arenaId));
             return;
         }
 
-        GameModeId curMode = gm.active() == null ? null : gm.active().mode();
+        var curMode = gm.active() == null ? null : gm.active().mode();
         if (curMode != null && !inst.type().equals(curMode)) {
-            Msg.send(sender, "Arena mode mismatch. active=" + curMode + " arena=" + inst.type());
+            messenger.error(sender, "Arena mode mismatch. active=%s arena=%s".formatted(curMode, inst.type()));
             return;
         }
 
         var st = rt.requireService(AdminRuntimeState.class);
         st.forcedNextArenaId(arenaId);
 
-        Msg.send(sender, "Next arena set to: " + arenaId);
+        messenger.success(sender, "Next arena set to: %s".formatted(arenaId));
     }
 
-    public void skip(CommandSender sender, String[] args) {
+    public void arenaUsage(CommandSender sender) {
+        messenger.usage(sender, "Usage: /ciaa arena <arena_id>");
+    }
+
+    public void invalidArena(CommandSender sender, String message) {
+        messenger.error(sender, message);
+    }
+
+    public void skip(CommandSender sender, ArenaId overrideArena) {
         var st = rt.requireService(AdminRuntimeState.class);
         var gm = rt.requireService(GameManager.class);
         var flow = rt.requireService(GameFlow.class);
 
-        ArenaId overrideArena = null;
-        if (args.length >= 1) {
-            try {
-                overrideArena = ArenaId.parse(args[0]);
-            } catch (IllegalArgumentException exception) {
-                Msg.send(sender, exception.getMessage());
-                return;
-            }
-        }
-
         var targetMode = st.forcedNextMode();
         if (targetMode == null) {
-            GameSession g = gm.active();
+            var g = gm.active();
             targetMode = (g == null)
                     ? rt.requireService(ConfigManager.class).globalConfig().game().defaultMode()
                     : g.mode();
             if (targetMode == null) {
-                Msg.send(sender, "No active or configured default game mode.");
+                messenger.error(sender, "No active or configured default game mode.");
                 return;
             }
         }
@@ -154,72 +148,48 @@ public final class AdminCommandHandlers {
         if (arenaId != null) {
             try {
                 gm.start(targetMode, arenaId);
-                Msg.send(sender, "Skipped. Started: mode=" + targetMode + " arena=" + arenaId);
+                messenger.success(sender, "Skipped. Started: mode=%s arena=%s".formatted(targetMode, arenaId));
                 return;
             } catch (Throwable t) {
-                Msg.send(sender, "Failed to start with arena=" + arenaId + " (" + t.getMessage() + "), fallback to auto.");
+                messenger.warn(sender, "Failed to start with arena=%s (%s), fallback to auto.".formatted(arenaId, t.getMessage()));
             }
         }
 
         gm.startAuto(targetMode);
-        Msg.send(sender, "Skipped. Started: mode=" + targetMode + " arena=auto");
+        messenger.success(sender, "Skipped. Started: mode=" + targetMode + " arena=auto");
     }
 
-    public void cooldown(CommandSender sender, String[] args) {
-        if (args.length < 1) {
-            Msg.send(sender, "Usage: /ciaa cooldown <factor>");
-            return;
-        }
-
-        Double v = parseDouble(args[0]);
-        if (v == null || v.isNaN() || v.isInfinite() || v < 0) {
-            Msg.send(sender, "Invalid factor: " + args[0]);
+    public void setCooldownFactor(CommandSender sender, double factor) {
+        if (Double.isNaN(factor) || Double.isInfinite(factor) || factor < 0) {
+            messenger.error(sender, "Invalid factor: " + factor);
             return;
         }
 
         var st = rt.requireService(AdminRuntimeState.class);
-        st.cooldownFactor(v);
-        Msg.send(sender, "Cooldown factor set to: " + v);
+        st.cooldownFactor(factor);
+        messenger.success(sender, "Cooldown factor set to: %s".formatted(factor));
     }
 
-    public void regen(CommandSender sender, String[] args) {
-        Msg.send(sender, "TBI");
+    public void cooldownUsage(CommandSender sender) {
+        messenger.usage(sender, "Usage: /ciaa cooldown <factor>");
     }
 
-    public void mutation(CommandSender sender, String[] args) {
+    public void regenerationStatus(CommandSender sender) {
+        messenger.info(sender, "TBI");
+    }
+
+    public void setRegenerationFactor(CommandSender sender, double factor) {
+        messenger.info(sender, "TBI");
+    }
+
+    public void mutationStatus(CommandSender sender) {
         var mutation = rt.getService(MutationService.class);
         if (mutation == null) {
-            Msg.send(sender, "Mutation service is not available.");
+            messenger.error(sender, "Mutation service is not available.");
             return;
         }
 
-        if (args.length < 1) {
-            Msg.send(sender, mutation.statusLine(mutationAdminEnabled()));
-            return;
-        }
-
-        if ("trigger".equalsIgnoreCase(args[0])) {
-            var result = mutation.trigger();
-            Msg.send(sender, result.message());
-            Msg.send(sender, mutation.statusLine(mutationAdminEnabled()));
-            return;
-        }
-
-        Boolean enabled = parseBoolean(args[0]);
-        if (enabled == null) {
-            Msg.send(sender, "Usage: /ciaa mutation (<boolean>|trigger)");
-            return;
-        }
-
-        var admin = rt.getService(IAbilityAdmin.class);
-        if (admin == null) {
-            Msg.send(sender, "Ability admin service is not available.");
-            return;
-        }
-        admin.setAdminEnabled(CoreAbilities.MUTATION, enabled);
-        if (!enabled) mutation.reset(MutationResetReason.ADMIN_DISABLED);
-        Msg.send(sender, "Mutation admin enabled: " + enabled);
-        Msg.send(sender, mutation.statusLine(admin.adminEnabled(CoreAbilities.MUTATION)));
+        messenger.info(sender, mutation.statusLine(mutationAdminEnabled()));
     }
 
     private boolean mutationAdminEnabled() {
@@ -227,144 +197,184 @@ public final class AdminCommandHandlers {
         return admin == null || admin.adminEnabled(CoreAbilities.MUTATION);
     }
 
+    public void triggerMutation(CommandSender sender) {
+        var mutation = rt.getService(MutationService.class);
+        if (mutation == null) {
+            messenger.error(sender, "Mutation service is not available.");
+            return;
+        }
+
+        var result = mutation.trigger();
+        messenger.info(sender, result.message());
+        messenger.info(sender, mutation.statusLine(mutationAdminEnabled()));
+    }
+
+    public void setMutationEnabled(CommandSender sender, boolean enabled) {
+        var mutation = rt.getService(MutationService.class);
+        if (mutation == null) {
+            messenger.error(sender, "Mutation service is not available.");
+            return;
+        }
+
+        var admin = rt.getService(IAbilityAdmin.class);
+        if (admin == null) {
+            messenger.error(sender, "Ability admin service is not available.");
+            return;
+        }
+        admin.setAdminEnabled(CoreAbilities.MUTATION, enabled);
+        if (!enabled) mutation.reset(MutationResetReason.ADMIN_DISABLED);
+        messenger.success(sender, "Mutation admin enabled: %s".formatted(enabled));
+        messenger.info(sender, mutation.statusLine(admin.adminEnabled(CoreAbilities.MUTATION)));
+    }
+
     public void abilityList(CommandSender sender) {
         var admin = rt.getService(IAbilityAdmin.class);
         if (admin == null) {
-            Msg.send(sender, "Ability admin service is not available.");
+            messenger.error(sender, "Ability admin service is not available.");
             return;
         }
 
         var ids = admin.abilityIds();
         if (ids.isEmpty()) {
-            Msg.send(sender, "No abilities are registered or configured.");
+            messenger.info(sender, "No abilities are registered or configured.");
             return;
         }
-        Msg.send(sender, "Abilities:");
-        for (AbilityId id : ids) {
-            Msg.send(sender, "- " + id.asString() + " admin=" + admin.adminEnabled(id)
-                    + " config=" + admin.config(id).enabled(false));
-        }
+        messenger.info(sender, "Abilities:");
+        ids.forEach(id -> messenger.info(sender, "- %s admin=%s config=%s".formatted(
+                id.asString(),
+                admin.adminEnabled(id),
+                admin.config(id).enabled(false)
+        )));
     }
 
     public void abilityReload(CommandSender sender) {
         var admin = rt.getService(IAbilityAdmin.class);
         if (admin == null) {
-            Msg.send(sender, "Ability admin service is not available.");
+            messenger.error(sender, "Ability admin service is not available.");
             return;
         }
         admin.reload();
-        Msg.send(sender, "Ability runtime reloaded, including registered ability settings.");
+        messenger.success(sender, "Ability runtime reloaded, including registered ability settings.");
     }
 
-    public void abilityAction(CommandSender sender, String action, AbilityId id) {
+    public void enableAbility(CommandSender sender, AbilityId id) {
         var admin = rt.getService(IAbilityAdmin.class);
         if (admin == null) {
-            Msg.send(sender, "Ability admin service is not available.");
+            messenger.error(sender, "Ability admin service is not available.");
             return;
         }
 
-        switch (action.toLowerCase(Locale.ROOT)) {
-            case "enable" -> {
-                admin.setAdminEnabled(id, true);
-                Msg.send(sender, "Ability admin override cleared/enabled: " + id.asString());
-                abilityInfo(sender, id);
-            }
-            case "disable" -> {
-                admin.setAdminEnabled(id, false);
-                Msg.send(sender, "Ability admin disabled: " + id.asString());
-                abilityInfo(sender, id);
-            }
-            case "info", "status" -> abilityInfo(sender, id);
-            default -> abilityUsage(sender);
-        }
+        admin.setAdminEnabled(id, true);
+        messenger.success(sender, "Ability admin override cleared/enabled: %s".formatted(id.asString()));
+        abilityInfo(sender, id);
     }
 
-    private void abilityInfo(CommandSender sender, AbilityId id) {
+    public void abilityInfo(CommandSender sender, AbilityId id) {
         var admin = rt.requireService(IAbilityAdmin.class);
         var gate = rt.getService(IAbilityGate.class);
         var view = admin.config(id);
         var service = rt.getService(AbilityService.class);
         var registered = service == null ? null : service.registeredAbility(id);
 
-        Msg.send(sender, "Ability: " + id.asString());
-        Msg.send(sender, "  registered: " + (registered != null));
-        if (registered != null) Msg.send(sender, "  owner: " + registered.owner());
-        Msg.send(sender, "  config-exists: " + view.exists());
-        Msg.send(sender, "  config-enabled: " + view.enabled(false));
-        Msg.send(sender, "  default-active: " + view.defaultActive(false));
-        Msg.send(sender, "  admin-enabled: " + admin.adminEnabled(id));
-        Msg.send(sender, "  effective-current-game: " + (gate == null
+        messenger.info(sender, "Ability: " + id.asString());
+        messenger.info(sender, "  registered: " + (registered != null));
+        if (registered != null) messenger.info(sender, "  owner: " + registered.owner());
+        messenger.info(sender, "  config-exists: " + view.exists());
+        messenger.info(sender, "  config-enabled: " + view.enabled(false));
+        messenger.info(sender, "  default-active: " + view.defaultActive(false));
+        messenger.info(sender, "  admin-enabled: " + admin.adminEnabled(id));
+        messenger.info(sender, "  effective-current-game: " + (gate == null
                 ? admin.isEnabled(id, null)
                 : gate.isEnabledForGame(id, "command")));
     }
 
+    public void disableAbility(CommandSender sender, AbilityId id) {
+        var admin = rt.getService(IAbilityAdmin.class);
+        if (admin == null) {
+            messenger.error(sender, "Ability admin service is not available.");
+            return;
+        }
+
+        admin.setAdminEnabled(id, false);
+        messenger.success(sender, "Ability admin disabled: %s".formatted(id.asString()));
+        abilityInfo(sender, id);
+    }
+
     public void abilityUsage(CommandSender sender) {
-        Msg.send(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]");
+        messenger.usage(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]");
     }
 
     public void storeList(CommandSender sender) {
         var registry = rt.getService(IStoreRegistry.class);
         if (registry == null) {
-            Msg.send(sender, "Store service is not available.");
+            messenger.error(sender, "Store service is not available.");
             return;
         }
 
-        Msg.send(sender, "Stores:");
-        for (var store : registry.stores()) {
-            Msg.send(sender, "- " + store.id().asString() + " items=" + registry.items(store.id()).size());
-        }
+        messenger.info(sender, "Stores:");
+        registry.stores().forEach(store -> messenger.info(
+                sender,
+                "- %s items=%d".formatted(store.id().asString(), registry.items(store.id()).size())
+        ));
     }
 
-    public void openStore(CommandSender sender, String playerName, StoreId storeId) {
+    public void openStore(
+            CommandSender sender,
+            String playerName,
+            StoreId storeId
+    ) {
         var stores = rt.getService(IStoreService.class);
         var registry = rt.getService(IStoreRegistry.class);
         if (stores == null || registry == null) {
-            Msg.send(sender, "Store service is not available.");
+            messenger.error(sender, "Store service is not available.");
             return;
         }
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            Msg.send(sender, "Player must be online: " + playerName);
+            messenger.error(sender, "Player must be online: %s".formatted(playerName));
             return;
         }
         if (registry.store(storeId) == null) {
-            Msg.send(sender, "Unknown store: " + storeId.asString());
+            messenger.error(sender, "Unknown store: %s".formatted(storeId.asString()));
             return;
         }
         stores.openStore(player, storeId);
-        Msg.send(sender, "Opened store " + storeId.asString() + " for " + player.getName());
+        messenger.success(sender, "Opened store %s for %s".formatted(storeId.asString(), player.getName()));
     }
 
     public void economyBalance(CommandSender sender, String playerName) {
         var wallet = rt.getService(IWalletService.class);
         var currencies = rt.getService(ICurrencyRegistry.class);
         if (wallet == null || currencies == null) {
-            Msg.send(sender, "Economy service is not available.");
+            messenger.error(sender, "Economy service is not available.");
             return;
         }
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            Msg.send(sender, "Player must be online for economy commands: " + playerName);
+            messenger.error(sender, "Player must be online for economy commands: %s".formatted(playerName));
             return;
         }
         if (!wallet.loaded(player.getUniqueId())) {
-            Msg.send(sender, "Player data is still loading: " + player.getName());
+            messenger.error(sender, "Player data is still loading: %s".formatted(player.getName()));
             return;
         }
 
-        Msg.send(sender, "Balance for " + player.getName() + ":");
+        messenger.info(sender, "Balance for %s:".formatted(player.getName()));
         var balances = wallet.balances(player.getUniqueId());
-        for (var currency : currencies.currencies()) {
-            Msg.send(sender, "- " + currency.id().asString() + ": "
-                    + balances.getOrDefault(currency.id(), 0L));
-        }
+        currencies.currencies().forEach(currency -> messenger.info(
+                sender,
+                "- %s: %d".formatted(
+                        currency.id().asString(),
+                        balances.getOrDefault(currency.id(), 0L)
+                )
+        ));
     }
 
     public void economyAmount(
             CommandSender sender,
-            String action,
+            EconomyOperation operation,
             String playerName,
             CurrencyId currencyId,
             long amount
@@ -372,91 +382,80 @@ public final class AdminCommandHandlers {
         var wallet = rt.getService(IWalletService.class);
         var currencies = rt.getService(ICurrencyRegistry.class);
         if (wallet == null || currencies == null) {
-            Msg.send(sender, "Economy service is not available.");
+            messenger.error(sender, "Economy service is not available.");
             return;
         }
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            Msg.send(sender, "Player must be online for economy commands: " + playerName);
+            messenger.error(sender, "Player must be online for economy commands: %s".formatted(playerName));
             return;
         }
         if (!wallet.loaded(player.getUniqueId())) {
-            Msg.send(sender, "Player data is still loading: " + player.getName());
+            messenger.error(sender, "Player data is still loading: %s".formatted(player.getName()));
             return;
         }
         if (currencies.currency(currencyId) == null) {
-            Msg.send(sender, "Unknown currency: " + currencyId.asString());
+            messenger.error(sender, "Unknown currency: %s".formatted(currencyId.asString()));
             return;
         }
 
         var currencyAmount = new CurrencyAmount(currencyId, amount);
-        var reason = WalletChangeReason.command("admin:" + action);
-        var result = switch (action.toLowerCase(Locale.ROOT)) {
-            case "give" -> wallet.deposit(player.getUniqueId(), currencyAmount, reason);
-            case "take" -> wallet.withdraw(player.getUniqueId(), CurrencyCost.of(currencyAmount), reason);
-            case "set" -> wallet.set(player.getUniqueId(), currencyAmount, reason);
-            default -> null;
+        var reason = WalletChangeReason.command("admin:%s".formatted(operation.id()));
+        var result = switch (operation) {
+            case GIVE -> wallet.deposit(player.getUniqueId(), currencyAmount, reason);
+            case TAKE -> wallet.withdraw(player.getUniqueId(), CurrencyCost.of(currencyAmount), reason);
+            case SET -> wallet.set(player.getUniqueId(), currencyAmount, reason);
         };
 
-        if (result == null) {
-            economyHelp(sender);
-            return;
-        }
         if (result.disabled()) {
-            Msg.send(sender, "Currency ability is disabled.");
+            messenger.error(sender, "Currency ability is disabled.");
             return;
         }
         if (!result.success()) {
-            Msg.send(sender, "Transaction failed. Missing: " + result.missingAmounts());
+            messenger.error(sender, "Transaction failed. Missing: %s".formatted(result.missingAmounts()));
             return;
         }
 
-        Msg.send(sender, "Economy updated: " + player.getName() + " " + currencyId.asString()
-                + " = " + wallet.balance(player.getUniqueId(), currencyId));
+        messenger.success(sender, "Economy updated: %s %s = %d".formatted(
+                player.getName(),
+                currencyId.asString(),
+                wallet.balance(player.getUniqueId(), currencyId)
+        ));
     }
 
     public void economyHelp(CommandSender sender) {
-        Msg.send(sender, "Usage: /ciaa economy balance <player>");
-        Msg.send(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
+        messenger.usage(sender, "Usage: /ciaa economy balance <player>");
+        messenger.usage(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
     }
 
-    public void entrance(CommandSender sender, String[] args) {
-        if (args.length < 1) {
-            Msg.send(sender, "Usage: /ciaa entrance <boolean>");
-            return;
-        }
-
-        Boolean b = parseBoolean(args[0]);
-        if (b == null) {
-            Msg.send(sender, "Invalid boolean: " + args[0]);
-            return;
-        }
-
+    public void entrance(CommandSender sender, boolean enabled) {
         var st = rt.requireService(AdminRuntimeState.class);
-        st.entranceAllowed(b);
-        Msg.send(sender, "Entrance allowed: " + b);
+        st.entranceAllowed(enabled);
+        messenger.success(sender, "Entrance allowed: %s".formatted(enabled));
     }
 
-    public void language(CommandSender sender, String[] args) {
-        if (args.length < 1) {
-            Msg.send(sender, "Usage: /ciaa language <language_id>");
-            return;
-        }
+    public void entranceUsage(CommandSender sender) {
+        messenger.usage(sender, "Usage: /ciaa entrance <boolean>");
+    }
 
-        String lang = args[0].trim();
+    public void language(CommandSender sender, String lang) {
         var cfg = rt.requireService(ConfigManager.class);
 
-        boolean ok = cfg.setGlobalNode("lang", lang);
+        boolean ok = cfg.setGlobalNode("lang", lang.trim());
         if (!ok) {
-            Msg.send(sender, "Failed to write config.yml");
+            messenger.error(sender, "Failed to write config.yml");
             return;
         }
 
         cfg.reloadAll();
         I18n.reload();
 
-        Msg.send(sender, "Default language set to: " + lang);
+        messenger.success(sender, "Default language set to: %s".formatted(lang.trim()));
+    }
+
+    public void languageUsage(CommandSender sender) {
+        messenger.usage(sender, "Usage: /ciaa language <language_id>");
     }
 
     public void reload(CommandSender sender) {
@@ -464,7 +463,7 @@ public final class AdminCommandHandlers {
         st.reset();
 
         rt.reloadPlugin();
-        Msg.send(sender, "Reloaded.");
+        messenger.success(sender, "Reloaded.");
     }
 
     public void extensionsList(CommandSender sender) {
@@ -472,14 +471,12 @@ public final class AdminCommandHandlers {
     }
 
     private void sendLines(CommandSender sender, List<String> lines) {
-        for (var line : lines) {
-            Msg.send(sender, line);
-        }
+        lines.forEach(line -> messenger.info(sender, line));
     }
 
     public void extensionInfo(CommandSender sender, String id) {
         if (id == null || id.isBlank()) {
-            Msg.send(sender, "Usage: /ciaa extensions info <extension_id>");
+            messenger.usage(sender, "Usage: /ciaa extensions info <extension_id>");
             return;
         }
         sendLines(sender, ExtensionDiagnostics.infoLines(rt, id));
@@ -488,114 +485,105 @@ public final class AdminCommandHandlers {
     public void extensionsDump(CommandSender sender) {
         try {
             var target = ExtensionDiagnostics.writeDump(rt);
-            Msg.send(sender, "Extension dump written to: " + target);
+            messenger.success(sender, "Extension dump written to: %s".formatted(target));
         } catch (Throwable t) {
-            Msg.send(sender, "Failed to write extension dump: " + t.getMessage());
+            messenger.error(sender, "Failed to write extension dump: %s".formatted(t.getMessage()));
         }
     }
 
     // TODO: modify a field with object will break the config
-    public void config(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            Msg.send(sender, "Usage: /ciaa config <config|arena|skill> <node> <value>");
-            return;
-        }
-
-        String file = args[0].toLowerCase(Locale.ROOT);
-        String node = args[1];
-        String valueRaw = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+    public void config(
+            CommandSender sender,
+            ConfigTarget target,
+            String node,
+            String valueRaw
+    ) {
         Object value = parseValue(valueRaw);
 
         var cfg = rt.requireService(ConfigManager.class);
 
-        boolean ok;
-        switch (file) {
-            case "config" -> ok = cfg.setGlobalNode(node, value);
-            case "arena" -> ok = cfg.setArenaNode(node, value);
-            case "skill" -> ok = cfg.setSkillNode(node, value);
-            default -> {
-                Msg.send(sender, "Unknown target: " + file);
-                return;
-            }
-        }
+        boolean ok = switch (target) {
+            case CONFIG -> cfg.setGlobalNode(node, value);
+            case ARENA -> cfg.setArenaNode(node, value);
+            case SKILL -> cfg.setSkillNode(node, value);
+        };
 
         if (!ok) {
-            Msg.send(sender, "Write failed.");
+            messenger.error(sender, "Write failed.");
             return;
         }
 
-        Object cur;
-        switch (file) {
-            case "config" -> cur = cfg.getGlobalNode(node);
-            case "arena" -> cur = cfg.getArenaNode(node);
-            case "skill" -> cur = cfg.getSkillNode(node);
-            default -> cur = null;
-        }
-        String currentValue = cur == null ? "null" : String.valueOf(cur);
-        Msg.send(sender, "Updated " + file + ".yml: " + node + " = " + value);
-        Msg.send(sender, "Current value: " + currentValue);
-        Msg.send(sender, "Run /ciaa reload to apply.");
+        Object cur = switch (target) {
+            case CONFIG -> cfg.getGlobalNode(node);
+            case ARENA -> cfg.getArenaNode(node);
+            case SKILL -> cfg.getSkillNode(node);
+        };
+        var currentValue = cur == null ? "null" : String.valueOf(cur);
+        messenger.success(sender, "Updated %s: %s = %s".formatted(target.fileName(), node, value));
+        messenger.info(sender, "Current value: %s".formatted(currentValue));
+        messenger.info(sender, "Run /ciaa reload to apply.");
     }
 
-    public void database(CommandSender sender, String[] args) {
-        var database = rt.getService(IDatabaseService.class);
-        if (database == null) {
-            Msg.send(sender, "Database service is not available.");
-            return;
-        }
-
-        String action = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
-        switch (action) {
-            case "ping" -> databasePing(sender, database);
-            case "tables" -> databaseTables(sender, database);
-            default -> databaseStatus(sender, database);
-        }
+    public void configUsage(CommandSender sender) {
+        messenger.usage(sender, "Usage: /ciaa config <config|arena|skill> <node> <value>");
     }
 
-    private void databasePing(CommandSender sender, IDatabaseService database) {
+    public void unknownConfigTarget(CommandSender sender, String target) {
+        messenger.error(sender, "Unknown target: %s".formatted(target));
+    }
+
+    public void databaseUnavailable(CommandSender sender) {
+        messenger.error(sender, "Database service is not available.");
+    }
+
+    public void databaseTables(CommandSender sender, IDatabaseService database) {
         database.read(connection -> {
-            try (var st = connection.createStatement()) {
-                st.execute("SELECT 1");
-            }
-            return true;
-        }).whenComplete((ok, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
-            if (error == null && Boolean.TRUE.equals(ok)) {
-                Msg.send(sender, "- connection: ok");
-            } else {
-                Msg.send(sender, "- connection: failed (" + (error == null ? "unknown" : error.getMessage()) + ")");
-            }
-        }));
+                    var names = new java.util.ArrayList<String>();
+                    var metadata = connection.getMetaData();
+                    try (var rs = metadata.getTables(null, null, database.tablePrefix() + "%", new String[]{"TABLE"})) {
+                        while (rs.next()) {
+                            names.add(rs.getString("TABLE_NAME"));
+                        }
+                    }
+                    Collections.sort(names);
+                    return names;
+                })
+                .whenComplete((tables, error) -> Bukkit.getServer()
+                        .getGlobalRegionScheduler()
+                        .execute(rt.plugin(), () -> {
+                            if (error != null) {
+                                messenger.error(sender, "Database tables lookup failed: %s".formatted(error.getMessage()));
+                                return;
+                            }
+                            messenger.info(sender, "Database tables (%d):".formatted(tables.size()));
+                            tables.forEach(table -> messenger.info(sender, "- %s".formatted(table)));
+                        }));
     }
 
-    private void databaseTables(CommandSender sender, IDatabaseService database) {
-        database.read(connection -> {
-            var names = new java.util.ArrayList<String>();
-            var metadata = connection.getMetaData();
-            try (var rs = metadata.getTables(null, null, database.tablePrefix() + "%", new String[]{"TABLE"})) {
-                while (rs.next()) {
-                    names.add(rs.getString("TABLE_NAME"));
-                }
-            }
-            java.util.Collections.sort(names);
-            return names;
-        }).whenComplete((tables, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
-            if (error != null) {
-                Msg.send(sender, "Database tables lookup failed: " + error.getMessage());
-                return;
-            }
-            Msg.send(sender, "Database tables (" + tables.size() + "):");
-            for (String table : tables) {
-                Msg.send(sender, "- " + table);
-            }
-        }));
-    }
-
-    private void databaseStatus(CommandSender sender, IDatabaseService database) {
-        Msg.send(sender, "Database:");
-        Msg.send(sender, "- type: " + database.type());
-        Msg.send(sender, "- table-prefix: " + database.tablePrefix());
-        Msg.send(sender, "- ready: " + database.ready());
+    public void databaseStatus(CommandSender sender, IDatabaseService database) {
+        messenger.info(sender, "Database:");
+        messenger.info(sender, "- type: %s".formatted(database.type()));
+        messenger.info(sender, "- table-prefix: %s".formatted(database.tablePrefix()));
+        messenger.info(sender, "- ready: %s".formatted(database.ready()));
         databasePing(sender, database);
+    }
+
+    public void databasePing(CommandSender sender, IDatabaseService database) {
+        database.read(connection -> {
+                    try (var st = connection.createStatement()) {
+                        st.execute("SELECT 1");
+                    }
+                    return true;
+                })
+                .whenComplete((ok, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
+                    if (error == null && Boolean.TRUE.equals(ok)) {
+                        messenger.info(sender, "- connection: ok");
+                    } else {
+                        messenger.error(sender, "- connection: failed (" + (error == null
+                                ? "unknown"
+                                : error.getMessage()) + ")");
+                    }
+                }));
     }
 
 }

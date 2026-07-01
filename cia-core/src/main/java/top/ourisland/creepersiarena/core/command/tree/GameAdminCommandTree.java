@@ -2,7 +2,6 @@ package top.ourisland.creepersiarena.core.command.tree;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -69,12 +68,16 @@ public final class GameAdminCommandTree {
                 .then(CiaArguments.word("arena_id")
                         .suggests((_, builder) -> RegistrySuggestions.arenaIds(rt, builder))
                         .executes(ctx -> {
-                            admin.arena(CiaArguments.sender(ctx), new String[]{StringArgumentType.getString(ctx, "arena_id")});
+                            try {
+                                admin.arena(CiaArguments.sender(ctx), CiaArguments.arenaId(ctx, "arena_id"));
+                            } catch (IllegalArgumentException exception) {
+                                admin.invalidArena(CiaArguments.sender(ctx), exception.getMessage());
+                            }
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.arena(CiaArguments.sender(ctx), new String[0]);
+                    admin.arenaUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -85,12 +88,16 @@ public final class GameAdminCommandTree {
                 .then(CiaArguments.word("arena_id")
                         .suggests((_, builder) -> RegistrySuggestions.arenaIds(rt, builder))
                         .executes(ctx -> {
-                            admin.skip(CiaArguments.sender(ctx), new String[]{StringArgumentType.getString(ctx, "arena_id")});
+                            try {
+                                admin.skip(CiaArguments.sender(ctx), CiaArguments.arenaId(ctx, "arena_id"));
+                            } catch (IllegalArgumentException exception) {
+                                admin.invalidArena(CiaArguments.sender(ctx), exception.getMessage());
+                            }
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.skip(CiaArguments.sender(ctx), new String[0]);
+                    admin.skip(CiaArguments.sender(ctx), null);
                     return 1;
                 });
     }
@@ -100,12 +107,12 @@ public final class GameAdminCommandTree {
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_COOLDOWN))
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Double>argument("factor", DoubleArgumentType.doubleArg(0.0D))
                         .executes(ctx -> {
-                            admin.cooldown(CiaArguments.sender(ctx), new String[]{String.valueOf(DoubleArgumentType.getDouble(ctx, "factor"))});
+                            admin.setCooldownFactor(CiaArguments.sender(ctx), DoubleArgumentType.getDouble(ctx, "factor"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.cooldown(CiaArguments.sender(ctx), new String[0]);
+                    admin.cooldownUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -115,12 +122,12 @@ public final class GameAdminCommandTree {
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_REGENERATION))
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Double>argument("factor", DoubleArgumentType.doubleArg())
                         .executes(ctx -> {
-                            admin.regen(CiaArguments.sender(ctx), new String[]{String.valueOf(DoubleArgumentType.getDouble(ctx, "factor"))});
+                            admin.setRegenerationFactor(CiaArguments.sender(ctx), DoubleArgumentType.getDouble(ctx, "factor"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.regen(CiaArguments.sender(ctx), new String[0]);
+                    admin.regenerationStatus(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -130,19 +137,19 @@ public final class GameAdminCommandTree {
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_MUTATION))
                 .then(Commands.literal("trigger")
                         .executes(ctx -> {
-                            admin.mutation(CiaArguments.sender(ctx), new String[]{"trigger"});
+                            admin.triggerMutation(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.BOOLEAN_SUGGESTIONS))
                         .executes(ctx -> {
-                            admin.mutation(CiaArguments.sender(ctx), new String[]{String.valueOf(BoolArgumentType.getBool(ctx, "enabled"))});
+                            admin.setMutationEnabled(CiaArguments.sender(ctx), BoolArgumentType.getBool(ctx, "enabled"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.mutation(CiaArguments.sender(ctx), new String[0]);
+                    admin.mutationStatus(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

@@ -3,7 +3,7 @@ package top.ourisland.creepersiarena.core.command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.game.team.TeamId;
-import top.ourisland.creepersiarena.core.utils.Msg;
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -15,7 +15,7 @@ public final class CommandParsers {
 
     public static Object parseValue(String s) {
         if (s == null) return null;
-        String v = s.trim();
+        var v = s.trim();
 
         if (v.equalsIgnoreCase("null")) return null;
 
@@ -72,18 +72,9 @@ public final class CommandParsers {
         if (sender instanceof Player p) {
             return Optional.of(p);
         }
-        Msg.send(sender, "You can only execute this command as a player!");
+        CommandMessenger.plain(sender, "You can only execute this command as a player!");
         return Optional.empty();
     }
 
-    public static void asHelp(
-            CommandSender sender,
-            String[] args,
-            String help
-    ) {
-        if (args.length == 0) {
-            Msg.send(sender, help);
-        }
-    }
 
 }

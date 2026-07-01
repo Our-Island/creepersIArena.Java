@@ -39,18 +39,27 @@ public final class ConfigAdminCommandTree {
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("value", StringArgumentType.greedyString())
                                         .suggests((ctx, builder) -> ConfigSuggestions.values(rt, ctx, builder))
                                         .executes(ctx -> {
-                                            admin.config(CiaArguments.sender(ctx), new String[]{
-                                                    StringArgumentType.getString(ctx, "target"),
-                                                    StringArgumentType.getString(ctx, "node"),
+                                            var target = CiaArguments.configTarget(ctx, "target");
+                                            if (target == null) {
+                                                admin.unknownConfigTarget(
+                                                        CiaArguments.sender(ctx),
+                                                        ctx.getArgument("target", String.class)
+                                                );
+                                                return 1;
+                                            }
+                                            admin.config(
+                                                    CiaArguments.sender(ctx),
+                                                    target,
+                                                    ctx.getArgument("node", String.class),
                                                     StringArgumentType.getString(ctx, "value")
-                                            });
+                                            );
                                             return 1;
                                         })
                                 )
                         )
                 )
                 .executes(ctx -> {
-                    admin.config(CiaArguments.sender(ctx), new String[0]);
+                    admin.configUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

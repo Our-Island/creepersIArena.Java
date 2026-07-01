@@ -10,9 +10,13 @@ import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.economy.CurrencyId;
 import top.ourisland.creepersiarena.api.economy.cosmetic.CosmeticId;
 import top.ourisland.creepersiarena.api.economy.store.StoreId;
+import top.ourisland.creepersiarena.api.game.arena.ArenaId;
 import top.ourisland.creepersiarena.api.game.mode.GameModeId;
+import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.identity.CiaKey;
 import top.ourisland.creepersiarena.api.job.JobId;
+import top.ourisland.creepersiarena.core.command.CommandParsers;
+import top.ourisland.creepersiarena.core.command.model.ConfigTarget;
 
 /**
  * Common Brigadier argument helpers shared by command-tree classes.
@@ -60,6 +64,18 @@ public final class CiaArguments {
 
     public static AbilityId abilityId(CommandContext<CommandSourceStack> ctx, String name) {
         return AbilityId.of(CiaKeyArgument.get(ctx, name));
+    }
+
+    public static ArenaId arenaId(CommandContext<CommandSourceStack> ctx, String name) {
+        return ArenaId.parse(StringArgumentType.getString(ctx, name));
+    }
+
+    public static TeamId teamId(CommandContext<CommandSourceStack> ctx, String name) {
+        return CommandParsers.parseTeamId(StringArgumentType.getString(ctx, name));
+    }
+
+    public static ConfigTarget configTarget(CommandContext<CommandSourceStack> ctx, String name) {
+        return ConfigTarget.parse(StringArgumentType.getString(ctx, name));
     }
 
 }

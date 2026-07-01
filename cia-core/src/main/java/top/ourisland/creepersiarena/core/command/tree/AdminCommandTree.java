@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.core.command.tree;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -34,7 +33,7 @@ public final class AdminCommandTree {
         this.admin = admin;
         this.gameTree = new GameAdminCommandTree(rt, admin);
         this.abilityTree = new AbilityAdminCommandTree(rt, admin);
-        this.databaseTree = new DatabaseAdminCommandTree(admin);
+        this.databaseTree = new DatabaseAdminCommandTree(rt, admin);
         this.economyTree = new EconomyAdminCommandTree(rt, admin);
         this.storeTree = new StoreAdminCommandTree(rt, admin);
         this.extensionTree = new ExtensionAdminCommandTree(rt, admin);
@@ -69,12 +68,12 @@ public final class AdminCommandTree {
                 .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.BOOLEAN_SUGGESTIONS))
                         .executes(ctx -> {
-                            admin.entrance(CiaArguments.sender(ctx), new String[]{String.valueOf(BoolArgumentType.getBool(ctx, "enabled"))});
+                            admin.entrance(CiaArguments.sender(ctx), BoolArgumentType.getBool(ctx, "enabled"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.entrance(CiaArguments.sender(ctx), new String[0]);
+                    admin.entranceUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -85,12 +84,12 @@ public final class AdminCommandTree {
                 .then(CiaArguments.word("language_id")
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.ADMIN_LANGUAGE_SUGGESTIONS))
                         .executes(ctx -> {
-                            admin.language(CiaArguments.sender(ctx), new String[]{StringArgumentType.getString(ctx, "language_id")});
+                            admin.language(CiaArguments.sender(ctx), ctx.getArgument("language_id", String.class));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.language(CiaArguments.sender(ctx), new String[0]);
+                    admin.languageUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

@@ -9,6 +9,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
 import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.model.EconomyOperation;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.PlayerSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
@@ -45,13 +46,13 @@ public final class EconomyAdminCommandTree {
                                 })
                         )
                 )
-                .then(amountAction("give"))
-                .then(amountAction("take"))
-                .then(amountAction("set"));
+                .then(amountAction("give", EconomyOperation.GIVE))
+                .then(amountAction("take", EconomyOperation.TAKE))
+                .then(amountAction("set", EconomyOperation.SET));
     }
 
-    private LiteralArgumentBuilder<CommandSourceStack> amountAction(String action) {
-        return Commands.literal(action)
+    private LiteralArgumentBuilder<CommandSourceStack> amountAction(String literal, EconomyOperation operation) {
+        return Commands.literal(literal)
                 .then(CiaArguments.word("player")
                         .suggests((_, builder) -> PlayerSuggestions.onlinePlayers(builder))
                         .then(CiaArguments.ciaKey("currency")
@@ -60,7 +61,7 @@ public final class EconomyAdminCommandTree {
                                         .executes(ctx -> {
                                             admin.economyAmount(
                                                     CiaArguments.sender(ctx),
-                                                    action,
+                                                    operation,
                                                     StringArgumentType.getString(ctx, "player"),
                                                     CiaArguments.currencyId(ctx, "currency"),
                                                     LongArgumentType.getLong(ctx, "amount")

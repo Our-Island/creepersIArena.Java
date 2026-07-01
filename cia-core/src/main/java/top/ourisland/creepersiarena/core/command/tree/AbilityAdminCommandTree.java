@@ -44,18 +44,37 @@ public final class AbilityAdminCommandTree {
                             return 1;
                         })
                 )
-                .then(abilityAction("info", "info"))
-                .then(abilityAction("status", "status"))
-                .then(abilityAction("enable", "enable"))
-                .then(abilityAction("disable", "disable"));
+                .then(abilityInfo("info"))
+                .then(abilityInfo("status"))
+                .then(abilityToggle("enable", true))
+                .then(abilityToggle("disable", false));
     }
 
-    private LiteralArgumentBuilder<CommandSourceStack> abilityAction(String literal, String action) {
+    private LiteralArgumentBuilder<CommandSourceStack> abilityInfo(String literal) {
         return Commands.literal(literal)
                 .then(CiaArguments.ciaKey("ability_id")
                         .suggests((_, builder) -> RegistrySuggestions.abilityIds(rt, builder))
                         .executes(ctx -> {
-                            admin.abilityAction(CiaArguments.sender(ctx), action, CiaArguments.abilityId(ctx, "ability_id"));
+                            admin.abilityInfo(CiaArguments.sender(ctx), CiaArguments.abilityId(ctx, "ability_id"));
+                            return 1;
+                        })
+                )
+                .executes(ctx -> {
+                    admin.abilityUsage(CiaArguments.sender(ctx));
+                    return 1;
+                });
+    }
+
+    private LiteralArgumentBuilder<CommandSourceStack> abilityToggle(String literal, boolean enabled) {
+        return Commands.literal(literal)
+                .then(CiaArguments.ciaKey("ability_id")
+                        .suggests((_, builder) -> RegistrySuggestions.abilityIds(rt, builder))
+                        .executes(ctx -> {
+                            if (enabled) {
+                                admin.enableAbility(CiaArguments.sender(ctx), CiaArguments.abilityId(ctx, "ability_id"));
+                            } else {
+                                admin.disableAbility(CiaArguments.sender(ctx), CiaArguments.abilityId(ctx, "ability_id"));
+                            }
                             return 1;
                         })
                 )

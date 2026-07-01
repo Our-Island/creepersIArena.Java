@@ -1,6 +1,5 @@
 package top.ourisland.creepersiarena.core.command.tree;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -100,12 +99,16 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.word("team")
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.TEAM_SUGGESTIONS))
                         .executes(ctx -> {
-                            player.team(CiaArguments.sender(ctx), new String[]{StringArgumentType.getString(ctx, "team")});
+                            try {
+                                player.team(CiaArguments.sender(ctx), CiaArguments.teamId(ctx, "team"));
+                            } catch (IllegalArgumentException exception) {
+                                player.invalidTeam(CiaArguments.sender(ctx), ctx.getArgument("team", String.class));
+                            }
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.team(CiaArguments.sender(ctx), new String[0]);
+                    player.teamUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -116,12 +119,12 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.word("language")
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PLAYER_LANGUAGE_SUGGESTIONS))
                         .executes(ctx -> {
-                            player.language(CiaArguments.sender(ctx), new String[]{StringArgumentType.getString(ctx, "language")});
+                            player.language(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.language(CiaArguments.sender(ctx), new String[0]);
+                    player.languageUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -130,7 +133,7 @@ public final class PlayerCommandTree {
         return Commands.literal("preference")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_PREFERENCE))
                 .executes(ctx -> {
-                    player.preference(CiaArguments.sender(ctx), new String[0]);
+                    player.preference(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
