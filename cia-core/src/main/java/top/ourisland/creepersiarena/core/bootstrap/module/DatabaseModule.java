@@ -2,16 +2,13 @@ package top.ourisland.creepersiarena.core.bootstrap.module;
 
 import top.ourisland.creepersiarena.api.database.IDatabaseMigrationRegistry;
 import top.ourisland.creepersiarena.api.database.IDatabaseService;
-import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
-import top.ourisland.creepersiarena.core.database.CoreSchemaMigration;
-import top.ourisland.creepersiarena.core.database.DatabaseMigrationRegistry;
-import top.ourisland.creepersiarena.core.database.DatabaseMigrationRunner;
-import top.ourisland.creepersiarena.core.database.JdbcDatabaseService;
+import top.ourisland.creepersiarena.core.database.*;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 @CiaBootstrapModule(name = "database", order = 610)
 public final class DatabaseModule implements IBootstrapModule {
@@ -28,6 +25,7 @@ public final class DatabaseModule implements IBootstrapModule {
             var service = new JdbcDatabaseService(rt.plugin(), rt.log(), cfg);
             var migrations = new DatabaseMigrationRegistry();
             migrations.registerMigration(RegistrationOwnerAuthority.core(), new CoreSchemaMigration());
+            migrations.registerMigration(RegistrationOwnerAuthority.core(), new CorePreferenceSchemaMigration());
 
             rt.putService(JdbcDatabaseService.class, service);
             rt.putService(IDatabaseService.class, service);

@@ -16,7 +16,7 @@ import java.util.List;
  * Steal-owned ready item marker and factory.
  * <p>
  * This deliberately does not use the generic core {@code LobbyAction} codec: ready/unready is a mode-owned waiting-room
- * action, and {@code /join} means "ready" in steal.
+ * action, and {@code /cia join} means "ready" in steal.
  */
 final class StealReadyItemCodec {
 

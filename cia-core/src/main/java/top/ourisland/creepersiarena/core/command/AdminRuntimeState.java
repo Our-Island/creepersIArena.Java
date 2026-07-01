@@ -11,6 +11,7 @@ public final class AdminRuntimeState {
 
     private volatile boolean entranceAllowed = true;
     private volatile double cooldownFactor = 1.0;
+    private volatile double regenerationFactor = 1.0;
 
     private volatile GameModeId forcedNextMode;
     private volatile ArenaId forcedNextArenaId;
@@ -18,6 +19,7 @@ public final class AdminRuntimeState {
     public void reset() {
         entranceAllowed = true;
         cooldownFactor = 1.0;
+        regenerationFactor = 1.0;
         forcedNextMode = null;
         forcedNextArenaId = null;
     }
