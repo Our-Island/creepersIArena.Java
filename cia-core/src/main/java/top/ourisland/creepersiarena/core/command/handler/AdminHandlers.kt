@@ -1,33 +1,37 @@
-package top.ourisland.creepersiarena.core.command.handler;
+package top.ourisland.creepersiarena.core.command.handler
 
-import lombok.Getter;
-import top.ourisland.creepersiarena.core.command.handler.admin.*;
+import top.ourisland.creepersiarena.core.command.handler.admin.*
 
 /**
  * Lightweight holder for admin command handlers. It intentionally contains no business logic; each command domain owns
  * its own handler class.
  */
-@Getter
-public final class AdminHandlers {
+class AdminHandlers(
+    context: CommandHandlerContext,
+) {
 
-    private final AdminSystemHandlers system;
-    private final GameAdminHandlers game;
-    private final AbilityAdminHandlers ability;
-    private final EconomyAdminHandlers economy;
-    private final StoreAdminHandlers store;
-    private final ExtensionAdminHandlers extension;
-    private final ConfigAdminHandlers config;
-    private final DatabaseAdminHandlers database;
+    @get:JvmName("system")
+    val system = AdminSystemHandlers(context)
 
-    public AdminHandlers(CommandHandlerContext context) {
-        this.system = new AdminSystemHandlers(context);
-        this.game = new GameAdminHandlers(context);
-        this.ability = new AbilityAdminHandlers(context);
-        this.economy = new EconomyAdminHandlers(context);
-        this.store = new StoreAdminHandlers(context);
-        this.extension = new ExtensionAdminHandlers(context);
-        this.config = new ConfigAdminHandlers(context);
-        this.database = new DatabaseAdminHandlers(context);
-    }
+    @get:JvmName("game")
+    val game = GameAdminHandlers(context)
+
+    @get:JvmName("ability")
+    val ability = AbilityAdminHandlers(context)
+
+    @get:JvmName("economy")
+    val economy = EconomyAdminHandlers(context)
+
+    @get:JvmName("store")
+    val store = StoreAdminHandlers(context)
+
+    @get:JvmName("extension")
+    val extension = ExtensionAdminHandlers(context)
+
+    @get:JvmName("config")
+    val config = ConfigAdminHandlers(context)
+
+    @get:JvmName("database")
+    val database = DatabaseAdminHandlers(context)
 
 }

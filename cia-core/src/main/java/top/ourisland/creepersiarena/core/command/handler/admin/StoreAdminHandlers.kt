@@ -1,74 +1,73 @@
-package top.ourisland.creepersiarena.core.command.handler.admin;
+package top.ourisland.creepersiarena.core.command.handler.admin
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry;
-import top.ourisland.creepersiarena.api.economy.store.IStoreService;
-import top.ourisland.creepersiarena.api.economy.store.StoreId;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext;
-import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
-import top.ourisland.creepersiarena.core.command.message.CommandPanel;
+import org.bukkit.Bukkit
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.api.economy.store.IStoreRegistry
+import top.ourisland.creepersiarena.api.economy.store.IStoreService
+import top.ourisland.creepersiarena.api.economy.store.StoreId
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime
+import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger
+import top.ourisland.creepersiarena.core.command.message.CommandPanel
 
-import java.util.Comparator;
+class StoreAdminHandlers(
+    context: CommandHandlerContext,
+) {
 
-public final class StoreAdminHandlers {
+    private val rt: BootstrapRuntime = context.runtime
+    private val messenger: CommandMessenger = context.messenger
 
-    private final BootstrapRuntime rt;
-    private final CommandMessenger messenger;
-
-    public StoreAdminHandlers(CommandHandlerContext context) {
-        this.rt = context.runtime();
-        this.messenger = context.messenger();
-    }
-
-    public void storeList(CommandSender sender) {
-        var registry = rt.getService(IStoreRegistry.class);
+    fun storeList(sender: CommandSender) {
+        val registry = rt.getService(IStoreRegistry::class.java)
         if (registry == null) {
-            messenger.error(sender, "Store service is not available.");
-            return;
+            messenger.error(sender, "Store service is not available.")
+            return
         }
 
-        var stores = registry.stores().stream()
-                .sorted(Comparator.comparing(store -> store.id().asString()))
-                .toList();
+        val stores = registry.stores().sortedBy { store -> store.id().asString() }
         if (stores.isEmpty()) {
-            messenger.warn(sender, "No stores are registered.");
-            return;
+            messenger.warn(sender, "No stores are registered.")
+            return
         }
 
-        var panel = CommandPanel.builder("Stores");
-        stores.forEach(store -> panel.row("<click:suggest_command:'/ciaa store open '>"
-                + messenger.id(store.id().asString()) + "</click> "
-                + "<dark_gray>|</dark_gray> rows <gold>" + store.rows() + "</gold> "
-                + "<dark_gray>|</dark_gray> items <gold>" + registry.items(store.id()).size() + "</gold>"));
-        messenger.panel(sender, panel.build());
+        val panel = CommandPanel.builder("Stores")
+        stores.forEach { store ->
+            panel.row(
+                "<click:suggest_command:'/ciaa store open '>" + messenger.id(store.id().asString()) + "</click> " +
+                        "<dark_gray>|</dark_gray> rows <gold>${store.rows()}</gold> " +
+                        "<dark_gray>|</dark_gray> items <gold>${registry.items(store.id()).size}</gold>"
+            )
+        }
+        messenger.panel(sender, panel.build())
     }
 
-    public void openStore(
-            CommandSender sender,
-            String playerName,
-            StoreId storeId
+    fun openStore(
+        sender: CommandSender,
+        playerName: String,
+        storeId: StoreId,
     ) {
-        var stores = rt.getService(IStoreService.class);
-        var registry = rt.getService(IStoreRegistry.class);
+        val stores = rt.getService(IStoreService::class.java)
+        val registry = rt.getService(IStoreRegistry::class.java)
         if (stores == null || registry == null) {
-            messenger.error(sender, "Store service is not available.");
-            return;
+            messenger.error(sender, "Store service is not available.")
+            return
         }
 
-        var player = Bukkit.getPlayerExact(playerName);
+        val player = Bukkit.getPlayerExact(playerName)
         if (player == null) {
-            messenger.errorMini(sender, "Player must be online: " + messenger.id(playerName));
-            return;
+            messenger.errorMini(sender, "Player must be online: ${messenger.id(playerName)}")
+            return
         }
         if (registry.store(storeId) == null) {
-            messenger.errorMini(sender, "Unknown store: " + messenger.id(storeId.asString()));
-            messenger.hint(sender, "Use /ciaa store list or press Tab to see available stores.");
-            return;
+            messenger.errorMini(sender, "Unknown store: ${messenger.id(storeId.asString())}")
+            messenger.hint(sender, "Use /ciaa store list or press Tab to see available stores.")
+            return
         }
-        stores.openStore(player, storeId);
-        messenger.successMini(sender, "Opened store " + messenger.id(storeId.asString()) + " for " + messenger.id(player.getName()));
+        stores.openStore(player, storeId)
+        messenger.successMini(
+            sender,
+            "Opened store ${messenger.id(storeId.asString())} for ${messenger.id(player.name)}"
+        )
     }
 
 }

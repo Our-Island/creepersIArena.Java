@@ -1,19 +1,17 @@
-package top.ourisland.creepersiarena.core.command.handler.player;
+package top.ourisland.creepersiarena.core.command.handler.player
 
-import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext;
-import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer;
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext
+import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer
 
-public final class PlayerHelpHandlers {
+class PlayerHelpHandlers(
+    context: CommandHandlerContext,
+) {
 
-    private final CommandHelpRenderer helpRenderer;
+    private val helpRenderer: CommandHelpRenderer = context.helpRenderer
 
-    public PlayerHelpHandlers(CommandHandlerContext context) {
-        this.helpRenderer = context.helpRenderer();
-    }
-
-    public void help(CommandSender sender) {
-        helpRenderer.playerHelp(sender);
+    fun help(sender: CommandSender) {
+        helpRenderer.playerHelp(sender)
     }
 
 }

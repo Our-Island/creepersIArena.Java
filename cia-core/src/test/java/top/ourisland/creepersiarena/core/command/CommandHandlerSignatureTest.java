@@ -6,12 +6,17 @@ import top.ourisland.creepersiarena.core.command.handler.PlayerHandlers;
 import top.ourisland.creepersiarena.core.command.handler.admin.*;
 import top.ourisland.creepersiarena.core.command.handler.player.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class CommandHandlerSignatureTest {
+
+    private static final Path HANDLER_ROOT = Path.of("src/main/java/top/ourisland/creepersiarena/core/command/handler");
 
     @Test
     void handlersDoNotAcceptLegacyStringArrayCommandArguments() {
@@ -48,6 +53,28 @@ class CommandHandlerSignatureTest {
 
         assertFalse(legacyMethod.isPresent(), () -> type.getSimpleName()
                 + " must receive Brigadier-parsed values instead of String[] command arguments.");
+    }
+
+    @Test
+    void kotlinHandlerSourcesDoNotDeclareLegacyStringArrayCommandArguments() throws IOException {
+        try (var files = Files.walk(HANDLER_ROOT)) {
+            var offenders = files
+                    .filter(path -> path.toString().endsWith(".kt"))
+                    .filter(path -> contains(path, "Array<String>")
+                            || contains(path, "Array<out String>")
+                            || contains(path, "vararg args"))
+                    .toList();
+            assertFalse(offenders.iterator()
+                    .hasNext(), () -> "Kotlin handlers must not receive legacy string-array command args: " + offenders);
+        }
+    }
+
+    private static boolean contains(Path path, String needle) {
+        try {
+            return Files.readString(path).contains(needle);
+        } catch (IOException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
 }

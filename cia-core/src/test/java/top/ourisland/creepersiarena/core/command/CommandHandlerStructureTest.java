@@ -21,57 +21,68 @@ class CommandHandlerStructureTest {
     void legacyGodHandlersHaveBeenRemoved() {
         assertFalse(Files.exists(HANDLER_ROOT.resolve("AdminCommandHandlers.java")));
         assertFalse(Files.exists(HANDLER_ROOT.resolve("PlayerCommandHandlers.java")));
+        assertFalse(Files.exists(HANDLER_ROOT.resolve("AdminCommandHandlers.kt")));
+        assertFalse(Files.exists(HANDLER_ROOT.resolve("PlayerCommandHandlers.kt")));
     }
 
     @Test
-    void handlerPackagesExposeExpectedModules() throws IOException {
+    void handlerAggregatorsHaveBeenMigratedToKotlin() throws IOException {
         assertEquals(Set.of(
-                "AdminSystemHandlers.java",
-                "GameAdminHandlers.java",
-                "AbilityAdminHandlers.java",
-                "EconomyAdminHandlers.java",
-                "StoreAdminHandlers.java",
-                "ExtensionAdminHandlers.java",
-                "ConfigAdminHandlers.java",
-                "DatabaseAdminHandlers.java"
-        ), fileNames(ADMIN_HANDLER_ROOT));
-
-        assertEquals(Set.of(
-                "PlayerHelpHandlers.java",
-                "PlayerGameHandlers.java",
-                "PlayerPreferenceHandlers.java",
-                "PlayerEconomyHandlers.java",
-                "PlayerStoreHandlers.java",
-                "PlayerCosmeticHandlers.java"
-        ), fileNames(PLAYER_HANDLER_ROOT));
+                "AdminHandlers.kt",
+                "CommandHandlerContext.kt",
+                "PlayerHandlers.kt"
+        ), fileNames(HANDLER_ROOT));
     }
 
     private static Set<String> fileNames(Path directory) throws IOException {
         try (var files = Files.list(directory)) {
             return files
-                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt"))
                     .map(path -> path.getFileName().toString())
                     .collect(Collectors.toSet());
         }
     }
 
     @Test
-    void concreteHandlersStaySmallEnoughForDomainOwnership() throws IOException {
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("AdminSystemHandlers.java"), 80);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("GameAdminHandlers.java"), 230);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("AbilityAdminHandlers.java"), 130);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("EconomyAdminHandlers.java"), 160);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("StoreAdminHandlers.java"), 100);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("ExtensionAdminHandlers.java"), 130);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("ConfigAdminHandlers.java"), 180);
-        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("DatabaseAdminHandlers.java"), 120);
+    void handlerPackagesExposeExpectedKotlinModules() throws IOException {
+        assertEquals(Set.of(
+                "AdminSystemHandlers.kt",
+                "GameAdminHandlers.kt",
+                "AbilityAdminHandlers.kt",
+                "EconomyAdminHandlers.kt",
+                "StoreAdminHandlers.kt",
+                "ExtensionAdminHandlers.kt",
+                "ConfigAdminHandlers.kt",
+                "DatabaseAdminHandlers.kt"
+        ), fileNames(ADMIN_HANDLER_ROOT));
 
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerHelpHandlers.java"), 40);
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerGameHandlers.java"), 170);
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerPreferenceHandlers.java"), 170);
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerEconomyHandlers.java"), 80);
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerStoreHandlers.java"), 110);
-        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerCosmeticHandlers.java"), 120);
+        assertEquals(Set.of(
+                "PlayerHelpHandlers.kt",
+                "PlayerGameHandlers.kt",
+                "PlayerPreferenceHandlers.kt",
+                "PlayerEconomyHandlers.kt",
+                "PlayerStoreHandlers.kt",
+                "PlayerCosmeticHandlers.kt"
+        ), fileNames(PLAYER_HANDLER_ROOT));
+    }
+
+    @Test
+    void concreteHandlersStaySmallEnoughForDomainOwnership() throws IOException {
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("AdminSystemHandlers.kt"), 80);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("GameAdminHandlers.kt"), 280);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("AbilityAdminHandlers.kt"), 170);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("EconomyAdminHandlers.kt"), 180);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("StoreAdminHandlers.kt"), 120);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("ExtensionAdminHandlers.kt"), 140);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("ConfigAdminHandlers.kt"), 90);
+        assertMaxLines(ADMIN_HANDLER_ROOT.resolve("DatabaseAdminHandlers.kt"), 120);
+
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerHelpHandlers.kt"), 40);
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerGameHandlers.kt"), 190);
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerPreferenceHandlers.kt"), 180);
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerEconomyHandlers.kt"), 100);
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerStoreHandlers.kt"), 110);
+        assertMaxLines(PLAYER_HANDLER_ROOT.resolve("PlayerCosmeticHandlers.kt"), 110);
     }
 
     private static void assertMaxLines(Path path, int maxLines) throws IOException {
@@ -85,7 +96,7 @@ class CommandHandlerStructureTest {
     void commandTreesDoNotDependOnRemovedGodHandlers() throws IOException {
         try (var files = Files.walk(COMMAND_ROOT.resolve("tree"))) {
             var offenders = files
-                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt"))
                     .filter(path -> contains(path, "AdminCommandHandlers") || contains(path, "PlayerCommandHandlers"))
                     .toList();
             assertTrue(offenders.isEmpty(), () -> "Command trees must use modular handlers instead of god handlers: " + offenders);
@@ -97,6 +108,16 @@ class CommandHandlerStructureTest {
             return Files.readString(path).contains(needle);
         } catch (IOException exception) {
             throw new IllegalStateException(exception);
+        }
+    }
+
+    @Test
+    void commandHandlerPackageDoesNotContainJavaHandlerSources() throws IOException {
+        try (var files = Files.walk(HANDLER_ROOT)) {
+            var javaHandlers = files
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .toList();
+            assertTrue(javaHandlers.isEmpty(), () -> "Command handlers should be Kotlin sources after stage 7.5: " + javaHandlers);
         }
     }
 

@@ -1,55 +1,52 @@
-package top.ourisland.creepersiarena.core.command.handler.admin;
+package top.ourisland.creepersiarena.core.command.handler.admin
 
-import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
-import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext;
-import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer;
-import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
-import top.ourisland.creepersiarena.core.config.ConfigManager;
-import top.ourisland.creepersiarena.core.utils.I18n;
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime
+import top.ourisland.creepersiarena.core.command.AdminRuntimeState
+import top.ourisland.creepersiarena.core.command.handler.CommandHandlerContext
+import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger
+import top.ourisland.creepersiarena.core.config.ConfigManager
+import top.ourisland.creepersiarena.core.utils.I18n
 
-public final class AdminSystemHandlers {
+class AdminSystemHandlers(
+    context: CommandHandlerContext,
+) {
 
-    private final BootstrapRuntime rt;
-    private final CommandMessenger messenger;
-    private final CommandHelpRenderer helpRenderer;
+    private val rt: BootstrapRuntime = context.runtime
+    private val messenger: CommandMessenger = context.messenger
+    private val helpRenderer: CommandHelpRenderer = context.helpRenderer
 
-    public AdminSystemHandlers(CommandHandlerContext context) {
-        this.rt = context.runtime();
-        this.messenger = context.messenger();
-        this.helpRenderer = context.helpRenderer();
+    fun help(sender: CommandSender) {
+        helpRenderer.adminHelp(sender)
     }
 
-    public void help(CommandSender sender) {
-        helpRenderer.adminHelp(sender);
-    }
+    fun language(sender: CommandSender, lang: String) {
+        val cfg = rt.requireService(ConfigManager::class.java)
+        val trimmed = lang.trim()
 
-    public void language(CommandSender sender, String lang) {
-        var cfg = rt.requireService(ConfigManager.class);
-
-        boolean ok = cfg.setGlobalNode("lang", lang.trim());
+        val ok = cfg.setGlobalNode("lang", trimmed)
         if (!ok) {
-            messenger.error(sender, "Failed to write config.yml");
-            return;
+            messenger.error(sender, "Failed to write config.yml")
+            return
         }
 
-        cfg.reloadAll();
-        I18n.reload();
+        cfg.reloadAll()
+        I18n.reload()
 
-        messenger.successMini(sender, "Default language set to: " + messenger.id(lang.trim()));
+        messenger.successMini(sender, "Default language set to: ${messenger.id(trimmed)}")
     }
 
-    public void languageUsage(CommandSender sender) {
-        messenger.usage(sender, "/ciaa language <language_id>");
+    fun languageUsage(sender: CommandSender) {
+        messenger.usage(sender, "/ciaa language <language_id>")
     }
 
-    public void reload(CommandSender sender) {
-        var st = rt.requireService(AdminRuntimeState.class);
-        st.reset();
+    fun reload(sender: CommandSender) {
+        val st = rt.requireService(AdminRuntimeState::class.java)
+        st.reset()
 
-        rt.reloadPlugin();
-        messenger.success(sender, "Reloaded plugin runtime state.");
+        rt.reloadPlugin()
+        messenger.success(sender, "Reloaded plugin runtime state.")
     }
 
 }
