@@ -18,14 +18,14 @@ object ConfigSuggestions {
     @JvmStatic
     fun nodes(
         rt: BootstrapRuntime?,
-        ctx: CommandContext<CommandSourceStack>,
+        ctx: CommandContext<CommandSourceStack>?,
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         if (rt == null) return builder.buildFuture()
         val config = rt.getService(ConfigManager::class.java) ?: return builder.buildFuture()
 
         val target = try {
-            ctx.getArgument("target", String::class.java)
+            ctx?.getArgument("target", String::class.java) ?: return builder.buildFuture()
         } catch (_: Throwable) {
             return builder.buildFuture()
         }
@@ -67,7 +67,7 @@ object ConfigSuggestions {
     @JvmStatic
     fun values(
         rt: BootstrapRuntime?,
-        ctx: CommandContext<CommandSourceStack>,
+        ctx: CommandContext<CommandSourceStack>?,
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         if (rt == null) return builder.buildFuture()
@@ -76,7 +76,7 @@ object ConfigSuggestions {
         val target: String
         val node: String
         try {
-            target = ctx.getArgument("target", String::class.java)
+            target = ctx?.getArgument("target", String::class.java) ?: return builder.buildFuture()
             node = ctx.getArgument("node", String::class.java)
         } catch (_: Throwable) {
             return builder.buildFuture()

@@ -20,33 +20,16 @@ class PlayerPreferenceHandlers(
     private val rt: BootstrapRuntime = context.runtime
     private val messenger: CommandMessenger = context.messenger
 
+    private fun usage(path: String, description: String) = CommandUsage(path, description).toMiniRow()
+
     fun preferenceUsage(sender: CommandSender) {
         messenger.panel(
             sender,
             CommandPanel.builder("Preferences")
-                .row(
-                    CommandUsage(
-                        "/cia pref language <default|en_us|zh_cn>",
-                        "Change your personal language."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref particles <true|false>",
-                        "Enable or disable particle cosmetics for yourself."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref scoreboard <true|false>",
-                        "Enable or disable scoreboard UI preference."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref reset", "Reset command preferences to defaults."
-                    ).toMiniRow()
-                )
+                .row(usage("/cia pref language <default|en_us|zh_cn>", "Change your personal language."))
+                .row(usage("/cia pref particles <true|false>", "Enable or disable particle cosmetics for yourself."))
+                .row(usage("/cia pref scoreboard <true|false>", "Enable or disable scoreboard UI preference."))
+                .row(usage("/cia pref reset", "Reset command preferences to defaults."))
                 .build()
         )
     }
@@ -80,21 +63,9 @@ class PlayerPreferenceHandlers(
         messenger.panel(
             sender,
             CommandPanel.builder("Language")
-                .row(
-                    CommandUsage(
-                        "/cia language default", "Use the server default language."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia language en_us", "Use English."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia language zh_cn", "Use Simplified Chinese."
-                    ).toMiniRow()
-                )
+                .row(usage("/cia language default", "Use the server default language."))
+                .row(usage("/cia language en_us", "Use English."))
+                .row(usage("/cia language zh_cn", "Use Simplified Chinese."))
                 .build()
         )
     }
@@ -122,6 +93,7 @@ class PlayerPreferenceHandlers(
                 cosmetics.clearSelection(player.uniqueId, CosmeticSlot.PARTICLE_TRAIL)
             }
         }
+
         messenger.successMini(sender, "Particle preference is now ${messenger.bool(enabled)}")
         if (!enabled) messenger.hint(sender, "Your current particle trail selection was cleared.")
     }
@@ -175,29 +147,10 @@ class PlayerPreferenceHandlers(
                 .row("<gray>Particles:</gray> ${messenger.bool(preferences.particlesEnabled(player))}")
                 .row("<gray>Scoreboard:</gray> ${messenger.bool(preferences.scoreboardEnabled(player))}")
                 .row("")
-                .row(
-                    CommandUsage(
-                        "/cia pref language <default|en_us|zh_cn>",
-                        "Change your personal language."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref particles <true|false>",
-                        "Enable or disable particle cosmetics for yourself."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref scoreboard <true|false>",
-                        "Enable or disable scoreboard UI preference."
-                    ).toMiniRow()
-                )
-                .row(
-                    CommandUsage(
-                        "/cia pref reset", "Reset command preferences to defaults."
-                    ).toMiniRow()
-                )
+                .row(usage("/cia pref language <default|en_us|zh_cn>", "Change your personal language."))
+                .row(usage("/cia pref particles <true|false>", "Enable or disable particle cosmetics for yourself."))
+                .row(usage("/cia pref scoreboard <true|false>", "Enable or disable scoreboard UI preference."))
+                .row(usage("/cia pref reset", "Reset command preferences to defaults."))
                 .build()
         )
     }
