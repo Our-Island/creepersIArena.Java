@@ -17,6 +17,7 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.core.ability.AbilityService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
+import top.ourisland.creepersiarena.core.command.config.ConfigWriteGuard;
 import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer;
 import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
 import top.ourisland.creepersiarena.core.command.message.CommandPanel;
@@ -33,10 +34,11 @@ import top.ourisland.creepersiarena.core.game.mutation.MutationService;
 import top.ourisland.creepersiarena.core.game.regeneration.RegenerationService;
 import top.ourisland.creepersiarena.core.utils.I18n;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-import static top.ourisland.creepersiarena.core.command.CommandParsers.*;
 
 public final class AdminCommandHandlers {
 
@@ -610,29 +612,33 @@ public final class AdminCommandHandlers {
             boolean create
     ) {
         var cfg = rt.requireService(ConfigManager.class);
-        var normalizedNode = normalizeConfigNode(node);
+        var normalizedNode = ConfigWriteGuard.normalizeNode(node);
         if (normalizedNode == null) {
             messenger.error(sender, "Config node is required.");
             return;
         }
 
         boolean exists = configNodeExists(cfg, target, normalizedNode);
-        if (!exists && !create) {
-            messenger.warnMini(sender, "Config node does not exist: " + messenger.id(normalizedNode));
-            messenger.hint(sender, "Use /ciaa config set " + target.id() + " " + normalizedNode + " --create <value> to create it intentionally.");
-            return;
-        }
-
-        if (exists && configSection(cfg, target, normalizedNode)) {
-            messenger.errorMini(sender, "Refusing to overwrite object config node: " + messenger.id(normalizedNode));
-            messenger.hint(sender, "Use /ciaa config list " + target.id() + " to choose a concrete child node.");
+        boolean section = exists && configSection(cfg, target, normalizedNode);
+        try {
+            ConfigWriteGuard.validateWrite(normalizedNode, exists, section, create);
+        } catch (IllegalArgumentException exception) {
+            if (!exists) {
+                messenger.warnMini(sender, "Config node does not exist: " + messenger.id(normalizedNode));
+                messenger.hint(sender, "Use /ciaa config set " + target.id() + " " + normalizedNode + " --create <value> to create it intentionally.");
+            } else if (section) {
+                messenger.errorMini(sender, "Refusing to overwrite object config node: " + messenger.id(normalizedNode));
+                messenger.hint(sender, "Use /ciaa config list " + target.id() + " to choose a concrete child node.");
+            } else {
+                messenger.error(sender, exception.getMessage());
+            }
             return;
         }
 
         Object oldValue = exists ? configNode(cfg, target, normalizedNode) : null;
         Object newValue;
         try {
-            newValue = coerceConfigValue(oldValue, valueRaw);
+            newValue = ConfigWriteGuard.coerceValue(oldValue, valueRaw);
         } catch (IllegalArgumentException exception) {
             messenger.error(sender, exception.getMessage());
             return;
@@ -658,12 +664,6 @@ public final class AdminCommandHandlers {
                 .row("<gray>Current:</gray> " + configValue(currentValue))
                 .row("<gold>Run</gold> <click:suggest_command:'/ciaa config reload'><yellow>/ciaa config reload</yellow></click> <gold>to reload config objects.</gold>")
                 .build());
-    }
-
-    private String normalizeConfigNode(String node) {
-        if (node == null) return null;
-        var normalized = node.trim();
-        return normalized.isBlank() ? null : normalized;
     }
 
     private boolean configNodeExists(
@@ -702,45 +702,6 @@ public final class AdminCommandHandlers {
         };
     }
 
-    private Object coerceConfigValue(
-            Object oldValue,
-            String raw
-    ) {
-        if (oldValue instanceof ConfigurationSection) {
-            throw new IllegalArgumentException("Object config sections cannot be overwritten.");
-        }
-        if (oldValue instanceof Boolean) {
-            var parsed = parseBoolean(raw);
-            if (parsed == null) throw new IllegalArgumentException("Expected a boolean value: true/false.");
-            return parsed;
-        }
-        if (oldValue instanceof Integer) {
-            var parsed = parseInt(raw);
-            if (parsed == null) throw new IllegalArgumentException("Expected an integer value.");
-            return parsed;
-        }
-        if (oldValue instanceof Long) {
-            try {
-                return Long.parseLong(raw.trim());
-            } catch (Throwable _) {
-                throw new IllegalArgumentException("Expected a long integer value.");
-            }
-        }
-        if (oldValue instanceof Float) {
-            return (float) parseRequiredDouble(raw);
-        }
-        if (oldValue instanceof Double) {
-            return parseRequiredDouble(raw);
-        }
-        if (oldValue instanceof List<?>) {
-            return parseListValue(raw);
-        }
-        if (oldValue instanceof String) {
-            return parseStringValue(raw);
-        }
-        return parseValue(raw);
-    }
-
     private String configValue(Object value) {
         if (value == null) return "<dark_gray>null</dark_gray>";
         if (value instanceof ConfigurationSection section) {
@@ -752,42 +713,13 @@ public final class AdminCommandHandlers {
         return messenger.value(value);
     }
 
-    private double parseRequiredDouble(String raw) {
-        try {
-            return Double.parseDouble(raw.trim());
-        } catch (Throwable _) {
-            throw new IllegalArgumentException("Expected a decimal value.");
-        }
-    }
-
-    private List<Object> parseListValue(String raw) {
-        var trimmed = raw == null ? "" : raw.trim();
-        if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
-            throw new IllegalArgumentException("Expected a list value like [one, two, three].");
-        }
-        var inner = trimmed.substring(1, trimmed.length() - 1).trim();
-        if (inner.isEmpty()) return List.of();
-
-        return Arrays.stream(inner.split(","))
-                .map(part -> parseValue(part.trim()))
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    private Object parseStringValue(String raw) {
-        var trimmed = raw == null ? "" : raw.trim();
-        if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-            return trimmed.substring(1, trimmed.length() - 1);
-        }
-        return raw == null ? "" : raw;
-    }
-
     public void configGet(
             CommandSender sender,
             ConfigTarget target,
             String node
     ) {
         var cfg = rt.requireService(ConfigManager.class);
-        var normalizedNode = normalizeConfigNode(node);
+        var normalizedNode = ConfigWriteGuard.normalizeNode(node);
         if (normalizedNode == null) {
             messenger.error(sender, "Config node is required.");
             return;

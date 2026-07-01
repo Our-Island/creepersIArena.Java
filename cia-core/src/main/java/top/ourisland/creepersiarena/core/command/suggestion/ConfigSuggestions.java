@@ -24,6 +24,7 @@ public final class ConfigSuggestions {
             CommandContext<CommandSourceStack> ctx,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var config = rt.getService(ConfigManager.class);
         if (config == null) return builder.buildFuture();
 
@@ -77,6 +78,7 @@ public final class ConfigSuggestions {
             CommandContext<CommandSourceStack> ctx,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var config = rt.getService(ConfigManager.class);
         if (config == null) return builder.buildFuture();
 

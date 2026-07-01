@@ -11,7 +11,13 @@ public final class CiaCommandConstants {
             PLAYER_ROOT_LITERAL = "cia",
             ADMIN_ROOT_LITERAL = "ciaa";
 
+    /**
+     * The command overhaul intentionally exposes only /cia and /ciaa roots. Standalone legacy aliases stay empty by
+     * design.
+     */
     public static final List<String>
+            PLAYER_ROOT_ALIASES = List.of(),
+            ADMIN_ROOT_ALIASES = List.of(),
             PLAYER_LANGUAGE_SUGGESTIONS = List.of("default", "en_us", "zh_cn"),
             ADMIN_LANGUAGE_SUGGESTIONS = List.of("en_us", "zh_cn"),
             CONFIG_TARGET_SUGGESTIONS = List.of("config", "arena", "skill"),

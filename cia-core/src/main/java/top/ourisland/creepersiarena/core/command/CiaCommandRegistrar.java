@@ -3,7 +3,6 @@ package top.ourisland.creepersiarena.core.command;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 
-import java.util.List;
 
 /**
  * Registers the current player and admin command roots.
@@ -19,13 +18,13 @@ public final class CiaCommandRegistrar {
         commands.register(
                 roots.playerRoot().build(),
                 "CreepersIArena player commands",
-                List.of()
+                CiaCommandConstants.PLAYER_ROOT_ALIASES
         );
 
         commands.register(
                 roots.adminRoot(CiaCommandConstants.ADMIN_ROOT_LITERAL).build(),
                 "CreepersIArena admin commands",
-                List.of()
+                CiaCommandConstants.ADMIN_ROOT_ALIASES
         );
 
         rt.log().info("[Command] Registered /cia and /ciaa command trees.");

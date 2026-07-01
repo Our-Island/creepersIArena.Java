@@ -5,6 +5,14 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
+
+/**
+ * Canonical permission nodes for the current /cia and /ciaa command trees.
+ *
+ * <p>The node lists are intentionally public read-only metadata: command-tree tests can verify
+ * that the registered permission hierarchy stays in sync without booting Bukkit.</p>
+ */
 public final class CiaPermissions {
 
     // ====== player command root ======
@@ -40,38 +48,72 @@ public final class CiaPermissions {
             ADMIN_EXTENSION = "creepersiarena.command.admin.extension",
             ADMIN_CONFIG = "creepersiarena.command.admin.config";
 
+    private static final List<String> PLAYER_CHILD_NODES = List.of(
+            COMMAND_JOIN,
+            COMMAND_LEAVE,
+            COMMAND_JOB,
+            COMMAND_TEAM,
+            COMMAND_LANGUAGE,
+            COMMAND_PREFERENCE,
+            COMMAND_BALANCE,
+            COMMAND_STORE,
+            COMMAND_PARTICLES
+    );
+
+    private static final List<String> ADMIN_CHILD_NODES = List.of(
+            ADMIN_GAME,
+            ADMIN_MODE,
+            ADMIN_ARENA,
+            ADMIN_SKIP,
+            ADMIN_COOLDOWN,
+            ADMIN_REGENERATION,
+            ADMIN_MUTATION,
+            ADMIN_ABILITY,
+            ADMIN_DATABASE,
+            ADMIN_ECONOMY,
+            ADMIN_STORE,
+            ADMIN_ENTRANCE,
+            ADMIN_LANGUAGE,
+            ADMIN_RELOAD,
+            ADMIN_EXTENSION,
+            ADMIN_CONFIG
+    );
+
     private CiaPermissions() {
     }
 
-    public static void registerAll(Plugin plugin) {
-        var pCommandRoot = ensure(COMMAND, PermissionDefault.TRUE);
-        addChild(pCommandRoot, ensure(COMMAND_JOIN, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_LEAVE, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_JOB, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_TEAM, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_LANGUAGE, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_PREFERENCE, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_BALANCE, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_STORE, PermissionDefault.TRUE));
-        addChild(pCommandRoot, ensure(COMMAND_PARTICLES, PermissionDefault.TRUE));
+    /**
+     * Direct children granted by the public player-command root.
+     */
+    public static List<String> playerChildNodes() {
+        return PLAYER_CHILD_NODES;
+    }
 
-        var pAdminRoot = ensure(ADMIN, PermissionDefault.OP);
-        addChild(pAdminRoot, ensure(ADMIN_GAME, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_MODE, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_ARENA, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_SKIP, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_COOLDOWN, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_REGENERATION, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_MUTATION, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_ABILITY, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_DATABASE, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_ECONOMY, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_STORE, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_ENTRANCE, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_LANGUAGE, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_RELOAD, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_EXTENSION, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_CONFIG, PermissionDefault.OP));
+    /**
+     * Direct children granted by the admin-command root.
+     */
+    public static List<String> adminChildNodes() {
+        return ADMIN_CHILD_NODES;
+    }
+
+    /**
+     * Complete permission declaration used by {@link #registerAll(Plugin)}.
+     */
+    public static List<String> allNodes() {
+        var nodes = new java.util.ArrayList<String>(2 + PLAYER_CHILD_NODES.size() + ADMIN_CHILD_NODES.size());
+        nodes.add(COMMAND);
+        nodes.addAll(PLAYER_CHILD_NODES);
+        nodes.add(ADMIN);
+        nodes.addAll(ADMIN_CHILD_NODES);
+        return List.copyOf(nodes);
+    }
+
+    public static void registerAll(Plugin plugin) {
+        var playerRoot = ensure(COMMAND, PermissionDefault.TRUE);
+        PLAYER_CHILD_NODES.forEach(node -> addChild(playerRoot, ensure(node, PermissionDefault.TRUE)));
+
+        var adminRoot = ensure(ADMIN, PermissionDefault.OP);
+        ADMIN_CHILD_NODES.forEach(node -> addChild(adminRoot, ensure(node, PermissionDefault.OP)));
 
         plugin.getLogger().info("Registered permissions (programmatic): command tree, admin tree.");
     }

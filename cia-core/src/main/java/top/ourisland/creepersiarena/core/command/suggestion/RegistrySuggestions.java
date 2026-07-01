@@ -30,6 +30,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var jobs = rt.getService(JobManager.class);
         if (jobs == null) return builder.buildFuture();
         var ids = jobs.getAllJobIds().stream()
@@ -43,6 +44,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var games = rt.getService(GameManager.class);
         if (games == null) return builder.buildFuture();
         var ids = games.modes().keySet().stream()
@@ -56,6 +58,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var arenas = rt.getService(ArenaManager.class);
         if (arenas == null) return builder.buildFuture();
         var ids = arenas.arenas().stream()
@@ -69,6 +72,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var registry = rt.getService(ICurrencyRegistry.class);
         if (registry == null) return builder.buildFuture();
         var ids = registry.currencies().stream()
@@ -82,6 +86,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var registry = rt.getService(IStoreRegistry.class);
         if (registry == null) return builder.buildFuture();
         var ids = registry.stores().stream()
@@ -95,6 +100,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var registry = rt.getService(ICosmeticRegistry.class);
         if (registry == null) return builder.buildFuture();
         var ids = registry.cosmetics(null).stream()
@@ -108,6 +114,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var admin = rt.getService(IAbilityAdmin.class);
         if (admin == null) return builder.buildFuture();
         var ids = admin.abilityIds().stream()
@@ -121,6 +128,7 @@ public final class RegistrySuggestions {
             BootstrapRuntime rt,
             SuggestionsBuilder builder
     ) {
+        if (rt == null) return builder.buildFuture();
         var manager = rt.getService(CiaExtensionManager.class);
         if (manager == null) return builder.buildFuture();
 
