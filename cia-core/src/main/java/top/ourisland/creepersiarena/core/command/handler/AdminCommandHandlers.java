@@ -16,7 +16,10 @@ import top.ourisland.creepersiarena.api.game.mode.GameModeId;
 import top.ourisland.creepersiarena.core.ability.AbilityService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
+import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer;
 import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
+import top.ourisland.creepersiarena.core.command.message.CommandPanel;
+import top.ourisland.creepersiarena.core.command.message.CommandUsage;
 import top.ourisland.creepersiarena.core.command.model.ConfigTarget;
 import top.ourisland.creepersiarena.core.command.model.EconomyOperation;
 import top.ourisland.creepersiarena.core.config.ConfigManager;
@@ -28,7 +31,9 @@ import top.ourisland.creepersiarena.core.game.mutation.MutationResetReason;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
 import top.ourisland.creepersiarena.core.utils.I18n;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static top.ourisland.creepersiarena.core.command.CommandParsers.parseValue;
@@ -37,6 +42,7 @@ public final class AdminCommandHandlers {
 
     private final BootstrapRuntime rt;
     private final CommandMessenger messenger;
+    private final CommandHelpRenderer helpRenderer;
 
     public AdminCommandHandlers(BootstrapRuntime rt) {
         this(rt, new CommandMessenger());
@@ -48,33 +54,18 @@ public final class AdminCommandHandlers {
     ) {
         this.rt = rt;
         this.messenger = messenger;
+        this.helpRenderer = new CommandHelpRenderer(messenger);
     }
 
     public void help(CommandSender sender) {
-        messenger.info(sender, """
-                /ciaa mode <namespace:mode>
-                /ciaa arena <arena_id>
-                /ciaa skip [arena_id]
-                /ciaa cooldown <factor>
-                /ciaa regen <factor>
-                /ciaa mutation [<bool>|trigger]
-                /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]
-                /ciaa database status
-                /ciaa economy <balance|give|take|set> ...
-                /ciaa store <list|open> ...
-                /ciaa entrance <bool>
-                /ciaa language <id>
-                /ciaa reload
-                /ciaa extensions list
-                /ciaa extensions info <id>
-                /ciaa extensions dump
-                /ciaa config <config|arena|skill> <node> <value>""");
+        helpRenderer.adminHelp(sender);
     }
 
     public void mode(CommandSender sender, GameModeId modeId) {
         var games = rt.requireService(GameManager.class);
         if (!games.hasMode(modeId)) {
-            messenger.error(sender, "Unknown mode: %s".formatted(modeId.asString()));
+            messenger.errorMini(sender, "Unknown mode: " + messenger.id(modeId.asString()));
+            messenger.hint(sender, "Use /ciaa mode and press Tab to see available modes.");
             return;
         }
 
@@ -88,11 +79,12 @@ public final class AdminCommandHandlers {
         }
 
         games.startAuto(modeId);
-        messenger.success(sender, "Mode switched to: " + modeId.asString());
+        messenger.successMini(sender, "Mode switched to: " + messenger.id(modeId.asString()));
+        messenger.hint(sender, "The active game was ended and a new auto-start flow was requested.");
     }
 
     public void modeUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa mode <namespace:mode>");
+        messenger.usage(sender, "/ciaa mode <namespace:mode>");
     }
 
     public void arena(CommandSender sender, ArenaId arenaId) {
@@ -101,24 +93,26 @@ public final class AdminCommandHandlers {
 
         var inst = am.getArena(arenaId);
         if (inst == null) {
-            messenger.error(sender, "Arena not found: %s".formatted(arenaId));
+            messenger.errorMini(sender, "Arena not found: " + messenger.id(arenaId.toString()));
+            messenger.hint(sender, "Use /ciaa arena and press Tab to see loaded arenas.");
             return;
         }
 
         var curMode = gm.active() == null ? null : gm.active().mode();
         if (curMode != null && !inst.type().equals(curMode)) {
-            messenger.error(sender, "Arena mode mismatch. active=%s arena=%s".formatted(curMode, inst.type()));
+            messenger.errorMini(sender, "Arena mode mismatch. Active: " + messenger.id(curMode.asString())
+                    + " <gray>arena:</gray> " + messenger.id(inst.type().asString()));
             return;
         }
 
         var st = rt.requireService(AdminRuntimeState.class);
         st.forcedNextArenaId(arenaId);
 
-        messenger.success(sender, "Next arena set to: %s".formatted(arenaId));
+        messenger.successMini(sender, "Next arena set to: " + messenger.id(arenaId.toString()));
     }
 
     public void arenaUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa arena <arena_id>");
+        messenger.usage(sender, "/ciaa arena <arena_id>");
     }
 
     public void invalidArena(CommandSender sender, String message) {
@@ -148,38 +142,42 @@ public final class AdminCommandHandlers {
         if (arenaId != null) {
             try {
                 gm.start(targetMode, arenaId);
-                messenger.success(sender, "Skipped. Started: mode=%s arena=%s".formatted(targetMode, arenaId));
+                messenger.successMini(sender, "Skipped current game. Started " + messenger.id(targetMode.asString())
+                        + " on " + messenger.id(arenaId.toString()));
                 return;
             } catch (Throwable t) {
-                messenger.warn(sender, "Failed to start with arena=%s (%s), fallback to auto.".formatted(arenaId, t.getMessage()));
+                messenger.warnMini(sender, "Failed to start arena " + messenger.id(arenaId.toString())
+                        + " <dark_gray>(" + CommandMessenger.escape(t.getMessage()) + ")</dark_gray>; falling back to auto arena.");
             }
         }
 
         gm.startAuto(targetMode);
-        messenger.success(sender, "Skipped. Started: mode=" + targetMode + " arena=auto");
+        messenger.successMini(sender, "Skipped current game. Started " + messenger.id(targetMode.asString()) + " with <gold>auto arena</gold>.");
     }
 
     public void setCooldownFactor(CommandSender sender, double factor) {
         if (Double.isNaN(factor) || Double.isInfinite(factor) || factor < 0) {
-            messenger.error(sender, "Invalid factor: " + factor);
+            messenger.errorMini(sender, "Invalid factor: " + messenger.value(factor));
             return;
         }
 
         var st = rt.requireService(AdminRuntimeState.class);
         st.cooldownFactor(factor);
-        messenger.success(sender, "Cooldown factor set to: %s".formatted(factor));
+        messenger.successMini(sender, "Cooldown factor set to: <gold>" + factor + "x</gold>");
     }
 
     public void cooldownUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa cooldown <factor>");
+        messenger.usage(sender, "/ciaa cooldown <factor>");
     }
 
     public void regenerationStatus(CommandSender sender) {
-        messenger.info(sender, "TBI");
+        messenger.warn(sender, "Regeneration controls are not available yet.");
+        messenger.hint(sender, "This command is reserved for a later implementation stage.");
     }
 
     public void setRegenerationFactor(CommandSender sender, double factor) {
-        messenger.info(sender, "TBI");
+        messenger.warn(sender, "Regeneration controls are not available yet.");
+        messenger.hint(sender, "Requested factor was " + factor + "x, but the regeneration command is not wired to a runtime service yet.");
     }
 
     public void mutationStatus(CommandSender sender) {
@@ -189,7 +187,10 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        messenger.info(sender, mutation.statusLine(mutationAdminEnabled()));
+        messenger.panel(sender, CommandPanel.builder("Mutation")
+                .row(statusLine(mutation.statusLine(mutationAdminEnabled())))
+                .row("<gray>Admin override:</gray> " + messenger.bool(mutationAdminEnabled()))
+                .build());
     }
 
     private boolean mutationAdminEnabled() {
@@ -206,7 +207,7 @@ public final class AdminCommandHandlers {
 
         var result = mutation.trigger();
         messenger.info(sender, result.message());
-        messenger.info(sender, mutation.statusLine(mutationAdminEnabled()));
+        mutationStatus(sender);
     }
 
     public void setMutationEnabled(CommandSender sender, boolean enabled) {
@@ -223,8 +224,8 @@ public final class AdminCommandHandlers {
         }
         admin.setAdminEnabled(CoreAbilities.MUTATION, enabled);
         if (!enabled) mutation.reset(MutationResetReason.ADMIN_DISABLED);
-        messenger.success(sender, "Mutation admin enabled: %s".formatted(enabled));
-        messenger.info(sender, mutation.statusLine(admin.adminEnabled(CoreAbilities.MUTATION)));
+        messenger.successMini(sender, "Mutation admin override: " + messenger.bool(enabled));
+        mutationStatus(sender);
     }
 
     public void abilityList(CommandSender sender) {
@@ -236,15 +237,18 @@ public final class AdminCommandHandlers {
 
         var ids = admin.abilityIds();
         if (ids.isEmpty()) {
-            messenger.info(sender, "No abilities are registered or configured.");
+            messenger.warn(sender, "No abilities are registered or configured.");
             return;
         }
-        messenger.info(sender, "Abilities:");
-        ids.forEach(id -> messenger.info(sender, "- %s admin=%s config=%s".formatted(
-                id.asString(),
-                admin.adminEnabled(id),
-                admin.config(id).enabled(false)
-        )));
+
+        var panel = CommandPanel.builder("Abilities");
+        ids.stream()
+                .sorted(Comparator.comparing(AbilityId::asString))
+                .forEach(id -> panel.row("<click:suggest_command:'/ciaa ability info " + CommandMessenger.escapeForAttribute(id.asString()) + "'>"
+                        + messenger.id(id.asString()) + "</click> "
+                        + "<dark_gray>|</dark_gray> admin " + messenger.bool(admin.adminEnabled(id))
+                        + " <dark_gray>|</dark_gray> config " + messenger.bool(admin.config(id).enabled(false))));
+        messenger.panel(sender, panel.build());
     }
 
     public void abilityReload(CommandSender sender) {
@@ -265,7 +269,7 @@ public final class AdminCommandHandlers {
         }
 
         admin.setAdminEnabled(id, true);
-        messenger.success(sender, "Ability admin override cleared/enabled: %s".formatted(id.asString()));
+        messenger.successMini(sender, "Ability enabled by admin override: " + messenger.id(id.asString()));
         abilityInfo(sender, id);
     }
 
@@ -275,17 +279,20 @@ public final class AdminCommandHandlers {
         var view = admin.config(id);
         var service = rt.getService(AbilityService.class);
         var registered = service == null ? null : service.registeredAbility(id);
-
-        messenger.info(sender, "Ability: " + id.asString());
-        messenger.info(sender, "  registered: " + (registered != null));
-        if (registered != null) messenger.info(sender, "  owner: " + registered.owner());
-        messenger.info(sender, "  config-exists: " + view.exists());
-        messenger.info(sender, "  config-enabled: " + view.enabled(false));
-        messenger.info(sender, "  default-active: " + view.defaultActive(false));
-        messenger.info(sender, "  admin-enabled: " + admin.adminEnabled(id));
-        messenger.info(sender, "  effective-current-game: " + (gate == null
+        var effective = gate == null
                 ? admin.isEnabled(id, null)
-                : gate.isEnabledForGame(id, "command")));
+                : gate.isEnabledForGame(id, "command");
+
+        messenger.panel(sender, CommandPanel.builder("Ability Info")
+                .row("<gray>Ability:</gray> " + messenger.id(id.asString()))
+                .row("<gray>Registered:</gray> " + messenger.yesNo(registered != null))
+                .row("<gray>Owner:</gray> " + (registered == null ? "<dark_gray>n/a</dark_gray>" : messenger.id(registered.owner().extensionId().value())))
+                .row("<gray>Config exists:</gray> " + messenger.yesNo(view.exists()))
+                .row("<gray>Config enabled:</gray> " + messenger.bool(view.enabled(false)))
+                .row("<gray>Default active:</gray> " + messenger.yesNo(view.defaultActive(false)))
+                .row("<gray>Admin override:</gray> " + messenger.bool(admin.adminEnabled(id)))
+                .row("<gray>Effective now:</gray> " + messenger.bool(effective))
+                .build());
     }
 
     public void disableAbility(CommandSender sender, AbilityId id) {
@@ -296,12 +303,18 @@ public final class AdminCommandHandlers {
         }
 
         admin.setAdminEnabled(id, false);
-        messenger.success(sender, "Ability admin disabled: %s".formatted(id.asString()));
+        messenger.successMini(sender, "Ability disabled by admin override: " + messenger.id(id.asString()));
         abilityInfo(sender, id);
     }
 
     public void abilityUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa ability <list|info|status|enable|disable|reload> [namespace:ability]");
+        messenger.panel(sender, CommandPanel.builder("Ability Commands")
+                .row(new CommandUsage("/ciaa ability list", "List all known abilities.").toMiniRow())
+                .row(new CommandUsage("/ciaa ability info <ability>", "Show one ability's runtime state.").toMiniRow())
+                .row(new CommandUsage("/ciaa ability enable <ability>", "Enable an ability through admin override.").toMiniRow())
+                .row(new CommandUsage("/ciaa ability disable <ability>", "Disable an ability through admin override.").toMiniRow())
+                .row(new CommandUsage("/ciaa ability reload", "Reload ability settings.").toMiniRow())
+                .build());
     }
 
     public void storeList(CommandSender sender) {
@@ -311,11 +324,20 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        messenger.info(sender, "Stores:");
-        registry.stores().forEach(store -> messenger.info(
-                sender,
-                "- %s items=%d".formatted(store.id().asString(), registry.items(store.id()).size())
-        ));
+        var stores = registry.stores().stream()
+                .sorted(Comparator.comparing(store -> store.id().asString()))
+                .toList();
+        if (stores.isEmpty()) {
+            messenger.warn(sender, "No stores are registered.");
+            return;
+        }
+
+        var panel = CommandPanel.builder("Stores");
+        stores.forEach(store -> panel.row("<click:suggest_command:'/ciaa store open '>"
+                + messenger.id(store.id().asString()) + "</click> "
+                + "<dark_gray>|</dark_gray> rows <gold>" + store.rows() + "</gold> "
+                + "<dark_gray>|</dark_gray> items <gold>" + registry.items(store.id()).size() + "</gold>"));
+        messenger.panel(sender, panel.build());
     }
 
     public void openStore(
@@ -332,15 +354,16 @@ public final class AdminCommandHandlers {
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            messenger.error(sender, "Player must be online: %s".formatted(playerName));
+            messenger.errorMini(sender, "Player must be online: " + messenger.id(playerName));
             return;
         }
         if (registry.store(storeId) == null) {
-            messenger.error(sender, "Unknown store: %s".formatted(storeId.asString()));
+            messenger.errorMini(sender, "Unknown store: " + messenger.id(storeId.asString()));
+            messenger.hint(sender, "Use /ciaa store list or press Tab to see available stores.");
             return;
         }
         stores.openStore(player, storeId);
-        messenger.success(sender, "Opened store %s for %s".formatted(storeId.asString(), player.getName()));
+        messenger.successMini(sender, "Opened store " + messenger.id(storeId.asString()) + " for " + messenger.id(player.getName()));
     }
 
     public void economyBalance(CommandSender sender, String playerName) {
@@ -353,23 +376,21 @@ public final class AdminCommandHandlers {
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            messenger.error(sender, "Player must be online for economy commands: %s".formatted(playerName));
+            messenger.errorMini(sender, "Player must be online for economy commands: " + messenger.id(playerName));
             return;
         }
         if (!wallet.loaded(player.getUniqueId())) {
-            messenger.error(sender, "Player data is still loading: %s".formatted(player.getName()));
+            messenger.warnMini(sender, "Player data is still loading: " + messenger.id(player.getName()));
             return;
         }
 
-        messenger.info(sender, "Balance for %s:".formatted(player.getName()));
+        var panel = CommandPanel.builder("Balance: " + player.getName());
         var balances = wallet.balances(player.getUniqueId());
-        currencies.currencies().forEach(currency -> messenger.info(
-                sender,
-                "- %s: %d".formatted(
-                        currency.id().asString(),
-                        balances.getOrDefault(currency.id(), 0L)
-                )
-        ));
+        currencies.currencies().stream()
+                .sorted(Comparator.comparing(currency -> currency.id().asString()))
+                .forEach(currency -> panel.row("<gray>•</gray> " + messenger.id(currency.id().asString())
+                        + " <dark_gray>=</dark_gray> <gold>" + balances.getOrDefault(currency.id(), 0L) + "</gold>"));
+        messenger.panel(sender, panel.build());
     }
 
     public void economyAmount(
@@ -388,15 +409,16 @@ public final class AdminCommandHandlers {
 
         var player = Bukkit.getPlayerExact(playerName);
         if (player == null) {
-            messenger.error(sender, "Player must be online for economy commands: %s".formatted(playerName));
+            messenger.errorMini(sender, "Player must be online for economy commands: " + messenger.id(playerName));
             return;
         }
         if (!wallet.loaded(player.getUniqueId())) {
-            messenger.error(sender, "Player data is still loading: %s".formatted(player.getName()));
+            messenger.warnMini(sender, "Player data is still loading: " + messenger.id(player.getName()));
             return;
         }
         if (currencies.currency(currencyId) == null) {
-            messenger.error(sender, "Unknown currency: %s".formatted(currencyId.asString()));
+            messenger.errorMini(sender, "Unknown currency: " + messenger.id(currencyId.asString()));
+            messenger.hint(sender, "Use /ciaa economy and press Tab at the currency argument.");
             return;
         }
 
@@ -413,30 +435,35 @@ public final class AdminCommandHandlers {
             return;
         }
         if (!result.success()) {
-            messenger.error(sender, "Transaction failed. Missing: %s".formatted(result.missingAmounts()));
+            messenger.errorMini(sender, "Transaction failed. Missing: " + messenger.value(result.missingAmounts()));
             return;
         }
 
-        messenger.success(sender, "Economy updated: %s %s = %d".formatted(
-                player.getName(),
-                currencyId.asString(),
-                wallet.balance(player.getUniqueId(), currencyId)
-        ));
+        messenger.panel(sender, CommandPanel.builder("Economy Updated")
+                .row("<gray>Operation:</gray> " + messenger.id(operation.id()))
+                .row("<gray>Player:</gray> " + messenger.id(player.getName()))
+                .row("<gray>Currency:</gray> " + messenger.id(currencyId.asString()))
+                .row("<gray>New balance:</gray> <gold>" + wallet.balance(player.getUniqueId(), currencyId) + "</gold>")
+                .build());
     }
 
     public void economyHelp(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa economy balance <player>");
-        messenger.usage(sender, "Usage: /ciaa economy <give|take|set> <player> <namespace:currency> <amount>");
+        messenger.panel(sender, CommandPanel.builder("Economy Commands")
+                .row(new CommandUsage("/ciaa economy balance <player>", "Show all balances for an online player.").toMiniRow())
+                .row(new CommandUsage("/ciaa economy give <player> <currency> <amount>", "Deposit currency into a wallet.").toMiniRow())
+                .row(new CommandUsage("/ciaa economy take <player> <currency> <amount>", "Withdraw currency from a wallet.").toMiniRow())
+                .row(new CommandUsage("/ciaa economy set <player> <currency> <amount>", "Set one currency balance exactly.").toMiniRow())
+                .build());
     }
 
     public void entrance(CommandSender sender, boolean enabled) {
         var st = rt.requireService(AdminRuntimeState.class);
         st.entranceAllowed(enabled);
-        messenger.success(sender, "Entrance allowed: %s".formatted(enabled));
+        messenger.successMini(sender, "Entrance is now " + messenger.bool(enabled));
     }
 
     public void entranceUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa entrance <boolean>");
+        messenger.usage(sender, "/ciaa entrance <true|false>");
     }
 
     public void language(CommandSender sender, String lang) {
@@ -451,11 +478,11 @@ public final class AdminCommandHandlers {
         cfg.reloadAll();
         I18n.reload();
 
-        messenger.success(sender, "Default language set to: %s".formatted(lang.trim()));
+        messenger.successMini(sender, "Default language set to: " + messenger.id(lang.trim()));
     }
 
     public void languageUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa language <language_id>");
+        messenger.usage(sender, "/ciaa language <language_id>");
     }
 
     public void reload(CommandSender sender) {
@@ -463,31 +490,31 @@ public final class AdminCommandHandlers {
         st.reset();
 
         rt.reloadPlugin();
-        messenger.success(sender, "Reloaded.");
+        messenger.success(sender, "Reloaded plugin runtime state.");
     }
 
     public void extensionsList(CommandSender sender) {
-        sendLines(sender, ExtensionDiagnostics.listLines(rt));
+        messenger.panel(sender, "Extensions", diagnosticRows(ExtensionDiagnostics.listLines(rt)));
     }
 
     private void sendLines(CommandSender sender, List<String> lines) {
-        lines.forEach(line -> messenger.info(sender, line));
+        messenger.panel(sender, "Diagnostics", diagnosticRows(lines));
     }
 
     public void extensionInfo(CommandSender sender, String id) {
         if (id == null || id.isBlank()) {
-            messenger.usage(sender, "Usage: /ciaa extensions info <extension_id>");
+            messenger.usage(sender, "/ciaa extensions info <extension_id>");
             return;
         }
-        sendLines(sender, ExtensionDiagnostics.infoLines(rt, id));
+        messenger.panel(sender, "Extension Info", diagnosticRows(ExtensionDiagnostics.infoLines(rt, id)));
     }
 
     public void extensionsDump(CommandSender sender) {
         try {
             var target = ExtensionDiagnostics.writeDump(rt);
-            messenger.success(sender, "Extension dump written to: %s".formatted(target));
+            messenger.successMini(sender, "Extension dump written to: " + messenger.value(target));
         } catch (Throwable t) {
-            messenger.error(sender, "Failed to write extension dump: %s".formatted(t.getMessage()));
+            messenger.errorMini(sender, "Failed to write extension dump: " + messenger.value(t.getMessage()));
         }
     }
 
@@ -519,17 +546,27 @@ public final class AdminCommandHandlers {
             case SKILL -> cfg.getSkillNode(node);
         };
         var currentValue = cur == null ? "null" : String.valueOf(cur);
-        messenger.success(sender, "Updated %s: %s = %s".formatted(target.fileName(), node, value));
-        messenger.info(sender, "Current value: %s".formatted(currentValue));
-        messenger.info(sender, "Run /ciaa reload to apply.");
+        messenger.panel(sender, CommandPanel.builder("Config Updated")
+                .row("<gray>File:</gray> " + messenger.id(target.fileName()))
+                .row("<gray>Node:</gray> " + messenger.id(node))
+                .row("<gray>Written value:</gray> " + messenger.value(value))
+                .row("<gray>Current value:</gray> " + messenger.value(currentValue))
+                .row("<gold>Run</gold> <click:suggest_command:'/ciaa reload'><yellow>/ciaa reload</yellow></click> <gold>to apply the change.</gold>")
+                .build());
     }
 
     public void configUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /ciaa config <config|arena|skill> <node> <value>");
+        messenger.panel(sender, CommandPanel.builder("Config Command")
+                .row(new CommandUsage("/ciaa config config <node> <value>", "Edit config.yml.").toMiniRow())
+                .row(new CommandUsage("/ciaa config arena <node> <value>", "Edit arena.yml.").toMiniRow())
+                .row(new CommandUsage("/ciaa config skill <node> <value>", "Edit skill.yml.").toMiniRow())
+                .row("<yellow>Warning:</yellow> <gray>Object-node protection is planned for the next config command stage.</gray>")
+                .build());
     }
 
     public void unknownConfigTarget(CommandSender sender, String target) {
-        messenger.error(sender, "Unknown target: %s".formatted(target));
+        messenger.errorMini(sender, "Unknown config target: " + messenger.id(target));
+        messenger.hint(sender, "Valid targets: config, arena, skill.");
     }
 
     public void databaseUnavailable(CommandSender sender) {
@@ -538,7 +575,7 @@ public final class AdminCommandHandlers {
 
     public void databaseTables(CommandSender sender, IDatabaseService database) {
         database.read(connection -> {
-                    var names = new java.util.ArrayList<String>();
+                    var names = new ArrayList<String>();
                     var metadata = connection.getMetaData();
                     try (var rs = metadata.getTables(null, null, database.tablePrefix() + "%", new String[]{"TABLE"})) {
                         while (rs.next()) {
@@ -552,19 +589,23 @@ public final class AdminCommandHandlers {
                         .getGlobalRegionScheduler()
                         .execute(rt.plugin(), () -> {
                             if (error != null) {
-                                messenger.error(sender, "Database tables lookup failed: %s".formatted(error.getMessage()));
+                                messenger.errorMini(sender, "Database tables lookup failed: " + messenger.value(error.getMessage()));
                                 return;
                             }
-                            messenger.info(sender, "Database tables (%d):".formatted(tables.size()));
-                            tables.forEach(table -> messenger.info(sender, "- %s".formatted(table)));
+                            var panel = CommandPanel.builder("Database Tables");
+                            panel.row("<gray>Total:</gray> <gold>" + tables.size() + "</gold>");
+                            tables.forEach(table -> panel.row("<gray>•</gray> " + messenger.id(table)));
+                            messenger.panel(sender, panel.build());
                         }));
     }
 
     public void databaseStatus(CommandSender sender, IDatabaseService database) {
-        messenger.info(sender, "Database:");
-        messenger.info(sender, "- type: %s".formatted(database.type()));
-        messenger.info(sender, "- table-prefix: %s".formatted(database.tablePrefix()));
-        messenger.info(sender, "- ready: %s".formatted(database.ready()));
+        messenger.panel(sender, CommandPanel.builder("Database")
+                .row("<gray>Type:</gray> " + messenger.id(database.type()))
+                .row("<gray>Table prefix:</gray> " + messenger.id(database.tablePrefix()))
+                .row("<gray>Ready:</gray> " + messenger.yesNo(database.ready()))
+                .row("<gray>Connection:</gray> <yellow>checking...</yellow>")
+                .build());
         databasePing(sender, database);
     }
 
@@ -577,13 +618,43 @@ public final class AdminCommandHandlers {
                 })
                 .whenComplete((ok, error) -> Bukkit.getServer().getGlobalRegionScheduler().execute(rt.plugin(), () -> {
                     if (error == null && Boolean.TRUE.equals(ok)) {
-                        messenger.info(sender, "- connection: ok");
+                        messenger.success(sender, "Database connection OK.");
                     } else {
-                        messenger.error(sender, "- connection: failed (" + (error == null
+                        messenger.errorMini(sender, "Database connection failed: " + messenger.value(error == null
                                 ? "unknown"
-                                : error.getMessage()) + ")");
+                                : error.getMessage()));
                     }
                 }));
+    }
+
+    private String statusLine(String plain) {
+        return "<gray>" + CommandMessenger.escape(plain) + "</gray>";
+    }
+
+    private List<String> diagnosticRows(List<String> lines) {
+        if (lines == null || lines.isEmpty()) return List.of("<dark_gray>No diagnostic lines.</dark_gray>");
+
+        var rows = new ArrayList<String>();
+        for (String line : lines) {
+            if (line == null || line.isBlank()) {
+                rows.add("");
+                continue;
+            }
+            var trimmed = line.trim();
+            if (trimmed.startsWith("- ")) {
+                rows.add("<gray>•</gray> <white>" + CommandMessenger.escape(trimmed.substring(2)) + "</white>");
+                continue;
+            }
+            var idx = trimmed.indexOf('=');
+            if (idx > 0) {
+                var key = trimmed.substring(0, idx);
+                var value = trimmed.substring(idx + 1);
+                rows.add("<gray>•</gray> <aqua>" + CommandMessenger.escape(key) + "</aqua><dark_gray>:</dark_gray> <white>" + CommandMessenger.escape(value) + "</white>");
+                continue;
+            }
+            rows.add("<gray>" + CommandMessenger.escape(trimmed) + "</gray>");
+        }
+        return rows;
     }
 
 }

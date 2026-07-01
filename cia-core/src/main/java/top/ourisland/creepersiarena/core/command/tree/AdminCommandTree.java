@@ -48,6 +48,7 @@ public final class AdminCommandTree {
                     return 1;
                 });
 
+        root.then(help());
         gameTree.appendTo(root);
         root.then(abilityTree.build("ability"));
         root.then(databaseTree.build("database"));
@@ -60,6 +61,14 @@ public final class AdminCommandTree {
         root.then(configTree.build("config"));
 
         return root;
+    }
+
+    private LiteralArgumentBuilder<CommandSourceStack> help() {
+        return Commands.literal("help")
+                .executes(ctx -> {
+                    admin.help(CiaArguments.sender(ctx));
+                    return 1;
+                });
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> entrance() {

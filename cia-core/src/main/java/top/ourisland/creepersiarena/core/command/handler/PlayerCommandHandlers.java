@@ -14,11 +14,16 @@ import top.ourisland.creepersiarena.api.economy.store.StoreId;
 import top.ourisland.creepersiarena.api.game.team.TeamId;
 import top.ourisland.creepersiarena.api.job.JobId;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
+import top.ourisland.creepersiarena.core.command.message.CommandHelpRenderer;
 import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
+import top.ourisland.creepersiarena.core.command.message.CommandPanel;
+import top.ourisland.creepersiarena.core.command.message.CommandUsage;
 import top.ourisland.creepersiarena.core.command.service.LeaveService;
 import top.ourisland.creepersiarena.core.command.service.UserLanguageService;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.job.JobManager;
+
+import java.util.Comparator;
 
 import static top.ourisland.creepersiarena.core.command.CommandParsers.asPlayer;
 import static top.ourisland.creepersiarena.core.game.flow.GameFlow.JoinFromHubPlan.*;
@@ -27,6 +32,7 @@ public final class PlayerCommandHandlers {
 
     private final BootstrapRuntime rt;
     private final CommandMessenger messenger;
+    private final CommandHelpRenderer helpRenderer;
 
     public PlayerCommandHandlers(BootstrapRuntime rt) {
         this(rt, new CommandMessenger());
@@ -38,20 +44,11 @@ public final class PlayerCommandHandlers {
     ) {
         this.rt = rt;
         this.messenger = messenger;
+        this.helpRenderer = new CommandHelpRenderer(messenger);
     }
 
     public void help(CommandSender sender) {
-        messenger.info(sender, """
-                /cia join
-                /cia leave
-                /cia job <cia:id>
-                /cia team <team-id|random>
-                /cia language <id|default>
-                /cia pref
-                /cia balance [namespace:currency]
-                /cia store [namespace:store]
-                /cia particles [off|select <namespace:cosmetic>]
-                /cia admin""");
+        helpRenderer.playerHelp(sender);
     }
 
     public void join(CommandSender sender) {
@@ -64,9 +61,9 @@ public final class PlayerCommandHandlers {
 
         switch (plan) {
             case NotPlayer _ -> messenger.error(p, "Only players can use this command.");
-            case NoActiveGame _ -> messenger.warn(p, "There is no active game.");
-            case NotInHub(var state) -> messenger.warn(p, "You can only /join from HUB (current=%s).".formatted(state));
-            case Joined _ -> messenger.success(p, "Joined game.");
+            case NoActiveGame _ -> messenger.warn(p, "There is no active game right now.");
+            case NotInHub(var state) -> messenger.warnMini(p, "You can only join from <aqua>HUB</aqua>. <dark_gray>(current: " + CommandMessenger.escape(String.valueOf(state)) + ")</dark_gray>");
+            case Joined _ -> messenger.success(p, "Joined the game.");
         }
     }
 
@@ -86,21 +83,25 @@ public final class PlayerCommandHandlers {
 
         var jobs = rt.requireService(JobManager.class);
         if (jobs.getJob(jobId) == null) {
-            messenger.error(sender, "Unknown job: %s".formatted(jobId.asString()));
+            messenger.errorMini(sender, "Unknown job: " + messenger.id(jobId.asString()));
+            messenger.hint(sender, "Use /cia job and press Tab to see available jobs.");
             return;
         }
 
         var flow = rt.requireService(GameFlow.class);
         if (!flow.lobbySelectJob(player, jobId)) {
-            messenger.warn(sender, "You can only choose job in hub/respawn.");
+            messenger.warn(sender, "You can only choose a job in hub or respawn.");
             return;
         }
 
-        messenger.success(player, "Job selected: %s".formatted(jobId.asString()));
+        messenger.successMini(player, "Job selected: " + messenger.id(jobId.asString()));
     }
 
     public void jobUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /job <cia:job_id>");
+        messenger.panel(sender, CommandPanel.builder("Job Selection")
+                .row(new CommandUsage("/cia job <cia:job_id>", "Select a job while in hub or respawn.").toMiniRow())
+                .row("<gray>Tip:</gray> <gold>Press Tab</gold> <gray>after</gray> <aqua>/cia job</aqua> <gray>to browse registered jobs.</gray>")
+                .build());
     }
 
     public void team(CommandSender sender, TeamId teamId) {
@@ -115,15 +116,19 @@ public final class PlayerCommandHandlers {
             return;
         }
 
-        messenger.success(p, "Team selected: %s".formatted(teamId == null ? "RANDOM" : teamId));
+        messenger.successMini(p, "Team selected: " + (teamId == null ? "<gold>random</gold>" : messenger.id(teamId.toString())));
     }
 
     public void teamUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /team <team-id|random>");
+        messenger.panel(sender, CommandPanel.builder("Team Selection")
+                .row(new CommandUsage("/cia team random", "Use random team assignment.").toMiniRow())
+                .row(new CommandUsage("/cia team <team-id>", "Select a concrete team when the active mode allows it.").toMiniRow())
+                .build());
     }
 
     public void invalidTeam(CommandSender sender, String token) {
-        messenger.error(sender, "Invalid team id: " + token);
+        messenger.errorMini(sender, "Invalid team id: " + messenger.id(token));
+        messenger.hint(sender, "Use /cia team random or press Tab after /cia team.");
     }
 
     public void language(CommandSender sender, String languageId) {
@@ -135,20 +140,25 @@ public final class PlayerCommandHandlers {
 
         if (languageId.equalsIgnoreCase("default")) {
             ul.set(p, null);
-            messenger.success(p, "Language reset to default.");
+            messenger.success(p, "Language reset to the server default.");
             return;
         }
 
         ul.set(p, languageId);
-        messenger.success(p, "Language set to: " + languageId);
+        messenger.successMini(p, "Language set to: " + messenger.id(languageId));
     }
 
     public void languageUsage(CommandSender sender) {
-        messenger.usage(sender, "Usage: /language <language_id|default>");
+        messenger.panel(sender, CommandPanel.builder("Language")
+                .row(new CommandUsage("/cia language default", "Use the server default language.").toMiniRow())
+                .row(new CommandUsage("/cia language en_us", "Use English.").toMiniRow())
+                .row(new CommandUsage("/cia language zh_cn", "Use Simplified Chinese.").toMiniRow())
+                .build());
     }
 
     public void preference(CommandSender sender) {
-        messenger.info(sender, "TBI");
+        messenger.warn(sender, "Preference settings are not available yet.");
+        messenger.hint(sender, "This command is reserved for the upcoming /cia pref feature set.");
     }
 
     public void balance(CommandSender sender, CurrencyId currencyId) {
@@ -170,21 +180,23 @@ public final class PlayerCommandHandlers {
 
         if (currencyId != null) {
             if (currencies.currency(currencyId) == null) {
-                messenger.error(sender, "Unknown currency: %s".formatted(currencyId.asString()));
+                messenger.errorMini(sender, "Unknown currency: " + messenger.id(currencyId.asString()));
+                messenger.hint(sender, "Use /cia balance and press Tab to see available currencies.");
                 return;
             }
-            messenger.info(sender, "%s: %d".formatted(currencyId.asString(), wallet.balance(player.getUniqueId(), currencyId)));
+            messenger.panel(sender, CommandPanel.builder("Balance")
+                    .row("<gray>Currency:</gray> " + messenger.id(currencyId.asString()))
+                    .row("<gray>Amount:</gray> <gold>" + wallet.balance(player.getUniqueId(), currencyId) + "</gold>")
+                    .build());
             return;
         }
 
-        messenger.info(sender, "Your balance:");
-        currencies.currencies().forEach(currency -> messenger.info(
-                sender,
-                "- %s: %d".formatted(
-                        currency.id().asString(),
-                        wallet.balance(player.getUniqueId(), currency.id())
-                )
-        ));
+        var panel = CommandPanel.builder("Your Balance");
+        currencies.currencies().stream()
+                .sorted(Comparator.comparing(currency -> currency.id().asString()))
+                .forEach(currency -> panel.row("<gray>•</gray> " + messenger.id(currency.id().asString())
+                        + " <dark_gray>=</dark_gray> <gold>" + wallet.balance(player.getUniqueId(), currency.id()) + "</gold>"));
+        messenger.panel(sender, panel.build());
     }
 
     public void openParticleStore(CommandSender sender) {
@@ -198,14 +210,19 @@ public final class PlayerCommandHandlers {
             return;
         }
         var stores = registry.stores().stream()
-                .sorted(java.util.Comparator.comparing(store -> store.id().asString()))
+                .sorted(Comparator.comparing(store -> store.id().asString()))
                 .toList();
         if (stores.isEmpty()) {
-            messenger.info(sender, "No stores are registered.");
+            messenger.warn(sender, "No stores are registered.");
             return;
         }
         if (stores.size() != 1) {
-            messenger.info(sender, "Multiple stores are registered; use /cia store <namespace:store>.");
+            var panel = CommandPanel.builder("Available Stores");
+            stores.forEach(store -> panel.row("<click:suggest_command:'/cia store " + CommandMessenger.escapeForAttribute(store.id().asString()) + "'>"
+                    + messenger.id(store.id().asString()) + "</click> <dark_gray>-</dark_gray> <gray>items:</gray> <gold>"
+                    + registry.items(store.id()).size() + "</gold>"));
+            messenger.panel(sender, panel.build());
+            messenger.hint(sender, "Click a store id or run /cia store <namespace:store>.");
             return;
         }
         store(sender, stores.getFirst().id());
@@ -224,10 +241,12 @@ public final class PlayerCommandHandlers {
         }
 
         if (registry.store(storeId) == null) {
-            messenger.error(sender, "Unknown store: %s".formatted(storeId.asString()));
+            messenger.errorMini(sender, "Unknown store: " + messenger.id(storeId.asString()));
+            messenger.hint(sender, "Use /cia store and press Tab to see available stores.");
             return;
         }
         stores.openStore(player, storeId);
+        messenger.successMini(sender, "Opened store: " + messenger.id(storeId.asString()));
     }
 
     public void disableParticles(CommandSender sender) {
@@ -265,14 +284,15 @@ public final class PlayerCommandHandlers {
             return;
         }
         if (registry.cosmetic(cosmeticId) == null) {
-            messenger.error(sender, "Unknown cosmetic: %s".formatted(cosmeticId.asString()));
+            messenger.errorMini(sender, "Unknown cosmetic: " + messenger.id(cosmeticId.asString()));
+            messenger.hint(sender, "Use /cia particles select and press Tab to see available cosmetics.");
             return;
         }
         if (!cosmetics.select(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL, cosmeticId)) {
-            messenger.error(sender, "Cosmetic is not unlocked: %s".formatted(cosmeticId.asString()));
+            messenger.errorMini(sender, "Cosmetic is not unlocked: " + messenger.id(cosmeticId.asString()));
             return;
         }
-        messenger.success(sender, "Particle cosmetic selected: %s".formatted(cosmeticId.asString()));
+        messenger.successMini(sender, "Particle cosmetic selected: " + messenger.id(cosmeticId.asString()));
     }
 
     public void chooseJob(CommandSender sender) {
@@ -283,7 +303,7 @@ public final class PlayerCommandHandlers {
         var flow = rt.requireService(GameFlow.class);
         boolean ok = flow.refreshLobbyKit(p);
         if (!ok) {
-            messenger.warn(sender, "You can only choose job in hub/respawn.");
+            messenger.warn(sender, "You can only choose a job in hub or respawn.");
             return;
         }
 

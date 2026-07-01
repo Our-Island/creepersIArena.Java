@@ -38,6 +38,7 @@ public final class PlayerCommandTree {
                     return 1;
                 });
 
+        root.then(help());
         root.then(join());
         root.then(leave());
         root.then(job());
@@ -57,6 +58,14 @@ public final class PlayerCommandTree {
         root.then(adminTree.build(CiaCommandConstants.ADMIN_EMBEDDED_LITERAL));
 
         return root;
+    }
+
+    private LiteralArgumentBuilder<CommandSourceStack> help() {
+        return Commands.literal("help")
+                .executes(ctx -> {
+                    player.help(CiaArguments.sender(ctx));
+                    return 1;
+                });
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> join() {

@@ -31,10 +31,11 @@ public final class LeaveService {
 
         switch (plan) {
             case NotPlayer _ -> messenger.error(p, "Only players can use this command.");
-            case NotInSession _ -> messenger.warn(p, "You are not in CIA session.");
-            case AlreadyInHub _ -> messenger.warn(p, "You are already in HUB.");
-            case Immediate _ -> messenger.success(p, "Returned to HUB.");
-            case Scheduled(int seconds) -> messenger.info(p, "Returning to HUB in %ds...".formatted(seconds));
+            case NotInSession _ -> messenger.warn(p, "You are not in a CreepersIArena session.");
+            case AlreadyInHub _ -> messenger.warn(p, "You are already in the hub.");
+            case Immediate _ -> messenger.success(p, "Returned to hub.");
+            case Scheduled(int seconds) ->
+                    messenger.infoMini(p, "Returning to hub in <gold>%ds</gold>...".formatted(seconds));
         }
     }
 
