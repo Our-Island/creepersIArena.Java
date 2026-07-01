@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Suggestions for the legacy /ciaa config command.
+ * Suggestions for /ciaa config get/list/set.
  */
 public final class ConfigSuggestions {
 

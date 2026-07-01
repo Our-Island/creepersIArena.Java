@@ -1,6 +1,7 @@
 package top.ourisland.creepersiarena.core.command.handler;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import top.ourisland.creepersiarena.api.economy.CurrencyId;
 import top.ourisland.creepersiarena.api.economy.ICurrencyRegistry;
 import top.ourisland.creepersiarena.api.economy.IWalletService;
@@ -19,6 +20,7 @@ import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
 import top.ourisland.creepersiarena.core.command.message.CommandPanel;
 import top.ourisland.creepersiarena.core.command.message.CommandUsage;
 import top.ourisland.creepersiarena.core.command.service.LeaveService;
+import top.ourisland.creepersiarena.core.command.service.PlayerPreferenceService;
 import top.ourisland.creepersiarena.core.command.service.UserLanguageService;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.job.JobManager;
@@ -26,6 +28,7 @@ import top.ourisland.creepersiarena.core.job.JobManager;
 import java.util.Comparator;
 
 import static top.ourisland.creepersiarena.core.command.CommandParsers.asPlayer;
+import static top.ourisland.creepersiarena.core.command.CommandParsers.parseBoolean;
 import static top.ourisland.creepersiarena.core.game.flow.GameFlow.JoinFromHubPlan.*;
 
 public final class PlayerCommandHandlers {
@@ -62,7 +65,8 @@ public final class PlayerCommandHandlers {
         switch (plan) {
             case NotPlayer _ -> messenger.error(p, "Only players can use this command.");
             case NoActiveGame _ -> messenger.warn(p, "There is no active game right now.");
-            case NotInHub(var state) -> messenger.warnMini(p, "You can only join from <aqua>HUB</aqua>. <dark_gray>(current: " + CommandMessenger.escape(String.valueOf(state)) + ")</dark_gray>");
+            case NotInHub(var state) ->
+                    messenger.warnMini(p, "You can only join from <aqua>HUB</aqua>. <dark_gray>(current: " + CommandMessenger.escape(String.valueOf(state)) + ")</dark_gray>");
             case Joined _ -> messenger.success(p, "Joined the game.");
         }
     }
@@ -98,10 +102,35 @@ public final class PlayerCommandHandlers {
     }
 
     public void jobUsage(CommandSender sender) {
-        messenger.panel(sender, CommandPanel.builder("Job Selection")
-                .row(new CommandUsage("/cia job <cia:job_id>", "Select a job while in hub or respawn.").toMiniRow())
-                .row("<gray>Tip:</gray> <gold>Press Tab</gold> <gray>after</gray> <aqua>/cia job</aqua> <gray>to browse registered jobs.</gray>")
-                .build());
+        jobOverview(sender);
+    }
+
+    public void jobOverview(CommandSender sender) {
+        if (sender instanceof Player player) {
+            var flow = rt.getService(GameFlow.class);
+            if (flow != null && flow.refreshLobbyKit(player)) {
+                messenger.success(sender, "Refreshed job selector.");
+                messenger.hint(sender, "Use the selector item, or run /cia job <job_id> directly.");
+                return;
+            }
+        }
+
+        var jobs = rt.getService(JobManager.class);
+        if (jobs == null || jobs.registeredJobs().isEmpty()) {
+            messenger.warn(sender, "No jobs are registered.");
+            return;
+        }
+
+        var panel = CommandPanel.builder("Available Jobs");
+        jobs.registeredJobs().stream()
+                .sorted(Comparator.comparing(job -> job.id().asString()))
+                .forEach(job -> panel.row("<click:suggest_command:'/cia job "
+                        + CommandMessenger.escapeForAttribute(job.id().asString())
+                        + "'>" + messenger.id(job.id().asString()) + "</click> "
+                        + "<dark_gray>|</dark_gray> owner " + messenger.id(job.owner().extensionId().value())));
+        panel.row("");
+        panel.row("<gray>Tip:</gray> <gold>Click</gold> <gray>a job id or run</gray> <aqua>/cia job <job_id></aqua><gray>.</gray>");
+        messenger.panel(sender, panel.build());
     }
 
     public void team(CommandSender sender, TeamId teamId) {
@@ -116,7 +145,9 @@ public final class PlayerCommandHandlers {
             return;
         }
 
-        messenger.successMini(p, "Team selected: " + (teamId == null ? "<gold>random</gold>" : messenger.id(teamId.toString())));
+        messenger.successMini(p, "Team selected: " + (teamId == null
+                ? "<gold>random</gold>"
+                : messenger.id(teamId.toString())));
     }
 
     public void teamUsage(CommandSender sender) {
@@ -129,6 +160,19 @@ public final class PlayerCommandHandlers {
     public void invalidTeam(CommandSender sender, String token) {
         messenger.errorMini(sender, "Invalid team id: " + messenger.id(token));
         messenger.hint(sender, "Use /cia team random or press Tab after /cia team.");
+    }
+
+    public void preferenceUsage(CommandSender sender) {
+        messenger.panel(sender, CommandPanel.builder("Preferences")
+                .row(new CommandUsage("/cia pref language <default|en_us|zh_cn>", "Change your personal language.").toMiniRow())
+                .row(new CommandUsage("/cia pref particles <true|false>", "Enable or disable particle cosmetics for yourself.").toMiniRow())
+                .row(new CommandUsage("/cia pref scoreboard <true|false>", "Enable or disable scoreboard UI preference.").toMiniRow())
+                .row(new CommandUsage("/cia pref reset", "Reset command preferences to defaults.").toMiniRow())
+                .build());
+    }
+
+    public void preferenceLanguage(CommandSender sender, String languageId) {
+        language(sender, languageId);
     }
 
     public void language(CommandSender sender, String languageId) {
@@ -148,6 +192,10 @@ public final class PlayerCommandHandlers {
         messenger.successMini(p, "Language set to: " + messenger.id(languageId));
     }
 
+    public void preferenceLanguageUsage(CommandSender sender) {
+        languageUsage(sender);
+    }
+
     public void languageUsage(CommandSender sender) {
         messenger.panel(sender, CommandPanel.builder("Language")
                 .row(new CommandUsage("/cia language default", "Use the server default language.").toMiniRow())
@@ -156,9 +204,86 @@ public final class PlayerCommandHandlers {
                 .build());
     }
 
+    public void preferenceParticles(CommandSender sender, String token) {
+        var enabled = parseBoolean(token);
+        if (enabled == null) {
+            messenger.errorMini(sender, "Invalid preference value: " + messenger.id(token));
+            messenger.hint(sender, "Use true/false or on/off.");
+            return;
+        }
+        preferenceParticles(sender, enabled);
+    }
+
+    public void preferenceParticles(CommandSender sender, boolean enabled) {
+        var playerOpt = asPlayer(sender);
+        if (playerOpt.isEmpty()) return;
+        var player = playerOpt.get();
+
+        var preferences = rt.requireService(PlayerPreferenceService.class);
+        preferences.particlesEnabled(player, enabled);
+        if (!enabled) {
+            var cosmetics = rt.getService(ICosmeticService.class);
+            if (cosmetics != null && cosmetics.loaded(player.getUniqueId())) {
+                cosmetics.clearSelection(player.getUniqueId(), CosmeticSlot.PARTICLE_TRAIL);
+            }
+        }
+        messenger.successMini(sender, "Particle preference is now " + messenger.bool(enabled));
+        if (!enabled) messenger.hint(sender, "Your current particle trail selection was cleared.");
+    }
+
+    public void preferenceScoreboard(CommandSender sender, String token) {
+        var enabled = parseBoolean(token);
+        if (enabled == null) {
+            messenger.errorMini(sender, "Invalid preference value: " + messenger.id(token));
+            messenger.hint(sender, "Use true/false or on/off.");
+            return;
+        }
+        preferenceScoreboard(sender, enabled);
+    }
+
+    public void preferenceScoreboard(CommandSender sender, boolean enabled) {
+        var playerOpt = asPlayer(sender);
+        if (playerOpt.isEmpty()) return;
+        var player = playerOpt.get();
+
+        var preferences = rt.requireService(PlayerPreferenceService.class);
+        preferences.scoreboardEnabled(player, enabled);
+        messenger.successMini(sender, "Scoreboard preference is now " + messenger.bool(enabled));
+        messenger.hint(sender, "This preference is saved and ready for scoreboard integrations.");
+    }
+
+    public void preferenceReset(CommandSender sender) {
+        var playerOpt = asPlayer(sender);
+        if (playerOpt.isEmpty()) return;
+        var player = playerOpt.get();
+
+        rt.requireService(PlayerPreferenceService.class).reset(player);
+        rt.requireService(UserLanguageService.class).set(player, null);
+        messenger.success(sender, "Preferences reset to defaults.");
+        preference(sender);
+    }
+
     public void preference(CommandSender sender) {
-        messenger.warn(sender, "Preference settings are not available yet.");
-        messenger.hint(sender, "This command is reserved for the upcoming /cia pref feature set.");
+        var playerOpt = asPlayer(sender);
+        if (playerOpt.isEmpty()) return;
+        var player = playerOpt.get();
+
+        var preferences = rt.requireService(PlayerPreferenceService.class);
+        var languages = rt.requireService(UserLanguageService.class);
+        var currentLanguage = languages.getOrNull(player);
+
+        messenger.panel(sender, CommandPanel.builder("Preferences")
+                .row("<gray>Language:</gray> " + (currentLanguage == null
+                        ? "<gold>server default</gold>"
+                        : messenger.id(currentLanguage)))
+                .row("<gray>Particles:</gray> " + messenger.bool(preferences.particlesEnabled(player)))
+                .row("<gray>Scoreboard:</gray> " + messenger.bool(preferences.scoreboardEnabled(player)))
+                .row("")
+                .row(new CommandUsage("/cia pref language <default|en_us|zh_cn>", "Change your personal language.").toMiniRow())
+                .row(new CommandUsage("/cia pref particles <true|false>", "Enable or disable particle cosmetics for yourself.").toMiniRow())
+                .row(new CommandUsage("/cia pref scoreboard <true|false>", "Enable or disable scoreboard UI preference.").toMiniRow())
+                .row(new CommandUsage("/cia pref reset", "Reset command preferences to defaults.").toMiniRow())
+                .build());
     }
 
     public void balance(CommandSender sender, CurrencyId currencyId) {
@@ -218,8 +343,10 @@ public final class PlayerCommandHandlers {
         }
         if (stores.size() != 1) {
             var panel = CommandPanel.builder("Available Stores");
-            stores.forEach(store -> panel.row("<click:suggest_command:'/cia store " + CommandMessenger.escapeForAttribute(store.id().asString()) + "'>"
-                    + messenger.id(store.id().asString()) + "</click> <dark_gray>-</dark_gray> <gray>items:</gray> <gold>"
+            stores.forEach(store -> panel.row("<click:suggest_command:'/cia store " + CommandMessenger.escapeForAttribute(store.id()
+                    .asString()) + "'>"
+                    + messenger.id(store.id()
+                    .asString()) + "</click> <dark_gray>-</dark_gray> <gray>items:</gray> <gold>"
                     + registry.items(store.id()).size() + "</gold>"));
             messenger.panel(sender, panel.build());
             messenger.hint(sender, "Click a store id or run /cia store <namespace:store>.");
@@ -283,6 +410,12 @@ public final class PlayerCommandHandlers {
             messenger.warn(sender, "Your player data is still loading. Please try again soon.");
             return;
         }
+        var preferences = rt.getService(PlayerPreferenceService.class);
+        if (preferences != null && !preferences.particlesEnabled(player)) {
+            messenger.warn(sender, "Particle cosmetics are disabled in your preferences.");
+            messenger.hint(sender, "Run /cia pref particles true to enable them again.");
+            return;
+        }
         if (registry.cosmetic(cosmeticId) == null) {
             messenger.errorMini(sender, "Unknown cosmetic: " + messenger.id(cosmeticId.asString()));
             messenger.hint(sender, "Use /cia particles select and press Tab to see available cosmetics.");
@@ -293,21 +426,6 @@ public final class PlayerCommandHandlers {
             return;
         }
         messenger.successMini(sender, "Particle cosmetic selected: " + messenger.id(cosmeticId.asString()));
-    }
-
-    public void chooseJob(CommandSender sender) {
-        var playerOpt = asPlayer(sender);
-        if (playerOpt.isEmpty()) return;
-        var p = playerOpt.get();
-
-        var flow = rt.requireService(GameFlow.class);
-        boolean ok = flow.refreshLobbyKit(p);
-        if (!ok) {
-            messenger.warn(sender, "You can only choose a job in hub or respawn.");
-            return;
-        }
-
-        messenger.success(sender, "Refreshed job selector.");
     }
 
 }

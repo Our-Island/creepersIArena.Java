@@ -10,7 +10,7 @@ import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 
 /**
- * Builds the legacy /ciaa ability subtree.
+ * Builds the /ciaa ability subtree.
  */
 public final class AbilityAdminCommandTree {
 
@@ -45,7 +45,6 @@ public final class AbilityAdminCommandTree {
                         })
                 )
                 .then(abilityInfo("info"))
-                .then(abilityInfo("status"))
                 .then(abilityToggle("enable", true))
                 .then(abilityToggle("disable", false));
     }

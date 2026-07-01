@@ -6,17 +6,18 @@ import top.ourisland.creepersiarena.api.ability.IAbilityGate;
 import top.ourisland.creepersiarena.api.ability.IAbilityRegistry;
 import top.ourisland.creepersiarena.api.game.player.PlayerSessionStore;
 import top.ourisland.creepersiarena.api.game.rest.IRestStateService;
-import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.bootstrap.IBootstrapModule;
 import top.ourisland.creepersiarena.core.bootstrap.ListenerBinder;
 import top.ourisland.creepersiarena.core.bootstrap.StageTask;
 import top.ourisland.creepersiarena.core.bootstrap.annotation.CiaBootstrapModule;
+import top.ourisland.creepersiarena.core.command.AdminRuntimeState;
 import top.ourisland.creepersiarena.core.game.GameManager;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
 import top.ourisland.creepersiarena.core.game.mutation.ScaledTickAccumulator;
 import top.ourisland.creepersiarena.core.game.regeneration.RegenerationListener;
 import top.ourisland.creepersiarena.core.game.regeneration.RegenerationService;
+import top.ourisland.creepersiarena.core.identity.RegistrationOwnerAuthority;
 
 import java.util.stream.IntStream;
 
@@ -48,18 +49,28 @@ public final class RegenerationModule implements IBootstrapModule {
         return StageTask.of(() -> {
             var service = rt.requireService(RegenerationService.class);
             var scaledClock = new ScaledTickAccumulator();
+
             ScheduledTask task = Bukkit.getServer().getGlobalRegionScheduler().runAtFixedRate(
                     rt.plugin(),
                     _ -> {
                         var mutation = rt.getService(MutationService.class);
-                        double scale = mutation == null ? 1.0D : mutation.serverTickScale();
+                        var admin = rt.getService(AdminRuntimeState.class);
+
+                        double mutationScale = mutation == null ? 1.0D : mutation.serverTickScale();
+                        double regenerationScale = admin == null ? 1.0D : admin.regenerationFactor();
+                        double scale = mutationScale * Math.max(0.0D, regenerationScale);
+
                         int maxSteps = mutation == null ? 1 : mutation.maxLogicalStepsPerRun();
+                        if (regenerationScale > 1.0D) {
+                            maxSteps = Math.max(maxSteps, (int) Math.ceil(regenerationScale));
+                        }
                         int steps = scaledClock.steps(scale, maxSteps);
                         IntStream.range(0, steps).forEach(_ -> service.tick());
                     },
                     1L,
                     1L
             );
+
             rt.trackTask(task);
             rt.putService(RegenerationTickHandle.class, new RegenerationTickHandle(task));
         }, "Starting resting regeneration tick...", "Resting regeneration tick started.");

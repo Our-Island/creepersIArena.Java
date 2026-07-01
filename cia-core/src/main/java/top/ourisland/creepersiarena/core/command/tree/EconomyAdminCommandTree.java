@@ -15,7 +15,7 @@ import top.ourisland.creepersiarena.core.command.suggestion.PlayerSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 
 /**
- * Builds the legacy /ciaa economy subtree.
+ * Builds the /ciaa economy subtree.
  */
 public final class EconomyAdminCommandTree {
 

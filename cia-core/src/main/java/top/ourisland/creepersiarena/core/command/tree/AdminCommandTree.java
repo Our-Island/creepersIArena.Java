@@ -1,8 +1,6 @@
 package top.ourisland.creepersiarena.core.command.tree;
 
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -13,7 +11,7 @@ import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
 
 /**
- * Builds /ciaa and embedded /cia admin command trees.
+ * Builds the /ciaa admin command tree.
  */
 public final class AdminCommandTree {
 
@@ -49,15 +47,14 @@ public final class AdminCommandTree {
                 });
 
         root.then(help());
-        gameTree.appendTo(root);
+        root.then(gameTree.build("game"));
         root.then(abilityTree.build("ability"));
         root.then(databaseTree.build("database"));
         root.then(economyTree.build("economy"));
         root.then(storeTree.build("store"));
-        root.then(entrance());
         root.then(language());
         root.then(reload());
-        root.then(extensionTree.build("extensions"));
+        root.then(extensionTree.build("extension"));
         root.then(configTree.build("config"));
 
         return root;
@@ -67,22 +64,6 @@ public final class AdminCommandTree {
         return Commands.literal("help")
                 .executes(ctx -> {
                     admin.help(CiaArguments.sender(ctx));
-                    return 1;
-                });
-    }
-
-    private LiteralArgumentBuilder<CommandSourceStack> entrance() {
-        return Commands.literal("entrance")
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_ENTRANCE))
-                .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
-                        .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.BOOLEAN_SUGGESTIONS))
-                        .executes(ctx -> {
-                            admin.entrance(CiaArguments.sender(ctx), BoolArgumentType.getBool(ctx, "enabled"));
-                            return 1;
-                        })
-                )
-                .executes(ctx -> {
-                    admin.entranceUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

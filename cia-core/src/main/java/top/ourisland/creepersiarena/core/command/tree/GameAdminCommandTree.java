@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -16,7 +15,7 @@ import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 
 /**
- * Legacy flat game-admin commands under /ciaa and /cia admin.
+ * Builds the grouped /ciaa game subtree.
  */
 public final class GameAdminCommandTree {
 
@@ -31,19 +30,20 @@ public final class GameAdminCommandTree {
         this.admin = admin;
     }
 
-    public void appendTo(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(mode());
-        root.then(arena());
-        root.then(skip());
-        root.then(cooldown());
-
-        LiteralCommandNode<CommandSourceStack> regeneration = regen().build();
-        root.then(regeneration);
-        root.then(Commands.literal("regeneration")
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_REGENERATION))
-                .redirect(regeneration));
-
-        root.then(mutation());
+    public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
+        return Commands.literal(literal)
+                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_GAME))
+                .executes(ctx -> {
+                    admin.gameUsage(CiaArguments.sender(ctx));
+                    return 1;
+                })
+                .then(mode())
+                .then(arena())
+                .then(skip())
+                .then(cooldown())
+                .then(regen())
+                .then(mutation())
+                .then(entrance());
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> mode() {
@@ -120,7 +120,7 @@ public final class GameAdminCommandTree {
     private LiteralArgumentBuilder<CommandSourceStack> regen() {
         return Commands.literal("regen")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_REGENERATION))
-                .then(RequiredArgumentBuilder.<CommandSourceStack, Double>argument("factor", DoubleArgumentType.doubleArg())
+                .then(RequiredArgumentBuilder.<CommandSourceStack, Double>argument("factor", DoubleArgumentType.doubleArg(0.0D))
                         .executes(ctx -> {
                             admin.setRegenerationFactor(CiaArguments.sender(ctx), DoubleArgumentType.getDouble(ctx, "factor"));
                             return 1;
@@ -150,6 +150,22 @@ public final class GameAdminCommandTree {
                 )
                 .executes(ctx -> {
                     admin.mutationStatus(CiaArguments.sender(ctx));
+                    return 1;
+                });
+    }
+
+    private LiteralArgumentBuilder<CommandSourceStack> entrance() {
+        return Commands.literal("entrance")
+                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_ENTRANCE))
+                .then(RequiredArgumentBuilder.<CommandSourceStack, Boolean>argument("enabled", BoolArgumentType.bool())
+                        .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.BOOLEAN_SUGGESTIONS))
+                        .executes(ctx -> {
+                            admin.entrance(CiaArguments.sender(ctx), BoolArgumentType.getBool(ctx, "enabled"));
+                            return 1;
+                        })
+                )
+                .executes(ctx -> {
+                    admin.entranceUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

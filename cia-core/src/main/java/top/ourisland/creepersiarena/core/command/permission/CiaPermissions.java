@@ -7,10 +7,6 @@ import org.bukkit.plugin.Plugin;
 
 public final class CiaPermissions {
 
-    // ====== base ======
-    public static final String
-            CHOOSEJOB = "creepersiarena.choosejob";
-
     // ====== player command root ======
     public static final String
             COMMAND = "creepersiarena.command",
@@ -41,15 +37,13 @@ public final class CiaPermissions {
             ADMIN_ENTRANCE = "creepersiarena.command.admin.entrance",
             ADMIN_LANGUAGE = "creepersiarena.command.admin.language",
             ADMIN_RELOAD = "creepersiarena.command.admin.reload",
-            ADMIN_EXTENSIONS = "creepersiarena.command.admin.extensions",
+            ADMIN_EXTENSION = "creepersiarena.command.admin.extension",
             ADMIN_CONFIG = "creepersiarena.command.admin.config";
 
     private CiaPermissions() {
     }
 
     public static void registerAll(Plugin plugin) {
-        ensure(CHOOSEJOB, PermissionDefault.TRUE);
-
         var pCommandRoot = ensure(COMMAND, PermissionDefault.TRUE);
         addChild(pCommandRoot, ensure(COMMAND_JOIN, PermissionDefault.TRUE));
         addChild(pCommandRoot, ensure(COMMAND_LEAVE, PermissionDefault.TRUE));
@@ -76,10 +70,10 @@ public final class CiaPermissions {
         addChild(pAdminRoot, ensure(ADMIN_ENTRANCE, PermissionDefault.OP));
         addChild(pAdminRoot, ensure(ADMIN_LANGUAGE, PermissionDefault.OP));
         addChild(pAdminRoot, ensure(ADMIN_RELOAD, PermissionDefault.OP));
-        addChild(pAdminRoot, ensure(ADMIN_EXTENSIONS, PermissionDefault.OP));
+        addChild(pAdminRoot, ensure(ADMIN_EXTENSION, PermissionDefault.OP));
         addChild(pAdminRoot, ensure(ADMIN_CONFIG, PermissionDefault.OP));
 
-        plugin.getLogger().info("Registered permissions (programmatic): choosejob, command tree, admin tree.");
+        plugin.getLogger().info("Registered permissions (programmatic): command tree, admin tree.");
     }
 
     private static Permission ensure(String node, PermissionDefault def) {

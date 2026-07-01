@@ -12,7 +12,7 @@ import top.ourisland.creepersiarena.core.command.suggestion.PlayerSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 
 /**
- * Builds the legacy /ciaa store subtree.
+ * Builds the /ciaa store subtree.
  */
 public final class StoreAdminCommandTree {
 

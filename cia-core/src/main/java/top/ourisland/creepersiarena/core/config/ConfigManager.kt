@@ -111,6 +111,18 @@ class ConfigManager(
 
     fun getSkillNode(node: String): Any? = getNode("skill.yml", node)
 
+    fun globalNodeExists(node: String): Boolean = nodeExists("config.yml", node)
+
+    fun arenaNodeExists(node: String): Boolean = nodeExists("arena.yml", node)
+
+    fun skillNodeExists(node: String): Boolean = nodeExists("skill.yml", node)
+
+    fun globalSection(node: String): Boolean = sectionNode("config.yml", node)
+
+    fun arenaSection(node: String): Boolean = sectionNode("arena.yml", node)
+
+    fun skillSection(node: String): Boolean = sectionNode("skill.yml", node)
+
     private fun getNode(filename: String, node: String): Any? {
         ensureDataDir()
         copyDefaultIfAbsent(filename)
@@ -122,6 +134,34 @@ class ConfigManager(
         } catch (t: Throwable) {
             logger.warn("[Config] Failed to read {} node={}: {}", filename, node, t.message, t)
             null
+        }
+    }
+
+    private fun nodeExists(filename: String, node: String): Boolean {
+        ensureDataDir()
+        copyDefaultIfAbsent(filename)
+
+        val p = dataDir.resolve(filename)
+        return try {
+            val yml = YamlConfiguration.loadConfiguration(p.toFile())
+            yml.contains(node)
+        } catch (t: Throwable) {
+            logger.warn("[Config] Failed to check {} node={}: {}", filename, node, t.message, t)
+            false
+        }
+    }
+
+    private fun sectionNode(filename: String, node: String): Boolean {
+        ensureDataDir()
+        copyDefaultIfAbsent(filename)
+
+        val p = dataDir.resolve(filename)
+        return try {
+            val yml = YamlConfiguration.loadConfiguration(p.toFile())
+            yml.isConfigurationSection(node)
+        } catch (t: Throwable) {
+            logger.warn("[Config] Failed to inspect {} node={}: {}", filename, node, t.message, t)
+            false
         }
     }
 

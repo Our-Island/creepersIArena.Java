@@ -1,7 +1,6 @@
 package top.ourisland.creepersiarena.core.command.tree;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
@@ -19,16 +18,13 @@ public final class PlayerCommandTree {
 
     private final BootstrapRuntime rt;
     private final PlayerCommandHandlers player;
-    private final AdminCommandTree adminTree;
 
     public PlayerCommandTree(
             BootstrapRuntime rt,
-            PlayerCommandHandlers player,
-            AdminCommandTree adminTree
+            PlayerCommandHandlers player
     ) {
         this.rt = rt;
         this.player = player;
-        this.adminTree = adminTree;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
@@ -44,18 +40,10 @@ public final class PlayerCommandTree {
         root.then(job());
         root.then(team());
         root.then(language());
-
-        LiteralCommandNode<CommandSourceStack> preference = preference().build();
-        root.then(preference);
-        root.then(Commands.literal("pref")
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_PREFERENCE))
-                .redirect(preference));
-
-        root.then(chooseJob());
+        root.then(pref());
         root.then(balance());
         root.then(store());
         root.then(particles());
-        root.then(adminTree.build(CiaCommandConstants.ADMIN_EMBEDDED_LITERAL));
 
         return root;
     }
@@ -97,7 +85,7 @@ public final class PlayerCommandTree {
                         })
                 )
                 .executes(ctx -> {
-                    player.jobUsage(CiaArguments.sender(ctx));
+                    player.jobOverview(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -138,20 +126,56 @@ public final class PlayerCommandTree {
                 });
     }
 
-    private LiteralArgumentBuilder<CommandSourceStack> preference() {
-        return Commands.literal("preference")
+    private LiteralArgumentBuilder<CommandSourceStack> pref() {
+        return Commands.literal("pref")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_PREFERENCE))
+                .then(Commands.literal("language")
+                        .then(CiaArguments.word("language")
+                                .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PLAYER_LANGUAGE_SUGGESTIONS))
+                                .executes(ctx -> {
+                                    player.preferenceLanguage(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
+                                    return 1;
+                                })
+                        )
+                        .executes(ctx -> {
+                            player.preferenceLanguageUsage(CiaArguments.sender(ctx));
+                            return 1;
+                        })
+                )
+                .then(Commands.literal("particles")
+                        .then(CiaArguments.word("enabled")
+                                .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PREFERENCE_BOOLEAN_SUGGESTIONS))
+                                .executes(ctx -> {
+                                    player.preferenceParticles(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
+                                    return 1;
+                                })
+                        )
+                        .executes(ctx -> {
+                            player.preferenceUsage(CiaArguments.sender(ctx));
+                            return 1;
+                        })
+                )
+                .then(Commands.literal("scoreboard")
+                        .then(CiaArguments.word("enabled")
+                                .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PREFERENCE_BOOLEAN_SUGGESTIONS))
+                                .executes(ctx -> {
+                                    player.preferenceScoreboard(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
+                                    return 1;
+                                })
+                        )
+                        .executes(ctx -> {
+                            player.preferenceUsage(CiaArguments.sender(ctx));
+                            return 1;
+                        })
+                )
+                .then(Commands.literal("reset")
+                        .executes(ctx -> {
+                            player.preferenceReset(CiaArguments.sender(ctx));
+                            return 1;
+                        })
+                )
                 .executes(ctx -> {
                     player.preference(CiaArguments.sender(ctx));
-                    return 1;
-                });
-    }
-
-    private LiteralArgumentBuilder<CommandSourceStack> chooseJob() {
-        return Commands.literal("choosejob")
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.CHOOSEJOB))
-                .executes(ctx -> {
-                    player.chooseJob(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

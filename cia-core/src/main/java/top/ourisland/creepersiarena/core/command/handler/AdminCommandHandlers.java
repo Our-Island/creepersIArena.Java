@@ -2,6 +2,7 @@ package top.ourisland.creepersiarena.core.command.handler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import top.ourisland.creepersiarena.api.ability.AbilityId;
 import top.ourisland.creepersiarena.api.ability.CoreAbilities;
 import top.ourisland.creepersiarena.api.ability.IAbilityAdmin;
@@ -29,14 +30,13 @@ import top.ourisland.creepersiarena.core.game.arena.ArenaManager;
 import top.ourisland.creepersiarena.core.game.flow.GameFlow;
 import top.ourisland.creepersiarena.core.game.mutation.MutationResetReason;
 import top.ourisland.creepersiarena.core.game.mutation.MutationService;
+import top.ourisland.creepersiarena.core.game.regeneration.RegenerationService;
 import top.ourisland.creepersiarena.core.utils.I18n;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static top.ourisland.creepersiarena.core.command.CommandParsers.parseValue;
+import static top.ourisland.creepersiarena.core.command.CommandParsers.*;
 
 public final class AdminCommandHandlers {
 
@@ -61,11 +61,23 @@ public final class AdminCommandHandlers {
         helpRenderer.adminHelp(sender);
     }
 
+    public void gameUsage(CommandSender sender) {
+        messenger.panel(sender, CommandPanel.builder("Game Commands")
+                .row(new CommandUsage("/ciaa game mode <mode>", "Switch mode and restart the game flow.").toMiniRow())
+                .row(new CommandUsage("/ciaa game arena <arena>", "Set the next arena.").toMiniRow())
+                .row(new CommandUsage("/ciaa game skip [arena]", "End the current game and start the next one.").toMiniRow())
+                .row(new CommandUsage("/ciaa game cooldown <factor>", "Set runtime cooldown multiplier.").toMiniRow())
+                .row(new CommandUsage("/ciaa game regen <factor>", "Set resting regeneration speed multiplier.").toMiniRow())
+                .row(new CommandUsage("/ciaa game mutation [true|false|trigger]", "Inspect, toggle, or trigger mutation.").toMiniRow())
+                .row(new CommandUsage("/ciaa game entrance <true|false>", "Enable or disable arena entrance.").toMiniRow())
+                .build());
+    }
+
     public void mode(CommandSender sender, GameModeId modeId) {
         var games = rt.requireService(GameManager.class);
         if (!games.hasMode(modeId)) {
             messenger.errorMini(sender, "Unknown mode: " + messenger.id(modeId.asString()));
-            messenger.hint(sender, "Use /ciaa mode and press Tab to see available modes.");
+            messenger.hint(sender, "Use /ciaa game mode and press Tab to see available modes.");
             return;
         }
 
@@ -84,7 +96,7 @@ public final class AdminCommandHandlers {
     }
 
     public void modeUsage(CommandSender sender) {
-        messenger.usage(sender, "/ciaa mode <namespace:mode>");
+        messenger.usage(sender, "/ciaa game mode <namespace:mode>");
     }
 
     public void arena(CommandSender sender, ArenaId arenaId) {
@@ -94,14 +106,16 @@ public final class AdminCommandHandlers {
         var inst = am.getArena(arenaId);
         if (inst == null) {
             messenger.errorMini(sender, "Arena not found: " + messenger.id(arenaId.toString()));
-            messenger.hint(sender, "Use /ciaa arena and press Tab to see loaded arenas.");
+            messenger.hint(sender, "Use /ciaa game arena and press Tab to see loaded arenas.");
             return;
         }
 
         var curMode = gm.active() == null ? null : gm.active().mode();
         if (curMode != null && !inst.type().equals(curMode)) {
-            messenger.errorMini(sender, "Arena mode mismatch. Active: " + messenger.id(curMode.asString())
-                    + " <gray>arena:</gray> " + messenger.id(inst.type().asString()));
+            messenger.errorMini(sender, "Arena mode mismatch. Active: %s <gray>arena:</gray> %s".formatted(
+                    messenger.id(curMode.asString()),
+                    messenger.id(inst.type().asString())
+            ));
             return;
         }
 
@@ -112,7 +126,7 @@ public final class AdminCommandHandlers {
     }
 
     public void arenaUsage(CommandSender sender) {
-        messenger.usage(sender, "/ciaa arena <arena_id>");
+        messenger.usage(sender, "/ciaa game arena <arena_id>");
     }
 
     public void invalidArena(CommandSender sender, String message) {
@@ -167,17 +181,58 @@ public final class AdminCommandHandlers {
     }
 
     public void cooldownUsage(CommandSender sender) {
-        messenger.usage(sender, "/ciaa cooldown <factor>");
+        messenger.usage(sender, "/ciaa game cooldown <factor>");
     }
 
     public void regenerationStatus(CommandSender sender) {
-        messenger.warn(sender, "Regeneration controls are not available yet.");
-        messenger.hint(sender, "This command is reserved for a later implementation stage.");
+        var regeneration = rt.getService(RegenerationService.class);
+        if (regeneration == null) {
+            messenger.error(sender, "Regeneration service is not available.");
+            return;
+        }
+
+        var runtime = rt.requireService(AdminRuntimeState.class);
+        var config = regeneration.config();
+        messenger.panel(sender, CommandPanel.builder("Regeneration")
+                .row("<gray>Runtime factor:</gray> <gold>" + runtime.regenerationFactor() + "x</gold>")
+                .row("<gray>Require in game:</gray> " + messenger.yesNo(config.requireInGame()))
+                .row("<gray>Require on ground:</gray> " + messenger.yesNo(config.requireOnGround()))
+                .row("<gray>Clear effect on break:</gray> " + messenger.yesNo(config.clearEffectOnBreak()))
+                .row("<gray>Configured stages:</gray> <gold>" + config.stages().size() + "</gold>")
+                .row(new CommandUsage("/ciaa game regen <factor>", "Set regeneration tick speed multiplier.").toMiniRow())
+                .build());
     }
 
     public void setRegenerationFactor(CommandSender sender, double factor) {
-        messenger.warn(sender, "Regeneration controls are not available yet.");
-        messenger.hint(sender, "Requested factor was " + factor + "x, but the regeneration command is not wired to a runtime service yet.");
+        if (Double.isNaN(factor) || Double.isInfinite(factor) || factor < 0) {
+            messenger.errorMini(sender, "Invalid factor: " + messenger.value(factor));
+            return;
+        }
+
+        var regeneration = rt.getService(RegenerationService.class);
+        if (regeneration == null) {
+            messenger.error(sender, "Regeneration service is not available.");
+            return;
+        }
+
+        var st = rt.requireService(AdminRuntimeState.class);
+        st.regenerationFactor(factor);
+        if (factor == 0.0D) regeneration.clearAll();
+        messenger.successMini(sender, "Regeneration factor set to: <gold>" + factor + "x</gold>");
+        if (factor == 0.0D)
+            messenger.hint(sender, "A factor of 0 pauses resting regeneration ticking and clears current rest states.");
+    }
+
+    public void triggerMutation(CommandSender sender) {
+        var mutation = rt.getService(MutationService.class);
+        if (mutation == null) {
+            messenger.error(sender, "Mutation service is not available.");
+            return;
+        }
+
+        var result = mutation.trigger();
+        messenger.info(sender, result.message());
+        mutationStatus(sender);
     }
 
     public void mutationStatus(CommandSender sender) {
@@ -193,21 +248,13 @@ public final class AdminCommandHandlers {
                 .build());
     }
 
+    private String statusLine(String plain) {
+        return "<gray>" + CommandMessenger.escape(plain) + "</gray>";
+    }
+
     private boolean mutationAdminEnabled() {
         var admin = rt.getService(IAbilityAdmin.class);
         return admin == null || admin.adminEnabled(CoreAbilities.MUTATION);
-    }
-
-    public void triggerMutation(CommandSender sender) {
-        var mutation = rt.getService(MutationService.class);
-        if (mutation == null) {
-            messenger.error(sender, "Mutation service is not available.");
-            return;
-        }
-
-        var result = mutation.trigger();
-        messenger.info(sender, result.message());
-        mutationStatus(sender);
     }
 
     public void setMutationEnabled(CommandSender sender, boolean enabled) {
@@ -286,7 +333,9 @@ public final class AdminCommandHandlers {
         messenger.panel(sender, CommandPanel.builder("Ability Info")
                 .row("<gray>Ability:</gray> " + messenger.id(id.asString()))
                 .row("<gray>Registered:</gray> " + messenger.yesNo(registered != null))
-                .row("<gray>Owner:</gray> " + (registered == null ? "<dark_gray>n/a</dark_gray>" : messenger.id(registered.owner().extensionId().value())))
+                .row("<gray>Owner:</gray> " + (registered == null
+                        ? "<dark_gray>n/a</dark_gray>"
+                        : messenger.id(registered.owner().extensionId().value())))
                 .row("<gray>Config exists:</gray> " + messenger.yesNo(view.exists()))
                 .row("<gray>Config enabled:</gray> " + messenger.bool(view.enabled(false)))
                 .row("<gray>Default active:</gray> " + messenger.yesNo(view.defaultActive(false)))
@@ -463,7 +512,7 @@ public final class AdminCommandHandlers {
     }
 
     public void entranceUsage(CommandSender sender) {
-        messenger.usage(sender, "/ciaa entrance <true|false>");
+        messenger.usage(sender, "/ciaa game entrance <true|false>");
     }
 
     public void language(CommandSender sender, String lang) {
@@ -497,13 +546,39 @@ public final class AdminCommandHandlers {
         messenger.panel(sender, "Extensions", diagnosticRows(ExtensionDiagnostics.listLines(rt)));
     }
 
+    private List<String> diagnosticRows(List<String> lines) {
+        if (lines == null || lines.isEmpty()) return List.of("<dark_gray>No diagnostic lines.</dark_gray>");
+
+        var rows = new ArrayList<String>();
+        lines.forEach(line -> {
+            if (line == null || line.isBlank()) {
+                rows.add("");
+                return;
+            }
+            var trimmed = line.trim();
+            if (trimmed.startsWith("- ")) {
+                rows.add("<gray>•</gray> <white>" + CommandMessenger.escape(trimmed.substring(2)) + "</white>");
+                return;
+            }
+            var idx = trimmed.indexOf('=');
+            if (idx > 0) {
+                var key = trimmed.substring(0, idx);
+                var value = trimmed.substring(idx + 1);
+                rows.add("<gray>•</gray> <aqua>" + CommandMessenger.escape(key) + "</aqua><dark_gray>:</dark_gray> <white>" + CommandMessenger.escape(value) + "</white>");
+                return;
+            }
+            rows.add("<gray>" + CommandMessenger.escape(trimmed) + "</gray>");
+        });
+        return rows;
+    }
+
     private void sendLines(CommandSender sender, List<String> lines) {
         messenger.panel(sender, "Diagnostics", diagnosticRows(lines));
     }
 
     public void extensionInfo(CommandSender sender, String id) {
         if (id == null || id.isBlank()) {
-            messenger.usage(sender, "/ciaa extensions info <extension_id>");
+            messenger.usage(sender, "/ciaa extension info <extension_id>");
             return;
         }
         messenger.panel(sender, "Extension Info", diagnosticRows(ExtensionDiagnostics.infoLines(rt, id)));
@@ -518,21 +593,55 @@ public final class AdminCommandHandlers {
         }
     }
 
-    // TODO: modify a field with object will break the config
     public void config(
             CommandSender sender,
             ConfigTarget target,
             String node,
             String valueRaw
     ) {
-        Object value = parseValue(valueRaw);
+        configSet(sender, target, node, valueRaw, false);
+    }
 
+    public void configSet(
+            CommandSender sender,
+            ConfigTarget target,
+            String node,
+            String valueRaw,
+            boolean create
+    ) {
         var cfg = rt.requireService(ConfigManager.class);
+        var normalizedNode = normalizeConfigNode(node);
+        if (normalizedNode == null) {
+            messenger.error(sender, "Config node is required.");
+            return;
+        }
+
+        boolean exists = configNodeExists(cfg, target, normalizedNode);
+        if (!exists && !create) {
+            messenger.warnMini(sender, "Config node does not exist: " + messenger.id(normalizedNode));
+            messenger.hint(sender, "Use /ciaa config set " + target.id() + " " + normalizedNode + " --create <value> to create it intentionally.");
+            return;
+        }
+
+        if (exists && configSection(cfg, target, normalizedNode)) {
+            messenger.errorMini(sender, "Refusing to overwrite object config node: " + messenger.id(normalizedNode));
+            messenger.hint(sender, "Use /ciaa config list " + target.id() + " to choose a concrete child node.");
+            return;
+        }
+
+        Object oldValue = exists ? configNode(cfg, target, normalizedNode) : null;
+        Object newValue;
+        try {
+            newValue = coerceConfigValue(oldValue, valueRaw);
+        } catch (IllegalArgumentException exception) {
+            messenger.error(sender, exception.getMessage());
+            return;
+        }
 
         boolean ok = switch (target) {
-            case CONFIG -> cfg.setGlobalNode(node, value);
-            case ARENA -> cfg.setArenaNode(node, value);
-            case SKILL -> cfg.setSkillNode(node, value);
+            case CONFIG -> cfg.setGlobalNode(normalizedNode, newValue);
+            case ARENA -> cfg.setArenaNode(normalizedNode, newValue);
+            case SKILL -> cfg.setSkillNode(normalizedNode, newValue);
         };
 
         if (!ok) {
@@ -540,27 +649,245 @@ public final class AdminCommandHandlers {
             return;
         }
 
-        Object cur = switch (target) {
+        Object currentValue = configNode(cfg, target, normalizedNode);
+        messenger.panel(sender, CommandPanel.builder("Config Updated")
+                .row("<gray>File:</gray> " + messenger.id(target.fileName()))
+                .row("<gray>Node:</gray> " + messenger.id(normalizedNode))
+                .row("<gray>Previous:</gray> " + (exists ? configValue(oldValue) : "<dark_gray>missing</dark_gray>"))
+                .row("<gray>Written:</gray> " + configValue(newValue))
+                .row("<gray>Current:</gray> " + configValue(currentValue))
+                .row("<gold>Run</gold> <click:suggest_command:'/ciaa config reload'><yellow>/ciaa config reload</yellow></click> <gold>to reload config objects.</gold>")
+                .build());
+    }
+
+    private String normalizeConfigNode(String node) {
+        if (node == null) return null;
+        var normalized = node.trim();
+        return normalized.isBlank() ? null : normalized;
+    }
+
+    private boolean configNodeExists(
+            ConfigManager cfg,
+            ConfigTarget target,
+            String node
+    ) {
+        return switch (target) {
+            case CONFIG -> cfg.globalNodeExists(node);
+            case ARENA -> cfg.arenaNodeExists(node);
+            case SKILL -> cfg.skillNodeExists(node);
+        };
+    }
+
+    private boolean configSection(
+            ConfigManager cfg,
+            ConfigTarget target,
+            String node
+    ) {
+        return switch (target) {
+            case CONFIG -> cfg.globalSection(node);
+            case ARENA -> cfg.arenaSection(node);
+            case SKILL -> cfg.skillSection(node);
+        };
+    }
+
+    private Object configNode(
+            ConfigManager cfg,
+            ConfigTarget target,
+            String node
+    ) {
+        return switch (target) {
             case CONFIG -> cfg.getGlobalNode(node);
             case ARENA -> cfg.getArenaNode(node);
             case SKILL -> cfg.getSkillNode(node);
         };
-        var currentValue = cur == null ? "null" : String.valueOf(cur);
-        messenger.panel(sender, CommandPanel.builder("Config Updated")
+    }
+
+    private Object coerceConfigValue(
+            Object oldValue,
+            String raw
+    ) {
+        if (oldValue instanceof ConfigurationSection) {
+            throw new IllegalArgumentException("Object config sections cannot be overwritten.");
+        }
+        if (oldValue instanceof Boolean) {
+            var parsed = parseBoolean(raw);
+            if (parsed == null) throw new IllegalArgumentException("Expected a boolean value: true/false.");
+            return parsed;
+        }
+        if (oldValue instanceof Integer) {
+            var parsed = parseInt(raw);
+            if (parsed == null) throw new IllegalArgumentException("Expected an integer value.");
+            return parsed;
+        }
+        if (oldValue instanceof Long) {
+            try {
+                return Long.parseLong(raw.trim());
+            } catch (Throwable _) {
+                throw new IllegalArgumentException("Expected a long integer value.");
+            }
+        }
+        if (oldValue instanceof Float) {
+            return (float) parseRequiredDouble(raw);
+        }
+        if (oldValue instanceof Double) {
+            return parseRequiredDouble(raw);
+        }
+        if (oldValue instanceof List<?>) {
+            return parseListValue(raw);
+        }
+        if (oldValue instanceof String) {
+            return parseStringValue(raw);
+        }
+        return parseValue(raw);
+    }
+
+    private String configValue(Object value) {
+        if (value == null) return "<dark_gray>null</dark_gray>";
+        if (value instanceof ConfigurationSection section) {
+            return "<dark_gray>object(" + section.getKeys(false).size() + " keys)</dark_gray>";
+        }
+        if (value instanceof List<?> list) {
+            return messenger.value(list);
+        }
+        return messenger.value(value);
+    }
+
+    private double parseRequiredDouble(String raw) {
+        try {
+            return Double.parseDouble(raw.trim());
+        } catch (Throwable _) {
+            throw new IllegalArgumentException("Expected a decimal value.");
+        }
+    }
+
+    private List<Object> parseListValue(String raw) {
+        var trimmed = raw == null ? "" : raw.trim();
+        if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
+            throw new IllegalArgumentException("Expected a list value like [one, two, three].");
+        }
+        var inner = trimmed.substring(1, trimmed.length() - 1).trim();
+        if (inner.isEmpty()) return List.of();
+
+        return Arrays.stream(inner.split(","))
+                .map(part -> parseValue(part.trim()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private Object parseStringValue(String raw) {
+        var trimmed = raw == null ? "" : raw.trim();
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            return trimmed.substring(1, trimmed.length() - 1);
+        }
+        return raw == null ? "" : raw;
+    }
+
+    public void configGet(
+            CommandSender sender,
+            ConfigTarget target,
+            String node
+    ) {
+        var cfg = rt.requireService(ConfigManager.class);
+        var normalizedNode = normalizeConfigNode(node);
+        if (normalizedNode == null) {
+            messenger.error(sender, "Config node is required.");
+            return;
+        }
+
+        if (!configNodeExists(cfg, target, normalizedNode)) {
+            messenger.warnMini(sender, "Config node does not exist: " + messenger.id(normalizedNode));
+            messenger.hint(sender, "Use /ciaa config list " + target.id() + " to browse available nodes.");
+            return;
+        }
+
+        Object value = configNode(cfg, target, normalizedNode);
+        messenger.panel(sender, CommandPanel.builder("Config Value")
                 .row("<gray>File:</gray> " + messenger.id(target.fileName()))
-                .row("<gray>Node:</gray> " + messenger.id(node))
-                .row("<gray>Written value:</gray> " + messenger.value(value))
-                .row("<gray>Current value:</gray> " + messenger.value(currentValue))
-                .row("<gold>Run</gold> <click:suggest_command:'/ciaa reload'><yellow>/ciaa reload</yellow></click> <gold>to apply the change.</gold>")
+                .row("<gray>Node:</gray> " + messenger.id(normalizedNode))
+                .row("<gray>Type:</gray> " + messenger.id(configType(value)))
+                .row("<gray>Value:</gray> " + configValue(value))
                 .build());
     }
 
+    private String configType(Object value) {
+        return switch (value) {
+            case null -> "null";
+            case ConfigurationSection _ -> "object";
+            case List<?> _ -> "list";
+            default -> value.getClass().getSimpleName().toLowerCase();
+        };
+    }
+
+    public void configList(
+            CommandSender sender,
+            ConfigTarget target
+    ) {
+        var cfg = rt.requireService(ConfigManager.class);
+        var keys = configKeys(cfg, target);
+        if (keys.isEmpty()) {
+            messenger.warnMini(sender, "No config nodes found in " + messenger.id(target.fileName()));
+            return;
+        }
+
+        var panel = CommandPanel.builder("Config Nodes: " + target.fileName());
+        panel.row("<gray>Total:</gray> <gold>" + keys.size() + "</gold>");
+        keys.stream().limit(60).forEach(key -> {
+            Object value = configNode(cfg, target, key);
+            panel.row("<click:suggest_command:'/ciaa config get " + target.id() + " "
+                    + CommandMessenger.escapeForAttribute(key) + "'>"
+                    + messenger.id(key) + "</click> <dark_gray>|</dark_gray> "
+                    + messenger.id(configType(value)) + " <dark_gray>=</dark_gray> " + shortConfigValue(value));
+        });
+        if (keys.size() > 60) {
+            panel.row("<dark_gray>…</dark_gray> <gray>" + (keys.size() - 60) + " more nodes hidden.</gray>");
+        }
+        messenger.panel(sender, panel.build());
+    }
+
+    private List<String> configKeys(
+            ConfigManager cfg,
+            ConfigTarget target
+    ) {
+        return switch (target) {
+            case CONFIG -> cfg.listGlobalKeys();
+            case ARENA -> cfg.listArenaKeys();
+            case SKILL -> cfg.listSkillKeys();
+        };
+    }
+
+    private String shortConfigValue(Object value) {
+        var rendered = switch (value) {
+            case null -> "null";
+            case ConfigurationSection section -> "object(" + section.getKeys(false).size() + " keys)";
+            case List<?> list -> list.toString();
+            default -> String.valueOf(value);
+        };
+        if (rendered.length() > 48) rendered = rendered.substring(0, 45) + "...";
+        return messenger.value(rendered);
+    }
+
+    public void configReload(CommandSender sender) {
+        var cfg = rt.requireService(ConfigManager.class);
+        cfg.reloadAll();
+        I18n.reload();
+
+        var abilityAdmin = rt.getService(IAbilityAdmin.class);
+        if (abilityAdmin != null) abilityAdmin.reload();
+
+        var regeneration = rt.getService(RegenerationService.class);
+        if (regeneration != null) regeneration.reloadConfig();
+
+        messenger.success(sender, "Configuration files reloaded.");
+        messenger.hint(sender, "Runtime-only admin overrides are unchanged. Use /ciaa reload for a full plugin runtime reload.");
+    }
+
     public void configUsage(CommandSender sender) {
-        messenger.panel(sender, CommandPanel.builder("Config Command")
-                .row(new CommandUsage("/ciaa config config <node> <value>", "Edit config.yml.").toMiniRow())
-                .row(new CommandUsage("/ciaa config arena <node> <value>", "Edit arena.yml.").toMiniRow())
-                .row(new CommandUsage("/ciaa config skill <node> <value>", "Edit skill.yml.").toMiniRow())
-                .row("<yellow>Warning:</yellow> <gray>Object-node protection is planned for the next config command stage.</gray>")
+        messenger.panel(sender, CommandPanel.builder("Config Commands")
+                .row(new CommandUsage("/ciaa config get <config|arena|skill> <node>", "Read one config value.").toMiniRow())
+                .row(new CommandUsage("/ciaa config list <config|arena|skill>", "List known config nodes.").toMiniRow())
+                .row(new CommandUsage("/ciaa config set <config|arena|skill> <node> <value>", "Update an existing scalar/list node.").toMiniRow())
+                .row(new CommandUsage("/ciaa config set <target> <node> --create <value>", "Create a missing node intentionally.").toMiniRow())
+                .row(new CommandUsage("/ciaa config reload", "Reload config files and config-backed systems.").toMiniRow())
+                .row("<yellow>Protection:</yellow> <gray>Object sections cannot be overwritten by this command.</gray>")
                 .build());
     }
 
@@ -625,36 +952,6 @@ public final class AdminCommandHandlers {
                                 : error.getMessage()));
                     }
                 }));
-    }
-
-    private String statusLine(String plain) {
-        return "<gray>" + CommandMessenger.escape(plain) + "</gray>";
-    }
-
-    private List<String> diagnosticRows(List<String> lines) {
-        if (lines == null || lines.isEmpty()) return List.of("<dark_gray>No diagnostic lines.</dark_gray>");
-
-        var rows = new ArrayList<String>();
-        for (String line : lines) {
-            if (line == null || line.isBlank()) {
-                rows.add("");
-                continue;
-            }
-            var trimmed = line.trim();
-            if (trimmed.startsWith("- ")) {
-                rows.add("<gray>•</gray> <white>" + CommandMessenger.escape(trimmed.substring(2)) + "</white>");
-                continue;
-            }
-            var idx = trimmed.indexOf('=');
-            if (idx > 0) {
-                var key = trimmed.substring(0, idx);
-                var value = trimmed.substring(idx + 1);
-                rows.add("<gray>•</gray> <aqua>" + CommandMessenger.escape(key) + "</aqua><dark_gray>:</dark_gray> <white>" + CommandMessenger.escape(value) + "</white>");
-                continue;
-            }
-            rows.add("<gray>" + CommandMessenger.escape(trimmed) + "</gray>");
-        }
-        return rows;
     }
 
 }

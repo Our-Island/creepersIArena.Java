@@ -32,6 +32,10 @@ public final class DatabaseNames {
         return prefix + "wallet_balances";
     }
 
+    public String playerPreferences() {
+        return prefix + "player_preferences";
+    }
+
     public String walletTransactions() {
         return prefix + "wallet_transactions";
     }

@@ -20,7 +20,7 @@ public final class CiaCommandRoots {
         var playerHandlers = new PlayerCommandHandlers(rt);
         var adminHandlers = new AdminCommandHandlers(rt);
         this.adminTree = new AdminCommandTree(rt, adminHandlers);
-        this.playerTree = new PlayerCommandTree(rt, playerHandlers, adminTree);
+        this.playerTree = new PlayerCommandTree(rt, playerHandlers);
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> playerRoot() {

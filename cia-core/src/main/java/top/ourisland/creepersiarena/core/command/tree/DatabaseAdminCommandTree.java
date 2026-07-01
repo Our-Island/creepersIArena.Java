@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 
 /**
- * Builds the legacy /ciaa database subtree.
+ * Builds the /ciaa database subtree.
  */
 public final class DatabaseAdminCommandTree {
 

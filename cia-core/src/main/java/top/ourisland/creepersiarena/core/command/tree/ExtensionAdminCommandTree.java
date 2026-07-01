@@ -11,7 +11,7 @@ import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 
 /**
- * Builds the legacy /ciaa extensions subtree.
+ * Builds the /ciaa extension subtree.
  */
 public final class ExtensionAdminCommandTree {
 
@@ -28,7 +28,7 @@ public final class ExtensionAdminCommandTree {
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
         return Commands.literal(literal)
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_EXTENSIONS))
+                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_EXTENSION))
                 .executes(ctx -> {
                     admin.extensionsList(CiaArguments.sender(ctx));
                     return 1;
