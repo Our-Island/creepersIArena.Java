@@ -6,7 +6,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.CiaCommandConstants;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.PlayerCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.PlayerHandlers;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
@@ -17,11 +17,11 @@ import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 public final class PlayerCommandTree {
 
     private final BootstrapRuntime rt;
-    private final PlayerCommandHandlers player;
+    private final PlayerHandlers player;
 
     public PlayerCommandTree(
             BootstrapRuntime rt,
-            PlayerCommandHandlers player
+            PlayerHandlers player
     ) {
         this.rt = rt;
         this.player = player;
@@ -30,7 +30,7 @@ public final class PlayerCommandTree {
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
         var root = Commands.literal(literal)
                 .executes(ctx -> {
-                    player.help(CiaArguments.sender(ctx));
+                    player.help().help(CiaArguments.sender(ctx));
                     return 1;
                 });
 
@@ -51,7 +51,7 @@ public final class PlayerCommandTree {
     private LiteralArgumentBuilder<CommandSourceStack> help() {
         return Commands.literal("help")
                 .executes(ctx -> {
-                    player.help(CiaArguments.sender(ctx));
+                    player.help().help(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -60,7 +60,7 @@ public final class PlayerCommandTree {
         return Commands.literal("join")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_JOIN))
                 .executes(ctx -> {
-                    player.join(CiaArguments.sender(ctx));
+                    player.game().join(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -69,7 +69,7 @@ public final class PlayerCommandTree {
         return Commands.literal("leave")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_LEAVE))
                 .executes(ctx -> {
-                    player.leave(CiaArguments.sender(ctx));
+                    player.game().leave(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -80,12 +80,12 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.ciaKey("job_id")
                         .suggests((_, builder) -> RegistrySuggestions.jobIds(rt, builder))
                         .executes(ctx -> {
-                            player.job(CiaArguments.sender(ctx), CiaArguments.jobId(ctx, "job_id"));
+                            player.game().job(CiaArguments.sender(ctx), CiaArguments.jobId(ctx, "job_id"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.jobOverview(CiaArguments.sender(ctx));
+                    player.game().jobOverview(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -97,15 +97,16 @@ public final class PlayerCommandTree {
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.TEAM_SUGGESTIONS))
                         .executes(ctx -> {
                             try {
-                                player.team(CiaArguments.sender(ctx), CiaArguments.teamId(ctx, "team"));
+                                player.game().team(CiaArguments.sender(ctx), CiaArguments.teamId(ctx, "team"));
                             } catch (IllegalArgumentException exception) {
-                                player.invalidTeam(CiaArguments.sender(ctx), ctx.getArgument("team", String.class));
+                                player.game()
+                                        .invalidTeam(CiaArguments.sender(ctx), ctx.getArgument("team", String.class));
                             }
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.teamUsage(CiaArguments.sender(ctx));
+                    player.game().teamUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -116,12 +117,13 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.word("language")
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PLAYER_LANGUAGE_SUGGESTIONS))
                         .executes(ctx -> {
-                            player.language(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
+                            player.preference()
+                                    .language(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.languageUsage(CiaArguments.sender(ctx));
+                    player.preference().languageUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -133,12 +135,13 @@ public final class PlayerCommandTree {
                         .then(CiaArguments.word("language")
                                 .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PLAYER_LANGUAGE_SUGGESTIONS))
                                 .executes(ctx -> {
-                                    player.preferenceLanguage(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
+                                    player.preference()
+                                            .preferenceLanguage(CiaArguments.sender(ctx), ctx.getArgument("language", String.class));
                                     return 1;
                                 })
                         )
                         .executes(ctx -> {
-                            player.preferenceLanguageUsage(CiaArguments.sender(ctx));
+                            player.preference().preferenceLanguageUsage(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
@@ -146,12 +149,13 @@ public final class PlayerCommandTree {
                         .then(CiaArguments.word("enabled")
                                 .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PREFERENCE_BOOLEAN_SUGGESTIONS))
                                 .executes(ctx -> {
-                                    player.preferenceParticles(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
+                                    player.preference()
+                                            .preferenceParticles(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
                                     return 1;
                                 })
                         )
                         .executes(ctx -> {
-                            player.preferenceUsage(CiaArguments.sender(ctx));
+                            player.preference().preferenceUsage(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
@@ -159,23 +163,24 @@ public final class PlayerCommandTree {
                         .then(CiaArguments.word("enabled")
                                 .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.PREFERENCE_BOOLEAN_SUGGESTIONS))
                                 .executes(ctx -> {
-                                    player.preferenceScoreboard(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
+                                    player.preference()
+                                            .preferenceScoreboard(CiaArguments.sender(ctx), ctx.getArgument("enabled", String.class));
                                     return 1;
                                 })
                         )
                         .executes(ctx -> {
-                            player.preferenceUsage(CiaArguments.sender(ctx));
+                            player.preference().preferenceUsage(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
                 .then(Commands.literal("reset")
                         .executes(ctx -> {
-                            player.preferenceReset(CiaArguments.sender(ctx));
+                            player.preference().preferenceReset(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.preference(CiaArguments.sender(ctx));
+                    player.preference().preference(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -186,12 +191,13 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.ciaKey("currency")
                         .suggests((_, builder) -> RegistrySuggestions.currencyIds(rt, builder))
                         .executes(ctx -> {
-                            player.balance(CiaArguments.sender(ctx), CiaArguments.currencyId(ctx, "currency"));
+                            player.economy()
+                                    .balance(CiaArguments.sender(ctx), CiaArguments.currencyId(ctx, "currency"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.balance(CiaArguments.sender(ctx), null);
+                    player.economy().balance(CiaArguments.sender(ctx), null);
                     return 1;
                 });
     }
@@ -202,12 +208,12 @@ public final class PlayerCommandTree {
                 .then(CiaArguments.ciaKey("store_id")
                         .suggests((_, builder) -> RegistrySuggestions.storeIds(rt, builder))
                         .executes(ctx -> {
-                            player.store(CiaArguments.sender(ctx), CiaArguments.storeId(ctx, "store_id"));
+                            player.store().store(CiaArguments.sender(ctx), CiaArguments.storeId(ctx, "store_id"));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    player.defaultStore(CiaArguments.sender(ctx));
+                    player.store().defaultStore(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -217,7 +223,7 @@ public final class PlayerCommandTree {
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.COMMAND_PARTICLES))
                 .then(Commands.literal("off")
                         .executes(ctx -> {
-                            player.disableParticles(CiaArguments.sender(ctx));
+                            player.cosmetic().disableParticles(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
@@ -225,13 +231,14 @@ public final class PlayerCommandTree {
                         .then(CiaArguments.ciaKey("cosmetic_id")
                                 .suggests((_, builder) -> RegistrySuggestions.cosmeticIds(rt, builder))
                                 .executes(ctx -> {
-                                    player.selectParticle(CiaArguments.sender(ctx), CiaArguments.cosmeticId(ctx, "cosmetic_id"));
+                                    player.cosmetic()
+                                            .selectParticle(CiaArguments.sender(ctx), CiaArguments.cosmeticId(ctx, "cosmetic_id"));
                                     return 1;
                                 })
                         )
                 )
                 .executes(ctx -> {
-                    player.openParticleStore(CiaArguments.sender(ctx));
+                    player.store().openParticleStore(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

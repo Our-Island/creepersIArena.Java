@@ -6,7 +6,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.CiaCommandConstants;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.AdminHandlers;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
 
@@ -15,7 +15,7 @@ import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
  */
 public final class AdminCommandTree {
 
-    private final AdminCommandHandlers admin;
+    private final AdminHandlers admin;
     private final GameAdminCommandTree gameTree;
     private final AbilityAdminCommandTree abilityTree;
     private final DatabaseAdminCommandTree databaseTree;
@@ -26,23 +26,23 @@ public final class AdminCommandTree {
 
     public AdminCommandTree(
             BootstrapRuntime rt,
-            AdminCommandHandlers admin
+            AdminHandlers admin
     ) {
         this.admin = admin;
-        this.gameTree = new GameAdminCommandTree(rt, admin);
-        this.abilityTree = new AbilityAdminCommandTree(rt, admin);
-        this.databaseTree = new DatabaseAdminCommandTree(rt, admin);
-        this.economyTree = new EconomyAdminCommandTree(rt, admin);
-        this.storeTree = new StoreAdminCommandTree(rt, admin);
-        this.extensionTree = new ExtensionAdminCommandTree(rt, admin);
-        this.configTree = new ConfigAdminCommandTree(rt, admin);
+        this.gameTree = new GameAdminCommandTree(rt, admin.game());
+        this.abilityTree = new AbilityAdminCommandTree(rt, admin.ability());
+        this.databaseTree = new DatabaseAdminCommandTree(rt, admin.database());
+        this.economyTree = new EconomyAdminCommandTree(rt, admin.economy());
+        this.storeTree = new StoreAdminCommandTree(rt, admin.store());
+        this.extensionTree = new ExtensionAdminCommandTree(rt, admin.extension());
+        this.configTree = new ConfigAdminCommandTree(rt, admin.config());
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
         var root = Commands.literal(literal)
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN))
                 .executes(ctx -> {
-                    admin.help(CiaArguments.sender(ctx));
+                    admin.system().help(CiaArguments.sender(ctx));
                     return 1;
                 });
 
@@ -63,7 +63,7 @@ public final class AdminCommandTree {
     private LiteralArgumentBuilder<CommandSourceStack> help() {
         return Commands.literal("help")
                 .executes(ctx -> {
-                    admin.help(CiaArguments.sender(ctx));
+                    admin.system().help(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -74,12 +74,13 @@ public final class AdminCommandTree {
                 .then(CiaArguments.word("language_id")
                         .suggests((_, builder) -> CiaSuggestions.staticValues(builder, CiaCommandConstants.ADMIN_LANGUAGE_SUGGESTIONS))
                         .executes(ctx -> {
-                            admin.language(CiaArguments.sender(ctx), ctx.getArgument("language_id", String.class));
+                            admin.system()
+                                    .language(CiaArguments.sender(ctx), ctx.getArgument("language_id", String.class));
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.languageUsage(CiaArguments.sender(ctx));
+                    admin.system().languageUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -88,7 +89,7 @@ public final class AdminCommandTree {
         return Commands.literal("reload")
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_RELOAD))
                 .executes(ctx -> {
-                    admin.reload(CiaArguments.sender(ctx));
+                    admin.system().reload(CiaArguments.sender(ctx));
                     return 1;
                 });
     }

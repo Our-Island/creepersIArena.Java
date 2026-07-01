@@ -6,7 +6,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.admin.StoreAdminHandlers;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.PlayerSuggestions;
 import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
@@ -17,26 +17,26 @@ import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 public final class StoreAdminCommandTree {
 
     private final BootstrapRuntime rt;
-    private final AdminCommandHandlers admin;
+    private final StoreAdminHandlers store;
 
     public StoreAdminCommandTree(
             BootstrapRuntime rt,
-            AdminCommandHandlers admin
+            StoreAdminHandlers store
     ) {
         this.rt = rt;
-        this.admin = admin;
+        this.store = store;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
         return Commands.literal(literal)
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_STORE))
                 .executes(ctx -> {
-                    admin.storeList(CiaArguments.sender(ctx));
+                    store.storeList(CiaArguments.sender(ctx));
                     return 1;
                 })
                 .then(Commands.literal("list")
                         .executes(ctx -> {
-                            admin.storeList(CiaArguments.sender(ctx));
+                            store.storeList(CiaArguments.sender(ctx));
                             return 1;
                         })
                 )
@@ -46,7 +46,7 @@ public final class StoreAdminCommandTree {
                                 .then(CiaArguments.ciaKey("store_id")
                                         .suggests((_, builder) -> RegistrySuggestions.storeIds(rt, builder))
                                         .executes(ctx -> {
-                                            admin.openStore(
+                                            store.openStore(
                                                     CiaArguments.sender(ctx),
                                                     StringArgumentType.getString(ctx, "player"),
                                                     CiaArguments.storeId(ctx, "store_id")

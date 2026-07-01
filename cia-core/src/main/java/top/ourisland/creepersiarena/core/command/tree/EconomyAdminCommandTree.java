@@ -8,7 +8,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.admin.EconomyAdminHandlers;
 import top.ourisland.creepersiarena.core.command.model.EconomyOperation;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.PlayerSuggestions;
@@ -20,28 +20,28 @@ import top.ourisland.creepersiarena.core.command.suggestion.RegistrySuggestions;
 public final class EconomyAdminCommandTree {
 
     private final BootstrapRuntime rt;
-    private final AdminCommandHandlers admin;
+    private final EconomyAdminHandlers economy;
 
     public EconomyAdminCommandTree(
             BootstrapRuntime rt,
-            AdminCommandHandlers admin
+            EconomyAdminHandlers economy
     ) {
         this.rt = rt;
-        this.admin = admin;
+        this.economy = economy;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
         return Commands.literal(literal)
                 .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_ECONOMY))
                 .executes(ctx -> {
-                    admin.economyHelp(CiaArguments.sender(ctx));
+                    economy.economyHelp(CiaArguments.sender(ctx));
                     return 1;
                 })
                 .then(Commands.literal("balance")
                         .then(CiaArguments.word("player")
                                 .suggests((_, builder) -> PlayerSuggestions.onlinePlayers(builder))
                                 .executes(ctx -> {
-                                    admin.economyBalance(CiaArguments.sender(ctx), StringArgumentType.getString(ctx, "player"));
+                                    economy.economyBalance(CiaArguments.sender(ctx), StringArgumentType.getString(ctx, "player"));
                                     return 1;
                                 })
                         )
@@ -59,7 +59,7 @@ public final class EconomyAdminCommandTree {
                                 .suggests((_, builder) -> RegistrySuggestions.currencyIds(rt, builder))
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, Long>argument("amount", LongArgumentType.longArg(0L))
                                         .executes(ctx -> {
-                                            admin.economyAmount(
+                                            economy.economyAmount(
                                                     CiaArguments.sender(ctx),
                                                     operation,
                                                     StringArgumentType.getString(ctx, "player"),

@@ -7,7 +7,7 @@ import org.bukkit.command.CommandSender;
 import top.ourisland.creepersiarena.api.database.IDatabaseService;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.admin.DatabaseAdminHandlers;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 
 /**
@@ -16,14 +16,14 @@ import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 public final class DatabaseAdminCommandTree {
 
     private final BootstrapRuntime rt;
-    private final AdminCommandHandlers admin;
+    private final DatabaseAdminHandlers databaseHandlers;
 
     public DatabaseAdminCommandTree(
             BootstrapRuntime rt,
-            AdminCommandHandlers admin
+            DatabaseAdminHandlers databaseHandlers
     ) {
         this.rt = rt;
-        this.admin = admin;
+        this.databaseHandlers = databaseHandlers;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
@@ -56,25 +56,25 @@ public final class DatabaseAdminCommandTree {
     private void databaseStatus(CommandSender sender) {
         var database = database(sender);
         if (database == null) return;
-        admin.databaseStatus(sender, database);
+        databaseHandlers.databaseStatus(sender, database);
     }
 
     private void databasePing(CommandSender sender) {
         var database = database(sender);
         if (database == null) return;
-        admin.databasePing(sender, database);
+        databaseHandlers.databasePing(sender, database);
     }
 
     private void databaseTables(CommandSender sender) {
         var database = database(sender);
         if (database == null) return;
-        admin.databaseTables(sender, database);
+        databaseHandlers.databaseTables(sender, database);
     }
 
     private IDatabaseService database(CommandSender sender) {
         var database = rt.getService(IDatabaseService.class);
         if (database == null) {
-            admin.databaseUnavailable(sender);
+            databaseHandlers.databaseUnavailable(sender);
         }
         return database;
     }

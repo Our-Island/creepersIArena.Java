@@ -9,7 +9,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
 import top.ourisland.creepersiarena.core.command.CiaCommandConstants;
 import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.AdminCommandHandlers;
+import top.ourisland.creepersiarena.core.command.handler.admin.ConfigAdminHandlers;
 import top.ourisland.creepersiarena.core.command.model.ConfigTarget;
 import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
 import top.ourisland.creepersiarena.core.command.suggestion.CiaSuggestions;
@@ -21,14 +21,14 @@ import top.ourisland.creepersiarena.core.command.suggestion.ConfigSuggestions;
 public final class ConfigAdminCommandTree {
 
     private final BootstrapRuntime rt;
-    private final AdminCommandHandlers admin;
+    private final ConfigAdminHandlers config;
 
     public ConfigAdminCommandTree(
             BootstrapRuntime rt,
-            AdminCommandHandlers admin
+            ConfigAdminHandlers config
     ) {
         this.rt = rt;
-        this.admin = admin;
+        this.config = config;
     }
 
     public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
@@ -39,7 +39,7 @@ public final class ConfigAdminCommandTree {
                 .then(set())
                 .then(reload())
                 .executes(ctx -> {
-                    admin.configUsage(CiaArguments.sender(ctx));
+                    config.configUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -52,13 +52,13 @@ public final class ConfigAdminCommandTree {
                                 .executes(ctx -> {
                                     var target = target(ctx, "target");
                                     if (target == null) return 1;
-                                    admin.configGet(CiaArguments.sender(ctx), target, ctx.getArgument("node", String.class));
+                                    config.configGet(CiaArguments.sender(ctx), target, ctx.getArgument("node", String.class));
                                     return 1;
                                 })
                         )
                 )
                 .executes(ctx -> {
-                    admin.configUsage(CiaArguments.sender(ctx));
+                    config.configUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -69,12 +69,12 @@ public final class ConfigAdminCommandTree {
                         .executes(ctx -> {
                             var target = target(ctx, "target");
                             if (target == null) return 1;
-                            admin.configList(CiaArguments.sender(ctx), target);
+                            config.configList(CiaArguments.sender(ctx), target);
                             return 1;
                         })
                 )
                 .executes(ctx -> {
-                    admin.configUsage(CiaArguments.sender(ctx));
+                    config.configUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -90,7 +90,7 @@ public final class ConfigAdminCommandTree {
                                                 .executes(ctx -> {
                                                     var target = target(ctx, "target");
                                                     if (target == null) return 1;
-                                                    admin.configSet(
+                                                    config.configSet(
                                                             CiaArguments.sender(ctx),
                                                             target,
                                                             ctx.getArgument("node", String.class),
@@ -106,7 +106,7 @@ public final class ConfigAdminCommandTree {
                                         .executes(ctx -> {
                                             var target = target(ctx, "target");
                                             if (target == null) return 1;
-                                            admin.configSet(
+                                            config.configSet(
                                                     CiaArguments.sender(ctx),
                                                     target,
                                                     ctx.getArgument("node", String.class),
@@ -119,7 +119,7 @@ public final class ConfigAdminCommandTree {
                         )
                 )
                 .executes(ctx -> {
-                    admin.configUsage(CiaArguments.sender(ctx));
+                    config.configUsage(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -127,7 +127,7 @@ public final class ConfigAdminCommandTree {
     private LiteralArgumentBuilder<CommandSourceStack> reload() {
         return Commands.literal("reload")
                 .executes(ctx -> {
-                    admin.configReload(CiaArguments.sender(ctx));
+                    config.configReload(CiaArguments.sender(ctx));
                     return 1;
                 });
     }
@@ -143,7 +143,7 @@ public final class ConfigAdminCommandTree {
     ) {
         var target = CiaArguments.configTarget(ctx, name);
         if (target == null) {
-            admin.unknownConfigTarget(
+            config.unknownConfigTarget(
                     CiaArguments.sender(ctx),
                     ctx.getArgument(name, String.class)
             );
