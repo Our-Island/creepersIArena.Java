@@ -1,36 +1,40 @@
-package top.ourisland.creepersiarena.core.command;
-
-import java.util.List;
+package top.ourisland.creepersiarena.core.command
 
 /**
  * Shared command literals and small static suggestion sets.
  */
-public final class CiaCommandConstants {
+object CiaCommandConstants {
 
-    public static final String
-            PLAYER_ROOT_LITERAL = "cia",
-            ADMIN_ROOT_LITERAL = "ciaa";
+    const val PLAYER_ROOT_LITERAL: String = "cia"
+    const val ADMIN_ROOT_LITERAL: String = "ciaa"
 
-    /**
-     * The command overhaul intentionally exposes only /cia and /ciaa roots. Standalone legacy aliases stay empty by
-     * design.
-     */
-    public static final List<String>
-            PLAYER_ROOT_ALIASES = List.of(),
-            ADMIN_ROOT_ALIASES = List.of(),
-            PLAYER_LANGUAGE_SUGGESTIONS = List.of("default", "en_us", "zh_cn"),
-            ADMIN_LANGUAGE_SUGGESTIONS = List.of("en_us", "zh_cn"),
-            CONFIG_TARGET_SUGGESTIONS = List.of("config", "arena", "skill"),
-            BOOLEAN_SUGGESTIONS = List.of("true", "false"),
-            PREFERENCE_BOOLEAN_SUGGESTIONS = List.of("on", "off", "true", "false"),
-            TEAM_SUGGESTIONS = List.of(
-                    "random",
-                    "1", "2", "3", "4",
-                    "red", "blue", "green", "yellow",
-                    "aqua", "cyan", "purple", "white", "black"
-            );
+    @JvmField
+    val PLAYER_ROOT_ALIASES: List<String> = listOf()
 
-    private CiaCommandConstants() {
-    }
+    @JvmField
+    val ADMIN_ROOT_ALIASES: List<String> = listOf()
+
+    @JvmField
+    val PLAYER_LANGUAGE_SUGGESTIONS: List<String> = listOf("default", "en_us", "zh_cn")
+
+    @JvmField
+    val ADMIN_LANGUAGE_SUGGESTIONS: List<String> = listOf("en_us", "zh_cn")
+
+    @JvmField
+    val CONFIG_TARGET_SUGGESTIONS: List<String> = listOf("config", "arena", "skill")
+
+    @JvmField
+    val BOOLEAN_SUGGESTIONS: List<String> = listOf("true", "false")
+
+    @JvmField
+    val PREFERENCE_BOOLEAN_SUGGESTIONS: List<String> = listOf("on", "off", "true", "false")
+
+    @JvmField
+    val TEAM_SUGGESTIONS: List<String> = listOf(
+        "random",
+        "1", "2", "3", "4",
+        "red", "blue", "green", "yellow",
+        "aqua", "cyan", "purple", "white", "black"
+    )
 
 }

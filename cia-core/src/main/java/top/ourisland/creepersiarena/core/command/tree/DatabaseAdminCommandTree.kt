@@ -1,82 +1,76 @@
-package top.ourisland.creepersiarena.core.command.tree;
+package top.ourisland.creepersiarena.core.command.tree
 
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
-import io.papermc.paper.command.brigadier.Commands;
-import org.bukkit.command.CommandSender;
-import top.ourisland.creepersiarena.api.database.IDatabaseService;
-import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime;
-import top.ourisland.creepersiarena.core.command.argument.CiaArguments;
-import top.ourisland.creepersiarena.core.command.handler.admin.DatabaseAdminHandlers;
-import top.ourisland.creepersiarena.core.command.permission.CiaPermissions;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import io.papermc.paper.command.brigadier.CommandSourceStack
+import io.papermc.paper.command.brigadier.Commands
+import org.bukkit.command.CommandSender
+import top.ourisland.creepersiarena.api.database.IDatabaseService
+import top.ourisland.creepersiarena.core.bootstrap.BootstrapRuntime
+import top.ourisland.creepersiarena.core.command.argument.CiaArguments
+import top.ourisland.creepersiarena.core.command.handler.admin.DatabaseAdminHandlers
+import top.ourisland.creepersiarena.core.command.permission.CiaPermissions
 
 /**
  * Builds the /ciaa database subtree.
  */
-public final class DatabaseAdminCommandTree {
+class DatabaseAdminCommandTree(
+    private val rt: BootstrapRuntime,
+    private val databaseHandlers: DatabaseAdminHandlers,
+) {
 
-    private final BootstrapRuntime rt;
-    private final DatabaseAdminHandlers databaseHandlers;
-
-    public DatabaseAdminCommandTree(
-            BootstrapRuntime rt,
-            DatabaseAdminHandlers databaseHandlers
-    ) {
-        this.rt = rt;
-        this.databaseHandlers = databaseHandlers;
-    }
-
-    public LiteralArgumentBuilder<CommandSourceStack> build(String literal) {
+    fun build(literal: String): LiteralArgumentBuilder<CommandSourceStack> {
         return Commands.literal(literal)
-                .requires(source -> CiaArguments.hasPermission(source, CiaPermissions.ADMIN_DATABASE))
-                .executes(ctx -> {
-                    databaseStatus(CiaArguments.sender(ctx));
-                    return 1;
-                })
-                .then(Commands.literal("status")
-                        .executes(ctx -> {
-                            databaseStatus(CiaArguments.sender(ctx));
-                            return 1;
-                        })
-                )
-                .then(Commands.literal("ping")
-                        .executes(ctx -> {
-                            databasePing(CiaArguments.sender(ctx));
-                            return 1;
-                        })
-                )
-                .then(Commands.literal("tables")
-                        .executes(ctx -> {
-                            databaseTables(CiaArguments.sender(ctx));
-                            return 1;
-                        })
-                );
+            .requires { source ->
+                CiaArguments.hasPermission(source, CiaPermissions.ADMIN_DATABASE)
+            }
+            .executes { ctx ->
+                databaseStatus(CiaArguments.sender(ctx))
+                1
+            }
+            .then(
+                Commands.literal("status")
+                    .executes { ctx ->
+                        databaseStatus(CiaArguments.sender(ctx))
+                        1
+                    },
+            )
+            .then(
+                Commands.literal("ping")
+                    .executes { ctx ->
+                        databasePing(CiaArguments.sender(ctx))
+                        1
+                    },
+            )
+            .then(
+                Commands.literal("tables")
+                    .executes { ctx ->
+                        databaseTables(CiaArguments.sender(ctx))
+                        1
+                    },
+            )
     }
 
-    private void databaseStatus(CommandSender sender) {
-        var database = database(sender);
-        if (database == null) return;
-        databaseHandlers.databaseStatus(sender, database);
+    private fun databaseStatus(sender: CommandSender) {
+        val database = database(sender) ?: return
+        databaseHandlers.databaseStatus(sender, database)
     }
 
-    private void databasePing(CommandSender sender) {
-        var database = database(sender);
-        if (database == null) return;
-        databaseHandlers.databasePing(sender, database);
+    private fun databasePing(sender: CommandSender) {
+        val database = database(sender) ?: return
+        databaseHandlers.databasePing(sender, database)
     }
 
-    private void databaseTables(CommandSender sender) {
-        var database = database(sender);
-        if (database == null) return;
-        databaseHandlers.databaseTables(sender, database);
+    private fun databaseTables(sender: CommandSender) {
+        val database = database(sender) ?: return
+        databaseHandlers.databaseTables(sender, database)
     }
 
-    private IDatabaseService database(CommandSender sender) {
-        var database = rt.getService(IDatabaseService.class);
+    private fun database(sender: CommandSender): IDatabaseService? {
+        val database = rt.getService(IDatabaseService::class.java)
         if (database == null) {
-            databaseHandlers.databaseUnavailable(sender);
+            databaseHandlers.databaseUnavailable(sender)
         }
-        return database;
+        return database
     }
 
 }

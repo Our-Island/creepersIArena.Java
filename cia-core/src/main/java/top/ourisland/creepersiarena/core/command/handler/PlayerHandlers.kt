@@ -11,21 +11,21 @@ class PlayerHandlers(
 ) {
 
     @get:JvmName("help")
-    val helpValue = PlayerHelpHandlers(context)
+    val help = PlayerHelpHandlers(context)
 
     @get:JvmName("game")
-    val gameValue = PlayerGameHandlers(context)
+    val game = PlayerGameHandlers(context)
 
     @get:JvmName("preference")
-    val preferenceValue = PlayerPreferenceHandlers(context)
+    val preference = PlayerPreferenceHandlers(context)
 
     @get:JvmName("economy")
-    val economyValue = PlayerEconomyHandlers(context)
+    val economy = PlayerEconomyHandlers(context)
 
     @get:JvmName("store")
-    val storeValue = PlayerStoreHandlers(context)
+    val store = PlayerStoreHandlers(context)
 
     @get:JvmName("cosmetic")
-    val cosmeticValue = PlayerCosmeticHandlers(context)
+    val cosmetic = PlayerCosmeticHandlers(context)
 
 }

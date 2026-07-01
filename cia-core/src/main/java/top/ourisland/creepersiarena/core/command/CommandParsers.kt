@@ -1,80 +1,94 @@
-package top.ourisland.creepersiarena.core.command;
+package top.ourisland.creepersiarena.core.command
 
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import top.ourisland.creepersiarena.api.game.team.TeamId;
-import top.ourisland.creepersiarena.core.command.message.CommandMessenger;
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import top.ourisland.creepersiarena.api.game.team.TeamId
+import top.ourisland.creepersiarena.core.command.message.CommandMessenger
+import java.util.*
 
-import java.util.Locale;
-import java.util.Optional;
+object CommandParsers {
 
-public final class CommandParsers {
+    @JvmStatic
+    fun parseValue(s: String?): Any? {
+        if (s == null) return null
 
-    private CommandParsers() {
-    }
+        val v = s.trim()
 
-    public static Object parseValue(String s) {
-        if (s == null) return null;
-        var v = s.trim();
+        if (v.equals("null", ignoreCase = true)) return null
 
-        if (v.equalsIgnoreCase("null")) return null;
+        parseBoolean(v)?.let { return it }
+        parseInt(v)?.let { return it }
+        parseDouble(v)?.let { return it }
 
-        var b = parseBoolean(v);
-        if (b != null) return b;
-
-        var i = parseInt(v);
-        if (i != null) return i;
-
-        var d = parseDouble(v);
-        if (d != null) return d;
-
-        if ((v.startsWith("\"") && v.endsWith("\"")) || (v.startsWith("'") && v.endsWith("'"))) {
-            return v.substring(1, v.length() - 1);
+        if (
+            (v.startsWith("\"") && v.endsWith("\"")) ||
+            (v.startsWith("'") && v.endsWith("'"))
+        ) {
+            return v.substring(1, v.length - 1)
         }
-        return v;
+
+        return v
     }
 
-    public static Boolean parseBoolean(String s) {
-        if (s == null) return null;
-        var v = s.trim().toLowerCase(Locale.ROOT);
-        if (v.equals("true") || v.equals("yes") || v.equals("on") || v.equals("1")) return true;
-        if (v.equals("false") || v.equals("no") || v.equals("off") || v.equals("0")) return false;
-        return null;
-    }
+    @JvmStatic
+    fun parseBoolean(s: String?): Boolean? {
+        if (s == null) return null
 
-    public static Integer parseInt(String s) {
-        try {
-            return Integer.parseInt(String.valueOf(s).trim());
-        } catch (Throwable _) {
-            return null;
+        return when (s.trim().lowercase(Locale.ROOT)) {
+            "true", "yes", "on", "1" -> true
+            "false", "no", "off", "0" -> false
+            else -> null
         }
     }
 
-    public static Double parseDouble(String s) {
-        try {
-            return Double.parseDouble(String.valueOf(s).trim());
-        } catch (Throwable _) {
-            return null;
+    @JvmStatic
+    fun parseInt(s: String?): Int? {
+        return try {
+            s?.trim()?.toInt()
+        } catch (_: Throwable) {
+            null
         }
     }
 
-    public static TeamId parseTeamId(String token) {
-        if (token == null) throw new IllegalArgumentException("Team id is required");
-        var value = token.trim();
-        if (value.equalsIgnoreCase("random")) return null;
-        if (value.chars().allMatch(Character::isDigit)) {
-            throw new IllegalArgumentException("Numeric team aliases are not supported; use the canonical team id");
+    @JvmStatic
+    fun parseDouble(s: String?): Double? {
+        return try {
+            s?.trim()?.toDouble()
+        } catch (_: Throwable) {
+            null
         }
-        return TeamId.parse(value);
     }
 
-    public static Optional<Player> asPlayer(CommandSender sender) {
-        if (sender instanceof Player p) {
-            return Optional.of(p);
+    @JvmStatic
+    fun parseTeamId(token: String?): TeamId? {
+        if (token == null) {
+            throw IllegalArgumentException("Team id is required")
         }
-        CommandMessenger.plain(sender, "You can only execute this command as a player!");
-        return Optional.empty();
+
+        val value = token.trim()
+
+        if (value.equals("random", ignoreCase = true)) return null
+
+        if (value.all { it.isDigit() }) {
+            throw IllegalArgumentException(
+                "Numeric team aliases are not supported; use the canonical team id"
+            )
+        }
+
+        return TeamId.parse(value)
     }
 
+    @JvmStatic
+    fun asPlayer(sender: CommandSender): Optional<Player> {
+        return if (sender is Player) {
+            Optional.of(sender)
+        } else {
+            CommandMessenger.plain(
+                sender,
+                "You can only execute this command as a player!"
+            )
+            Optional.empty()
+        }
+    }
 
 }
