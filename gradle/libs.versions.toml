@@ -10,7 +10,7 @@ paper-api = "26.2.build.71-beta"
 luckperms = "5.5"
 
 lombok = "1.18.46"
-jspecify = "1.0.0"
+jspecify = "1.0.1"
 junit-jupiter = "6.1.2"
 junit-platform = "6.1.2"
 
